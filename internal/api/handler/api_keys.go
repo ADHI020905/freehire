@@ -38,18 +38,25 @@ type createdAPIKeyResponse struct {
 	Token string `json:"token"`
 }
 
-// createAPIKeyRequest is the create body: a required display name and an optional
-// expiry. A null/absent expires_at means the key never expires.
+// createAPIKeyRequest is the create body: a required display name, an optional
+// expiry, and an optional scope. A null/absent expires_at means the key never
+// expires. An absent/empty scope mints auth.ScopeFull — unchanged from before this
+// field existed, so every existing caller that never sends it keeps getting a
+// full-scope key. The only other scope a client may request for itself is
+// auth.ScopeEmbed (for the volunteer-embed-mvp service, a separate repo that only
+// ever reads/validates api_keys directly — this scope grants nothing on freehire's
+// own API). ScopeCV stays server-only: no client-requestable value mints it.
 type createAPIKeyRequest struct {
 	Name      string     `json:"name"`
 	ExpiresAt *time.Time `json:"expires_at"`
+	Scope     string     `json:"scope"`
 }
 
 // mintAPIKey generates a new API key for the user and persists it (only the hash
 // is stored), returning the plaintext token — revealed to the caller exactly once —
 // and the stored row. Used by the key-management endpoint (the
 // browser-extension connect flow issues a session JWT instead).
-func (h *authHandlers) mintAPIKey(ctx context.Context, userID int64, name string, expiresAt pgtype.Timestamptz) (string, db.CreateAPIKeyRow, error) {
+func (h *authHandlers) mintAPIKey(ctx context.Context, userID int64, name string, expiresAt pgtype.Timestamptz, scope string) (string, db.CreateAPIKeyRow, error) {
 	token, hash, prefix, err := auth.GenerateAPIKey()
 	if err != nil {
 		// Returned rather than phrased as fiber.NewError(500, …): the reader we need
@@ -62,10 +69,8 @@ func (h *authHandlers) mintAPIKey(ctx context.Context, userID int64, name string
 		Name:        name,
 		TokenHash:   hash,
 		TokenPrefix: prefix,
-		// Always full: the scope is a server decision, and the create body has no field
-		// for it, so a client cannot mint itself anything narrower or wider.
-		Scope:     auth.ScopeFull,
-		ExpiresAt: expiresAt,
+		Scope:       scope,
+		ExpiresAt:   expiresAt,
 	})
 	// The statement inserts nothing — and so returns no row — when the account's address
 	// was never proven. The caller is authenticated (a session cookie got them here), so
@@ -100,7 +105,15 @@ func (h *authHandlers) CreateAPIKey(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "name is required")
 	}
 
-	token, row, err := h.mintAPIKey(c.Context(), userID, name, pgconv.Timestamptz(in.ExpiresAt))
+	scope := auth.ScopeFull
+	if in.Scope != "" {
+		if in.Scope != auth.ScopeEmbed {
+			return fiber.NewError(fiber.StatusBadRequest, "invalid scope")
+		}
+		scope = in.Scope
+	}
+
+	token, row, err := h.mintAPIKey(c.Context(), userID, name, pgconv.Timestamptz(in.ExpiresAt), scope)
 	if err != nil {
 		return err
 	}

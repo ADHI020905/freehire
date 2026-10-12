@@ -65,8 +65,11 @@ type CreateAPIKeyRow struct {
 // Create an API key for a user. The caller passes the SHA-256 token_hash and the
 // display token_prefix; the plaintext token is shown once and never stored.
 // expires_at NULL means the key never expires. scope confines the credential to a
-// surface ('full' for a user-created key, 'cv' for the tailoring agent's); it comes
-// from the server, never from client input. Returns display fields only, never the hash.
+// surface: 'full' is the default for a user-created key; 'cv' is server-only, never
+// client-requestable (reserved for the tailoring agent); 'embed' is the one scope a
+// client may request for itself, for the separate volunteer-embed-mvp service — the
+// handler validates which scopes a client may request before this query ever runs.
+// Returns display fields only, never the hash.
 //
 // The INSERT ... SELECT is the verified-address gate, not a style choice: registration
 // hands out a session before the address is proven, so a squatter on someone else's

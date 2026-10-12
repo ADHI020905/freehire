@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -53,6 +55,38 @@ func TestAPIKeysManagement_IsCookieOnly(t *testing.T) {
 			defer resp.Body.Close()
 			if resp.StatusCode != fiber.StatusUnauthorized {
 				t.Errorf("status = %d, want 401 (key management must be cookie-only)", resp.StatusCode)
+			}
+		})
+	}
+}
+
+// A client may request auth.ScopeEmbed for itself (the volunteer-embed-mvp
+// service), but nothing else — in particular not auth.ScopeCV, which stays a
+// server-only decision. This rejects before any query runs, same as the
+// cookie-gate cases above, so the nil queries on a bare &authHandlers{} is
+// never dereferenced.
+func TestCreateAPIKey_RejectsUnrequestableScope(t *testing.T) {
+	app := apiKeysApp()
+	iss := auth.NewIssuer("test-secret", time.Hour)
+	cookie, err := iss.Issue(1, testTokenVersion)
+	if err != nil {
+		t.Fatalf("issue cookie: %v", err)
+	}
+
+	for _, scope := range []string{"cv", "admin", "nonsense"} {
+		t.Run(scope, func(t *testing.T) {
+			body := bytes.NewBufferString(`{"name":"x","scope":"` + scope + `"}`)
+			req := httptest.NewRequestWithContext(context.Background(), fiber.MethodPost, "/api/v1/me/api-keys", body)
+			req.Header.Set("Content-Type", "application/json")
+			req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: cookie})
+
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("Test: %v", err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != fiber.StatusBadRequest {
+				t.Errorf("status = %d, want 400 for scope %q", resp.StatusCode, scope)
 			}
 		})
 	}
