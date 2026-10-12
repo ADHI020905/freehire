@@ -143,6 +143,12 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"careers.pageuppeople.com", "pageup", modePathNumeric},
 	{"oportunidades.mindsight.com.br", "mindsight", modePath},
 	{"careers.hireology.com", "hireology", modePath},
+	// ADP MyJobs: myjobs.adp.com/<board>/cx/…. A different ADP product from Workforce Now
+	// (modeQueryPair below) — its board is the career site's own slug, which the adpmyjobs
+	// adapter resolves to the orgoid its listing needs; neither id derives from the other.
+	{"myjobs.adp.com", "adpmyjobs", modePath},
+	// AppliTrack serves every district from one host: www.applitrack.com/<board>/onlineapp/….
+	{"applitrack.com", "applitrack", modePath},
 	// Manatal's hosted career-page domain is PATH-based (careers-page.com/<tenant>/job/<id>),
 	// not a tenant subdomain, and its source is manatal: careerspage.yml is deliberately empty
 	// because every careers-page.com tenant is served by the Manatal adapter.
@@ -179,6 +185,7 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"icims.com", "icims", modeICIMS},
 
 	// --- subdomain: board = leftmost DNS label under the apex ---
+	{"betterteam.com", "betterteam", modeSubdomain},
 	{"recruitee.com", "recruitee", modeSubdomain},
 	{"bamboohr.com", "bamboohr", modeSubdomain},
 	{"breezy.hr", "breezy", modeSubdomain},
@@ -350,9 +357,9 @@ var queryPairBoards = map[string]struct {
 	// adapter's listing call sends both. The ccId is a digits-and-underscore id ("19000101_000001",
 	// "9201289910657_2"), never a uuid, so the two cannot be confused for one another.
 	//
-	// myjobs.adp.com is deliberately absent: it is a DIFFERENT ADP product (a hosted career site
-	// addressed by a name slug), our adapter cannot crawl it, and reading its slug as a board
-	// would produce exactly the silently-wrong board this package exists to avoid.
+	// myjobs.adp.com is a DIFFERENT ADP product (a hosted career site addressed by a name slug)
+	// with its own adapter and its own row above; reading its slug as an adp board would produce
+	// exactly the silently-wrong board this package exists to avoid.
 	"workforcenow.adp.com": {
 		first:         "cid",
 		second:        "ccId",
@@ -437,6 +444,9 @@ var noBoardFirstSegments = map[string][]string{
 	// segment along, not decline it. Two unrelated employers resolving to the same board is what
 	// surfaced it (2026-09-08).
 	"greenhouse.io": {"ai_opt_out_request"},
+	// ADP MyJobs' own API (/public/staffing/v1/career-site/<board>, which the adapter calls)
+	// shares the host with the career sites; "public" is not a tenant.
+	"myjobs.adp.com": {"public"},
 }
 
 // allowedFirstSegments lists, per matched host entry in modeAllowedFirstSegment, the ONLY leading

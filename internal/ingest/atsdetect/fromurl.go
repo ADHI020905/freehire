@@ -70,14 +70,24 @@ func FromURL(rawurl string) (provider, board string, ok bool) {
 		if len(segs) >= 3 && segs[0] == "jobs" && comeetUID.MatchString(segs[2]) {
 			return "comeet", segs[1] + "/" + segs[2], true
 		}
-	case host == "www.paycomonline.net", host == "paycomonline.net":
+	case host == "paycomonline.net", strings.HasSuffix(host, ".paycomonline.net"):
 		// board is the 32-hex client key in /v4/ats/web.php/portal/<clientkey>/...
 		if key := segAfter(segs, "portal"); key != "" {
+			return "paycom", key, true
+		}
+		// A posting link (…/jobs/ViewJobDetails?job=<id>&clientkey=<key>, sometimes on a regional
+		// host) carries the key as a parameter instead, usually upper-case; the catalogue holds it
+		// lower-case and the platform serves either.
+		if key := strings.ToLower(u.Query().Get("clientkey")); paycomClientKey.MatchString(key) {
 			return "paycom", key, true
 		}
 	}
 	return "", "", false
 }
+
+// paycomClientKey matches Paycom's 32-hex client key; a parameter is a weaker signal than a path
+// segment, so its value must have the shape before it is taken as a board.
+var paycomClientKey = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 // comeetUID matches a Comeet company UID: two alphanumerics, a dot, three more ("B1.001",
 // "32.00E"). Requiring the shape is what separates a board URL from any other comeet.com path.

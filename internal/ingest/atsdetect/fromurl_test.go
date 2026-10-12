@@ -90,6 +90,17 @@ func TestFromURL(t *testing.T) {
 			url:      "https://www.paycomonline.net/v4/ats/web.php/portal/3b4555a93baac45919556b5f901f7b83/jobs/383852?utm_source=Role",
 			provider: "paycom", board: "3b4555a93baac45919556b5f901f7b83", ok: true,
 		},
+		{
+			// A posting link names the client key as a query parameter instead of a path segment,
+			// often upper-case and on a regional host; the catalogue holds the key lower-case.
+			name:     "paycom clientkey query",
+			url:      "https://phx.us-west.paycomonline.net/v4/ats/web.php/jobs/ViewJobDetails?job=2844&clientkey=0000007733F608D84DFE1BB6118E38D3",
+			provider: "paycom", board: "0000007733f608d84dfe1bb6118e38d3", ok: true,
+		},
+		{
+			name: "paycom malformed clientkey",
+			url:  "https://www.paycomonline.net/v4/ats/web.php/jobs/ViewJobDetails?job=2844&clientkey=acme",
+		},
 		// iCIMS moved into the shared atsboard table (the reward it used to guard against no
 		// longer exists), so both shapes reach FromURL through the delegation at its top —
 		// see TestRecognize in atsboard for the full coverage, this is just a smoke test that
@@ -159,12 +170,14 @@ func TestFromURL(t *testing.T) {
 			url:  "https://www.governmentjobs.com/careers",
 			ok:   false,
 		},
-		// Shapes whose URL does not yield the board id our adapter expects.
+		// ADP MyJobs is its own product with its own adapter: the slug is an adpmyjobs board,
+		// never an adp one (whose board is the cid:ccId pair).
 		{
-			name: "adp vanity not cid:ccId",
-			url:  "https://myjobs.adp.com/afcindustries/cx/job-details?reqid=5001150982906",
-			ok:   false,
+			name:     "adp myjobs slug is adpmyjobs, not adp",
+			url:      "https://myjobs.adp.com/afcindustries/cx/job-details?reqid=5001150982906",
+			provider: "adpmyjobs", board: "afcindustries", ok: true,
 		},
+		// Shapes whose URL does not yield the board id our adapter expects.
 		{
 			name: "join slug not numeric company id",
 			url:  "https://join.com/companies/hr-groep/16130508-metselaar",

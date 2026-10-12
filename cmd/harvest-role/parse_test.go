@@ -96,7 +96,7 @@ func TestClassifyDetailNoApplyLink(t *testing.T) {
 }
 
 func TestClassifyDetailUnsupportedAts(t *testing.T) {
-	html := `<a class="job-apply" href="https://myjobs.adp.com/afcindustries/cx/job-details?reqid=5001">Apply</a>`
+	html := `<a class="job-apply" href="https://apply.interfolio.com/194167">Apply</a>`
 	if _, _, _, ok := classifyDetail([]byte(html)); ok {
 		t.Error("ok = true, want false for an unsupported ATS shape")
 	}

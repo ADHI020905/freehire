@@ -161,9 +161,19 @@ func TestRecognize(t *testing.T) {
 		{"adp with neither is not a board", "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html", "", "", "", false},
 		{"adp malformed cid is not a board", "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=acme&ccId=19000101_000001", "", "", "", false},
 		{"adp malformed ccId is not a board", "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=8a680274-0b2e-46cf-b2cc-49bd2ef0c20f&ccId=main", "", "", "", false},
-		// myjobs.adp.com is a different ADP product our adapter cannot crawl, so its slug must
-		// never become an adp board.
-		{"adp hosted career site is not this platform", "https://myjobs.adp.com/stellantisexternalcx/cx/job/5001207766206", "", "", "", false},
+		// myjobs.adp.com is a DIFFERENT ADP product with its own adapter: its slug is an
+		// adpmyjobs board, never an adp one (whose board is the cid:ccId pair).
+		{"adp myjobs career site is adpmyjobs", "https://myjobs.adp.com/stellantisexternalcx/cx/job/5001207766206", "adpmyjobs", "stellantisexternalcx", "https://myjobs.adp.com/stellantisexternalcx/cx/job/5001207766206", true},
+		{"adp myjobs job-details link", "https://myjobs.adp.com/1138141confidential/cx/job-details?reqId=5001207191206", "adpmyjobs", "1138141confidential", "https://myjobs.adp.com/1138141confidential/cx/job-details", true},
+		// /public/staffing/v1/career-site/<slug> is the platform's own API, which the adapter
+		// itself calls; "public" is not a career site.
+		{"adp myjobs public API has no board", "https://myjobs.adp.com/public/staffing/v1/career-site/acme", "", "", "", false},
+		{"adp myjobs bare host has no board", "https://myjobs.adp.com/", "", "", "", false},
+
+		// AppliTrack serves every district from one host: www.applitrack.com/<board>/onlineapp/….
+		{"applitrack posting", "https://www.applitrack.com/aacs/onlineapp/jobpostings/view.asp?AppliTrackJobId=1313", "applitrack", "aacs", "https://www.applitrack.com/aacs/onlineapp/jobpostings/view.asp", true},
+		{"applitrack listing", "https://www.applitrack.com/saskatoon/onlineapp/default.aspx", "applitrack", "saskatoon", "https://www.applitrack.com/saskatoon/onlineapp/default.aspx", true},
+		{"applitrack bare host has no board", "https://www.applitrack.com/", "", "", "", false},
 
 		// apiBoards — Paylocity: only the listing path names the board. A posting and its apply
 		// form carry a posting id and no tenant, so they are declined rather than read as one.
@@ -370,6 +380,10 @@ func TestRecognize(t *testing.T) {
 		// (reservedSegments) rule above.
 		{"dover apply link", "https://app.dover.com/apply/qompyl/f9fd123e-e7ff-4bcc-a16a-bb8c47e591b5", "dover", "qompyl", "https://app.dover.com/jobs/qompyl", true},
 		{"dover board listing", "https://app.dover.com/jobs/qompyl", "dover", "qompyl", "https://app.dover.com/jobs/qompyl", true},
+
+		// Betterteam: the tenant is the subdomain (<board>.betterteam.com/<posting-slug>).
+		{"betterteam posting", "https://110grill.betterteam.com/bartender-20", "betterteam", "110grill", "https://110grill.betterteam.com", true},
+		{"betterteam marketing site has no board", "https://www.betterteam.com/job-posting", "", "", "", false},
 		{"dover pricing page carries no board", "https://app.dover.com/pricing", "", "", "", false},
 		{"dover login page carries no board", "https://app.dover.com/login", "", "", "", false},
 		{"dover crm dashboard carries no board", "https://app.dover.com/crm", "", "", "", false},
