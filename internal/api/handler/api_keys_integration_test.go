@@ -172,6 +172,63 @@ func TestAPIKeysEndToEnd(t *testing.T) {
 	})
 }
 
+// A verified account can mint an embed-scoped key for itself — the one scope a
+// client may request, for the volunteer-embed-mvp service. The stored row and
+// the create response both carry the requested scope, not auth.ScopeFull.
+func TestCreateAPIKey_EmbedScope_Persists(t *testing.T) {
+	pool := startPostgres(t)
+	ctx := context.Background()
+
+	var userID int64
+	if err := pool.QueryRow(ctx,
+		`INSERT INTO users (email, email_verified) VALUES ('volunteer@example.test', true) RETURNING id`,
+	).Scan(&userID); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+
+	iss := auth.NewIssuer("test-secret", time.Hour)
+	cookie, _ := iss.Issue(userID, testTokenVersion)
+	h := &authHandlers{queries: db.New(pool)}
+
+	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
+	app.Post("/api/v1/me/api-keys", auth.RequireAuth(iss, testVersions), h.CreateAPIKey)
+
+	req := httptest.NewRequestWithContext(ctx, fiber.MethodPost, "/api/v1/me/api-keys", bytes.NewBufferString(`{"name":"volunteer embed worker","scope":"embed"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: cookie})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != fiber.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("create status = %d, want 201 (body %s)", resp.StatusCode, body)
+	}
+
+	var created struct {
+		Data struct {
+			ID    int64  `json:"id"`
+			Scope string `json:"scope"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
+		t.Fatalf("decode create: %v", err)
+	}
+	if created.Data.Scope != auth.ScopeEmbed {
+		t.Errorf("response scope = %q, want %q", created.Data.Scope, auth.ScopeEmbed)
+	}
+
+	var storedScope string
+	if err := pool.QueryRow(ctx, `SELECT scope FROM api_keys WHERE id = $1`, created.Data.ID).Scan(&storedScope); err != nil {
+		t.Fatalf("querying stored scope: %v", err)
+	}
+	if storedScope != auth.ScopeEmbed {
+		t.Errorf("stored scope = %q, want %q", storedScope, auth.ScopeEmbed)
+	}
+}
+
 // An account whose address was never proven cannot mint an API key. Registration hands
 // out a session immediately, so without this gate a squatter who registered someone
 // else's address could take a durable, full-scope bearer credential away with them —

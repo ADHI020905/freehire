@@ -33,11 +33,15 @@ const localsKeyScope = "auth.keyScope"
 const localsViaCookie = "auth.viaCookie"
 
 // Scopes an API key can carry. ScopeFull is everything a key may do and is what a
-// user-created key gets; ScopeCV is the CV surface a tailoring agent needs and nothing
-// else, so a credential handed to an external agent cannot reach the rest of the account.
+// user-created key gets by default; ScopeCV is the CV surface a tailoring agent needs
+// and nothing else, so a credential handed to an external agent cannot reach the rest
+// of the account. ScopeEmbed is for the volunteer-embed-mvp service (a separate repo):
+// a key with this scope is validated only against api_keys directly by that service —
+// it grants nothing on freehire's own API surface.
 const (
-	ScopeFull = "full"
-	ScopeCV   = "cv"
+	ScopeFull  = "full"
+	ScopeCV    = "cv"
+	ScopeEmbed = "embed"
 )
 
 // ViaAPIKey reports whether the request authenticated via an API key (Bearer) rather than
