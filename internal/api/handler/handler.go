@@ -19,6 +19,7 @@ import (
 	"github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/ai/speech"
 	"github.com/strelov1/freehire/internal/api/atsapply"
+	"github.com/strelov1/freehire/internal/api/ojcp"
 	"github.com/strelov1/freehire/internal/api/ratelimit"
 	"github.com/strelov1/freehire/internal/api/realtime"
 	"github.com/strelov1/freehire/internal/application/gmailsync"
@@ -401,6 +402,9 @@ type Config struct {
 	// feature is off (connect routes unregistered, inbox empty).
 	GmailConnector *gmailsync.Connector
 	GmailCipher    *tokencrypt.Cipher
+	// OJCPSigner signs the OJCP manifest. Nil = the manifest is unsigned and no key set is
+	// published.
+	OJCPSigner *ojcp.Signer
 	// MailboxDomain enables the hosted-mailbox option: the receiving domain user
 	// addresses live on (<handle>@MailboxDomain). Empty = the feature is off.
 	MailboxDomain string
@@ -675,6 +679,7 @@ func Register(app *fiber.App, cfg Config) {
 	// above rather than holding its own: an agent's question and a browser's must reach the
 	// same catalogue, or the two answers drift.
 	ojcpH := newOJCPHandlers(jobSearch, queries, cfg.FrontendOrigin, atsapply.SubmittableProviders())
+	ojcpH.signer = cfg.OJCPSigner
 	// The ChatGPT app's MCP surface. A SECOND MCP server beside the OJCP one, over the same
 	// search backend and the same store: that one renders a foreign schema for agents which
 	// branch on error codes, this one renders ours for a language model reading prose. They

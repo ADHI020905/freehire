@@ -26,6 +26,8 @@ type Manifest struct {
 	Auth           *ManifestAuth  `json:"auth,omitempty"`
 	RateLimits     *RateLimits    `json:"rate_limits,omitempty"`
 	ApplyPathTypes []string       `json:"apply_paths,omitempty"`
+	// Signature is set by Signer.Sign and absent on a deployment with no signing key.
+	Signature *Signature `json:"signature,omitempty"`
 }
 
 // Provider is who is answering.

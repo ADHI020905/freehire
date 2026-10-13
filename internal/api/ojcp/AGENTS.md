@@ -171,6 +171,31 @@ Two of these shipped in one commit:
 When a comment states what a library does, measure it. Both took under a minute to check and
 both were wrong.
 
+## The manifest signature
+
+`Signer` (`signing.go`) signs the manifest when `OJCP_SIGNING_KEY_FILE` names a PEM P-256
+key on the host — a path, because `.env` cannot hold a multi-line value. Unset, the
+manifest goes out unsigned and `/.well-known/ojcp-keys.json` answers 404; that is the
+shipped default and the rollback. A path that is set but unreadable fails the server start
+rather than quietly serving unsigned. Generate a key with
+`openssl ecparam -name prime256v1 -genkey -noout -out ojcp-signing.pem`.
+
+- **Signed per request.** A signature lives 24 hours; one made at startup would expire on
+  any deployment that runs longer than a day. The SPA caches the manifest for an hour, well
+  inside that.
+- **`value` is R||S, not DER.** The spec says JWS and shows `MEUCIQ...` — a DER encoding no
+  JOSE library produces or accepts. We follow the prose (RFC 7518 §3.4).
+- **`kid` is the RFC 7638 thumbprint**, so a replaced key file can never publish a new key
+  under an old kid.
+- **Rotation is not built.** The spec asks that old and new keys be published together for
+  at least 24 hours; `KeySet` publishes one. Until a second key is needed, rotating means
+  a window of up to an hour (the SPA cache) in which a cached manifest names a kid the key
+  set no longer carries. The seam is `KeySet` — add the retired key there when it matters.
+- **Nobody verifies it yet.** As of 2026-10 no provider in the registry, the reference one
+  included, signs its manifest, and the registry only checks that a `signature` is
+  present. The test in `signing_test.go` is therefore the only verifier: it runs the
+  spec's Validation Procedure against the published key set, the way an agent would.
+
 ## Check with the client that will actually use it
 
 The manifest was verified by unit tests, two reviews, OJCP's conformance suite and a `curl`

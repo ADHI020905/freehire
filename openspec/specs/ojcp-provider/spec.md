@@ -39,6 +39,34 @@ endpoints. A declared limit the deployment does not honour is a defect, not a ni
 - **WHEN** the manifest is generated
 - **THEN** every name in `tools` resolves to a registered handler on both transports
 
+### Requirement: Signed manifest
+
+When the deployment holds a manifest signing key, the system SHALL sign the manifest per
+OJCP § Manifest Signing: ES256 over the RFC 8785 (JCS) canonicalisation of the manifest
+with its `signature` member removed, carrying `alg`, `kid`, `iss` (the serving host),
+`signed_at`, `expires_at` (24 hours later) and `value`. The manifest SHALL be signed on
+every request, so a long-running deployment never serves an expired signature. The system
+SHALL publish the verifying key as a JWK Set at `/.well-known/ojcp-keys.json` with
+`Content-Type: application/jwk-set+json`, whose `kid` is the key's RFC 7638 thumbprint.
+
+Without a signing key the manifest SHALL be served unsigned and the key set SHALL answer
+404, so removing the key is the rollback.
+
+#### Scenario: An agent verifies the manifest
+
+- **WHEN** an agent fetches the manifest and the key set and runs the spec's Validation Procedure
+- **THEN** the signature verifies against the key the set publishes under the signature's `kid`
+
+#### Scenario: A tampered manifest fails verification
+
+- **WHEN** any member of a signed manifest is altered
+- **THEN** verification fails with `invalid_signature`
+
+#### Scenario: A deployment without a key
+
+- **WHEN** no signing key is configured
+- **THEN** the manifest carries no `signature` and `/.well-known/ojcp-keys.json` answers 404
+
 ### Requirement: search_jobs tool
 
 The system SHALL implement `search_jobs` with a conforming input and response schema. The

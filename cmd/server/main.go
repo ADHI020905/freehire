@@ -3,7 +3,10 @@ package main
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"log"
+	"net/url"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -26,6 +29,7 @@ import (
 	"github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/ai/speech"
 	"github.com/strelov1/freehire/internal/api/handler"
+	"github.com/strelov1/freehire/internal/api/ojcp"
 	"github.com/strelov1/freehire/internal/api/ratelimit"
 	"github.com/strelov1/freehire/internal/api/realtime"
 	"github.com/strelov1/freehire/internal/application/gmailsync"
@@ -286,6 +290,17 @@ func main() {
 		}
 	}
 
+	// The OJCP manifest signature. A key file that is set but cannot be read fails the start
+	// rather than serving unsigned: an operator who configured a key would never notice the
+	// signature had quietly gone missing.
+	var ojcpSigner *ojcp.Signer
+	if cfg.OJCPSigningKeyFile != "" {
+		ojcpSigner, err = loadOJCPSigner(cfg.OJCPSigningKeyFile, cfg.FrontendOrigin)
+		if err != nil {
+			log.Fatalf("ojcp signing key: %v", err)
+		}
+	}
+
 	// Connect-Gmail inbox: enabled only when the Google OAuth client and the
 	// token-encryption key are configured. Both nil disables the feature.
 	gmailConnector, gmailCipher := buildGmail(cfg)
@@ -328,6 +343,7 @@ func main() {
 		AppleGrantKeys:              appleGrantKeys,
 		GmailConnector:              gmailConnector,
 		GmailCipher:                 gmailCipher,
+		OJCPSigner:                  ojcpSigner,
 		MailboxDomain:               cfg.MailboxDomain,
 		Search:                      searchClient,
 		Suggest:                     suggestSvc,
@@ -502,4 +518,18 @@ func startSuggestRefresh(ctx context.Context, svc *suggest.Service) {
 			}
 		}
 	}()
+}
+
+// loadOJCPSigner reads the manifest signing key. The signature's iss is the host the
+// manifest is served from, which an agent compares against the domain it fetched it from.
+func loadOJCPSigner(path, frontendOrigin string) (*ojcp.Signer, error) {
+	origin, err := url.Parse(frontendOrigin)
+	if err != nil || origin.Host == "" {
+		return nil, fmt.Errorf("FRONTEND_ORIGIN %q names no host for the signature's iss", frontendOrigin)
+	}
+	key, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return ojcp.NewSigner(key, origin.Host)
 }

@@ -53,9 +53,13 @@ type Settings struct {
 	// AuthV2 enables verifier-bound native OAuth endpoints. Browser-provider v2
 	// can run without Apple; native Apple is advertised only when its separate
 	// bundle client id and refresh-grant encryption key ring are complete.
-	AuthV2Enabled         bool
-	MobileAuthCallbacks   map[string]string
-	AppleNativeClientID   string
+	AuthV2Enabled       bool
+	MobileAuthCallbacks map[string]string
+	AppleNativeClientID string
+	// OJCPSigningKeyFile is the path to a PEM P-256 private key on the host that signs the
+	// OJCP manifest. A path rather than the key itself, because .env cannot hold a multi-line
+	// value. Empty leaves the manifest unsigned, which is also the rollback.
+	OJCPSigningKeyFile    string
 	AppleGrantActiveKeyID string
 	AppleGrantKeys        map[string][]byte
 	RecentAuthTTL         time.Duration
@@ -408,6 +412,7 @@ func Load() Settings {
 		AuthV2Enabled:         envBool("AUTH_V2_ENABLED", false),
 		MobileAuthCallbacks:   parseNamedValues(os.Getenv("MOBILE_AUTH_CALLBACKS")),
 		AppleNativeClientID:   strings.TrimSpace(os.Getenv("APPLE_NATIVE_CLIENT_ID")),
+		OJCPSigningKeyFile:    strings.TrimSpace(os.Getenv("OJCP_SIGNING_KEY_FILE")),
 		AppleGrantActiveKeyID: strings.TrimSpace(os.Getenv("APPLE_GRANT_ACTIVE_KEY_ID")),
 		AppleGrantKeys:        parseKeyRing(os.Getenv("APPLE_GRANT_KEYS")),
 		RecentAuthTTL:         envDuration("RECENT_AUTH_TTL", 10*time.Minute),

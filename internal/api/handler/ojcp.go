@@ -43,6 +43,9 @@ type ojcpHandlers struct {
 	// about it uses.
 	attachReality func(ctx context.Context, row db.Job, view *jobview.Job)
 	projector     ojcp.Projector
+	// signer signs the manifest and publishes the key that verifies it. Nil means this
+	// deployment has no signing key: the manifest goes out unsigned and no key set exists.
+	signer *ojcp.Signer
 }
 
 // newOJCPHandlers builds the OJCP surface.
@@ -90,13 +93,31 @@ func (h *ojcpHandlers) register(api fiber.Router, mw middleware) {
 	// was found the only way it could be: deployed, with the API path answering 200 and the
 	// manifest answering 404.
 	api.Get("/ojcp/manifest", limit, h.OJCPManifest)
+	// The key set the manifest's signature verifies against, proxied by the SPA to
+	// /.well-known/ojcp-keys.json for the same reason the manifest is.
+	api.Get("/ojcp/keys", limit, h.OJCPKeys)
 }
 
 // OJCPManifest answers with this deployment's manifest.
 func (h *ojcpHandlers) OJCPManifest(c *fiber.Ctx) error {
 	// The spec requires this content type by name.
 	c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
-	return c.JSON(h.manifest())
+	m := h.manifest()
+	if h.signer != nil {
+		// Signed per request: a signature lives 24 hours, so one made at startup would
+		// expire on any deployment that runs longer than a day.
+		m = h.signer.Sign(m, time.Now())
+	}
+	return c.JSON(m)
+}
+
+// OJCPKeys answers with the JWK Set the manifest's signature verifies against.
+func (h *ojcpHandlers) OJCPKeys(c *fiber.Ctx) error {
+	if h.signer == nil {
+		return fiber.NewError(fiber.StatusNotFound, "this provider does not sign its manifest")
+	}
+	// The spec requires this content type by name.
+	return c.JSON(h.signer.KeySet(), "application/jwk-set+json")
 }
 
 // manifest describes this deployment. Both binding claims are DERIVED rather than written
