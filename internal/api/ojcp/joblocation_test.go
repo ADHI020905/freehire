@@ -1,6 +1,11 @@
 package ojcp
 
-import "testing"
+import (
+	"encoding/json"
+	"reflect"
+	"strings"
+	"testing"
+)
 
 func TestJobLocationNamesAnUnambiguousPlace(t *testing.T) {
 	row := openPostingRow()
@@ -10,40 +15,42 @@ func TestJobLocationNamesAnUnambiguousPlace(t *testing.T) {
 
 	posting := jobPostingFrom(j, testOrigin)
 
-	if posting.JobLocation == nil {
-		t.Fatal("jobLocation is nil for a posting with one city in one country")
-	}
-	if got := posting.JobLocation.Address.AddressCountry; got != "DE" {
-		t.Errorf("addressCountry = %q, want DE", got)
-	}
-	if got := posting.JobLocation.Address.AddressLocality; got != "Berlin" {
-		t.Errorf("addressLocality = %q, want Berlin", got)
+	assertPlaces(t, posting, Address{AddressLocality: "Berlin", AddressCountry: "DE"})
+	// One place stays ONE object on the wire, as it was before lists existed: a consumer
+	// written against the singular shape keeps reading every single-place posting.
+	if raw := jobLocationJSON(t, posting); !strings.HasPrefix(raw, "{") {
+		t.Errorf("jobLocation = %s, want a single object for one place", raw)
 	}
 	if err := validateAgainstSchema(t, schemaJobPosting, posting); err != nil {
 		t.Fatalf("posting with a location rejected: %v", err)
 	}
 }
 
-func TestJobLocationStaysSilentWhereThePostingSpansSeveralPlaces(t *testing.T) {
-	// The schema shapes jobLocation as ONE schema.org Place, and a posting open in three
-	// countries does not have one. Picking the first element would state a restriction the
-	// employer never made — an agent filtering on it would drop the posting everywhere else.
+func TestJobLocationListsEveryCountryOfAMultiCountryPosting(t *testing.T) {
+	// The schema forbids reducing a multi-location role to one of its locations, and
+	// omitting the field is reserved for a posting whose location is unknown. A posting open
+	// in three countries is therefore three Places.
 	row := openPostingRow()
-	row.Countries = []string{"DE", "PL", "ES"}
-	row.Cities = []string{"Berlin", "Warsaw"}
+	row.Countries = []string{"DE", "ES", "PL"}
 	j := viewOf(row)
 
 	posting := jobPostingFrom(j, testOrigin)
 
-	if posting.JobLocation != nil {
-		t.Errorf("jobLocation = %+v, want nil for a multi-country posting", posting.JobLocation)
+	assertPlaces(t, posting,
+		Address{AddressCountry: "DE"},
+		Address{AddressCountry: "ES"},
+		Address{AddressCountry: "PL"},
+	)
+	if raw := jobLocationJSON(t, posting); !strings.HasPrefix(raw, "[") {
+		t.Errorf("jobLocation = %s, want an array for several places", raw)
+	}
+	if err := validateAgainstSchema(t, schemaJobPosting, posting); err != nil {
+		t.Fatalf("multi-country posting rejected: %v", err)
 	}
 }
 
-func TestJobLocationKeepsTheHalfItDoesKnow(t *testing.T) {
-	// One country, several cities within it: the country is still a fact, so it is stated
-	// and the city is not. Withholding both because one is ambiguous serves less than the
-	// posting says.
+func TestJobLocationPairsEveryCityWithTheOnlyCountry(t *testing.T) {
+	// With one country every city lies in it, so each city is a complete Place.
 	row := openPostingRow()
 	row.Countries = []string{"DE"}
 	row.Cities = []string{"Berlin", "Munich"}
@@ -51,15 +58,45 @@ func TestJobLocationKeepsTheHalfItDoesKnow(t *testing.T) {
 
 	posting := jobPostingFrom(j, testOrigin)
 
-	if posting.JobLocation == nil {
-		t.Fatal("jobLocation is nil though the country is unambiguous")
-	}
-	if posting.JobLocation.Address.AddressCountry != "DE" {
-		t.Errorf("addressCountry = %q, want DE", posting.JobLocation.Address.AddressCountry)
-	}
-	if got := posting.JobLocation.Address.AddressLocality; got != "" {
-		t.Errorf("addressLocality = %q, want empty with two cities", got)
-	}
+	assertPlaces(t, posting,
+		Address{AddressLocality: "Berlin", AddressCountry: "DE"},
+		Address{AddressLocality: "Munich", AddressCountry: "DE"},
+	)
+}
+
+func TestJobLocationStatesOnlyCountriesWhereCitiesCannotBePaired(t *testing.T) {
+	// Cities and countries are separate facets. With several countries nothing says which
+	// city lies in which, and a Place pairing Warsaw with DE would state a workplace that
+	// does not exist. The countries are still facts, so they are stated alone.
+	row := openPostingRow()
+	row.Countries = []string{"DE", "PL"}
+	row.Cities = []string{"Berlin", "Warsaw"}
+	j := viewOf(row)
+
+	posting := jobPostingFrom(j, testOrigin)
+
+	assertPlaces(t, posting,
+		Address{AddressCountry: "DE"},
+		Address{AddressCountry: "PL"},
+	)
+}
+
+func TestJobLocationOfARemotePostingNamesCountriesNotCities(t *testing.T) {
+	// For a remote role a Place is where the employee may live and work. A city on a remote
+	// posting is usually the employer's office, and stating it would read as a requirement
+	// to live there.
+	row := openPostingRow()
+	row.WorkMode = "remote"
+	row.Countries = []string{"CA", "US"}
+	row.Cities = []string{"New York"}
+	j := viewOf(row)
+
+	posting := jobPostingFrom(j, testOrigin)
+
+	assertPlaces(t, posting,
+		Address{AddressCountry: "CA"},
+		Address{AddressCountry: "US"},
+	)
 }
 
 func TestJobLocationNeverBorrowsOurMacroRegionForAddressRegion(t *testing.T) {
@@ -73,12 +110,7 @@ func TestJobLocationNeverBorrowsOurMacroRegionForAddressRegion(t *testing.T) {
 
 	posting := jobPostingFrom(j, testOrigin)
 
-	if posting.JobLocation == nil {
-		t.Fatal("jobLocation is nil though the country is unambiguous")
-	}
-	if got := posting.JobLocation.Address.AddressRegion; got != "" {
-		t.Errorf("addressRegion = %q, want empty — a macro-region is not a province", got)
-	}
+	assertPlaces(t, posting, Address{AddressCountry: "DE"})
 }
 
 func TestJobLocationIsAbsentWhenNoPlaceIsKnown(t *testing.T) {
@@ -102,4 +134,30 @@ func TestJobPostingCarriesTheDescription(t *testing.T) {
 	if posting.Description != j.Description {
 		t.Errorf("description = %q, want the posting's own text", posting.Description)
 	}
+}
+
+// assertPlaces fails unless the posting's jobLocation is exactly want, in order.
+func assertPlaces(t *testing.T, posting JobPosting, want ...Address) {
+	t.Helper()
+	got := make([]Address, len(posting.JobLocation))
+	for i, place := range posting.JobLocation {
+		got[i] = place.Address
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("jobLocation addresses = %+v, want %+v", got, want)
+	}
+}
+
+// jobLocationJSON returns the jobLocation member exactly as the wire carries it.
+func jobLocationJSON(t *testing.T, posting JobPosting) string {
+	t.Helper()
+	body, err := json.Marshal(posting)
+	if err != nil {
+		t.Fatalf("marshal posting: %v", err)
+	}
+	var members map[string]json.RawMessage
+	if err := json.Unmarshal(body, &members); err != nil {
+		t.Fatalf("unmarshal posting: %v", err)
+	}
+	return string(members["jobLocation"])
 }

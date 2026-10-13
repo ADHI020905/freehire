@@ -105,15 +105,17 @@ and the manifest; the two transports that publish it live elsewhere:
 
 ## Known gaps in the standard
 
-Both are candidates for the same RFC, and both are the reason to hold a seat rather than ask
-for one:
+The reason to hold a seat rather than ask for one:
 
 - **No field for posting reality.** Hence `agent_notes`, above.
-- **Multi-country reach is not expressible.** `jobLocation` is ONE schema.org `Place`, and a
-  posting open in three countries does not have one. An ambiguous facet is omitted rather
-  than resolved by taking the first value — the list order carries no precedence, and an
-  agent filtering on an arbitrary choice would drop the posting everywhere else the employer
-  accepts.
+
+Multi-country reach used to be the second gap: `jobLocation` was ONE schema.org `Place`, so a
+posting open in three countries had no truthful rendering and the facet was omitted.
+Upstream closed it ([ojcp#19](https://github.com/ojcp-org/ojcp/issues/19)) — `jobLocation`
+now takes a `Place` or an array of them, and `jobLocationFor` states every country. Cities
+are paired with a country only when the posting names one country; with several, nothing
+says which city lies in which, so the countries are stated alone. A remote posting states
+countries only, because there a `Place` is where the employee may live and work.
 
 ## What the projection cannot do for itself
 
