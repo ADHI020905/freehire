@@ -57,7 +57,7 @@ type JobPosting struct {
 	EmploymentType  string  `json:"employmentType,omitempty"`
 	ExperienceLevel string  `json:"experienceLevel,omitempty"`
 	RemotePolicy    string  `json:"remote_policy,omitempty"`
-	JobLocation     *Place  `json:"jobLocation,omitempty"`
+	JobLocation     Places  `json:"jobLocation,omitempty"`
 	BaseSalary      *Salary `json:"baseSalary,omitempty"`
 
 	// SkillsRequired and SkillsPreferred are split by what the posting itself demanded —

@@ -14,8 +14,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -83,7 +86,8 @@ func newServer(r Reader) *mcp.Server {
 	}, nil)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name: toolSearchJobs,
+		Name:         toolSearchJobs,
+		OutputSchema: searchJobsOutputSchema,
 		Description: "Search freehire's job catalogue. Returns OJCP JobPostings, each with " +
 			"the application paths it can be applied through and whether an agent can submit " +
 			"unattended. Filters this provider could not honour are named in ignored_params.",
@@ -93,8 +97,9 @@ func newServer(r Reader) *mcp.Server {
 	})
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        toolGetJobDetail,
-		Description: "Read one posting in full, by the ojcp_id a search result carries.",
+		Name:         toolGetJobDetail,
+		OutputSchema: jobDetailOutputSchema,
+		Description:  "Read one posting in full, by the ojcp_id a search result carries.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in jobDetailInput) (*mcp.CallToolResult, ojcp.JobDetailResponse, error) {
 		out, err := r.JobDetail(ctx, in.JobID)
 		return nil, out, toolError(err)
@@ -110,6 +115,39 @@ func newServer(r Reader) *mcp.Server {
 	})
 
 	return server
+}
+
+// The output schemas of the tools whose results carry a JobPosting.
+//
+// The SDK validates every result against a schema it infers from the Go type unless one is
+// given. Inferred from ojcp.Places — a slice — that schema admits only an array, while
+// OJCP's jobLocation is a Place OR an array and a single place is written as an object. Left
+// to inference, every search returning a one-place posting failed validation in production.
+var (
+	searchJobsOutputSchema = outputSchema[ojcp.SearchJobsResponse]()
+	jobDetailOutputSchema  = outputSchema[ojcp.JobDetailResponse]()
+)
+
+// outputSchema infers T's schema the way the SDK would, except that ojcp.Places is described
+// as OJCP describes jobLocation. It panics on a type it cannot describe — a programming
+// error, surfaced when the package loads rather than on an agent's first call.
+func outputSchema[T any]() *jsonschema.Schema {
+	place, err := jsonschema.For[ojcp.Place](nil)
+	if err != nil {
+		panic(fmt.Sprintf("ojcpmcp: schema for ojcp.Place: %v", err))
+	}
+	oneOrMore := 1
+	places := &jsonschema.Schema{OneOf: []*jsonschema.Schema{
+		place,
+		{Type: "array", Items: place, MinItems: &oneOrMore},
+	}}
+	schema, err := jsonschema.For[T](&jsonschema.ForOptions{
+		TypeSchemas: map[reflect.Type]*jsonschema.Schema{reflect.TypeFor[ojcp.Places](): places},
+	})
+	if err != nil {
+		panic(fmt.Sprintf("ojcpmcp: output schema for %T: %v", *new(T), err))
+	}
+	return schema
 }
 
 // Tool names, declared once and used BOTH to register a tool and to answer ToolNames.

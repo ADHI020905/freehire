@@ -1,6 +1,7 @@
 package ojcp
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/strelov1/freehire/internal/job/jobview"
@@ -25,36 +26,55 @@ type Address struct {
 	AddressCountry string `json:"addressCountry,omitempty"`
 }
 
-// jobLocationFor states a place only where the posting names exactly one, per facet.
-//
-// Where a facet is ambiguous — three countries, two cities — that facet is left out rather
-// than resolved by picking the first value. The list order carries no precedence, so a
-// choice would be arbitrary, and an agent filtering on the result would drop the posting
-// everywhere the employer also accepts. The two facets are judged independently: one
-// country with two cities still states the country, because withholding a fact because a
-// neighbouring one is unknown serves less than the posting says.
-//
-// Multi-country reach is simply not expressible in OJCP v0.1. It is the clearest gap this
-// implementation has found in the schema so far, and a candidate for the same RFC that
-// argues for a posting-reality field.
-func jobLocationFor(j jobview.Job) *Place {
-	// The country facet is served lowercased (jobview.normalizeSet), while addressCountry is
-	// the ISO 3166-1 alpha-2 code, canonically UPPERCASE. An agent comparing against "DE"
-	// or feeding the value to a country library misses every posting otherwise.
-	address := Address{
-		AddressLocality: onlyValue(j.Cities),
-		AddressCountry:  strings.ToUpper(onlyValue(j.Countries)),
+// Places is jobLocation: the places a posting names. schema.org and the OJCP schema accept
+// one Place or an array of them, and one place is written as a bare object so a consumer
+// built on the singular shape keeps reading every posting that has exactly one.
+type Places []Place
+
+// MarshalJSON writes a single Place as an object and anything longer as an array.
+func (p Places) MarshalJSON() ([]byte, error) {
+	if len(p) == 1 {
+		return json.Marshal(p[0])
 	}
-	if address == (Address{}) {
-		return nil
-	}
-	return &Place{Type: "Place", Address: address}
+	return json.Marshal([]Place(p))
 }
 
-// onlyValue returns the single element of values, or "" when there is not exactly one.
-func onlyValue(values []string) string {
-	if len(values) != 1 {
-		return ""
+// jobLocationFor states every place the posting names, as precisely as the facets allow.
+//
+// Countries and cities are separate facets, so a city can be paired with a country only
+// when there is one country for it to lie in. With several countries the cities are left
+// out and each country is its own Place: Warsaw paired with DE would be a workplace that
+// does not exist, while the countries alone are still facts. A remote posting states
+// countries only, because there a Place is where the employee may live and work, and a
+// city on it is usually the employer's office.
+func jobLocationFor(j jobview.Job) Places {
+	countries := make([]string, len(j.Countries))
+	for i, country := range j.Countries {
+		// The country facet is served lowercased (jobview.normalizeSet), while
+		// addressCountry is the ISO 3166-1 alpha-2 code, canonically UPPERCASE. An agent
+		// comparing against "DE" or feeding the value to a country library misses every
+		// posting otherwise.
+		countries[i] = strings.ToUpper(country)
 	}
-	return values[0]
+	// With no city to pair, or none that can be paired, each country is its own Place.
+	if j.WorkMode == "remote" || len(countries) > 1 || len(j.Cities) == 0 {
+		var places Places
+		for _, country := range countries {
+			places = append(places, place(Address{AddressCountry: country}))
+		}
+		return places
+	}
+	country := ""
+	if len(countries) == 1 {
+		country = countries[0]
+	}
+	places := make(Places, len(j.Cities))
+	for i, city := range j.Cities {
+		places[i] = place(Address{AddressLocality: city, AddressCountry: country})
+	}
+	return places
+}
+
+func place(address Address) Place {
+	return Place{Type: "Place", Address: address}
 }
