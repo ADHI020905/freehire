@@ -2,8 +2,8 @@
 
 These are the published OJCP v0.1 schemas, copied verbatim from
 [ojcp-org/ojcp](https://github.com/ojcp-org/ojcp) at commit
-`2ed6d6087c152747f4d5560c5405a05e47cd9188` (2026-09-23, "allow jobLocation to be
-an array of Place").
+`8c8ac8f57950b97bb95d889ceb3db79b62a8f6a1` (2026-09-16, "add url and
+official_job_url to JobPosting (RFC 0002 impl)").
 
 They are the **oracle** every projection test in this package validates against.
 Hand-written Go assertions drift from the spec silently; these cannot, because they are
