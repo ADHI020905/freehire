@@ -233,7 +233,7 @@ func (h *authHandlers) register(api fiber.Router, mw middleware) {
 	// surface (social sign-in) that happens to share the "oauth" word.
 	//
 	// Dynamic client registration (RFC 7591): public, no session involved yet.
-	api.Post("/oauth/register", noCache, h.RegisterOAuthClient)
+	api.Post("/oauth/register", noCache, oauthRegisterLimiter(h.throttler), h.RegisterOAuthClient)
 	// Metadata discovery (RFC 8414 / RFC 9728): public and cacheable (no
 	// noCache), proxied from /.well-known/* by the SvelteKit app — see
 	// oauth_metadata.go for why a direct Go route at the well-known path

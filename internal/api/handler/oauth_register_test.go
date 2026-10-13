@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -49,5 +50,33 @@ func TestRegisterOAuthClient_RejectsMissingClientName(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != fiber.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusBadRequest)
+	}
+}
+
+func TestRegisterOAuthClient_RejectsBadShapes(t *testing.T) {
+	cases := map[string]map[string]any{
+		"plain http off loopback": {"client_name": "X", "redirect_uris": []string{"http://attacker.example.com/cb"}},
+		"javascript scheme":       {"client_name": "X", "redirect_uris": []string{"javascript:alert(1)"}},
+		"too many uris": {"client_name": "X", "redirect_uris": []string{
+			"https://a.example/1", "https://a.example/2", "https://a.example/3",
+			"https://a.example/4", "https://a.example/5", "https://a.example/6",
+		}},
+		"name too long": {"client_name": strings.Repeat("n", 101), "redirect_uris": []string{"https://a.example/cb"}},
+	}
+	for name, payload := range cases {
+		t.Run(name, func(t *testing.T) {
+			app := oauthRegisterApp()
+			body, _ := json.Marshal(payload)
+			req := httptest.NewRequestWithContext(context.Background(), fiber.MethodPost, "/api/v1/oauth/register", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test: %v", err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != fiber.StatusBadRequest {
+				t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusBadRequest)
+			}
+		})
 	}
 }

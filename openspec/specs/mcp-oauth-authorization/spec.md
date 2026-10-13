@@ -14,6 +14,18 @@ The system SHALL accept public, unauthenticated client registration per RFC 7591
 - **WHEN** a client POSTs a body with `client_name` but an empty or missing `redirect_uris`
 - **THEN** the response is `400 Bad Request` and no client row is created
 
+#### Scenario: A redirect URI of a disallowed shape is rejected
+- **WHEN** a client registers a `redirect_uris` entry that is plain `http` on a non-loopback host, uses a browser-interpreted scheme (`javascript`, `data`, `vbscript`, `file`, `blob`, `about`), is not absolute, or carries a fragment
+- **THEN** the response is `400 Bad Request` and no client row is created; `https` URIs, loopback `http` URIs and private-use app schemes (e.g. `cursor://`) are accepted
+
+#### Scenario: An oversized registration is rejected
+- **WHEN** a client registers more than 5 `redirect_uris`, a `client_name` over 100 characters, or a redirect URI over 2048 characters
+- **THEN** the response is `400 Bad Request` and no client row is created
+
+#### Scenario: Registration is rate limited per IP
+- **WHEN** one IP registers more than 300 clients within an hour
+- **THEN** further registrations from it are answered `429 Too Many Requests`
+
 ### Requirement: Authorization Server and Protected Resource Metadata
 The system SHALL serve `GET /.well-known/oauth-authorization-server` (RFC 8414) naming the registration, authorization, and token endpoints and declaring `code_challenge_methods_supported: ["S256"]`, and SHALL serve `GET /.well-known/oauth-protected-resource` (RFC 9728) naming the signed-in MCP server as the protected resource and this deployment as its authorization server.
 
@@ -30,7 +42,7 @@ The system SHALL show a consent screen on `GET /api/v1/oauth/authorize` for a si
 
 #### Scenario: A signed-in visitor sees the consent screen
 - **WHEN** a signed-in user's browser GETs `/api/v1/oauth/authorize` with a valid registered client, redirect_uri, `response_type=code`, and a PKCE `code_challenge`/`code_challenge_method=S256`
-- **THEN** the response is `200 OK` HTML showing an Allow/Deny form naming the client
+- **THEN** the response is `200 OK` HTML showing an Allow/Deny form naming the client, the host the code will be sent to (taken from the `redirect_uri`, since the client name is self-chosen), and a notice that freehire has not verified the client's name
 
 #### Scenario: A sessionless visitor is sent to sign in first
 - **WHEN** a visitor with no session cookie GETs `/api/v1/oauth/authorize` with a valid request

@@ -166,6 +166,26 @@ func (h *authHandlers) oauthSignInURL(params authorizeParams) string {
 	return strings.TrimSuffix(h.frontendOrigin, "/") + "/signin?" + q.Encode()
 }
 
+// redirectDestination names, for a person, where approving sends the code. It is
+// the one thing on the consent screen a registrant cannot choose freely —
+// client_name is any string, so a client calling itself "Claude" is stopped only
+// by the screen also saying "attacker.example.com". The URI was validated at
+// registration and matched at authorize, so it parses.
+func redirectDestination(redirectURI string) string {
+	u, err := url.Parse(redirectURI)
+	if err != nil {
+		return redirectURI
+	}
+	switch host := u.Hostname(); {
+	case strings.EqualFold(u.Scheme, "http"):
+		return "an app on this computer (" + host + ")"
+	case strings.EqualFold(u.Scheme, "https"):
+		return host
+	default:
+		return "the " + u.Scheme + ":// app on this computer"
+	}
+}
+
 // oauthConsentPage is a minimal, dependency-free HTML form — same reasoning as
 // extension_connect.go's consentPage: this is a one-screen, server-rendered
 // surface, not a reason to round-trip through the SPA build.
@@ -175,7 +195,9 @@ func oauthConsentPage(clientName string, params authorizeParams) string {
 <head><meta charset="utf-8"><title>Connect %s</title></head>
 <body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem">
   <h1>Connect %s to your freehire account</h1>
+  <p>Access will be sent to <strong>%s</strong>.</p>
   <p>%s will be able to search jobs and manage your tracked applications on your behalf.</p>
+  <p>The app chose its own name; freehire has not verified it. Allow only if you started this connection yourself.</p>
   <form method="post" action="/api/v1/oauth/authorize">
     <input type="hidden" name="client_id" value="%s">
     <input type="hidden" name="redirect_uri" value="%s">
@@ -187,7 +209,8 @@ func oauthConsentPage(clientName string, params authorizeParams) string {
   </form>
 </body>
 </html>`,
-		html.EscapeString(clientName), html.EscapeString(clientName), html.EscapeString(clientName),
+		html.EscapeString(clientName), html.EscapeString(clientName),
+		html.EscapeString(redirectDestination(params.RedirectURI)), html.EscapeString(clientName),
 		html.EscapeString(params.ClientID), html.EscapeString(params.RedirectURI), html.EscapeString(params.State),
 		html.EscapeString(params.CodeChallenge), html.EscapeString(params.CodeChallengeMethod))
 }
