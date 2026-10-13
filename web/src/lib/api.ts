@@ -1679,9 +1679,19 @@ export function createApi(
   }
 
   /** Create a key and return it with its one-time plaintext `token`. `expiresAt` is
-   *  an RFC3339 string, or omitted for a key that never expires. */
-  async function createApiKey(name: string, expiresAt?: string): Promise<CreatedApiKey> {
-    return requestData<CreatedApiKey>('/api/v1/me/api-keys', jsonBody('POST', { name, expires_at: expiresAt ?? null }));
+   *  an RFC3339 string, or omitted for a key that never expires. `scope` is omitted
+   *  for the default full-access key; the only other value a client may request is
+   *  `"embed"` (for the volunteer-embed-mvp service — see that scope's own doc on
+   *  the server). */
+  async function createApiKey(
+    name: string,
+    expiresAt?: string,
+    scope?: string,
+  ): Promise<CreatedApiKey> {
+    return requestData<CreatedApiKey>(
+      '/api/v1/me/api-keys',
+      jsonBody('POST', { name, expires_at: expiresAt ?? null, scope: scope ?? null }),
+    );
   }
 
   /** Revoke a key by id; it stops authenticating immediately. */

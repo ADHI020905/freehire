@@ -55,6 +55,7 @@ const created: CreatedApiKey = {
   id: 7,
   name: 'CI bot',
   token_prefix: 'fh_ab12',
+  scope: 'full',
   created_at: '2026-09-15T00:00:00Z',
   last_used_at: null,
   expires_at: null,
@@ -96,7 +97,7 @@ describe('CreateApiKeyDialog', () => {
     // `waitFor`: submitting is a chain of awaits and a single event flush lands mid-way.
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith(created));
     expect(reauthenticatePassword).toHaveBeenCalledWith('hunter2');
-    expect(createApiKey).toHaveBeenCalledWith('CI bot', undefined);
+    expect(createApiKey).toHaveBeenCalledWith('CI bot', undefined, undefined);
   });
 
   it('does not spend an empty password when a proof is already held', async () => {
@@ -124,12 +125,34 @@ describe('CreateApiKeyDialog', () => {
       surface: 'create-api-key',
       name: 'CI bot',
       days: 0,
+      scope: '',
+    });
+  });
+
+  // Guards a real regression: picking "Embed only" then having to leave for an OAuth
+  // provider (the only path for an account with no password) used to silently drop the
+  // choice — the member came back to "Full access" with no sign anything had changed,
+  // and submitting minted the MORE dangerous full-access key instead of the embed-only
+  // one they asked for.
+  it('carries the picked scope the same way, not just name and expiry', async () => {
+    signedIn(false);
+    render(CreateApiKeyDialog, { props: { open: true, onCreated: vi.fn() } });
+    await fireEvent.input(screen.getByLabelText('Name'), { target: { value: 'My laptop' } });
+    await fireEvent.change(screen.getByLabelText('Scope'), { target: { value: 'embed' } });
+
+    await fireEvent.click(await screen.findByRole('button', { name: 'Confirm with google' }));
+
+    expect(begin).toHaveBeenCalledWith('google', '/my/api-keys', {
+      surface: 'create-api-key',
+      name: 'My laptop',
+      days: 0,
+      scope: 'embed',
     });
   });
 
   it('reopens itself with the typed name restored when the member returns', async () => {
     signedIn(false);
-    draft.next = { surface: 'create-api-key', name: 'CI bot', days: 30 };
+    draft.next = { surface: 'create-api-key', name: 'CI bot', days: 30, scope: '' };
     expiry.mockReturnValue(new Date(Date.now() + 9 * 60_000));
 
     render(CreateApiKeyDialog, { props: { open: false, onCreated: vi.fn() } });
@@ -138,9 +161,19 @@ describe('CreateApiKeyDialog', () => {
     expect(await screen.findByText(/Identity confirmed/)).toBeTruthy();
   });
 
+  it('reopens with the picked scope restored, not reverted to full access', async () => {
+    signedIn(false);
+    draft.next = { surface: 'create-api-key', name: 'My laptop', days: 0, scope: 'embed' };
+    expiry.mockReturnValue(new Date(Date.now() + 9 * 60_000));
+
+    render(CreateApiKeyDialog, { props: { open: false, onCreated: vi.fn() } });
+
+    expect((await screen.findByLabelText<HTMLSelectElement>('Scope')).value).toBe('embed');
+  });
+
   it('does not create the key merely because the member came back confirmed', async () => {
     signedIn(false);
-    draft.next = { surface: 'create-api-key', name: 'CI bot', days: 30 };
+    draft.next = { surface: 'create-api-key', name: 'CI bot', days: 30, scope: '' };
     expiry.mockReturnValue(new Date(Date.now() + 9 * 60_000));
 
     render(CreateApiKeyDialog, { props: { open: false, onCreated: vi.fn() } });
@@ -169,5 +202,34 @@ describe('CreateApiKeyDialog', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Create key' }));
 
     expect(createApiKey).not.toHaveBeenCalled();
+  });
+
+  it('defaults to full access and sends no scope, unchanged from before scope existed', async () => {
+    signedIn(true);
+    render(CreateApiKeyDialog, { props: { open: true, onCreated: vi.fn() } });
+
+    await fireEvent.input(screen.getByLabelText('Name'), { target: { value: 'CI bot' } });
+    await fireEvent.input(await screen.findByLabelText('Password'), {
+      target: { value: 'hunter2' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Create key' }));
+
+    await waitFor(() => expect(createApiKey).toHaveBeenCalledOnce());
+    expect(createApiKey).toHaveBeenCalledWith('CI bot', undefined, undefined);
+  });
+
+  it('sends the embed scope when the member picks it', async () => {
+    signedIn(true);
+    render(CreateApiKeyDialog, { props: { open: true, onCreated: vi.fn() } });
+
+    await fireEvent.input(screen.getByLabelText('Name'), { target: { value: 'My laptop' } });
+    await fireEvent.change(screen.getByLabelText('Scope'), { target: { value: 'embed' } });
+    await fireEvent.input(await screen.findByLabelText('Password'), {
+      target: { value: 'hunter2' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Create key' }));
+
+    await waitFor(() => expect(createApiKey).toHaveBeenCalledOnce());
+    expect(createApiKey).toHaveBeenCalledWith('My laptop', undefined, 'embed');
   });
 });

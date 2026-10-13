@@ -115,7 +115,10 @@ describe('ConfirmIdentity', () => {
     signedIn(false);
     let name = 'typed before mount';
     render(ConfirmIdentity, {
-      props: { ...props, draft: () => ({ surface: 'create-api-key' as const, name, days: 30 }) },
+      props: {
+        ...props,
+        draft: () => ({ surface: 'create-api-key' as const, name, days: 30, scope: '' }),
+      },
     });
     name = 'typed just before leaving';
 
@@ -125,6 +128,7 @@ describe('ConfirmIdentity', () => {
       surface: 'create-api-key',
       name: 'typed just before leaving',
       days: 30,
+      scope: '',
     });
   });
 

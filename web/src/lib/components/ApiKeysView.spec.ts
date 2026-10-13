@@ -70,6 +70,7 @@ const key: ApiKey = {
   id: 7,
   name: 'CI bot',
   token_prefix: 'fh_ab12',
+  scope: 'full',
   created_at: '2026-09-15T00:00:00Z',
   last_used_at: null,
   expires_at: null,

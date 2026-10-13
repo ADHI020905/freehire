@@ -28,9 +28,17 @@
     { label: s.expiry90, days: 90 },
     { label: s.expiry365, days: 365 },
   ]);
+  // "" (full) is the default and is never sent to the server — unchanged from
+  // before scope existed. "embed" is the only other value a client may request
+  // (see api.createApiKey's doc and the server's own scope check).
+  const scopeOptions = $derived([
+    { label: s.scopeFull, value: '' },
+    { label: s.scopeEmbed, value: 'embed' },
+  ]);
 
   let name = $state('');
   let days = $state(0);
+  let scope = $state('');
   let password = $state('');
   let creating = $state(false);
   let error = $state<string | null>(null);
@@ -48,6 +56,7 @@
     if (!draft) return;
     name = draft.name;
     days = draft.days;
+    scope = draft.scope;
     open = true;
   });
 
@@ -56,6 +65,7 @@
   function reset(): void {
     name = '';
     days = 0;
+    scope = '';
     password = '';
     error = null;
   }
@@ -76,7 +86,7 @@
       if (!(await identity?.prove())) return;
       const expiresAt =
         days > 0 ? new Date(Date.now() + days * 86_400_000).toISOString() : undefined;
-      onCreated(await api.createApiKey(trimmed, expiresAt));
+      onCreated(await api.createApiKey(trimmed, expiresAt, scope || undefined));
       reset();
       open = false;
     } catch (e) {
@@ -122,11 +132,30 @@
         </select>
       </label>
 
+      <div class="flex flex-col gap-1">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-medium">{s.scopeLabel}</span>
+          <select
+            bind:value={scope}
+            disabled={creating}
+            class="h-9 rounded-lg border border-input bg-transparent px-3 text-sm transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+          >
+            {#each scopeOptions as opt (opt.value)}
+              <option value={opt.value}>{opt.label}</option>
+            {/each}
+          </select>
+        </label>
+        <!-- Outside the label on purpose: a wrapper <label>'s accessible name is every
+             text node inside it, so a hint sharing the label would get concatenated
+             onto "Scope" instead of staying its own readable sentence. -->
+        <span class="text-xs text-muted-foreground">{s.scopeHint}</span>
+      </div>
+
       <ConfirmIdentity
         bind:this={identity}
         bind:password
         returnTo="/my/api-keys"
-        draft={() => ({ surface: 'create-api-key', name, days })}
+        draft={() => ({ surface: 'create-api-key', name, days, scope })}
         prompt={s.confirmPrompt}
         active={open}
         disabled={creating}

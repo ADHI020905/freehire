@@ -1311,6 +1311,8 @@ export interface ApiKey {
   id: number;
   name: string;
   token_prefix: string;
+  /** "full" (default) or "embed" (the volunteer-embed-mvp service). */
+  scope: string;
   created_at: string | null;
   last_used_at: string | null;
   expires_at: string | null;

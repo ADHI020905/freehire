@@ -63,6 +63,7 @@ describe('beginProviderReauthentication', () => {
       surface: 'create-api-key',
       name: 'CI bot',
       days: 30,
+      scope: '',
     });
 
     expect(storage.getItem(VERIFIER_KEY)).toBeTruthy();
@@ -70,6 +71,7 @@ describe('beginProviderReauthentication', () => {
       surface: 'create-api-key',
       name: 'CI bot',
       days: 30,
+      scope: '',
     });
     expect(assign).toHaveBeenCalledOnce();
   });
@@ -91,12 +93,14 @@ describe('consumeReauthDraft', () => {
       surface: 'create-api-key',
       name: 'CI bot',
       days: 0,
+      scope: '',
     });
 
     expect(consumeReauthDraft('create-api-key')).toEqual({
       surface: 'create-api-key',
       name: 'CI bot',
       days: 0,
+      scope: '',
     });
     expect(storage.getItem(DRAFT_KEY)).toBeNull();
   });
@@ -145,7 +149,22 @@ describe('consumeReauthDraft', () => {
   it('refuses readable JSON that is not the shape it claims to be', () => {
     // `JSON.parse(raw) as ReauthDraft` is a promise the runtime does not keep; the
     // restored value goes straight into an input, so its fields have to be checked.
-    storage.setItem(DRAFT_KEY, JSON.stringify({ surface: 'create-api-key', name: {}, days: 'x' }));
+    // `scope` is deliberately valid here so the bad `name`/`days` are what trip the
+    // rejection, not a missing field masking whether those checks still run at all.
+    storage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ surface: 'create-api-key', name: {}, days: 'x', scope: '' }),
+    );
+
+    expect(consumeReauthDraft('create-api-key')).toBeNull();
+    expect(storage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
+  it('refuses a draft whose scope is not a string', () => {
+    storage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ surface: 'create-api-key', name: 'CI bot', days: 30, scope: 42 }),
+    );
 
     expect(consumeReauthDraft('create-api-key')).toBeNull();
     expect(storage.getItem(DRAFT_KEY)).toBeNull();
@@ -162,12 +181,18 @@ describe('completeProviderReauthentication', () => {
       surface: 'create-api-key',
       name: 'CI bot',
       days: 90,
+      scope: '',
     });
 
     await expect(completeProviderReauthentication('code-from-provider')).resolves.toBe(
       '/my/api-keys',
     );
-    expect(consumeReauthDraft('create-api-key')).toEqual({ surface: 'create-api-key', name: 'CI bot', days: 90 });
+    expect(consumeReauthDraft('create-api-key')).toEqual({
+      surface: 'create-api-key',
+      name: 'CI bot',
+      days: 90,
+      scope: '',
+    });
   });
 
   it('discards the draft when the exchange fails, leaving nothing to reopen later', async () => {
@@ -175,6 +200,7 @@ describe('completeProviderReauthentication', () => {
       surface: 'create-api-key',
       name: 'CI bot',
       days: 0,
+      scope: '',
     });
     exchange.mockRejectedValue(new Error('attempt already used'));
 

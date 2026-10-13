@@ -44,7 +44,7 @@ function forgetSession(key: string): void {
  *  no anti-mistake barrier belongs here. `delete-account` therefore carries nothing but
  *  its own name — the typed address that arms it is re-entered on return, on purpose. */
 export type ReauthDraft =
-  | { surface: 'create-api-key'; name: string; days: number }
+  | { surface: 'create-api-key'; name: string; days: number; scope: string }
   | { surface: 'revoke-api-key'; keyId: number }
   | { surface: 'revoke-oauth-grant'; grantId: number }
   | { surface: 'delete-account' };
@@ -85,7 +85,9 @@ function isDraftFor<S extends ReauthDraft['surface']>(
   // real type guard rather than a cast wearing a boolean.
   switch (surface) {
     case 'create-api-key':
-      return typeof d.name === 'string' && typeof d.days === 'number';
+      return (
+        typeof d.name === 'string' && typeof d.days === 'number' && typeof d.scope === 'string'
+      );
     case 'revoke-api-key':
       return typeof d.keyId === 'number';
     case 'revoke-oauth-grant':
