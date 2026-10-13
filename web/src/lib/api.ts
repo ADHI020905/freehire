@@ -2342,6 +2342,12 @@ export function createApi(
     return requestData<EmployerAccount>('/api/v1/employer/claim/confirm', jsonBody('POST', { code }));
   }
 
+  /** Mails a fresh work-email code for the caller's still-unconfirmed claim. 429 inside the
+   *  resend cooldown; 409 once the email is already confirmed. */
+  async function resendEmployerClaimCode(): Promise<EmployerAccount> {
+    return requestData<EmployerAccount>('/api/v1/employer/claim/resend', { method: 'POST' });
+  }
+
   /** The caller's own employer account, whatever status it is in, plus the company's
    *  current curated profile once active. Never requires an active account — this is the
    *  one read a pending/revoked claimant can still make. `null` when the caller has never
@@ -3222,6 +3228,7 @@ export function createApi(
     rejectSubmission,
     claimCompany,
     confirmEmployerClaim,
+    resendEmployerClaimCode,
     getEmployerCompany,
     updateEmployerCompany,
     listEmployerVacancies,

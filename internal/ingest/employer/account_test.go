@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 )
 
 // fakeRepo is an in-memory Repository double: one account per user, one slug reservation
@@ -50,16 +51,29 @@ func (r *fakeRepo) GetByUserID(_ context.Context, userID int64) (Account, error)
 func (r *fakeRepo) ListPending(_ context.Context) ([]Account, error) {
 	var out []Account
 	for _, acc := range r.accounts {
-		if acc.Status == StatusPending {
+		if acc.Status == StatusPending && acc.EmailConfirmed() {
 			out = append(out, acc)
 		}
 	}
 	return out, nil
 }
 
-func (r *fakeRepo) Activate(_ context.Context, userID int64) (Account, error) {
+func (r *fakeRepo) ConfirmEmail(_ context.Context, userID int64) (Account, error) {
 	acc, ok := r.accounts[userID]
 	if !ok || acc.Status != StatusPending {
+		return Account{}, ErrClaimNotPending
+	}
+	if acc.EmailConfirmedAt == nil {
+		now := time.Now()
+		acc.EmailConfirmedAt = &now
+	}
+	r.accounts[userID] = acc
+	return acc, nil
+}
+
+func (r *fakeRepo) Activate(_ context.Context, userID int64) (Account, error) {
+	acc, ok := r.accounts[userID]
+	if !ok || acc.Status != StatusPending || !acc.EmailConfirmed() {
 		return Account{}, ErrClaimNotPending
 	}
 	acc.Status = StatusActive
@@ -393,6 +407,129 @@ func TestApproveClaim_NeverOverwritesAnExistingWebsite(t *testing.T) {
 	_, website, _, _ := repo.ExistingCompany(context.Background(), "acme")
 	if website != "https://acme.test" {
 		t.Errorf("website = %q, must never be overwritten by an approval", website)
+	}
+}
+
+func TestConfirmClaim_NeverAutoActivatesAnAcademicDomain(t *testing.T) {
+	// A university hands an address on its own domain to every student, so a domain match
+	// there proves enrolment, not the authority to hire on the university's behalf.
+	repo := newFakeRepo()
+	repo.companies["university-of-pennsylvania"] = struct{ name, website string }{name: "University of Pennsylvania", website: "https://upenn.edu"}
+	s := New(repo, newFakeCodeIssuer(), &fakeClaimMailer{}, nil, nil)
+
+	if _, err := s.Claim(context.Background(), 1, "University of Pennsylvania", "student@upenn.edu"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	acc, err := s.ConfirmClaim(context.Background(), 1, "654321")
+	if err != nil {
+		t.Fatalf("ConfirmClaim: %v", err)
+	}
+	if acc.Status != StatusPending {
+		t.Errorf("status = %q, want pending — an academic domain must go to a moderator", acc.Status)
+	}
+	if !acc.EmailConfirmed() {
+		t.Error("a consumed code must still mark the work email confirmed, so the claim reaches the queue")
+	}
+}
+
+func TestListPendingClaims_HidesAClaimWhoseCodeWasNeverEntered(t *testing.T) {
+	repo := newFakeRepo()
+	s := New(repo, newFakeCodeIssuer(), &fakeClaimMailer{}, nil, nil)
+
+	if _, err := s.Claim(context.Background(), 1, "Unconfirmed", "hr@unconfirmed.test"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	if _, err := s.Claim(context.Background(), 2, "Confirmed", "hr@confirmed.test"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	if _, err := s.ConfirmClaim(context.Background(), 2, "654321"); err != nil {
+		t.Fatalf("ConfirmClaim: %v", err)
+	}
+
+	queue, err := s.ListPendingClaims(context.Background())
+	if err != nil {
+		t.Fatalf("ListPendingClaims: %v", err)
+	}
+	if len(queue) != 1 || queue[0].UserID != 2 {
+		t.Fatalf("queue = %+v, want only the confirmed claim (user 2)", queue)
+	}
+}
+
+func TestApproveClaim_RefusesAClaimWhoseCodeWasNeverEntered(t *testing.T) {
+	repo := newFakeRepo()
+	s := New(repo, newFakeCodeIssuer(), &fakeClaimMailer{}, nil, nil)
+
+	if _, err := s.Claim(context.Background(), 1, "Brand New", "ceo@brandnew.test"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	if _, err := s.ApproveClaim(context.Background(), 1); !errors.Is(err, ErrClaimNotPending) {
+		t.Fatalf("err = %v, want ErrClaimNotPending — nobody proved they read that address", err)
+	}
+	if _, website, found, _ := repo.ExistingCompany(context.Background(), "brand-new"); found || website != "" {
+		t.Error("a refused approval must seed no website")
+	}
+}
+
+func TestResendClaimCode_MailsAFreshCodeThatConfirms(t *testing.T) {
+	repo := newFakeRepo()
+	codes := newFakeCodeIssuer()
+	mailer := &fakeClaimMailer{}
+	s := New(repo, codes, mailer, nil, nil)
+
+	if _, err := s.Claim(context.Background(), 1, "Brand New", "hr@brandnew.test"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	delete(codes.issued, codeIssuerKey(1, "verify_work_email")) // the first code expired
+
+	if _, err := s.ResendClaimCode(context.Background(), 1); err != nil {
+		t.Fatalf("ResendClaimCode: %v", err)
+	}
+	if len(mailer.sent) != 2 || mailer.sent[1].email != "hr@brandnew.test" {
+		t.Fatalf("sent = %+v, want a second code to the claim's own work email", mailer.sent)
+	}
+	acc, err := s.ConfirmClaim(context.Background(), 1, "654321")
+	if err != nil {
+		t.Fatalf("ConfirmClaim with the resent code: %v", err)
+	}
+	if !acc.EmailConfirmed() {
+		t.Error("the resent code must confirm the work email")
+	}
+}
+
+func TestResendClaimCode_RefusesAnAlreadyConfirmedClaim(t *testing.T) {
+	repo := newFakeRepo()
+	mailer := &fakeClaimMailer{}
+	s := New(repo, newFakeCodeIssuer(), mailer, nil, nil)
+
+	if _, err := s.Claim(context.Background(), 1, "Brand New", "hr@brandnew.test"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	if _, err := s.ConfirmClaim(context.Background(), 1, "654321"); err != nil {
+		t.Fatalf("ConfirmClaim: %v", err)
+	}
+	if _, err := s.ResendClaimCode(context.Background(), 1); !errors.Is(err, ErrEmailAlreadyConfirmed) {
+		t.Fatalf("err = %v, want ErrEmailAlreadyConfirmed", err)
+	}
+	if len(mailer.sent) != 1 {
+		t.Errorf("sent %d mails, want no resend for a confirmed claim", len(mailer.sent))
+	}
+}
+
+func TestResendClaimCode_RefusesAnAccountThatIsNotPending(t *testing.T) {
+	repo := newFakeRepo()
+	s := New(repo, newFakeCodeIssuer(), &fakeClaimMailer{}, nil, nil)
+
+	if _, err := s.ResendClaimCode(context.Background(), 1); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound for a user with no claim", err)
+	}
+	if _, err := s.Claim(context.Background(), 1, "Acme", "hr@acme.test"); err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	if _, err := s.RevokeAccount(context.Background(), 1); err != nil {
+		t.Fatalf("RevokeAccount: %v", err)
+	}
+	if _, err := s.ResendClaimCode(context.Background(), 1); !errors.Is(err, ErrClaimNotPending) {
+		t.Errorf("err = %v, want ErrClaimNotPending for a revoked account", err)
 	}
 }
 

@@ -52,3 +52,18 @@ func emailDomain(email string) string {
 func isPublicWebmailDomain(email string) bool {
 	return publicWebmailDomains[emailDomain(email)]
 }
+
+// isAcademicDomain reports whether domain sits in an academic zone: the .edu TLD, or a
+// country's second-level edu/ac zone (.edu.au, .ac.uk, .ac.jp). A university hands an
+// address on its own domain to every student, so on such a domain a match against the
+// company's website proves enrolment, not the authority to hire — ConfirmClaim sends these
+// to a moderator instead of activating. Best-effort: a university outside these zones
+// (uni-heidelberg.de) is not recognised, and its claims auto-activate like any company's.
+func isAcademicDomain(domain string) bool {
+	labels := strings.Split(domain, ".")
+	n := len(labels)
+	if n >= 2 && labels[n-1] == "edu" {
+		return true
+	}
+	return n >= 3 && (labels[n-2] == "edu" || labels[n-2] == "ac")
+}

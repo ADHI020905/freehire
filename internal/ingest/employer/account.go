@@ -101,16 +101,21 @@ func (s *Service) Claim(ctx context.Context, userID int64, companyName, workEmai
 	return acc, nil
 }
 
-// ConfirmClaim consumes the mailed code and, when the work email's domain matches the
-// company's already-known website, activates the account immediately. An unknown or
-// mismatched domain leaves the account pending — see ApproveClaim for how a moderator
-// closes that gap, and employer-account's spec for why this method never seeds a website.
+// ConfirmClaim consumes the mailed code, records the work email as confirmed (which is what
+// puts the claim in front of a moderator at all), and, when the work email's domain matches
+// the company's already-known website, activates the account immediately. An unknown or
+// mismatched domain — or an academic one, see isAcademicDomain — leaves the account
+// pending; see ApproveClaim for how a moderator closes that gap, and employer-account's
+// spec for why this method never seeds a website.
 func (s *Service) ConfirmClaim(ctx context.Context, userID int64, code string) (Account, error) {
-	acc, err := s.repo.GetByUserID(ctx, userID)
-	if err != nil {
+	if _, err := s.repo.GetByUserID(ctx, userID); err != nil {
 		return Account{}, err
 	}
 	if err := s.codes.ConfirmCode(ctx, userID, accounts.PurposeVerifyWorkEmail, code); err != nil {
+		return Account{}, err
+	}
+	acc, err := s.repo.ConfirmEmail(ctx, userID)
+	if err != nil {
 		return Account{}, err
 	}
 
@@ -119,13 +124,41 @@ func (s *Service) ConfirmClaim(ctx context.Context, userID int64, code string) (
 		return Account{}, err
 	}
 	knownDomain := logodomain.Domain(website)
-	if !found || knownDomain == "" || knownDomain != emailDomain(acc.WorkEmail) {
+	workDomain := emailDomain(acc.WorkEmail)
+	if !found || knownDomain == "" || knownDomain != workDomain || isAcademicDomain(workDomain) {
 		return acc, nil
 	}
 	return s.repo.Activate(ctx, userID)
 }
 
-// ListPendingClaims is the moderator review queue.
+// ResendClaimCode mails a fresh work-email code for a claim still waiting on one. Without it
+// a code that expired (or an email that went to spam) stranded the claim for good: the
+// claimant could neither confirm it nor claim again (one account per user), and the company
+// slug stayed reserved. accounts.Service's own resend cooldown applies (ErrResendTooSoon).
+func (s *Service) ResendClaimCode(ctx context.Context, userID int64) (Account, error) {
+	acc, err := s.repo.GetByUserID(ctx, userID)
+	if err != nil {
+		return Account{}, err
+	}
+	if acc.Status != StatusPending {
+		return Account{}, ErrClaimNotPending
+	}
+	if acc.EmailConfirmed() {
+		return Account{}, ErrEmailAlreadyConfirmed
+	}
+	// Same eager method-value hazard Claim guards against.
+	if s.mailer == nil {
+		return Account{}, ErrMailUnavailable
+	}
+	if err := s.codes.IssueCode(ctx, userID, accounts.PurposeVerifyWorkEmail, acc.WorkEmail, s.mailer.SendClaimVerificationCode); err != nil {
+		return Account{}, err
+	}
+	return acc, nil
+}
+
+// ListPendingClaims is the moderator review queue: pending claims whose work email is
+// confirmed. A claim whose code was never entered is not shown — nobody proved they can read
+// that address, so there is nothing for a moderator to vouch for yet.
 func (s *Service) ListPendingClaims(ctx context.Context) ([]Account, error) {
 	return s.repo.ListPending(ctx)
 }
@@ -133,7 +166,8 @@ func (s *Service) ListPendingClaims(ctx context.Context) ([]Account, error) {
 // ApproveClaim activates a pending claim on a moderator's say-so and, when the company's
 // website was still blank, seeds it from the claim's confirmed work-email domain — the human
 // vouching for exactly the pairing the automatic domain check could not itself verify. It
-// never overwrites an existing, non-blank website (SeedCompanyWebsite is a no-op then).
+// never overwrites an existing, non-blank website (SeedCompanyWebsite is a no-op then). A
+// claim whose work email was never confirmed is refused with ErrClaimNotPending.
 func (s *Service) ApproveClaim(ctx context.Context, userID int64) (Account, error) {
 	acc, err := s.repo.Activate(ctx, userID)
 	if err != nil {

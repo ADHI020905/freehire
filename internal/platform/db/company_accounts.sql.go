@@ -12,14 +12,15 @@ import (
 const activateCompanyAccount = `-- name: ActivateCompanyAccount :one
 UPDATE company_accounts
 SET status = 'active', verified_at = now(), updated_at = now()
-WHERE user_id = $1 AND status = 'pending'
-RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at
+WHERE user_id = $1 AND status = 'pending' AND email_confirmed_at IS NOT NULL
+RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at, email_confirmed_at
 `
 
 // Shared by both activation paths — the domain-match auto-activate and a moderator's
 // approval — since both are the same state transition. Scoped to status='pending' so
 // activating an already-active or revoked account is a no-op read miss (ErrNoRows) rather
-// than a silent re-stamp of verified_at.
+// than a silent re-stamp of verified_at. An unconfirmed work email is the same miss: a
+// moderator must never be able to activate a claim on an address nobody proved they read.
 func (q *Queries) ActivateCompanyAccount(ctx context.Context, userID int64) (CompanyAccount, error) {
 	row := q.db.QueryRow(ctx, activateCompanyAccount, userID)
 	var i CompanyAccount
@@ -32,6 +33,33 @@ func (q *Queries) ActivateCompanyAccount(ctx context.Context, userID int64) (Com
 		&i.VerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailConfirmedAt,
+	)
+	return i, err
+}
+
+const confirmCompanyAccountEmail = `-- name: ConfirmCompanyAccountEmail :one
+UPDATE company_accounts
+SET email_confirmed_at = COALESCE(email_confirmed_at, now()), updated_at = now()
+WHERE user_id = $1 AND status = 'pending'
+RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at, email_confirmed_at
+`
+
+// Records that the claimant consumed the code mailed to work_email. COALESCE keeps the
+// first confirmation time; scoped to status='pending' like ActivateCompanyAccount.
+func (q *Queries) ConfirmCompanyAccountEmail(ctx context.Context, userID int64) (CompanyAccount, error) {
+	row := q.db.QueryRow(ctx, confirmCompanyAccountEmail, userID)
+	var i CompanyAccount
+	err := row.Scan(
+		&i.UserID,
+		&i.CompanySlug,
+		&i.CompanyName,
+		&i.WorkEmail,
+		&i.Status,
+		&i.VerifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EmailConfirmedAt,
 	)
 	return i, err
 }
@@ -53,7 +81,7 @@ func (q *Queries) DeleteCompanyAccount(ctx context.Context, userID int64) (int64
 }
 
 const getCompanyAccountByUserID = `-- name: GetCompanyAccountByUserID :one
-SELECT user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at
+SELECT user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at, email_confirmed_at
 FROM company_accounts
 WHERE user_id = $1
 `
@@ -73,6 +101,7 @@ func (q *Queries) GetCompanyAccountByUserID(ctx context.Context, userID int64) (
 		&i.VerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailConfirmedAt,
 	)
 	return i, err
 }
@@ -80,7 +109,7 @@ func (q *Queries) GetCompanyAccountByUserID(ctx context.Context, userID int64) (
 const insertPendingCompanyAccount = `-- name: InsertPendingCompanyAccount :one
 INSERT INTO company_accounts (user_id, company_slug, company_name, work_email)
 VALUES ($1, $2, $3, $4)
-RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at
+RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at, email_confirmed_at
 `
 
 type InsertPendingCompanyAccountParams struct {
@@ -112,19 +141,22 @@ func (q *Queries) InsertPendingCompanyAccount(ctx context.Context, arg InsertPen
 		&i.VerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailConfirmedAt,
 	)
 	return i, err
 }
 
 const listPendingCompanyAccounts = `-- name: ListPendingCompanyAccounts :many
-SELECT user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at
+SELECT user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at, email_confirmed_at
 FROM company_accounts
-WHERE status = 'pending'
+WHERE status = 'pending' AND email_confirmed_at IS NOT NULL
 ORDER BY created_at
 `
 
 // The moderator review queue: every claim that could not auto-activate (unknown or
-// mismatched work-email domain), oldest first so the queue drains in claim order.
+// mismatched work-email domain), oldest first so the queue drains in claim order. A claim
+// whose code was never entered is not reviewable — nobody has shown they can read that
+// address — so it stays out of the queue (migration 0181).
 func (q *Queries) ListPendingCompanyAccounts(ctx context.Context) ([]CompanyAccount, error) {
 	rows, err := q.db.Query(ctx, listPendingCompanyAccounts)
 	if err != nil {
@@ -143,6 +175,7 @@ func (q *Queries) ListPendingCompanyAccounts(ctx context.Context) ([]CompanyAcco
 			&i.VerifiedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EmailConfirmedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -158,7 +191,7 @@ const revokeCompanyAccount = `-- name: RevokeCompanyAccount :one
 UPDATE company_accounts
 SET status = 'revoked', updated_at = now()
 WHERE user_id = $1 AND status IN ('pending', 'active')
-RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at
+RETURNING user_id, company_slug, company_name, work_email, status, verified_at, created_at, updated_at, email_confirmed_at
 `
 
 // An admin kill switch. Deliberately does not delete the row or free company_slug — see the
@@ -176,6 +209,7 @@ func (q *Queries) RevokeCompanyAccount(ctx context.Context, userID int64) (Compa
 		&i.VerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailConfirmedAt,
 	)
 	return i, err
 }

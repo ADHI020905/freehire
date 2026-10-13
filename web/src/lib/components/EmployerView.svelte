@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
   import { Building2, Mail, ShieldAlert } from '@lucide/svelte';
   import { api, ApiError } from '$lib/api';
   import { isAuthenticated } from '$lib/auth.svelte';
@@ -31,41 +30,11 @@
     if (isAuthenticated()) void load();
   });
 
-  // Whether THIS account's code has already been confirmed, so a page reload while
-  // status is still 'pending' shows the "awaiting moderator" message instead of
-  // re-asking for a code the backend has already consumed (a second confirm attempt
-  // on the same code fails — see internal/identity/accounts' code-store semantics).
-  // Per-viewer convenience only, matching the account shell's own nav-collapse flag;
-  // never the source of truth for status itself.
-  function confirmedKey(slug: string) {
-    return `hire.employerClaimConfirmed.${slug}`;
-  }
-  function markConfirmed(slug: string) {
-    if (!browser) return;
-    try {
-      localStorage.setItem(confirmedKey(slug), '1');
-    } catch {
-      // Private browsing / blocked storage: the worst case is re-showing the code
-      // field on the next reload, not a broken flow.
-    }
-  }
-  function wasConfirmed(slug: string): boolean {
-    if (!browser) return false;
-    try {
-      return localStorage.getItem(confirmedKey(slug)) === '1';
-    } catch {
-      return false;
-    }
-  }
-
   // ── Claim form ─────────────────────────────────────────────────────────
   let companyName = $state('');
   let workEmail = $state('');
   let claiming = $state(false);
   let claimError = $state<string | null>(null);
-  // Set once Claim succeeds, so the confirm-code step renders without a second fetch —
-  // the server's own response already carries a fresh 'pending' account.
-  let justClaimed = $state(false);
 
   async function submitClaim(e: SubmitEvent) {
     e.preventDefault();
@@ -74,7 +43,6 @@
     claimError = null;
     try {
       company = await api.claimCompany(companyName.trim(), workEmail.trim());
-      justClaimed = true;
     } catch (err) {
       claimError = err instanceof ApiError ? err.message : s.loadError;
     } finally {
@@ -94,9 +62,7 @@
     confirmError = null;
     try {
       company = await api.confirmEmployerClaim(code.trim());
-      markConfirmed(company.company_slug);
       code = '';
-      justClaimed = false;
     } catch (err) {
       confirmError = err instanceof ApiError ? err.message : s.loadError;
     } finally {
@@ -104,14 +70,34 @@
     }
   }
 
-  // The phase this view renders — derived once from company/justClaimed rather than
-  // branched inline in the markup, so the markup below reads as one switch.
+  // A code expires, and mail lands in spam — without a resend the claim would be stuck
+  // with no way to confirm it and no way to claim again.
+  let resending = $state(false);
+  let resent = $state(false);
+
+  async function resendCode() {
+    if (resending) return;
+    resending = true;
+    resent = false;
+    confirmError = null;
+    try {
+      company = await api.resendEmployerClaimCode();
+      resent = true;
+    } catch (err) {
+      confirmError = err instanceof ApiError ? err.message : s.loadError;
+    } finally {
+      resending = false;
+    }
+  }
+
+  // The phase this view renders — derived once from company rather than branched inline
+  // in the markup, so the markup below reads as one switch.
   const phase = $derived.by(() => {
     if (!company) return 'claim' as const;
     if (company.status === 'active') return 'dashboard' as const;
     if (company.status === 'revoked') return 'revoked' as const;
-    // status === 'pending'
-    return justClaimed || !wasConfirmed(company.company_slug) ? ('confirm' as const) : ('pending' as const);
+    // status === 'pending': still owes the mailed code, or is waiting on a moderator.
+    return company.email_confirmed ? ('pending' as const) : ('confirm' as const);
   });
 </script>
 
@@ -168,8 +154,14 @@
       {#if confirmError}
         <p class="text-sm text-destructive">{confirmError}</p>
       {/if}
+      {#if resent}
+        <p class="text-sm text-muted-foreground">{s.resendSent}</p>
+      {/if}
       <Button type="submit" disabled={confirming || !code.trim()}>
         {confirming ? s.confirming : s.confirmSubmit}
+      </Button>
+      <Button type="button" variant="ghost" onclick={resendCode} disabled={resending}>
+        {resending ? s.resending : s.resendCode}
       </Button>
     </form>
   </div>

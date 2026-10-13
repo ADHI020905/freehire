@@ -636,6 +636,9 @@ export interface EmployerAccount {
   work_email: string;
   status: 'pending' | 'active' | 'revoked';
   verified_at?: string | null;
+  /** Whether the mailed work-email code was entered. A pending claim without it still owes
+   *  the code; with it, it is waiting on a moderator. */
+  email_confirmed: boolean;
   created_at: string;
 }
 

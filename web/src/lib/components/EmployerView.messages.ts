@@ -27,8 +27,11 @@ export const messages = defineMessages(
     codeLabel: 'Code',
     confirmSubmit: 'Confirm',
     confirming: 'Confirming…',
+    resendCode: 'Send a new code',
+    resending: 'Sending…',
+    resendSent: 'A new code is on its way.',
 
-    // Pending review (code confirmed, or already pending on reload).
+    // Pending review: code confirmed, awaiting a moderator.
     pendingTitle: 'Verification pending',
     pendingBody:
       "We couldn't automatically match your work email to {company}'s known domain, so a moderator is reviewing your claim. This is usually quick.",
@@ -107,6 +110,9 @@ export const messages = defineMessages(
       codeLabel: 'Код',
       confirmSubmit: 'Подтвердить',
       confirming: 'Подтверждение…',
+      resendCode: 'Отправить новый код',
+      resending: 'Отправка…',
+      resendSent: 'Новый код уже в пути.',
 
       pendingTitle: 'Заявка на проверке',
       pendingBody:

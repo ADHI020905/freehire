@@ -38,9 +38,10 @@ func newEmployerHandlers(queries *db.Queries, svc *employer.Service) *employerHa
 func (h *employerHandlers) register(api fiber.Router, mw middleware) {
 	// Cookie-only (RequireAuth), not mw.key: this MVP does not open employer actions to
 	// API keys — see design.md's Non-Goals. Every route below requires ActiveAccount
-	// except the claim/confirm pair, which is how an account BECOMES active.
+	// except the claim/confirm/resend trio, which is how an account BECOMES active.
 	api.Post("/employer/claim", mw.cookie, h.Claim)
 	api.Post("/employer/claim/confirm", mw.cookie, h.ConfirmClaim)
+	api.Post("/employer/claim/resend", mw.cookie, h.ResendClaimCode)
 	api.Get("/employer/company", mw.cookie, h.GetCompany)
 	api.Patch("/employer/company", mw.cookie, h.UpdateCompany)
 	api.Get("/employer/jobs", mw.cookie, h.ListVacancies)
@@ -78,6 +79,8 @@ func employerError(err error) error {
 		return fiber.NewError(fiber.StatusConflict, "this company is already claimed")
 	case errors.Is(err, employer.ErrClaimNotPending):
 		return fiber.NewError(fiber.StatusConflict, "no pending claim for this user")
+	case errors.Is(err, employer.ErrEmailAlreadyConfirmed):
+		return fiber.NewError(fiber.StatusConflict, "work email is already confirmed")
 	case errors.Is(err, employer.ErrJobNotFound):
 		return fiber.NewError(fiber.StatusNotFound, "vacancy not found")
 	case errors.Is(err, employer.ErrURLTaken):
@@ -107,18 +110,22 @@ type employerAccountResponse struct {
 	WorkEmail   string     `json:"work_email"`
 	Status      string     `json:"status"`
 	VerifiedAt  *time.Time `json:"verified_at,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
+	// EmailConfirmed tells a pending claimant whether they still owe the mailed code or
+	// are waiting on a moderator.
+	EmailConfirmed bool      `json:"email_confirmed"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func toEmployerAccountResponse(a employer.Account) employerAccountResponse {
 	return employerAccountResponse{
-		UserID:      a.UserID,
-		CompanySlug: a.CompanySlug,
-		CompanyName: a.CompanyName,
-		WorkEmail:   a.WorkEmail,
-		Status:      a.Status,
-		VerifiedAt:  a.VerifiedAt,
-		CreatedAt:   a.CreatedAt,
+		UserID:         a.UserID,
+		CompanySlug:    a.CompanySlug,
+		CompanyName:    a.CompanyName,
+		WorkEmail:      a.WorkEmail,
+		Status:         a.Status,
+		VerifiedAt:     a.VerifiedAt,
+		EmailConfirmed: a.EmailConfirmed(),
+		CreatedAt:      a.CreatedAt,
 	}
 }
 
@@ -166,6 +173,21 @@ func (h *employerHandlers) ConfirmClaim(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 	acc, err := h.employer.ConfirmClaim(c.Context(), userID, in.Code)
+	if err != nil {
+		return employerError(err)
+	}
+	return c.JSON(fiber.Map{"data": toEmployerAccountResponse(acc)})
+}
+
+// ResendClaimCode mails a fresh work-email code for the caller's still-unconfirmed claim.
+// 409 when there is no pending claim or its email is already confirmed; 429 inside the
+// resend cooldown.
+func (h *employerHandlers) ResendClaimCode(c *fiber.Ctx) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+	acc, err := h.employer.ResendClaimCode(c.Context(), userID)
 	if err != nil {
 		return employerError(err)
 	}

@@ -44,7 +44,7 @@ func TestEmployerEndToEnd(t *testing.T) {
 	ctx := context.Background()
 	queries := db.New(pool)
 
-	var modID, adminID, userAID, userBID int64
+	var modID, adminID, userAID, userBID, userCID int64
 	seed := func(email, role string) int64 {
 		t.Helper()
 		var id int64
@@ -61,6 +61,7 @@ func TestEmployerEndToEnd(t *testing.T) {
 	adminID = seed("admin@example.test", "admin")
 	userAID = seed("founder@acme.test", "")
 	userBID = seed("founder@bravo.test", "")
+	userCID = seed("founder@charlie.test", "")
 
 	if _, err := pool.Exec(ctx,
 		`INSERT INTO companies (slug, name, company_info) VALUES ('acme', 'Acme', '{"website":"acme.test"}')`); err != nil {
@@ -73,6 +74,7 @@ func TestEmployerEndToEnd(t *testing.T) {
 	adminCookie, _ := iss.Issue(adminID, testTokenVersion)
 	userACookie, _ := iss.Issue(userAID, testTokenVersion)
 	userBCookie, _ := iss.Issue(userBID, testTokenVersion)
+	userCCookie, _ := iss.Issue(userCID, testTokenVersion)
 
 	accountsSvc := accounts.New(accounts.NewQueriesRepository(queries, pool), authHasher{})
 	mailer := newFakeClaimMailer()
@@ -202,6 +204,71 @@ func TestEmployerEndToEnd(t *testing.T) {
 		decodeData(t, resp, &acc)
 		if acc.Status != "pending" {
 			t.Errorf("status = %q, want pending", acc.Status)
+		}
+	})
+
+	t.Run("a claim whose code was never entered is hidden, unapprovable, and resendable", func(t *testing.T) {
+		resp := do(t, req(fiber.MethodPost, "/api/v1/employer/claim", userCCookie,
+			`{"company_name":"Charlie","work_email":"founder@charlie.test"}`))
+		defer resp.Body.Close()
+		if resp.StatusCode != fiber.StatusCreated {
+			t.Fatalf("claim status = %d, want 201", resp.StatusCode)
+		}
+
+		resp = do(t, req(fiber.MethodGet, "/api/v1/employer/claims", modCookie, ""))
+		defer resp.Body.Close()
+		var rows []struct {
+			CompanySlug string `json:"company_slug"`
+		}
+		decodeData(t, resp, &rows)
+		for _, r := range rows {
+			if r.CompanySlug == "charlie" {
+				t.Fatalf("queue = %+v, an unconfirmed claim must not be in it", rows)
+			}
+		}
+
+		resp = do(t, req(fiber.MethodPost, "/api/v1/employer/claims/"+itoa(userCID)+"/approve", modCookie, ""))
+		defer resp.Body.Close()
+		if resp.StatusCode != fiber.StatusConflict {
+			t.Fatalf("approve status = %d, want 409 for an unconfirmed claim", resp.StatusCode)
+		}
+
+		resp = do(t, req(fiber.MethodPost, "/api/v1/employer/claim/resend", userCCookie, ""))
+		defer resp.Body.Close()
+		if resp.StatusCode != fiber.StatusTooManyRequests {
+			t.Fatalf("immediate resend status = %d, want 429 inside the cooldown", resp.StatusCode)
+		}
+
+		// Age the first code past both the cooldown and its own expiry.
+		if _, err := pool.Exec(ctx,
+			`UPDATE user_email_codes SET created_at = now() - interval '1 hour' WHERE user_id = $1`, userCID); err != nil {
+			t.Fatalf("age the first code: %v", err)
+		}
+		resp = do(t, req(fiber.MethodPost, "/api/v1/employer/claim/resend", userCCookie, ""))
+		defer resp.Body.Close()
+		if resp.StatusCode != fiber.StatusOK {
+			b, _ := io.ReadAll(resp.Body)
+			t.Fatalf("resend status = %d, want 200 (body %s)", resp.StatusCode, b)
+		}
+		// The aged first code is past its expiry too, so this confirm only succeeds on a
+		// freshly minted one.
+		code := mailer.codes["founder@charlie.test"]
+
+		resp = do(t, req(fiber.MethodPost, "/api/v1/employer/claim/confirm", userCCookie, `{"code":"`+code+`"}`))
+		defer resp.Body.Close()
+		var acc struct {
+			Status         string `json:"status"`
+			EmailConfirmed bool   `json:"email_confirmed"`
+		}
+		decodeData(t, resp, &acc)
+		if acc.Status != "pending" || !acc.EmailConfirmed {
+			t.Fatalf("after confirm = %+v, want pending with email_confirmed", acc)
+		}
+
+		resp = do(t, req(fiber.MethodPost, "/api/v1/employer/claim/resend", userCCookie, ""))
+		defer resp.Body.Close()
+		if resp.StatusCode != fiber.StatusConflict {
+			t.Errorf("resend after confirm status = %d, want 409", resp.StatusCode)
 		}
 	})
 

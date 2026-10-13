@@ -43,6 +43,9 @@ var (
 	// ErrClaimNotPending is an approve/reject of a claim that is no longer pending (already
 	// active, revoked, or never existed).
 	ErrClaimNotPending = errors.New("employer: no pending claim for this user")
+	// ErrEmailAlreadyConfirmed is a code resend for a claim whose work email is already
+	// confirmed — there is nothing left to prove, only a moderator's decision to wait for.
+	ErrEmailAlreadyConfirmed = errors.New("employer: work email is already confirmed")
 	// ErrMailUnavailable reports that no claim-mail transport is configured (see New's
 	// mailer parameter), so no code can be delivered. Checked before Claim ever evaluates
 	// a method value on it — mirrors accounts.ErrMailUnavailable's role, but is this
@@ -59,8 +62,14 @@ type Account struct {
 	WorkEmail   string
 	Status      string
 	VerifiedAt  *time.Time
-	CreatedAt   time.Time
+	// EmailConfirmedAt is when the claimant consumed the code mailed to WorkEmail; nil
+	// until then. An unconfirmed claim is invisible to moderators and cannot be activated.
+	EmailConfirmedAt *time.Time
+	CreatedAt        time.Time
 }
+
+// EmailConfirmed reports whether the claimant has proven they can read WorkEmail.
+func (a Account) EmailConfirmed() bool { return a.EmailConfirmedAt != nil }
 
 // Active reports whether this account may act on its company — publish/edit/close a
 // vacancy, or edit the company's curated profile.
@@ -75,10 +84,14 @@ type Repository interface {
 	// GetByUserID is the one account a user may hold, whatever status it is in. ErrNotFound
 	// when the user holds none.
 	GetByUserID(ctx context.Context, userID int64) (Account, error)
-	// ListPending is the moderator review queue, oldest first.
+	// ListPending is the moderator review queue, oldest first: pending claims whose work
+	// email is confirmed.
 	ListPending(ctx context.Context) ([]Account, error)
-	// Activate flips a pending account to active. ErrClaimNotPending when the account is
-	// missing or not pending.
+	// ConfirmEmail records that the claimant consumed the work-email code.
+	// ErrClaimNotPending when the account is missing or not pending.
+	ConfirmEmail(ctx context.Context, userID int64) (Account, error)
+	// Activate flips a pending, email-confirmed account to active. ErrClaimNotPending when
+	// the account is missing, not pending, or its work email was never confirmed.
 	Activate(ctx context.Context, userID int64) (Account, error)
 	// Revoke flips a pending or active account to revoked, keeping the row (and the slug
 	// reservation) — see migrations/0174. ErrNotFound when the user holds no account at all.

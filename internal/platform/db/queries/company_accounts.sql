@@ -18,20 +18,31 @@ WHERE user_id = @user_id;
 
 -- name: ListPendingCompanyAccounts :many
 -- The moderator review queue: every claim that could not auto-activate (unknown or
--- mismatched work-email domain), oldest first so the queue drains in claim order.
+-- mismatched work-email domain), oldest first so the queue drains in claim order. A claim
+-- whose code was never entered is not reviewable — nobody has shown they can read that
+-- address — so it stays out of the queue (migration 0181).
 SELECT *
 FROM company_accounts
-WHERE status = 'pending'
+WHERE status = 'pending' AND email_confirmed_at IS NOT NULL
 ORDER BY created_at;
+
+-- name: ConfirmCompanyAccountEmail :one
+-- Records that the claimant consumed the code mailed to work_email. COALESCE keeps the
+-- first confirmation time; scoped to status='pending' like ActivateCompanyAccount.
+UPDATE company_accounts
+SET email_confirmed_at = COALESCE(email_confirmed_at, now()), updated_at = now()
+WHERE user_id = @user_id AND status = 'pending'
+RETURNING *;
 
 -- name: ActivateCompanyAccount :one
 -- Shared by both activation paths — the domain-match auto-activate and a moderator's
 -- approval — since both are the same state transition. Scoped to status='pending' so
 -- activating an already-active or revoked account is a no-op read miss (ErrNoRows) rather
--- than a silent re-stamp of verified_at.
+-- than a silent re-stamp of verified_at. An unconfirmed work email is the same miss: a
+-- moderator must never be able to activate a claim on an address nobody proved they read.
 UPDATE company_accounts
 SET status = 'active', verified_at = now(), updated_at = now()
-WHERE user_id = @user_id AND status = 'pending'
+WHERE user_id = @user_id AND status = 'pending' AND email_confirmed_at IS NOT NULL
 RETURNING *;
 
 -- name: RevokeCompanyAccount :one

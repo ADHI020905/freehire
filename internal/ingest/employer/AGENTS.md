@@ -33,6 +33,17 @@ for the full design record.
   itself could not verify) seeds a blank website. The two were conflated in an earlier draft
   of this spec and caught by TDD, not by review — see the design doc's Decisions section if
   this distinction is ever tempting to "simplify" back together.
+- **A claim is only reviewable once its work email is confirmed.** The row is inserted at
+  `Claim`, before the code is consumed, so `company_accounts.email_confirmed_at` (migration
+  0181, written by `ConfirmClaim`) is what tells a claimant who proved the address from one
+  who typed someone else's. The queue and `ActivateCompanyAccount` both require it — before
+  it, 3 of the 4 pending claims on prod had never entered a code and Approve would have
+  activated them. `ResendClaimCode` exists for the same reason: without it an expired code
+  stranded the claim forever, since a user may hold only one account.
+- **An academic domain never auto-activates** (`isAcademicDomain`): every student holds an
+  address on the university's domain, so a match there proves enrolment, not the authority
+  to hire. Subdomains are deliberately NOT treated as a match for the same reason —
+  `pennmedicine.upenn.edu` is exactly where a student's address lives.
 - **`CreateVacancy` guards a real gap in `UpsertManualJob`, not a hypothetical one.** That
   query's `ON CONFLICT` never checks `created_by`, so reusing `moderation.Service.Create`
   unguarded would let employer B silently take over employer A's vacancy by resubmitting the

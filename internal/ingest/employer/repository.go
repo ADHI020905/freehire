@@ -78,6 +78,17 @@ func (r *QueriesRepository) ListPending(ctx context.Context) ([]Account, error) 
 	return out, nil
 }
 
+func (r *QueriesRepository) ConfirmEmail(ctx context.Context, userID int64) (Account, error) {
+	row, err := r.q.ConfirmCompanyAccountEmail(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Account{}, ErrClaimNotPending
+	}
+	if err != nil {
+		return Account{}, err
+	}
+	return fromRow(row), nil
+}
+
 func (r *QueriesRepository) Activate(ctx context.Context, userID int64) (Account, error) {
 	row, err := r.q.ActivateCompanyAccount(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -291,13 +302,14 @@ func (r *QueriesRepository) Close(ctx context.Context, actorID int64, slug strin
 // fromRow maps the generated db row to the package domain type.
 func fromRow(row db.CompanyAccount) Account {
 	return Account{
-		UserID:      row.UserID,
-		CompanySlug: row.CompanySlug,
-		CompanyName: row.CompanyName,
-		WorkEmail:   row.WorkEmail,
-		Status:      row.Status,
-		VerifiedAt:  pgconv.TimePtr(row.VerifiedAt),
-		CreatedAt:   row.CreatedAt.Time,
+		UserID:           row.UserID,
+		CompanySlug:      row.CompanySlug,
+		CompanyName:      row.CompanyName,
+		WorkEmail:        row.WorkEmail,
+		Status:           row.Status,
+		VerifiedAt:       pgconv.TimePtr(row.VerifiedAt),
+		EmailConfirmedAt: pgconv.TimePtr(row.EmailConfirmedAt),
+		CreatedAt:        row.CreatedAt.Time,
 	}
 }
 

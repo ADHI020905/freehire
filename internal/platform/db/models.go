@@ -320,6 +320,8 @@ type CompanyAccount struct {
 	VerifiedAt  pgtype.Timestamptz `json:"verified_at"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	// When the claimant consumed the code mailed to work_email. NULL = never proven: such a claim is hidden from the moderator queue and cannot be activated.
+	EmailConfirmedAt pgtype.Timestamptz `json:"email_confirmed_at"`
 }
 
 type CompanyFeedback struct {

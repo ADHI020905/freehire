@@ -70,6 +70,13 @@ matching the behavior already established for the account's own email-verificati
   been reached
 - **THEN** the confirmation is refused and no claim is confirmed
 
+#### Scenario: A claimant whose code expired requests a new one
+
+- **WHEN** a user whose pending claim's work email is not yet confirmed asks for a new code,
+  outside the resend cooldown
+- **THEN** a fresh code is mailed to the claim's work email, and it confirms the claim
+- **AND** a user whose work email is already confirmed is refused, and no code is sent
+
 ### Requirement: A public webmail domain is refused as a work email
 
 The system SHALL refuse a claim's work email when its domain is a known public/free email
@@ -85,13 +92,21 @@ sent.
 
 When a claim's work email is confirmed, the system SHALL compare its domain to the claimed
 company's already-known website domain, when one is recorded. A match SHALL activate the
-employer account immediately, with no further review.
+employer account immediately, with no further review — except on an academic domain (the
+.edu TLD or a country's edu/ac zone), where a university hands an address to every student,
+so a match proves enrolment rather than the authority to hire.
 
 #### Scenario: A matching domain activates the account at once
 
 - **WHEN** a claim's confirmed work-email domain matches the claimed company's recorded
   website domain
 - **THEN** the employer account becomes active immediately, with no moderator step
+
+#### Scenario: A matching academic domain goes to a moderator
+
+- **WHEN** a claim's confirmed work-email domain is academic and matches the claimed
+  company's recorded website domain
+- **THEN** the employer account stays pending and appears in the moderator review queue
 
 ### Requirement: An unverifiable domain is routed to moderator review, not refused
 
@@ -121,7 +136,15 @@ approving a claim the domain check could not itself verify is exactly the human 
 automatic path was missing, so this is where that gap closes, not the automatic path (which
 never activates a claim whose website was unknown or mismatched in the first place — see "An
 unverifiable domain is routed to moderator review, not refused"). Rejection SHALL remove the
-claim and free its company slug for a future claim.
+claim and free its company slug for a future claim. A claim whose work email was never
+confirmed SHALL be neither listed nor approvable: nobody has shown they can read that
+address, so there is nothing for a moderator to vouch for.
+
+#### Scenario: An unconfirmed claim is hidden from the queue and cannot be approved
+
+- **WHEN** a claim exists whose mailed code was never entered
+- **THEN** it does not appear in the moderator review queue, and an attempt to approve it is
+  refused
 
 #### Scenario: Moderator approval activates a pending claim
 

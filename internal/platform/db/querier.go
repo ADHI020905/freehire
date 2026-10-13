@@ -18,7 +18,8 @@ type Querier interface {
 	// Shared by both activation paths — the domain-match auto-activate and a moderator's
 	// approval — since both are the same state transition. Scoped to status='pending' so
 	// activating an already-active or revoked account is a no-op read miss (ErrNoRows) rather
-	// than a silent re-stamp of verified_at.
+	// than a silent re-stamp of verified_at. An unconfirmed work email is the same miss: a
+	// moderator must never be able to activate a claim on an address nobody proved they read.
 	ActivateCompanyAccount(ctx context.Context, userID int64) (CompanyAccount, error)
 	// Add a job to a list. Idempotent: re-adding an already-present job changes nothing.
 	AddJobListItem(ctx context.Context, arg AddJobListItemParams) error
@@ -1080,6 +1081,9 @@ type Querier interface {
 	// a no-op in Meilisearch, so "landed" includes the common case where the job had no document
 	// to begin with — there is nothing to distinguish and nothing to retry.
 	CompleteSearchDeleteOutbox(ctx context.Context, ids []int64) error
+	// Records that the claimant consumed the code mailed to work_email. COALESCE keeps the
+	// first confirmation time; scoped to status='pending' like ActivateCompanyAccount.
+	ConfirmCompanyAccountEmail(ctx context.Context, userID int64) (CompanyAccount, error)
 	// Promote a suggested link to a confirmed one: the suggestion becomes job_id with
 	// link_source 'manual'. No-op (0 rows) when there is no pending suggestion.
 	ConfirmEmailLink(ctx context.Context, arg ConfirmEmailLinkParams) (int64, error)
@@ -4258,7 +4262,9 @@ type Querier interface {
 	// 2026-09-06, which returned up to 2*limit rows and skipped a window per page.
 	ListOrphanedApplications(ctx context.Context, arg ListOrphanedApplicationsParams) ([]ListOrphanedApplicationsRow, error)
 	// The moderator review queue: every claim that could not auto-activate (unknown or
-	// mismatched work-email domain), oldest first so the queue drains in claim order.
+	// mismatched work-email domain), oldest first so the queue drains in claim order. A claim
+	// whose code was never entered is not reviewable — nobody has shown they can read that
+	// address — so it stays out of the queue (migration 0181).
 	ListPendingCompanyAccounts(ctx context.Context) ([]CompanyAccount, error)
 	// The moderation queue, oldest first. Carries whether the account also holds an APPROVED
 	// referral offer for the same company — corroborating evidence for the human deciding,
