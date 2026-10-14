@@ -22,12 +22,14 @@ export const JOB_SEARCH_STAGE_OPTIONS: SurveyOption[] = [
   { value: 'exploring', label: "I'm just looking around — it's not a priority right now" },
 ];
 
-/** The single biggest thing in the candidate's way. */
+/** The single biggest thing in the candidate's way. Most of the audience writes in English,
+ *  so the language comes after the obstacles every candidate shares — first in the list, it
+ *  read as an assumption about who was answering. */
 export const JOB_CHALLENGE_OPTIONS: SurveyOption[] = [
-  { value: 'english', label: 'English' },
   { value: 'recruiter_contact', label: 'Getting recruiters to reply' },
-  { value: 'working_abroad', label: 'Finding work abroad' },
   { value: 'technical_interviews', label: 'Passing technical interviews' },
+  { value: 'working_abroad', label: 'Finding work abroad' },
+  { value: 'english', label: 'English' },
   { value: 'other', label: 'Something else' },
 ];
 
@@ -54,18 +56,42 @@ export const INCOME_PERIODS: SurveyOption[] = [
   { value: 'year', label: 'per year' },
 ];
 
-/** The slider's step. Coarse on purpose: the question is what bracket someone is in, and a
- *  control that invites a to-the-dollar answer implies a precision the answer does not
- *  have. */
-export const INCOME_STEP = 500;
+/** One slider's range: its ceiling and its step, in the stated currency and period.
+ *
+ *  The step is coarse on purpose: the question is what bracket someone is in, and a control
+ *  that invites a to-the-unit answer implies a precision the answer does not have.
+ *
+ *  The last stop is the maximum itself, which the UI labels as an open-ended "or more"
+ *  rather than as a figure — a candidate at the top of the range has not told us their
+ *  salary is exactly this. */
+interface IncomeScale {
+  max: number;
+  step: number;
+}
 
-/** The slider's ceiling, in the stated currency and period. The last stop is the maximum
- *  itself, which the UI labels as an open-ended "or more" rather than as a figure — a
- *  candidate at the top of the range has not told us their salary is exactly this. */
-export const INCOME_MAX_MONTHLY = 30_000;
-export const INCOME_MAX_YEARLY = 360_000;
+// USD, EUR and GBP are close enough in value to share one scale. RUB is not — one scale for
+// all four topped a ruble salary out at 30,000 a month, under what most of the market earns —
+// so it carries its own, sized to the ruble rather than converted from the dollar: a rate
+// moves daily, and a ceiling that drifts with it would move under a stored answer.
+const MAJOR_CURRENCY_SCALE = {
+  month: { max: 30_000, step: 500 },
+  year: { max: 360_000, step: 500 },
+} as const;
 
-/** The ceiling for the currently-selected period. */
-export function incomeMax(period: string): number {
-  return period === 'year' ? INCOME_MAX_YEARLY : INCOME_MAX_MONTHLY;
+const INCOME_SCALES: Record<string, { month: IncomeScale; year: IncomeScale }> = {
+  USD: MAJOR_CURRENCY_SCALE,
+  EUR: MAJOR_CURRENCY_SCALE,
+  GBP: MAJOR_CURRENCY_SCALE,
+  RUB: {
+    month: { max: 1_500_000, step: 10_000 },
+    year: { max: 18_000_000, step: 50_000 },
+  },
+};
+
+/** The range for the selected currency and period. An unknown currency takes the major
+ *  currencies' scale and an unknown period the monthly one, so neither can put NaN into a
+ *  slider's attributes. */
+export function incomeScale(currency: string, period: string): IncomeScale {
+  const scales = INCOME_SCALES[currency] ?? MAJOR_CURRENCY_SCALE;
+  return period === 'year' ? scales.year : scales.month;
 }

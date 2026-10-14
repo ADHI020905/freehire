@@ -9,7 +9,7 @@
   //
   // Each slider yields one exact integer, not a range: the screening answer holds one
   // number, the jobs filter's salary floor takes one number, and an ATS form asks for one.
-  import { INCOME_CURRENCIES, INCOME_PERIODS, INCOME_STEP, incomeMax } from '$lib/surveyOptions';
+  import { INCOME_CURRENCIES, INCOME_PERIODS, incomeScale } from '$lib/surveyOptions';
 
   interface Props {
     currentIncome: number | null;
@@ -33,15 +33,16 @@
     onPeriodChange,
   }: Props = $props();
 
-  const max = $derived(incomeMax(period));
+  const scale = $derived(incomeScale(currency, period));
 
   // An unanswered slider rests at the bottom without that resting position counting as an
-  // answer — the page tracks answered-ness separately, and only a slider the candidate
-  // actually moved is sent.
+  // answer. Zero is the same non-answer — the save drops it, as both endpoints reject it — so
+  // it reads "Not saying" too, which also makes dragging back to the start the way to take an
+  // answer back.
   function amountLabel(amount: number | null): string {
-    if (amount === null) return 'Not saying';
+    if (amount === null || amount <= 0) return 'Not saying';
     const formatted = amount.toLocaleString();
-    return amount >= max ? `${formatted}+ ${currency}` : `${formatted} ${currency}`;
+    return amount >= scale.max ? `${formatted}+ ${currency}` : `${formatted} ${currency}`;
   }
 </script>
 
@@ -84,8 +85,8 @@
   <input
     type="range"
     min="0"
-    {max}
-    step={INCOME_STEP}
+    max={scale.max}
+    step={scale.step}
     value={currentIncome ?? 0}
     oninput={(e) => onCurrentIncomeChange(e.currentTarget.valueAsNumber)}
     aria-label="What you earn now"
@@ -102,8 +103,8 @@
   <input
     type="range"
     min="0"
-    {max}
-    step={INCOME_STEP}
+    max={scale.max}
+    step={scale.step}
     value={desiredSalary ?? 0}
     oninput={(e) => onDesiredSalaryChange(e.currentTarget.valueAsNumber)}
     aria-label="What you're looking for"

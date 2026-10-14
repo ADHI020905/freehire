@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  INCOME_MAX_MONTHLY,
-  INCOME_MAX_YEARLY,
+  INCOME_CURRENCIES,
   INCOME_PERIODS,
-  INCOME_STEP,
   JOB_CHALLENGE_OPTIONS,
   JOB_CHALLENGE_OTHER,
   JOB_SEARCH_STAGE_OPTIONS,
-  incomeMax,
+  incomeScale,
 } from './surveyOptions';
 
 // These values are validated server-side against internal/dict/vocab, and anything outside
@@ -49,20 +47,28 @@ describe('the option lists are well-formed', () => {
   });
 });
 
-describe('incomeMax', () => {
+describe('incomeScale', () => {
   it('scales the ceiling with the period', () => {
-    expect(incomeMax('year')).toBe(INCOME_MAX_YEARLY);
-    expect(incomeMax('month')).toBe(INCOME_MAX_MONTHLY);
+    expect(incomeScale('USD', 'year').max).toBeGreaterThan(incomeScale('USD', 'month').max);
   });
 
-  // Not a fallback worth thinking about — but an unknown period must not yield NaN or
-  // Infinity into a slider's max attribute.
-  it('falls back to the monthly ceiling for anything else', () => {
-    expect(incomeMax('fortnight')).toBe(INCOME_MAX_MONTHLY);
+  // One scale for every currency topped a ruble salary out at 30,000 a month.
+  it('gives the ruble a range sized to the ruble', () => {
+    expect(incomeScale('RUB', 'month').max).toBeGreaterThanOrEqual(1_000_000);
   });
 
-  it('keeps both ceilings a whole number of steps, so the top stop is reachable', () => {
-    expect(INCOME_MAX_MONTHLY % INCOME_STEP).toBe(0);
-    expect(INCOME_MAX_YEARLY % INCOME_STEP).toBe(0);
+  // Not a fallback worth thinking about — but an unknown value must not yield NaN or
+  // Infinity into a slider's attributes.
+  it('falls back to the major-currency monthly scale for anything else', () => {
+    expect(incomeScale('JPY', 'fortnight')).toEqual(incomeScale('USD', 'month'));
+  });
+
+  it('keeps every ceiling a whole number of steps, so the top stop is reachable', () => {
+    for (const c of INCOME_CURRENCIES) {
+      for (const p of INCOME_PERIODS) {
+        const { max, step } = incomeScale(c.value, p.value);
+        expect(max % step).toBe(0);
+      }
+    }
   });
 });
