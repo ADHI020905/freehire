@@ -60,7 +60,7 @@
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@scalar/api-reference": "1.69.2",
-    "@scalar/server-side-rendering": "0.1.49",
+    "@scalar/server-side-rendering": "0.1.58",
     "@scalar/types": "0.22.4",
     "@sentry/sveltekit": "^11.4.0",
     "easymde": "^2.21.0",
