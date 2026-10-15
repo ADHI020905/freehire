@@ -1,0 +1,127 @@
+{
+ "success": true,
+ "meta": {
+  "from": 1,
+  "to": 3,
+  "per_page": 50,
+  "current_page": 1,
+  "has_more_pages": false,
+  "total": 3,
+  "total_without_params": 3
+ },
+ "results": [
+  {
+   "id": 2886,
+   "foreign_id": 7316,
+   "title": "Разработчик Fullstack Senior (Python, Vue.js)",
+   "location": "Россия",
+   "is_internship": false,
+   "direction": {
+    "foreign_id": 23,
+    "name": "Корпоративные IT-системы"
+   },
+   "speciality": {
+    "foreign_id": 15962,
+    "name": "Fullstack"
+   },
+   "work_formats": [
+    {
+     "foreign_id": 16108,
+     "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно",
+     "pivot": {
+      "vacancy_foreign_id": 7316,
+      "work_format_foreign_id": 16108
+     }
+    }
+   ],
+   "technologies": [
+    {
+     "foreign_id": 34,
+     "name": "Python",
+     "pivot": {
+      "vacancy_id": 7316,
+      "technology_id": 34
+     }
+    },
+    {
+     "foreign_id": 15995,
+     "name": "Vue.js",
+     "pivot": {
+      "vacancy_id": 7316,
+      "technology_id": 15995
+     }
+    }
+   ]
+  },
+  {
+   "id": 2921,
+   "foreign_id": 7378,
+   "title": "Главный Kotlin разработчик",
+   "location": null,
+   "is_internship": false,
+   "direction": {
+    "foreign_id": 23,
+    "name": "Корпоративные IT-системы"
+   },
+   "speciality": {
+    "foreign_id": 15961,
+    "name": "Backend"
+   },
+   "work_formats": [
+    {
+     "foreign_id": 16108,
+     "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно",
+     "pivot": {
+      "vacancy_foreign_id": 7378,
+      "work_format_foreign_id": 16108
+     }
+    }
+   ],
+   "technologies": [
+    {
+     "foreign_id": 32,
+     "name": "Kotlin",
+     "pivot": {
+      "vacancy_id": 7378,
+      "technology_id": 32
+     }
+    }
+   ]
+  },
+  {
+   "id": 3085,
+   "foreign_id": 7669,
+   "title": "Главный разработчик 1С",
+   "location": null,
+   "is_internship": false,
+   "direction": {
+    "foreign_id": 15954,
+    "name": "Информационная безопасность"
+   },
+   "speciality": {
+    "foreign_id": 16114,
+    "name": "1C"
+   },
+   "work_formats": [
+    {
+     "foreign_id": 16108,
+     "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно",
+     "pivot": {
+      "vacancy_foreign_id": 7669,
+      "work_format_foreign_id": 16108
+     }
+    }
+   ],
+   "technologies": [
+    {
+     "foreign_id": 25,
+     "name": "1С",
+     "pivot": {
+      "vacancy_id": 7669,
+      "technology_id": 25
+     }
+    }
+   ]
+  }
+ ]
+}

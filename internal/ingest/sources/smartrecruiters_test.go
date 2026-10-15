@@ -86,6 +86,28 @@ func (r *routedHTTP) GetJSONResolved(_ context.Context, url string, v any) (stri
 	return url, r.decode(url, json.Unmarshal, v)
 }
 
+// GetHTMLResolved is the HTML counterpart of GetJSONResolved: a request whose URL a
+// routeRedirect declared lands on the declared final URL with an empty page, the shape of a
+// platform that answers "no such posting" by redirecting to its listing; any other request
+// is GetHTML, reporting the requested URL as final.
+func (r *routedHTTP) GetHTMLResolved(ctx context.Context, url string) (*html.Node, string, error) {
+	r.mu.Lock()
+	final, redirected := "", false
+	for _, rd := range r.redirects {
+		if strings.Contains(url, rd.match) {
+			final, redirected = rd.final, true
+			break
+		}
+	}
+	r.mu.Unlock()
+	if redirected {
+		root, err := html.Parse(strings.NewReader("<html><body></body></html>"))
+		return root, final, err
+	}
+	root, err := r.GetHTML(ctx, url)
+	return root, url, err
+}
+
 func (r *routedHTTP) GetXML(_ context.Context, url string, v any) error {
 	return r.decode(url, xml.Unmarshal, v)
 }

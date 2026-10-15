@@ -436,6 +436,11 @@ func All(c HTTPClient) map[string]Source {
 		NewMTS(c),
 		NewVK(c),
 		NewTwoGIS(c),
+		// Kaspersky: no public API; the listing's RSC flight carries the structured fields
+		// and the posting page the body. See kaspersky.go.
+		NewKaspersky(c),
+		// Magnit Tech: the retail group's IT arm, a keyless JSON API (list → detail).
+		NewMagnit(c),
 	)
 	// usajobs, reed, whatjobs and adzuna are the keyed sources: each needs a credential read from
 	// the environment, never from a board file. The credential gates the CRAWL registry only — a
