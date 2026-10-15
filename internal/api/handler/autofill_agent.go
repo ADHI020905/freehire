@@ -39,6 +39,11 @@ func (h *autofillHandlers) RunAgentAutofill(c *fiber.Ctx) error {
 		return err
 	}
 
+	model, err := h.llm.bind(c.UserContext(), userID, llm.Feature(tagAutofill))
+	if err != nil {
+		return err
+	}
+
 	caller := h.browserTools.NewCaller(userID)
 	defer caller.Close()
 
@@ -46,7 +51,7 @@ func (h *autofillHandlers) RunAgentAutofill(c *fiber.Ctx) error {
 		c.Context(),
 		caller,
 		autofillagent.NewJevPlanner(
-			autofillagent.LLMPlanner{Client: h.llm.bind(c.Context(), userID, llm.Feature(tagAutofill))},
+			autofillagent.LLMPlanner{Client: model},
 			h.typesafeAPIKey,
 		),
 		autofillagent.Profile(profile.Fields()),

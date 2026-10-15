@@ -53,6 +53,17 @@ func (c Config) decide(tier Tier, f Feature, used int, alreadyCharged bool, now 
 	allowance := c.Allowance(tier, f)
 	d.Limit, d.Unlimited = allowance.Limit, allowance.Unlimited
 
+	// An unpaid tier is refused before anything else is asked, including whether this
+	// reference was charged before. Free gets no metered feature — a product invariant, not
+	// an allowance that happens to be zero — so no configuration, no environment variable
+	// and no ledger row may reopen one. It outranks the already-charged branch below on
+	// purpose: a reference a subscriber paid for while subscribed is still a model call when
+	// it is recomputed, and a lapsed subscription does not keep buying them. The decision's
+	// other fields stay populated so the refusal renders with the same body as any other.
+	if !tier.Paid() {
+		return d
+	}
+
 	// A reference already paid for is always allowed and never charged again. This comes
 	// first because it outranks every ceiling: a recompute, a retry and a reconnect are
 	// the same work the user has already been billed for, and refusing one would charge

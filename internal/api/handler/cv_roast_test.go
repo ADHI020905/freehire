@@ -451,6 +451,7 @@ func TestRoastCV_IsMountedPublicAndLimited(t *testing.T) {
 		return fiber.NewError(fiber.StatusUnauthorized, "auth middleware ran")
 	}
 	h.register(app.Group("/api/v1"), middleware{
+		paidAI:    markPaidAI,
 		cookie:    refuse,
 		key:       refuse,
 		throttler: newOneShotThrottler(),

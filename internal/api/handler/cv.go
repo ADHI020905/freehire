@@ -210,8 +210,8 @@ func (h *cvHandlers) register(api fiber.Router, mw middleware) {
 	// it was already able to drive (edit + context/get/render all accept a key). It creates a
 	// copy of the caller's own CV and spends their own plan allowance — both of which a full-scope
 	// key already does through the fit analysis and the assistant — and never calls the LLM.
-	api.Post("/me/cvs/tailor", mw.key, h.TailorCV)
-	api.Post("/me/cvs/:id/tailor-session", mw.cookie, h.StartTailorSession)
+	api.Post("/me/cvs/tailor", mw.key, mw.paidAI(plan.FeatureTailor), h.TailorCV)
+	api.Post("/me/cvs/:id/tailor-session", mw.cookie, mw.paidAI(plan.FeatureTailor), h.StartTailorSession)
 	// Literal `/base/` before `:id` — otherwise Fiber treats "base" as a CV uuid.
 	api.Post("/me/cvs/base/reseed", mw.cookie, h.ReseedBaseCV)
 	// Rebuild this tailored CV (and the base) from the current seed. Cookie-only:
@@ -227,7 +227,7 @@ func (h *cvHandlers) register(api fiber.Router, mw middleware) {
 	// session, which is not a hole: a session is the account holder's own, and its turn is
 	// metered before this one is.
 	api.Get("/me/cvs/:id/cover-letter", mw.key, h.GetCVCoverLetter)
-	api.Post("/me/cvs/:id/cover-letter", mw.cookie, h.DraftCVCoverLetter)
+	api.Post("/me/cvs/:id/cover-letter", mw.cookie, mw.paidAI(plan.FeatureCoverLetter), h.DraftCVCoverLetter)
 	// The streaming twin of that POST, and what the workspace actually calls. The chain is
 	// three model calls in series and takes minutes; a proxy closes a silent response at
 	// sixty seconds, so the one-shot POST reached production only as a 504. The one-shot
@@ -238,7 +238,7 @@ func (h *cvHandlers) register(api fiber.Router, mw middleware) {
 	// would not survive a drafting GET. The client reads the body with fetch rather than
 	// EventSource — EventSource can only GET, and it also hides the status code, which is how
 	// a 402 first reached the workspace disguised as a dropped connection.
-	api.Post("/me/cvs/:id/cover-letter/stream", mw.cookie, h.StreamCVCoverLetter)
+	api.Post("/me/cvs/:id/cover-letter/stream", mw.cookie, mw.paidAI(plan.FeatureCoverLetter), h.StreamCVCoverLetter)
 	// The history of what changed the CV, and the two ways to undo an entry: on its own, or
 	// as the run it belonged to. Cookie-only for the same reason as every other mutation —
 	// the browser is where the candidate is watching this happen, and the tailoring agent

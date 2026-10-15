@@ -134,19 +134,20 @@ type tierAllowance struct {
 // auto-apply needs the third shape: a REAL daily ceiling on pro, unlimited above it. Bolting
 // a `proDaily` beside `proFairUse` would have left two fields whose interaction nobody could
 // read from the call site.
+//
+// There is no free allowance to configure. Free gets no metered feature at all — a product
+// invariant rather than a number (see decide) — and a field for it would be a lever that
+// could only ever be pulled the wrong way.
 type featureConfig struct {
-	free    tierAllowance
 	pro     tierAllowance
 	ultra   tierAllowance
 	enforce bool
 }
 
-// of returns this feature's allowance for one tier. An unknown tier allows nothing, for the
-// same reason an unknown feature does.
+// of returns this feature's allowance for one tier. Free and an unknown tier allow nothing:
+// free by product decision, an unknown tier for the same reason an unknown feature does.
 func (fc featureConfig) of(tier Tier) tierAllowance {
 	switch tier {
-	case TierFree:
-		return fc.free
 	case TierPro:
 		return fc.pro
 	case TierUltra:
@@ -170,40 +171,34 @@ type Config struct {
 
 // DefaultConfig is the configuration the change ships with.
 //
-// The free numbers sit a little above the 90th percentile of measured behaviour, so an
-// ordinary day never meets a wall and a deliberate evening of editing does. The fair-use
-// guards are set roughly twenty times higher: they exist to stop a script from draining
-// the gateway on one subscription, not to bound a person.
+// The fair-use guards are set roughly twenty times above measured behaviour: they exist to
+// stop a script from draining the gateway on one subscription, not to bound a person.
 //
 // Every metered AI feature is subscription-only: free gets none of it, and enforcement is
-// ON from the start — a zero allowance needs no shadow run to justify refusing it, unlike
-// the pro/ultra numbers themselves, which are still the unverified reading of 101 users
-// over 23 days under no paywall at all. PLAN_FREE_DAILY_<FEATURE> (env.go) is the lever
-// that reopens a free allowance for one feature without a deploy, if that is ever wanted;
-// nothing here forecloses it.
+// ON from the start — refusing free needs no shadow run to justify it, unlike the pro/ultra
+// numbers themselves, which are still the unverified reading of 101 users over 23 days
+// under no paywall at all. Free is not a number here at all: there is no free allowance to
+// set, by configuration or by environment, and `decide` refuses an unpaid tier before it
+// reads any allowance.
 func DefaultConfig() Config {
 	return Config{
 		features: map[Feature]featureConfig{
 			FeatureTailor: {
-				free:    tierAllowance{},
 				pro:     tierAllowance{daily: 40, unlimited: true},
 				ultra:   tierAllowance{daily: 120, unlimited: true},
 				enforce: true,
 			},
 			FeatureFit: {
-				free:    tierAllowance{},
 				pro:     tierAllowance{daily: 60, unlimited: true},
 				ultra:   tierAllowance{daily: 180, unlimited: true},
 				enforce: true,
 			},
 			FeatureAssistant: {
-				free:    tierAllowance{},
 				pro:     tierAllowance{daily: 200, unlimited: true},
 				ultra:   tierAllowance{daily: 600, unlimited: true},
 				enforce: true,
 			},
 			FeatureDictation: {
-				free:    tierAllowance{},
 				pro:     tierAllowance{daily: 200, unlimited: true},
 				ultra:   tierAllowance{daily: 600, unlimited: true},
 				enforce: true,
@@ -214,7 +209,6 @@ func DefaultConfig() Config {
 			// says nothing about free, where the number is zero by product decision rather
 			// than a guess to be read back from usage.
 			FeatureCoverLetter: {
-				free:    tierAllowance{},
 				pro:     tierAllowance{daily: 60, unlimited: true},
 				ultra:   tierAllowance{daily: 180, unlimited: true},
 				enforce: true,
@@ -226,7 +220,6 @@ func DefaultConfig() Config {
 			// HOST (each attempt is a browser) rather than a price, and there is no usage
 			// history to set it from.
 			FeatureAutoApply: {
-				free:    tierAllowance{},
 				pro:     tierAllowance{daily: 3},
 				ultra:   tierAllowance{daily: 100, unlimited: true},
 				enforce: true,
@@ -257,19 +250,20 @@ func (c Config) Enforcing() Config {
 	return c.with(func(_ Feature, fc *featureConfig) { fc.enforce = true })
 }
 
-// WithFreeDaily returns this configuration with one feature's free allowance set to n.
-func (c Config) WithFreeDaily(f Feature, n int) Config {
+// WithProCeiling returns this configuration with one feature's pro allowance turned into a
+// real daily ceiling of n — the shape auto-apply ships with, applied to any feature.
+//
+// It exists for tests. The ledger's mechanism (idempotency, the day rollover, the boundary
+// refusal, the tailoring session's bounds) needs an allowance somebody can consume partway
+// into, and since free gets nothing the only tier left to give one is a paid one. Nothing
+// in production calls it: the shipped numbers live in DefaultConfig and move by environment.
+func (c Config) WithProCeiling(f Feature, n int) Config {
 	return c.with(func(k Feature, fc *featureConfig) {
 		if k == f {
-			fc.free.daily = n
+			fc.pro = tierAllowance{daily: n}
 		}
 	})
 }
-
-// FreeDaily is the free plan's daily allowance for a feature. An unconfigured feature
-// allows nothing rather than everything: a surface somebody forgot to configure should
-// show up as refused in a shadow run, not as free in a bill.
-func (c Config) FreeDaily(f Feature) int { return c.features[f].free.daily }
 
 // Enforced reports whether a refusal for this feature actually refuses. False is shadow
 // mode: the consumption is recorded and reported, and the caller is allowed through.

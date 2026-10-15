@@ -11,6 +11,7 @@ export const messages = defineMessages(
     reRunReview: 'Re-run AI review',
     reviewing: 'Reviewing…',
     reviewUnavailable: 'AI review is not available right now.',
+    reviewNeedsPlan: 'AI review is part of a paid plan.',
     loadError: "Couldn't load the report.",
     noCv: {
       title: 'Add your CV to score its ATS readiness',
@@ -27,6 +28,7 @@ export const messages = defineMessages(
       reRunReview: 'Запустить AI-проверку повторно',
       reviewing: 'Проверяем…',
       reviewUnavailable: 'AI-проверка сейчас недоступна.',
+      reviewNeedsPlan: 'AI-проверка входит в платный план.',
       loadError: 'Не удалось загрузить отчёт.',
       noCv: {
         title: 'Добавьте резюме, чтобы оценить его готовность для ATS',

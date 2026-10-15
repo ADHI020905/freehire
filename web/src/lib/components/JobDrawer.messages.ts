@@ -107,6 +107,7 @@ export const messages = defineMessages(
     errors: {
       loadEmails: 'Failed to load emails.',
       searchMail: 'Could not search your mail right now.',
+      searchMailNeedsPlan: 'Finding this application in your mail is an AI feature, part of a paid plan.',
       saveAnswer: 'Could not save your answer.',
     },
   },
@@ -208,6 +209,7 @@ export const messages = defineMessages(
       errors: {
         loadEmails: 'Не удалось загрузить письма.',
         searchMail: 'Не удалось выполнить поиск в почте сейчас.',
+        searchMailNeedsPlan: 'Поиск этого отклика в почте — AI-функция, она входит в платный план.',
         saveAnswer: 'Не удалось сохранить ваш ответ.',
       },
     },

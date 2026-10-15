@@ -101,11 +101,11 @@ func seedBankedCareer(t *testing.T, queries *db.Queries, userID int64) {
 	}
 }
 
-// fitFreeDailyForTests is generous on purpose: fit analysis's free allowance is 0 by
-// default now (subscription-only), and fitAPI is shared across several subtests run
+// fitProDailyForTests is the real daily ceiling these fixtures pin on the pro plan, and it
+// is generous on purpose: free gets no fit analysis at all, and fitAPI is shared across several subtests run
 // against the SAME seeded user, so the day's counter accumulates real consumptions across
 // all of them rather than resetting per subtest.
-const fitFreeDailyForTests = 20
+const fitProDailyForTests = 20
 
 func fitAPI(pool *pgxpool.Pool, queries *db.Queries, iss *auth.Issuer, store *resume.Store, an *matchanalysis.Analyzer) *matchHandlers {
 	return &matchHandlers{
@@ -113,7 +113,7 @@ func fitAPI(pool *pgxpool.Pool, queries *db.Queries, iss *auth.Issuer, store *re
 		userProfile: userprofile.New(ownedProfile()),
 		resume:      store, matchAnalysis: an,
 		fit: fitanalysis.New(queries,
-			plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureFit, fitFreeDailyForTests)), an),
+			plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureFit, fitProDailyForTests)), an),
 	}
 }
 
@@ -127,6 +127,7 @@ func TestMatchAnalysisEndpoints(t *testing.T) {
 		`INSERT INTO users (email) VALUES ('fit@example.test') RETURNING id`).Scan(&userID); err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
+	makePro(t, pool, userID) // fit analysis is a paid feature
 	if err := pool.QueryRow(ctx,
 		`INSERT INTO jobs (source, external_id, url, title, description, company_slug, public_slug, skills, content_hash)
 		 VALUES ('test','f1','http://e.test','Senior Go Engineer','Build backends in Go.',
@@ -176,7 +177,7 @@ func TestMatchAnalysisEndpoints(t *testing.T) {
 		app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 		g := auth.RequireAuth(iss, testVersions)
 		app.Get("/api/v1/jobs/:slug/fit", g, h.GetMatchAnalysis)
-		app.Post("/api/v1/jobs/:slug/fit", g, h.PostMatchAnalysis)
+		app.Post("/api/v1/jobs/:slug/fit", g, markPaidAI(plan.FeatureFit), h.PostMatchAnalysis)
 		return app
 	}
 
@@ -268,6 +269,7 @@ func TestMatchAnalysisAllowance(t *testing.T) {
 		if err := pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, email).Scan(&id); err != nil {
 			t.Fatalf("seed user: %v", err)
 		}
+		makePro(t, pool, id) // fit analysis is a paid feature
 		tok, err := iss.Issue(id, testTokenVersion)
 		if err != nil {
 			t.Fatalf("issue token: %v", err)
@@ -314,13 +316,13 @@ func TestMatchAnalysisAllowance(t *testing.T) {
 			userProfile: userprofile.New(ownedProfile()),
 			resume:      store, matchAnalysis: an,
 			fit: fitanalysis.New(queries,
-				plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureFit, grant)), an),
+				plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureFit, grant)), an),
 		}
 		app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 		g := auth.RequireAuth(iss, testVersions)
 		app.Get("/api/v1/jobs/:slug/fit", g, h.GetMatchAnalysis)
-		app.Post("/api/v1/jobs/:slug/fit", g, h.PostMatchAnalysis)
-		app.Get("/api/v1/jobs/:slug/fit/stream", g, h.StreamMatchAnalysis)
+		app.Post("/api/v1/jobs/:slug/fit", g, markPaidAI(plan.FeatureFit), h.PostMatchAnalysis)
+		app.Get("/api/v1/jobs/:slug/fit/stream", g, markPaidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 		return app
 	}
 	postFit := func(t *testing.T, app *fiber.App, slug, tok string) (int, fitBody) {

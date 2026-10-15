@@ -47,7 +47,7 @@ func (h *autofillHandlers) register(api fiber.Router, mw middleware) {
 	// wire. keyAuth admits the cookie too, same as every other mw.key route — the
 	// handler itself refuses anything but the extension's own Bearer session JWT,
 	// because unlike a read this one writes into a live form.
-	api.Post("/me/autofill/run", mw.key, h.RunAgentAutofill)
+	api.Post("/me/autofill/run", mw.key, mw.paidAI(unmeteredAI), h.RunAgentAutofill)
 }
 
 // autofillProfile assembles a user's canonical autofill fields via internal/api/candidateprofile.

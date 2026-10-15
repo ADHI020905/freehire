@@ -35,12 +35,13 @@ import (
 	"github.com/strelov1/freehire/internal/platform/db"
 )
 
-// testTailorFreeDaily is the free tailoring allowance every fixture in this file pins via
-// plan.Config.WithFreeDaily — tailoring's real default is 0 (subscription-only), and a
-// vacuous zero-limit fixture cannot tell "spent" from "never had any". One is enough: no
+// testTailorProDaily is the real daily tailoring ceiling every fixture in this file pins on
+// the PRO plan via plan.Config.WithProCeiling — free gets no tailoring at all, and pro's
+// shipped allowance is unlimited behind a fair-use guard, so neither can tell "spent" from
+// "never had any". One is enough: no
 // test here bootstraps more than one vacancy in a run (a reload of the SAME vacancy is
 // idempotent and charges once).
-const testTailorFreeDaily = 1
+const testTailorProDaily = 1
 
 // newTailorAPI builds a handler wired for the tailoring endpoints and truncates the tables.
 func newTailorAPI(t *testing.T) (*cvHandlers, *auth.Issuer, *pgxpool.Pool) {
@@ -52,7 +53,7 @@ func newTailorAPI(t *testing.T) (*cvHandlers, *auth.Issuer, *pgxpool.Pool) {
 		t.Fatalf("truncate: %v", err)
 	}
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	plans := plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureTailor, testTailorFreeDaily))
+	plans := plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureTailor, testTailorProDaily))
 	bank := experience.NewStore(experience.NewQueriesRepository(queries))
 	resumeStore := resume.New(nil, resume.NewQueriesRepository(queries))
 	h := &cvHandlers{queries: queries, jobReader: queries,
@@ -88,7 +89,7 @@ func buildTailorApp(h *cvHandlers, iss *auth.Issuer) *fiber.App {
 	// very credential the flow issues.
 	keyAuth := auth.RequireAuthOrScopedKey(iss, testVersions, apiKeys{h.queries}, auth.ScopeCV)
 	app.Get("/api/v1/me/cvs/:id", keyAuth, h.GetCV)
-	app.Post("/api/v1/me/cvs/tailor", saved, h.TailorCV)
+	app.Post("/api/v1/me/cvs/tailor", saved, markPaidAI(plan.FeatureTailor), h.TailorCV)
 	app.Patch("/api/v1/me/cvs/:id", keyAuth, h.PatchCV)
 	app.Get("/api/v1/me/cvs/:id/tailor-context", keyAuth, h.TailorContext)
 	return app
@@ -172,7 +173,7 @@ func TestTailorCVBootstrap(t *testing.T) {
 	h, iss, pool := newTailorAPI(t)
 	app := buildTailorApp(h, iss)
 
-	user := seedAccount(t, pool, "tailor@example.test", true)
+	user := seedSubscriber(t, pool, "tailor@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 	jobID := seedJobSlug(t, pool, "backend-eng")
 
@@ -307,7 +308,7 @@ func TestTailorCVBootstrap_HealsMissingSave(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "tailor-heal@example.test", true)
+	user := seedSubscriber(t, pool, "tailor-heal@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 	jobID := seedJobSlug(t, pool, "heal-eng")
 	seedFreshResume(t, pool, user)
@@ -397,7 +398,7 @@ func TestTailorCVBootstrap_SaveFailureStillSucceeds(t *testing.T) {
 	h.jobs = boomBoarder{}
 	app := buildTailorApp(h, iss)
 
-	user := seedAccount(t, pool, "tailor-save-fail@example.test", true)
+	user := seedSubscriber(t, pool, "tailor-save-fail@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 	jobID := seedJobSlug(t, pool, "fail-eng")
 	seedFreshResume(t, pool, user)
@@ -431,7 +432,7 @@ func TestTailorCVOutOfCredits(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "poor@example.test", true)
+	user := seedSubscriber(t, pool, "poor@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 	jobID := seedJobSlug(t, pool, "backend-eng")
 	seedAnalysis(t, h, user, jobID)
@@ -442,7 +443,7 @@ func TestTailorCVOutOfCredits(t *testing.T) {
 	// who already opened today's sessions would be in.
 	if _, err := pool.Exec(ctx,
 		`INSERT INTO usage_daily (user_id, feature, day, used) VALUES ($1, 'tailor', CURRENT_DATE, $2)`,
-		user, testTailorFreeDaily); err != nil {
+		user, testTailorProDaily); err != nil {
 		t.Fatalf("seed a spent allowance: %v", err)
 	}
 
@@ -463,8 +464,8 @@ func TestPatchCVViaKey(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	owner := seedAccount(t, pool, "owner@example.test", true)
-	other := seedAccount(t, pool, "other@example.test", true)
+	owner := seedSubscriber(t, pool, "owner@example.test", true)
+	other := seedSubscriber(t, pool, "other@example.test", true)
 
 	base, err := h.cvStore.Create(ctx, owner, "General", cv.DefaultTemplateID, cv.Document{
 		Header:     cv.Header{FullName: "Ada Lovelace", Email: "ada@x.com", Phone: "+1 415 555 0000"},
@@ -586,7 +587,7 @@ func TestTailorContextSplit(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "ctx@example.test", true)
+	user := seedSubscriber(t, pool, "ctx@example.test", true)
 	jobID := seedJobSlug(t, pool, "backend-eng")
 	seedAnalysis(t, h, user, jobID)
 
@@ -633,7 +634,7 @@ func TestTailorContextSplit(t *testing.T) {
 func TestCVSessionAndTailoredList(t *testing.T) {
 	h, _, pool := newTailorAPI(t)
 	ctx := context.Background()
-	user := seedAccount(t, pool, "sess@example.test", true)
+	user := seedSubscriber(t, pool, "sess@example.test", true)
 	jobID := seedJobSlug(t, pool, "backend-eng")
 
 	// A base CV (job_id NULL) must NOT appear in the tailored list.
@@ -667,7 +668,7 @@ func TestCVSessionAndTailoredList(t *testing.T) {
 		t.Errorf("tailored item = %+v, want slug backend-eng + session sess-xyz", items[0])
 	}
 
-	other := seedAccount(t, pool, "other-sess@example.test", true)
+	other := seedSubscriber(t, pool, "other-sess@example.test", true)
 	if err := h.cvStore.SetSession(ctx, tailored.ID, other, "hijack"); !errors.Is(err, cv.ErrNotFound) {
 		t.Errorf("foreign set-session err = %v, want ErrNotFound", err)
 	}
@@ -703,7 +704,7 @@ func TestTailorCVBootstrapIsIdempotentPerVacancy(t *testing.T) {
 	h, iss, pool := newTailorAPI(t)
 	app := buildTailorApp(h, iss)
 
-	user := seedAccount(t, pool, "tailor-reload@example.test", true)
+	user := seedSubscriber(t, pool, "tailor-reload@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 	jobID := seedJobSlug(t, pool, "backend-eng")
 	seedAnalysis(t, h, user, jobID)
@@ -776,7 +777,7 @@ func TestTailorCVBootstrap_ReseedsStaleBaseAfterUpload(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "stale-base@example.test", true)
+	user := seedSubscriber(t, pool, "stale-base@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	// Old seed stamp + base content that predates the later upload.
@@ -862,7 +863,7 @@ func TestTailorCVBootstrap_PendingStructureDoesNotBlankHeader(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "pending-struct@example.test", true)
+	user := seedSubscriber(t, pool, "pending-struct@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-2 * time.Hour).Truncate(time.Microsecond)
@@ -931,7 +932,7 @@ func TestTailorCVBootstrap_IdentityOnlyCurrentStructureDoesNotBlankBase(t *testi
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "identity-only-current@example.test", true)
+	user := seedSubscriber(t, pool, "identity-only-current@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-2 * time.Hour).Truncate(time.Microsecond)
@@ -983,7 +984,7 @@ func TestTailorCVBootstrap_KeepsBaseEditedAfterUpload(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "edited-base@example.test", true)
+	user := seedSubscriber(t, pool, "edited-base@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	uploadAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
@@ -1037,7 +1038,7 @@ func TestTailorCVBootstrap_ProvisionalContactsFillEmptyHeader(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "provisional-header@example.test", true)
+	user := seedSubscriber(t, pool, "provisional-header@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-2 * time.Hour).Truncate(time.Microsecond)
@@ -1105,7 +1106,7 @@ func TestGetCV_HealsEmptyTailoredHeaderFromProvisional(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "heal-get@example.test", true)
+	user := seedSubscriber(t, pool, "heal-get@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
@@ -1163,7 +1164,7 @@ func TestGetCV_SecondHealDoesNotWriteRevision(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "heal-once@example.test", true)
+	user := seedSubscriber(t, pool, "heal-once@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
@@ -1227,7 +1228,7 @@ func TestListCVsAndPDFDoNotHealHeader(t *testing.T) {
 	app.Get("/api/v1/me/cvs/:id/pdf", saved, h.RenderCVPDF)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "heal-list-pdf@example.test", true)
+	user := seedSubscriber(t, pool, "heal-list-pdf@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
@@ -1285,7 +1286,7 @@ func TestGetCV_PartialHeaderKeepsNameFillsEmail(t *testing.T) {
 	app := buildTailorApp(h, iss)
 	ctx := context.Background()
 
-	user := seedAccount(t, pool, "heal-partial@example.test", true)
+	user := seedSubscriber(t, pool, "heal-partial@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 
 	oldAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
@@ -1337,7 +1338,7 @@ func TestTailorCVAlignsSkillSurfaceOnMint(t *testing.T) {
 	h, iss, pool := newTailorAPI(t)
 	app := buildTailorApp(h, iss)
 
-	user := seedAccount(t, pool, "align-mint@example.test", true)
+	user := seedSubscriber(t, pool, "align-mint@example.test", true)
 	tok, _ := iss.Issue(user, testTokenVersion)
 	seedJobSlugDesc(t, pool, "align-mint-job",
 		"We practice infrastructure as code and Terraform daily.")
@@ -1405,5 +1406,15 @@ func mustParseUUID(t *testing.T, s string) uuid.UUID {
 	if err != nil {
 		t.Fatalf("uuid: %v", err)
 	}
+	return id
+}
+
+// seedSubscriber is seedAccount on the pro plan. Tailoring is a paid feature, so a free
+// account is refused before any allowance this file pins is read; every fixture here is
+// about what happens once a candidate may tailor at all.
+func seedSubscriber(t *testing.T, pool *pgxpool.Pool, email string, verified bool) int64 {
+	t.Helper()
+	id := seedAccount(t, pool, email, verified)
+	makePro(t, pool, id)
 	return id
 }

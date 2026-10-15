@@ -72,7 +72,7 @@ func atsAppWith(t *testing.T, repo *fakeProfileRepo, fc facetCounter, store *res
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	g := auth.RequireAuth(iss, testVersions)
 	app.Get("/me/profile/ats-report", g, h.GetATSReport)
-	app.Post("/me/profile/ats-report", g, h.PostATSReport)
+	app.Post("/me/profile/ats-report", g, markPaidAI(unmeteredAI), h.PostATSReport)
 	return app, token
 }
 

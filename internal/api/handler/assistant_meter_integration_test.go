@@ -72,12 +72,12 @@ func usedToday(t *testing.T, pool *pgxpool.Pool, userID int64, feature plan.Feat
 func TestAChatTurnDrawsOnTheAssistantAllowance(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	// The assistant's free allowance is 0 by default now (subscription-only); pinned to 1
+	// Free gets no AI at all, and pro's allowance is unlimited by default; pinned to 1
 	// so the one turn this test posts actually goes through.
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureAssistant, 1)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureAssistant, 1)
 	app := meteredAssistantApp(t, pool, iss, &turnModel{replies: []*llms.ContentChoice{{Content: "hello"}}}, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "turn-charged@example.test", false)
+	userID, token := assistantSubscriber(t, pool, iss, "turn-charged@example.test", false)
 	sessionID := createAssistantSession(t, app, token, assistant.PresetChat)
 
 	if status, _ := postTurn(t, app, sessionID, token, "hi"); status != fiber.StatusOK {
@@ -92,11 +92,11 @@ func TestASpentAssistantAllowanceIs402BeforeTheStreamOpens(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
 	// One message a day, so the second is refused.
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureAssistant, 1)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureAssistant, 1)
 	model := &turnModel{replies: []*llms.ContentChoice{{Content: "first"}, {Content: "second"}}}
 	app := meteredAssistantApp(t, pool, iss, model, cfg)
 
-	_, token := assistantUser(t, pool, iss, "turn-refused@example.test", false)
+	_, token := assistantSubscriber(t, pool, iss, "turn-refused@example.test", false)
 	sessionID := createAssistantSession(t, app, token, assistant.PresetChat)
 
 	if status, _ := postTurn(t, app, sessionID, token, "one"); status != fiber.StatusOK {
@@ -117,20 +117,22 @@ func TestASpentAssistantAllowanceIs402BeforeTheStreamOpens(t *testing.T) {
 	}
 }
 
-func TestATailoringTurnIsBoundedByItsSessionNotTheAssistantAllowance(t *testing.T) {
+func TestATailoringTurnDoesNotDrawOnTheAssistantAllowance(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	// No assistant allowance at all, and a one-turn tailoring ceiling. If tailoring drew on
-	// the assistant allowance the first turn would be refused; it must not be. Tailoring's
-	// own free allowance is pinned to 1 as well, since StartSession below spends it.
+	// An assistant allowance of one, and a one-turn tailoring ceiling. Tailoring turns draw on
+	// no assistant allowance, so two of them leave it untouched — and a paying candidate's
+	// session is not stopped at the turn ceiling either: it binds only an unpaid tier, which
+	// the paid gate keeps from reaching a turn at all. A real tailoring ceiling of 1 is pinned
+	// on the pro plan, since StartSession below spends it.
 	cfg := plan.DefaultConfig().Enforcing().
-		WithFreeDaily(plan.FeatureAssistant, 1).
-		WithFreeDaily(plan.FeatureTailor, 1)
+		WithProCeiling(plan.FeatureAssistant, 1).
+		WithProCeiling(plan.FeatureTailor, 1)
 	cfg.TailorTurnsPerSession = 1
 	replies := []*llms.ContentChoice{{Content: "one"}, {Content: "two"}}
 	app := meteredAssistantApp(t, pool, iss, &turnModel{replies: replies}, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "tailor-ceiling@example.test", false)
+	userID, token := assistantSubscriber(t, pool, iss, "tailor-ceiling@example.test", false)
 	// Created through the store, not through POST /assistant/sessions: that endpoint mints
 	// only the presets that bind to nothing, and a tailoring session binds to a CV. The
 	// tailoring bootstrap is what creates one in production, and this is the state it
@@ -154,26 +156,24 @@ func TestATailoringTurnIsBoundedByItsSessionNotTheAssistantAllowance(t *testing.
 		t.Errorf("a tailoring turn consumed %d of the assistant allowance, want 0", got)
 	}
 
-	// The ceiling is one turn, and it has been used.
-	status, body := postTurn(t, app, sessionID, token, "second")
-	if status != fiber.StatusPaymentRequired {
-		t.Fatalf("second tailoring turn status = %d, want 402 at the ceiling", status)
+	if status, _ := postTurn(t, app, sessionID, token, "second"); status != fiber.StatusOK {
+		t.Fatalf("second tailoring turn status = %d, want 200 — a subscriber's session has no turn ceiling", status)
 	}
-	if !strings.Contains(body, string(plan.FeatureTailor)) {
-		t.Errorf("the refusal names the wrong feature: %q — it must send the candidate to their tailoring allowance", body)
+	if got := usedToday(t, pool, userID, plan.FeatureAssistant); got != 0 {
+		t.Errorf("two tailoring turns consumed %d of the assistant allowance, want 0", got)
 	}
 }
 
 func TestAFailedTurnGivesItsAllowanceBack(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	// The assistant's free allowance is 0 by default now; pinned to 1 for the one turn
+	// Free gets no AI at all, and pro's allowance is unlimited by default; pinned to 1 for the one turn
 	// this test posts (which is charged, then released after the model fails).
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureAssistant, 1)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureAssistant, 1)
 	// A model that fails: the turn is charged before the first call and must be refunded.
 	app := meteredAssistantApp(t, pool, iss, &failingModel{}, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "turn-failed@example.test", false)
+	userID, token := assistantSubscriber(t, pool, iss, "turn-failed@example.test", false)
 	sessionID := createAssistantSession(t, app, token, assistant.PresetChat)
 
 	if status, _ := postTurn(t, app, sessionID, token, "hi"); status != fiber.StatusOK {
@@ -199,11 +199,11 @@ func TestATurnRefusedTheSessionSlotGivesItsAllowanceBack(t *testing.T) {
 	defer model.letGo()
 	// Two real turns run here (the one held inside the model, and the one queued behind
 	// it) — the third is refused the session slot before it ever reaches the allowance.
-	// The assistant's free allowance is 0 by default now, so it is pinned to 2 for those.
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureAssistant, 2)
+	// Free gets no AI at all, and pro's allowance is unlimited by default, so it is pinned to 2 for those.
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureAssistant, 2)
 	app := meteredAssistantApp(t, pool, iss, model, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "turn-queue-full@example.test", true)
+	userID, token := assistantSubscriber(t, pool, iss, "turn-queue-full@example.test", true)
 	sessionID := createSession(t, app, token)
 	addr := serveOnSocket(t, app)
 
@@ -247,12 +247,12 @@ func TestATurnRefusedTheSessionSlotGivesItsAllowanceBack(t *testing.T) {
 func TestARetriedTurnIsNotChargedTwice(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	// The assistant's free allowance is 0 by default now; pinned to 1 for the one turn
+	// Free gets no AI at all, and pro's allowance is unlimited by default; pinned to 1 for the one turn
 	// this test posts (the retry that follows must not consume a second).
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureAssistant, 1)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureAssistant, 1)
 	app := meteredAssistantApp(t, pool, iss, &turnModel{replies: []*llms.ContentChoice{{Content: "answer"}}}, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "turn-retried@example.test", false)
+	userID, token := assistantSubscriber(t, pool, iss, "turn-retried@example.test", false)
 	sessionID := createAssistantSession(t, app, token, assistant.PresetChat)
 
 	if status, _ := postTurn(t, app, sessionID, token, "hi"); status != fiber.StatusOK {
@@ -309,4 +309,13 @@ func createAssistantSession(t *testing.T, app *fiber.App, token, preset string) 
 		t.Fatal("create session returned no id")
 	}
 	return body.Data.ID.String()
+}
+
+// assistantSubscriber is assistantUser on the pro plan. These tests are about how a turn
+// draws on an allowance, and free has none to draw on: it is refused before any is read.
+func assistantSubscriber(t *testing.T, pool *pgxpool.Pool, iss *auth.Issuer, email string, beta bool) (int64, string) {
+	t.Helper()
+	id, token := assistantUser(t, pool, iss, email, beta)
+	makePro(t, pool, id)
+	return id, token
 }

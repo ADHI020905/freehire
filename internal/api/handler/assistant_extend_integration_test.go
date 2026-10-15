@@ -42,23 +42,22 @@ func startedTailorSession(t *testing.T, pool *pgxpool.Pool, cfg plan.Config, use
 func TestExtendingASessionBuysMoreTurns(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	// Tailoring's free allowance is 0 by default now (subscription-only); pinned to 2 here
-	// because the test spends it twice on purpose — the session start and the extension —
+	// A real tailoring ceiling of 2 on the pro plan, because the test spends it twice on
+	// purpose — the session start and the extension —
 	// and asserts exactly that count below.
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureTailor, 2)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureTailor, 2)
 	cfg.TailorTurnsPerSession = 1
 	app := meteredAssistantApp(t, pool, iss,
 		&turnModel{replies: []*llms.ContentChoice{{Content: "one"}, {Content: "two"}}}, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "session-extend-http@example.test", false)
+	userID, token := assistantSubscriber(t, pool, iss, "session-extend-http@example.test", false)
 	sessionID := startedTailorSession(t, pool, cfg, userID)
 
-	// Spend the one turn this session's first ceiling allows, then meet the ceiling.
+	// A paying candidate's session runs past the per-session turn ceiling: that ceiling binds
+	// only an unpaid tier, and the paid gate keeps an unpaid one from reaching a turn at all.
+	// Extending still buys a further slot and charges the day's tailoring allowance for it.
 	if status, _ := postTurn(t, app, sessionID, token, "first"); status != fiber.StatusOK {
 		t.Fatalf("first turn status = %d, want 200", status)
-	}
-	if status, _ := postTurn(t, app, sessionID, token, "second"); status != fiber.StatusPaymentRequired {
-		t.Fatalf("second turn status = %d, want 402 at the ceiling", status)
 	}
 
 	if status := postExtend(t, app, sessionID, token); status != fiber.StatusOK {
@@ -67,7 +66,7 @@ func TestExtendingASessionBuysMoreTurns(t *testing.T) {
 	if got := usedToday(t, pool, userID, plan.FeatureTailor); got != 2 {
 		t.Errorf("tailoring allowance used = %d, want 2 (the start plus the extension)", got)
 	}
-	if status, _ := postTurn(t, app, sessionID, token, "third"); status != fiber.StatusOK {
+	if status, _ := postTurn(t, app, sessionID, token, "second"); status != fiber.StatusOK {
 		t.Fatalf("turn after extending status = %d, want 200", status)
 	}
 }
@@ -76,10 +75,10 @@ func TestExtendingIsRefusedWithNoAllowanceLeft(t *testing.T) {
 	pool := startPostgres(t)
 	iss := auth.NewIssuer("test-secret", time.Hour)
 	// One session a day: starting this one spends it, so there is nothing to extend with.
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureTailor, 1)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureTailor, 1)
 	app := meteredAssistantApp(t, pool, iss, &turnModel{}, cfg)
 
-	userID, token := assistantUser(t, pool, iss, "session-extend-broke-http@example.test", false)
+	userID, token := assistantSubscriber(t, pool, iss, "session-extend-broke-http@example.test", false)
 	sessionID := startedTailorSession(t, pool, cfg, userID)
 
 	if status := postExtend(t, app, sessionID, token); status != fiber.StatusPaymentRequired {
@@ -92,7 +91,7 @@ func TestOnlyATailoringSessionCanBeExtended(t *testing.T) {
 	iss := auth.NewIssuer("test-secret", time.Hour)
 	app := meteredAssistantApp(t, pool, iss, &turnModel{}, plan.DefaultConfig().Enforcing())
 
-	_, token := assistantUser(t, pool, iss, "session-extend-chat@example.test", false)
+	_, token := assistantSubscriber(t, pool, iss, "session-extend-chat@example.test", false)
 	sessionID := createAssistantSession(t, app, token, assistant.PresetChat)
 
 	// A chat session is bounded by the daily assistant allowance, and a day cannot be

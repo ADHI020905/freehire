@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/ai/assistant"
+	"github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/candidate/cv"
 	"github.com/strelov1/freehire/internal/dict/skilltag"
 	"github.com/strelov1/freehire/internal/platform/db"
@@ -131,6 +132,13 @@ func (h *assistantHandlers) PostAutoApplyTailor(c *fiber.Ctx) error {
 	if entry.ReviewDecision.Valid {
 		return fiber.NewError(fiber.StatusConflict, "this entry has already been reviewed")
 	}
+	// The paid gate, here rather than as the route's middleware: the user this run spends
+	// for is the entry's OWNER, which the orchestrator's shared secret does not name — it is
+	// known only once the entry is read. A candidate whose subscription lapsed after they
+	// queued the entry gets no unattended tailoring for it.
+	if ok, err := authorizePaidAI(c, entitlementOf(h.plans), userID, plan.FeatureTailor); !ok {
+		return err
+	}
 
 	job, err := h.queries.GetJob(c.Context(), entry.JobID)
 	if err != nil {
@@ -198,8 +206,14 @@ func (h *assistantHandlers) PostAutoApplyTailor(c *fiber.Ctx) error {
 	}
 	defer h.turns.release(sess.ID, slot)
 
-	analysis := h.prepareAutopilotAnalysis(c, sess, job)
-	runner := h.boundRunner(ctx, sess)
+	analysis, err := h.prepareAutopilotAnalysis(c, sess, job)
+	if err != nil {
+		return err
+	}
+	runner, err := h.boundRunner(c.UserContext(), sess)
+	if err != nil {
+		return err
+	}
 	reg := h.registry(sess, uuid.New())
 	system := assistant.SystemPrompt(sess.Preset, h.userLanguage(ctx, userID))
 	noop := func(assistant.Event) {}

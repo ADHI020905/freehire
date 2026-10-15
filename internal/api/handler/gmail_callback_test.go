@@ -127,6 +127,7 @@ func newGmailCallbackApp(t *testing.T) (*fiber.App, string) {
 	iss := auth.NewIssuer(testGmailSecret, time.Hour)
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	h.register(app.Group("/api/v1"), middleware{
+		paidAI:         markPaidAI,
 		cookie:         auth.RequireAuth(iss, testVersions),
 		optionalCookie: auth.OptionalCookieAuth(iss, testVersions),
 		key:            auth.RequireAuthOrKey(iss, testVersions, nil),

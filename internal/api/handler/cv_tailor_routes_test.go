@@ -35,6 +35,7 @@ func TestCVRegister_TailoringEntryPointsTakeAKey(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app := fiber.New()
 			(&cvHandlers{}).register(app.Group("/api/v1"), middleware{
+				paidAI: markPaidAI,
 				key:    namedGate("key"),
 				cvKey:  namedGate("cvKey"),
 				cookie: namedGate("cookie"),
@@ -60,6 +61,7 @@ func TestCVRegister_TailoringEntryPointsTakeAKey(t *testing.T) {
 func TestCVRegister_AuthoringStaysCookieOnly(t *testing.T) {
 	app := fiber.New()
 	(&cvHandlers{}).register(app.Group("/api/v1"), middleware{
+		paidAI: markPaidAI,
 		key:    namedGate("key"),
 		cvKey:  namedGate("cvKey"),
 		cookie: namedGate("cookie"),

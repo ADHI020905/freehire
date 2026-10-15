@@ -79,7 +79,11 @@ func (h *cvHandlers) DraftCVCoverLetter(c *fiber.Ctx) error {
 		return refuse(c, decision)
 	}
 
-	caller := h.llm.caller(c.Context(), userID, llm.Feature(tagCoverLetter))
+	caller, err := h.llm.caller(c.UserContext(), userID, llm.Feature(tagCoverLetter))
+	if err != nil {
+		releaseLetterCharge(h.plans, userID, charge)
+		return err
+	}
 	letter, err := drafter.draft(c.Context(), caller, userID, jobID, coverLetterBand(c))
 	if err != nil || letter == nil {
 		// Every failing path gives the charge back, so it is given back once here rather than

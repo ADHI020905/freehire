@@ -59,6 +59,7 @@ func newJobMatchFixture(t *testing.T, pool *pgxpool.Pool) jobMatchFixture {
 	}
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	h.register(app.Group("/api/v1"), middleware{
+		paidAI: markPaidAI,
 		cookie: auth.RequireAuth(iss, testVersions),
 		key:    auth.RequireAuth(iss, testVersions),
 	})

@@ -87,7 +87,11 @@ func (h *resumeHandlers) PostATSReport(c *fiber.Ctx) error {
 		// asking the model to judge a document it cannot see.
 		return c.JSON(fiber.Map{"data": atsResponse{HasCV: true, Report: report}})
 	}
-	analyzer := h.atsAnalyzer.As(h.llm.caller(c.Context(), userID, llm.Feature(tagATSReview)))
+	caller, err := h.llm.caller(c.UserContext(), userID, llm.Feature(tagATSReview))
+	if err != nil {
+		return err
+	}
+	analyzer := h.atsAnalyzer.As(caller)
 	review, err := analyzer.Analyze(c.Context(), candidate)
 	if err != nil {
 		// Best-effort: log (never the CV text) and serve the deterministic report.

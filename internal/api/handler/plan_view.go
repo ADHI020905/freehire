@@ -60,8 +60,8 @@ func viewDecision(d plan.Decision) allowanceView {
 // them: one clears at midnight, one means they are being throttled, and one means their plan
 // never included this at all.
 //
-// inPlan is that third case, and it is not a nicety. Every metered feature's free allowance
-// is zero (internal/ai/plan.DefaultConfig), so `used >= limit` is satisfied at 0 >= 0 before
+// inPlan is that third case, and it is not a nicety. Free has no allowance for any metered
+// feature (internal/ai/plan.DefaultConfig), so `used >= limit` is satisfied at 0 >= 0 before
 // anybody does anything — a free account that had run no analysis all day was told "You've
 // used today's job analyses", under a reset time at which it would still be zero. Both
 // halves of that sentence were false, and the one action that would have helped — the
@@ -105,9 +105,10 @@ func featureNoun(feature plan.Feature) string {
 }
 
 // planIncludes reports whether the plan behind an allowance gives the caller any of the
-// feature at all. Read off the allowance rather than off the tier: the free figures move by
-// environment variable without a deploy (PLAN_FREE_DAILY_<FEATURE>), so "free" and "gets
-// none of it" are not the same question and were briefly not the same answer.
+// feature at all. Read off the allowance rather than off the tier. Free gets no AI at all
+// and is now refused by the paid gate (paid_ai.go) before any allowance is read, which
+// renders through here with a zero allowance; but a paid tier reads zero too for a feature
+// nobody configured, and "paid" and "gets some of it" are still not the same question.
 func planIncludes(a allowanceView) bool { return a.Unlimited || a.Limit > 0 }
 
 // isRefusal reports whether an error is the meter saying no, as opposed to the meter

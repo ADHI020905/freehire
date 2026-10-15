@@ -68,6 +68,7 @@ func newHarnessInboxFixture(t *testing.T, email string) *harnessInboxFixture {
 	h := newInboxHandlers(queries, pool, nil, nil, "", false, "inbox.freehire.test")
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	h.register(app.Group("/api/v1"), middleware{
+		paidAI: markPaidAI,
 		cookie: auth.RequireAuth(iss, testVersions),
 		key:    auth.RequireAuthOrKey(iss, testVersions, apiKeys{queries}),
 	})

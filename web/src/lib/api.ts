@@ -321,6 +321,14 @@ export class ApiError extends Error {
   }
 }
 
+/** Whether a failure is the server's plan refusal (HTTP 402) rather than a fault. Every model
+ *  call a person can start is paid-only, so a free caller reaching one gets this — and a
+ *  surface that renders it as "unavailable" or "couldn't read" states something false about
+ *  the service or the candidate's own file. Callers show the upgrade path instead. */
+export function isPlanRefusal(e: unknown): boolean {
+  return e instanceof ApiError && e.status === 402;
+}
+
 /** A resource that has permanently moved, carrying the slug it moved TO.
  *
  *  Only raised for a request that opted into `redirect: 'manual'`. Left to the default,

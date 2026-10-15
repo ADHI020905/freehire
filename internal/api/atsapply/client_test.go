@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	aiplan "github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/application/autoapply"
 	"github.com/strelov1/freehire/internal/candidate/experience"
 	"github.com/strelov1/freehire/internal/ingest/applyform"
@@ -209,5 +210,50 @@ func TestDomKindFor_MapsEveryFieldType(t *testing.T) {
 		if got := domKindFor(ft); got != want {
 			t.Errorf("domKindFor(%q) = %q, want %q", ft, got, want)
 		}
+	}
+}
+
+// fakeEntitlement answers the plan question drafting asks, recording that it was asked.
+type fakeEntitlement struct {
+	err   error
+	asked int
+}
+
+func (f *fakeEntitlement) RequirePaid(context.Context, int64) (aiplan.Tier, error) {
+	f.asked++
+	if f.err != nil {
+		return aiplan.TierFree, f.err
+	}
+	return aiplan.TierPro, nil
+}
+
+// A candidate whose subscription lapsed after they queued an entry gets no draft call: the
+// worker asks the plan right before the model, and a free answer comes back as
+// ErrPaymentRequired, which Submit parks with reasonPaidPlanRequired.
+func TestClientResolve_RefusesToDraftForALapsedCandidate(t *testing.T) {
+	fields := []MergedField{{ID: "q1", Label: "Why do you want to work here?", Kind: "textarea", Required: true}}
+	claimed := autoapply.Claimed{Provider: "greenhouse", UserID: 42}
+
+	lapsed := &fakeEntitlement{err: aiplan.ErrPaymentRequired}
+	c := &Client{atoms: &recordingAtomReader{}, entitlement: lapsed}
+	if _, err := c.resolve(context.Background(), claimed, fields, map[string]string{}); !errors.Is(err, aiplan.ErrPaymentRequired) {
+		t.Fatalf("resolve for a lapsed candidate: err = %v, want ErrPaymentRequired", err)
+	}
+	if lapsed.asked != 1 {
+		t.Errorf("the plan was asked %d times, want 1", lapsed.asked)
+	}
+
+	// A plan that could not be read is not a yes: the attempt fails (and retries) rather
+	// than drafting on an entitlement nobody could read.
+	unreadable := &fakeEntitlement{err: errors.New("database is down")}
+	c = &Client{atoms: &recordingAtomReader{}, entitlement: unreadable}
+	if _, err := c.resolve(context.Background(), claimed, fields, map[string]string{}); err == nil || errors.Is(err, aiplan.ErrPaymentRequired) {
+		t.Fatalf("resolve on an unreadable plan: err = %v, want the read's own error", err)
+	}
+
+	// And a client wired with no entitlement at all refuses to draft rather than spending.
+	c = &Client{atoms: &recordingAtomReader{}}
+	if _, err := c.resolve(context.Background(), claimed, fields, map[string]string{}); err == nil {
+		t.Fatal("resolve with no entitlement configured drafted anyway")
 	}
 }

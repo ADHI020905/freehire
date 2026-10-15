@@ -159,6 +159,7 @@ func newAutopilotHarness(t *testing.T, pool *pgxpool.Pool, iss *auth.Issuer, tur
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	api := app.Group("/api/v1")
 	mw := middleware{
+		paidAI: markPaidAI,
 		cookie: auth.RequireAuth(iss, testVersions),
 		key:    auth.RequireAuthOrKey(iss, testVersions, apiKeys{queries}),
 	}

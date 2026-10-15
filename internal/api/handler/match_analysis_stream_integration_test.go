@@ -66,6 +66,7 @@ func TestMatchAnalysisStreamEndpoint(t *testing.T) {
 		`INSERT INTO users (email) VALUES ('stream@example.test') RETURNING id`).Scan(&userID); err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
+	makePro(t, pool, userID) // fit analysis is a paid feature
 	if err := pool.QueryRow(ctx,
 		`INSERT INTO jobs (source, external_id, url, title, description, company_slug, public_slug, skills, content_hash)
 		 VALUES ('test','s1','http://e.test','Senior Go Engineer','Build backends.','acme','stream-job', ARRAY['go'], 'h1')
@@ -95,17 +96,17 @@ func TestMatchAnalysisStreamEndpoint(t *testing.T) {
 			queries:     queries,
 			userProfile: userprofile.New(ownedProfile()),
 			resume:      store, matchAnalysis: an,
-			// Fit analysis's free allowance is 0 by default now (subscription-only); pinned
+			// Free gets no AI at all, and pro's allowance is unlimited by default; pinned
 			// generously since this fixture is shared across several subtests run against
 			// the same seeded user, whose daily counter accumulates real consumptions.
 			fit: fitanalysis.New(queries,
-				plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureFit, fitFreeDailyForTests)), an),
+				plan.NewStore(queries, pool, plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureFit, fitProDailyForTests)), an),
 		}
 		app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 		for _, mw := range mws {
 			app.Use(mw)
 		}
-		app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), h.StreamMatchAnalysis)
+		app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), markPaidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 		return app
 	}
 

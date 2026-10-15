@@ -97,6 +97,7 @@ func newAssistantApp(pool *pgxpool.Pool, iss *auth.Issuer, model assistant.Model
 	// mounts: the extension reaches the assistant with a Bearer credential, which
 	// only `key` resolves.
 	mw := middleware{
+		paidAI: markPaidAI,
 		cookie: auth.RequireAuth(iss, testVersions),
 		key:    auth.RequireAuthOrKey(iss, testVersions, apiKeys{queries}),
 	}

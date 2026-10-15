@@ -23,9 +23,12 @@ import (
 // llm.Settings is deliberately NOT folded in here: it is the env-free shape the library takes, so
 // internal/platform/llm depends on no configuration package. Settings() is the one mapping between them.
 type LLM struct {
-	BaseURL     string
-	APIKey      string
-	Model       string
+	BaseURL string
+	APIKey  string
+	Model   string
+	// Temperature is LLM_TEMPERATURE. Nil leaves langchaingo's own behaviour, which sends
+	// "temperature":0 for a non-reasoning model id rather than omitting the field; a value
+	// applies to every client built from this config in the process.
 	Temperature *float64
 
 	// StrictSchema says whether the model behind this gateway honours

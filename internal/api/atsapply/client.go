@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/strelov1/freehire/internal/ai/llmkey"
+	aiplan "github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/application/autoapply"
 	"github.com/strelov1/freehire/internal/candidate/cv"
 	"github.com/strelov1/freehire/internal/ingest/applyform"
@@ -136,7 +137,23 @@ type Client struct {
 	// deployment: fetchSchema then behaves exactly as it did before this capability
 	// existed. See openspec/changes/atsapply-recruitee-stored-schema.
 	forms StoredFormReader
+	// entitlement answers whether the candidate is still on a paid plan before a draft call
+	// spends for them. Required, not optional like the dependencies above: a nil one means
+	// nobody can tell, and drafting then refuses rather than spending (resolve).
+	entitlement Entitlement
 }
+
+// Entitlement is the plan question drafting asks before a model call. *plan.Store
+// satisfies it; tests use a fake.
+type Entitlement interface {
+	RequirePaid(ctx context.Context, userID int64) (aiplan.Tier, error)
+}
+
+// reasonPaidPlanRequired parks an attempt whose candidate is no longer on a paid plan. The
+// entry was queued while they were, and may wait a long time to be claimed; by then a lapsed
+// subscription buys no model call, so the questions it would have drafted are not drafted
+// and the attempt is not submitted half-answered either.
+const reasonPaidPlanRequired = "the candidate's paid plan has lapsed; drafting answers needs Pro"
 
 // WithBrowserUse attaches the browser-use fallback executor, returning c for chaining.
 // Separate from NewClient's constructor so adding this optional dependency never touches
@@ -173,7 +190,10 @@ type CVReader interface {
 // atoms and letters are not two independent switches — see that guard's own comment.
 // cvs/renderer
 // may also be nil, with the same degrade: a résumé field parks instead of being filled.
-func NewClient(transport applyform.Transport, llmClient *llm.Client, llmKeys *llmkey.Resolver, typesafeAPIKey string, atoms AtomReader, letters LetterReader, cvs CVReader, renderer cv.Renderer) *Client {
+//
+// entitlement is consulted before every draft call (see resolve); unlike the others, a nil
+// one does not degrade to the old behaviour — it refuses to draft.
+func NewClient(transport applyform.Transport, llmClient *llm.Client, llmKeys *llmkey.Resolver, typesafeAPIKey string, atoms AtomReader, letters LetterReader, cvs CVReader, renderer cv.Renderer, entitlement Entitlement) *Client {
 	return &Client{
 		fetchers:       applyform.Fetchers(transport),
 		allocatorOpts:  stealthAllocatorOptions(),
@@ -184,6 +204,7 @@ func NewClient(transport applyform.Transport, llmClient *llm.Client, llmKeys *ll
 		letters:        letters,
 		cvs:            cvs,
 		renderer:       renderer,
+		entitlement:    entitlement,
 	}
 }
 
@@ -244,6 +265,9 @@ func (c *Client) Submit(ctx context.Context, claimed autoapply.Claimed, answers 
 	}
 
 	plan, err := c.resolve(ctx, claimed, merged, answers)
+	if errors.Is(err, aiplan.ErrPaymentRequired) {
+		return autoapply.SidecarResult{Status: autoapply.StatusParked, Reason: reasonPaidPlanRequired}, nil
+	}
 	if err != nil {
 		return autoapply.SidecarResult{}, fmt.Errorf("resolve fields for job %d: %w", claimed.JobID, err)
 	}
@@ -352,9 +376,26 @@ func (c *Client) resolve(ctx context.Context, claimed autoapply.Claimed, merged 
 		return Resolve(merged, answers, hasApprovedCV), nil
 	}
 
+	// Every model call made for a person needs them on a paid plan, and this worker cannot
+	// sit behind the HTTP paid gate — so it asks here, per attempt, right before the call.
+	// The candidate may have lapsed since the entry was queued. A free answer parks the
+	// attempt (Submit); a read that fails is returned as the error it is, so the attempt
+	// fails and retries rather than drafting on an entitlement nobody could read.
+	if err := c.requirePaid(ctx, claimed.UserID); err != nil {
+		return Plan{}, err
+	}
 	bound := llmkey.Bind(ctx, c.llmKeys, c.llmClient, claimed.UserID, llm.Feature(tagAutoApplyDrafting))
 	drafter := NewJevSelectDrafter(NewLLMDrafter(bound), c.typesafeAPIKey)
 	return ResolveWithDrafting(ctx, merged, answers, drafter, grounding, hasApprovedCV, c.letters, claimed.UserID, claimed.JobID)
+}
+
+// requirePaid asks the entitlement, failing closed when none is configured.
+func (c *Client) requirePaid(ctx context.Context, userID int64) error {
+	if c.entitlement == nil {
+		return errors.New("atsapply: no entitlement check configured; refusing to draft")
+	}
+	_, err := c.entitlement.RequirePaid(ctx, userID)
+	return err
 }
 
 // attachApprovedResume renders the claim's approved tailored CV to a temp PDF and sets it

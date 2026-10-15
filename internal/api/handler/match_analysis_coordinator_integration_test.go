@@ -80,6 +80,7 @@ func seedCoordinatorUser(t *testing.T, pool *pgxpool.Pool, queries *db.Queries, 
 		`INSERT INTO users (email) VALUES ($1) RETURNING id`, "coalesce-"+suffix+"@example.test").Scan(&userID); err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
+	makePro(t, pool, userID) // fit analysis is a paid feature
 	store := resume.New(newFakeResumeBlobs(), &fakeResumeRepo{})
 	if _, err := store.Put(ctx, userID, "text/plain", []byte("5y Go at Acme.")); err != nil {
 		t.Fatalf("seed CV: %v", err)
@@ -124,7 +125,7 @@ const coordinatorAllowance = 100
 
 func newCoordinatorHandlers(pool *pgxpool.Pool, queries *db.Queries, store *resume.Store, model llms.Model) *matchHandlers {
 	an := matchanalysis.NewAnalyzer(llm.NewWithModel(model))
-	cfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureFit, coordinatorAllowance)
+	cfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureFit, coordinatorAllowance)
 	return &matchHandlers{
 		queries:       queries,
 		userProfile:   userprofile.New(ownedProfile()),
@@ -140,8 +141,12 @@ func newCoordinatorHandlers(pool *pgxpool.Pool, queries *db.Queries, store *resu
 // runs the fill from its SSE writer on a plain context; a request context stands in for that
 // here, since what these tests exercise is the coalescing, not where the fill is called from.
 func registerEnsureRoute(app *fiber.App, h *matchHandlers, userID int64, job db.Job) {
-	app.Post("/test/ensure", func(c *fiber.Ctx) error {
-		h.prepareAutopilotRun(c, userID, job).ensure(c.Context())
+	app.Post("/test/ensure", markPaidAI(plan.FeatureTailor), func(c *fiber.Ctx) error {
+		run, err := h.prepareAutopilotRun(c, userID, job)
+		if err != nil {
+			return err
+		}
+		_ = run.ensure(c.Context())
 		return c.SendStatus(fiber.StatusOK)
 	})
 }
@@ -231,7 +236,7 @@ func TestMatchAnalysisCoordinatorEnsureCachedAnalysisLeadsStreamFollows(t *testi
 
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	registerEnsureRoute(app, h, userID, job)
-	app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), h.StreamMatchAnalysis)
+	app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), markPaidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 
 	ensure := startEnsure(t, app)
 	select {
@@ -323,7 +328,7 @@ func TestMatchAnalysisCoordinatorStreamLeadsEnsureCachedAnalysisFollowsAndLeader
 
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	registerEnsureRoute(app, h, userID, job)
-	app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), h.StreamMatchAnalysis)
+	app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), markPaidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 
 	stream := startStream(t, app, "/api/v1/jobs/"+coordinatorJobSlug("b", 0)+"/fit/stream", token)
 
@@ -399,7 +404,7 @@ func TestMatchAnalysisCoordinatorSecondStreamNeverSeesAnalysisUnavailable(t *tes
 		model := newBlockingFitModel()
 		h := newCoordinatorHandlers(pool, queries, store, model)
 		app := fiber.New(fiber.Config{ErrorHandler: RenderError})
-		app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), h.StreamMatchAnalysis)
+		app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), markPaidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 
 		leader := startStream(t, app, path, token)
 		select {
@@ -496,7 +501,7 @@ func TestMatchAnalysisCoordinatorFollowerNeverServesStaleAnalysisAfterFailedReco
 	token, _ := iss.Issue(userID, testTokenVersion)
 
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
-	app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), h.StreamMatchAnalysis)
+	app.Get("/api/v1/jobs/:slug/fit/stream", auth.RequireAuth(iss, testVersions), markPaidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 	path := "/api/v1/jobs/" + coordinatorJobSlug("d", 0) + "/fit/stream"
 
 	leader := startStream(t, app, path, token)

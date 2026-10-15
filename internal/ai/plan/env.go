@@ -15,8 +15,8 @@ import (
 // It is the end of the shadow run, feature by feature, and it is spelled as a list rather
 // than a boolean because the features are turned on one at a time, cheapest first.
 //
-// PLAN_FREE_DAILY_<FEATURE>, PLAN_PRO_DAILY_<FEATURE>, PLAN_ULTRA_DAILY_<FEATURE> and
-// PLAN_TAILOR_TURNS_PER_SESSION move the numbers themselves. They exist because the shipped
+// PLAN_PRO_DAILY_<FEATURE>, PLAN_ULTRA_DAILY_<FEATURE> and PLAN_TAILOR_TURNS_PER_SESSION
+// move the numbers themselves. They exist because the shipped
 // values are a reading of three August weeks under no paywall, and the shadow run is
 // expected to contradict them. PLAN_PRO_DAILY_AUTO_APPLY earns its keep twice over: that
 // one number is a ceiling under a plan people had already bought, so it has to move without
@@ -27,9 +27,13 @@ import (
 // PLAN_FAIR_USE_<FEATURE> was the older spelling of the pro one and is gone — two names for
 // one field is a question every reader has to answer twice, and nothing had ever set it.
 //
+// There is no PLAN_FREE_DAILY_<FEATURE>. It once reopened a free allowance without a deploy;
+// free getting no AI at all is now a product invariant, and a lever that can only weaken it
+// is one an operator can pull by accident. A value still set on a host is simply not read.
+//
 // An override that cannot be read keeps the default and says so in the log. The alternative
-// — a typo resolving to zero — would refuse the feature to every free account and look
-// exactly like a deliberate decision.
+// — a typo resolving to zero — would refuse the feature to every subscriber and look exactly
+// like a deliberate decision.
 func ConfigFromEnv() Config {
 	cfg := DefaultConfig()
 
@@ -39,9 +43,6 @@ func ConfigFromEnv() Config {
 			fc.enforce = true
 		}
 		suffix := envSuffix(f)
-		if n, ok := envPositive("PLAN_FREE_DAILY_" + suffix); ok {
-			fc.free.daily = n
-		}
 		if n, ok := envPositive("PLAN_PRO_DAILY_" + suffix); ok {
 			fc.pro.daily = n
 		}

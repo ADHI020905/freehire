@@ -5,41 +5,42 @@ import (
 	"time"
 )
 
-// enforcing is the config the shadow run used to end with, before every feature shipped
-// enforcing by default. Every feature's free allowance is pinned here to its historical
-// default (2/3/10/10/3) rather than read off DefaultConfig, because the product default is
-// now zero for all of them — the tests built on this helper exercise the decide/store
-// MECHANISM (idempotency, day rollover, boundary refusal, the tailoring session's own two
-// bounds), which needs room to consume partway into an allowance, not the product's actual
-// number. Several tailoring-session tests depend on the EXACT historical tailor figure (2):
-// they assert a specific session refused after exactly that many charges, not merely "some
-// positive number".
+// enforcing is the config the shadow run used to end with, with a REAL daily ceiling pinned
+// on the pro plan for every AI feature (2/3/10/10/3, the figures free used to carry). The
+// tests built on it exercise the decide/store MECHANISM — idempotency, day rollover, the
+// boundary refusal, the tailoring session's own bounds — which needs an allowance somebody
+// can consume partway into. Free gets nothing at all now, so the only tier that can carry
+// such an allowance is a paid one. Several tailoring-session tests depend on the EXACT tailor
+// figure (2): they assert a specific session refused after exactly that many charges.
 func enforcing() Config {
 	return DefaultConfig().Enforcing().
-		WithFreeDaily(FeatureTailor, 2).
-		WithFreeDaily(FeatureFit, 3).
-		WithFreeDaily(FeatureAssistant, 10).
-		WithFreeDaily(FeatureDictation, 10).
-		WithFreeDaily(FeatureCoverLetter, 3)
+		WithProCeiling(FeatureTailor, 2).
+		WithProCeiling(FeatureFit, 3).
+		WithProCeiling(FeatureAssistant, 10).
+		WithProCeiling(FeatureDictation, 10).
+		WithProCeiling(FeatureCoverLetter, 3)
 }
 
-// notEnforcing is DefaultConfig with every feature's refusal forced back off, and
-// FeatureFit's free allowance pinned to a positive number for the same reason enforcing()
-// pins it: `decide` treats an allowance of exactly zero as an UNCONFIGURED feature (always
-// refused, regardless of enforcement — see decide.go), so testing shadow behaviour needs a
-// real, positive allowance to shadow past, not the product's actual zero.
+// notEnforcing is DefaultConfig with every feature's refusal forced back off. The pro
+// allowances are left as shipped — unlimited behind a fair-use guard — so the guard's own
+// tests can stand on it.
 func notEnforcing() Config {
-	return DefaultConfig().
-		with(func(_ Feature, fc *featureConfig) { fc.enforce = false }).
-		WithFreeDaily(FeatureFit, 3)
+	return DefaultConfig().with(func(_ Feature, fc *featureConfig) { fc.enforce = false })
+}
+
+// shadowCeiling is notEnforcing with FeatureFit's pro allowance pinned to a real ceiling of
+// three, so a shadow decision has a ceiling to shadow past: an unlimited allowance never
+// reaches one.
+func shadowCeiling() Config {
+	return notEnforcing().WithProCeiling(FeatureFit, 3)
 }
 
 func TestDecideWithinAllowance(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	d := enforcing().decide(TierFree, FeatureFit, 1, false, now)
+	d := enforcing().decide(TierPro, FeatureFit, 1, false, now)
 
 	if !d.Allowed {
-		t.Fatal("a free user one analysis into an allowance of three was refused")
+		t.Fatal("a subscriber one analysis into an allowance of three was refused")
 	}
 	if d.Charge != 1 {
 		t.Errorf("Charge = %d, want 1", d.Charge)
@@ -54,10 +55,10 @@ func TestDecideWithinAllowance(t *testing.T) {
 
 func TestDecideRefusesAtTheAllowance(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	d := enforcing().decide(TierFree, FeatureFit, 3, false, now)
+	d := enforcing().decide(TierPro, FeatureFit, 3, false, now)
 
 	if d.Allowed {
-		t.Fatal("a free user who has used all three analyses was allowed a fourth")
+		t.Fatal("a subscriber who has used all three analyses was allowed a fourth")
 	}
 	if d.Charge != 0 {
 		t.Errorf("a refusal charged %d; nothing is taken from someone who was told no", d.Charge)
@@ -74,7 +75,7 @@ func TestDecideChargesAnAlreadyPaidRefNothing(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	// Over the allowance AND already charged: a recompute of work already paid for must
 	// go through, or a user would be punished for looking at their own result again.
-	d := enforcing().decide(TierFree, FeatureFit, 99, true, now)
+	d := enforcing().decide(TierPro, FeatureFit, 99, true, now)
 
 	if !d.Allowed {
 		t.Fatal("a recompute of an already-charged reference was refused")
@@ -89,7 +90,7 @@ func TestDecideChargesAnAlreadyPaidRefNothing(t *testing.T) {
 
 func TestDecideShadowRecordsButNeverRefuses(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	d := notEnforcing().decide(TierFree, FeatureFit, 3, false, now) // enforcement off
+	d := shadowCeiling().decide(TierPro, FeatureFit, 3, false, now) // enforcement off
 
 	if !d.Allowed {
 		t.Fatal("shadow mode refused; the point of it is to count what a limit WOULD stop, without stopping anyone")
@@ -111,7 +112,7 @@ func TestDecideShadowRecordsButNeverRefuses(t *testing.T) {
 // very requests the shadow run is counting.
 func TestDecisionCarriesWhetherTheCeilingIsLive(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	d := enforcing().decide(TierFree, FeatureFit, 0, false, now)
+	d := enforcing().decide(TierPro, FeatureFit, 0, false, now)
 
 	if !d.Enforced {
 		t.Error("an enforcing configuration produced a decision that says it is not enforced")
@@ -141,8 +142,8 @@ func TestStandingRefusesOnlyWhenTheCeilingIsLive(t *testing.T) {
 
 func TestDecideProHasNoPlanCeiling(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	cfg := enforcing()
-	d := cfg.decide(TierPro, FeatureFit, cfg.FreeDaily(FeatureFit)+50, false, now)
+	cfg := DefaultConfig().Enforcing()
+	d := cfg.decide(TierPro, FeatureFit, 50, false, now)
 
 	if !d.Allowed {
 		t.Fatal("a pro user was refused well below the fair-use guard")
@@ -154,7 +155,7 @@ func TestDecideProHasNoPlanCeiling(t *testing.T) {
 
 func TestDecideFairUseGuardStopsAScript(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	cfg := enforcing()
+	cfg := DefaultConfig().Enforcing()
 	guard := cfg.Allowance(TierPro, FeatureFit).Limit
 	d := cfg.decide(TierPro, FeatureFit, guard, false, now)
 
@@ -184,9 +185,68 @@ func TestFairUseGuardHoldsEvenInShadow(t *testing.T) {
 
 func TestDecideRefusesAnUnconfiguredFeature(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	d := enforcing().decide(TierFree, Feature("no-such-feature"), 0, false, now)
+	d := enforcing().decide(TierPro, Feature("no-such-feature"), 0, false, now)
 
 	if d.Allowed {
 		t.Fatal("a feature nobody configured was allowed; forgetting to configure a surface must surface as refused, not as free")
+	}
+}
+
+// Free gets no AI at all, and that is a rule about the TIER rather than an allowance that
+// happens to be zero: it holds before any allowance is read, so nothing configured, set in
+// the environment or already in the ledger can reopen one.
+func TestDecideRefusesFreeWhateverElseIsTrue(t *testing.T) {
+	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
+	cfg := enforcing()
+	for _, f := range AllFeatures() {
+		for _, charged := range []bool{false, true} {
+			d := cfg.decide(TierFree, f, 0, charged, now)
+			if d.Allowed {
+				t.Errorf("%s (already charged: %v): free was allowed; no free tier may reach a model call", f, charged)
+			}
+			if d.Charge != 0 || d.Shadowed || d.FairUse {
+				t.Errorf("%s: a free refusal reads charge=%d shadowed=%v fairUse=%v, want a plain refusal",
+					f, d.Charge, d.Shadowed, d.FairUse)
+			}
+			// The fields the 402 body is rendered from are still there.
+			if d.Tier != TierFree || d.Feature != f || d.ResetsAt.IsZero() {
+				t.Errorf("%s: refusal lost the fields its body renders from: %+v", f, d)
+			}
+		}
+	}
+	// Shadow mode does not reopen it either: it protects people from an unread ceiling, and
+	// free has no ceiling to read.
+	if d := notEnforcing().decide(TierFree, FeatureFit, 0, false, now); d.Allowed {
+		t.Error("free was allowed in shadow mode")
+	}
+	// An unknown tier is not paid either.
+	if d := cfg.decide(Tier("staff"), FeatureFit, 0, false, now); d.Allowed {
+		t.Error("an unknown tier was allowed; only a tier somebody bought may spend")
+	}
+}
+
+func TestDecideAdmitsEveryPaidTier(t *testing.T) {
+	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
+	cfg := DefaultConfig()
+	for _, tier := range []Tier{TierPro, TierUltra} {
+		for _, f := range AllFeatures() {
+			if d := cfg.decide(tier, f, 0, false, now); !d.Allowed {
+				t.Errorf("%s was refused %s on an untouched day", tier, f)
+			}
+		}
+	}
+}
+
+// An entitlement is over at the instant it expires, and what is left is free — which is
+// refused. The pairing is the point: TierOf alone is tested elsewhere, and decide alone
+// above; a lapsed subscription is where the two meet.
+func TestALapsedEntitlementIsRefused(t *testing.T) {
+	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
+	tier := TierOf(now.Add(-time.Minute), time.Time{}, now)
+	if tier != TierFree {
+		t.Fatalf("an expired pro_until resolved to %q, want free", tier)
+	}
+	if d := DefaultConfig().decide(tier, FeatureFit, 0, false, now); d.Allowed {
+		t.Fatal("an expired subscription was allowed a model call")
 	}
 }

@@ -19,7 +19,12 @@ const { getExperience, listCompanies, createExperienceEmployment, getResume, ret
 
 vi.mock('$lib/api', () => ({
   api: { getExperience, listCompanies, createExperienceEmployment, getResume, retryResumeExtract },
+  isPlanRefusal: () => false,
 }));
+
+// A signed-out store reads as the free tier, which is the account the plan banner is for.
+vi.mock('$lib/auth.svelte', () => ({ currentUser: () => null }));
+vi.mock('$lib/i18n/currentLocale.svelte', () => ({ locale: () => 'en' }));
 
 // AssistantChat (mounted unconditionally, just hidden, inside ExperienceAssistantPanel)
 // boots a real conversation on mount — irrelevant to the add-job form and not worth
@@ -143,6 +148,24 @@ describe('ExperienceBankView résumé-extraction banner', () => {
     render(ExperienceBankView, { props: {} });
 
     expect(await screen.findByRole('button', { name: /try again/i })).toBeTruthy();
+  });
+
+  // A free account's upload is stored and read; only the model that fills the bank is paid.
+  // Saying we "couldn't read" the CV is false, and a retry the server refuses is a dead end.
+  it('tells a free account the bank fill is paid, not that the CV was unreadable', async () => {
+    getResume.mockResolvedValue({
+      enabled: true,
+      present: true,
+      uploaded_at: '2026-10-01T00:00:00Z',
+      structured: null,
+      parse_status: 'requires_plan',
+    } satisfies ResumeMeta);
+
+    render(ExperienceBankView, { props: {} });
+
+    expect(await screen.findByText(/part of a paid plan/i)).toBeTruthy();
+    expect(screen.queryByText(/couldn't read/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
   });
 
   it('shows no banner when the résumé parsed fine', async () => {

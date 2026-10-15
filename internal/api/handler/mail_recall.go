@@ -83,7 +83,11 @@ func (h *inboxHandlers) RecallApplicationMail(c *fiber.Ctx) error {
 	//
 	// The mailbox is resolved per caller and may be nil — a hosted address or a harness
 	// tier — in which case the service reads stored mail instead.
-	recall := h.recall.As(h.llm.bind(c.Context(), userID, llm.Feature(tagMailRecall)))
+	model, err := h.llm.bind(c.UserContext(), userID, llm.Feature(tagMailRecall))
+	if err != nil {
+		return err
+	}
+	recall := h.recall.As(model)
 	if h.mailboxes != nil {
 		recall = recall.WithMailbox(h.mailboxes.For(c.Context(), userID))
 	}

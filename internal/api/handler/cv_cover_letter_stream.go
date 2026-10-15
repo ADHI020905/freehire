@@ -60,7 +60,12 @@ func (h *cvHandlers) StreamCVCoverLetter(c *fiber.Ctx) error {
 	// carries the write deadline sseStream needs; the hub is cloned because the writer
 	// outlives the request that owns its scope.
 	band := coverLetterBand(c)
-	caller := h.llm.caller(c.Context(), userID, llm.Feature(tagCoverLetter))
+	caller, err := h.llm.caller(c.UserContext(), userID, llm.Feature(tagCoverLetter))
+	if err != nil {
+		// Before the headers, so this is still a status rather than an event in a 200.
+		releaseLetterCharge(h.plans, userID, charge)
+		return err
+	}
 	conn := c.Context().Conn()
 	var hub *sentry.Hub
 	if reqHub := sentryfiber.GetHubFromContext(c); reqHub != nil {

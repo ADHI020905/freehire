@@ -3,7 +3,8 @@
   import { ScanSearch } from '@lucide/svelte';
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
-  import { api } from '$lib/api';
+  import { api, isPlanRefusal } from '$lib/api';
+  import PlanLimitLink from '$lib/components/PlanLimitLink.svelte';
   import { FilterStore, filtersToParams } from '$lib/filters';
   import ATSReportView from '$lib/components/ATSReportView.svelte';
   import FilterSummary from '$lib/components/filters/FilterSummary.svelte';
@@ -41,6 +42,9 @@
   // AI review state.
   let reviewBusy = $state(false);
   let reviewUnavailable = $state(false);
+  // Refused for plan, not broken: "not available right now" would invite a retry that the
+  // server will refuse every time, so this one shows the upgrade path instead.
+  let reviewNeedsPlan = $state(false);
 
   // Job-count preview for the modal's staged filters — the same facet call, total only.
   const previewCount = (params: URLSearchParams) => api.facetCounts(params).then((c) => c.total);
@@ -51,6 +55,7 @@
   async function runReview() {
     reviewBusy = true;
     reviewUnavailable = false;
+    reviewNeedsPlan = false;
     try {
       const params = filters ? filtersToParams(filters.applied) : undefined;
       const next = await api.runATSReview(params);
@@ -58,7 +63,8 @@
       if (next.has_cv && next.report && !next.report.reviewed) {
         reviewUnavailable = true;
       }
-    } catch {
+    } catch (e) {
+      reviewNeedsPlan = isPlanRefusal(e);
       reviewUnavailable = true;
     } finally {
       reviewBusy = false;
@@ -150,7 +156,12 @@
       <States state="loading" />
     {:else if ats.has_cv && ats.report}
       <div class="flex flex-col gap-5">
-        {#if reviewUnavailable}
+        {#if reviewNeedsPlan}
+          <div class="flex flex-wrap items-center gap-3">
+            <p class="text-xs text-muted-foreground">{s.reviewNeedsPlan}</p>
+            <PlanLimitLink />
+          </div>
+        {:else if reviewUnavailable}
           <p class="text-xs text-muted-foreground">{s.reviewUnavailable}</p>
         {/if}
         <ATSReportView report={ats.report} action={reviewAction} />

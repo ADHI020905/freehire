@@ -41,6 +41,12 @@ default, rather than the shadow mode where usage is only counted and nobody is r
 
 ### Requirement: A free allowance can be reopened for one feature without a deploy
 
+> **Superseded** by the paid gate for user-initiated AI
+> (`docs/superpowers/specs/2026-10-14-paid-gate-for-user-ai-design.md`): free gets no AI at
+> all, `PLAN_FREE_DAILY_<FEATURE>` is no longer read, and the plan decision refuses an
+> unpaid tier whatever allowance is configured. Kept below as the record of what this
+> change originally specified.
+
 The system SHALL continue to let a positive `PLAN_FREE_DAILY_<FEATURE>` environment
 override raise one feature's free daily allowance above zero, without a code change.
 

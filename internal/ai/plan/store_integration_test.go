@@ -55,6 +55,23 @@ func makePro(t *testing.T, pool *pgxpool.Pool, userID int64, until time.Time) {
 	}
 }
 
+// subscribedUntil is far enough past every fixed test clock in this package that a
+// subscriber stays one for the whole test, whatever the store's now() is set to.
+var subscribedUntil = time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC)
+
+// insertSubscriber inserts a user on the pro plan. The ledger's mechanism is exercised on
+// a subscriber because a free account is refused before any allowance is read — it has
+// nothing to consume, so it could not show a counter moving.
+func insertSubscriber(t *testing.T, pool *pgxpool.Pool, email string) int64 {
+	t.Helper()
+	id := insertUser(t, pool, email)
+	makePro(t, pool, id, subscribedUntil)
+	return id
+}
+
+// proCeiling is the daily ceiling enforcing() pins on the pro plan for one feature.
+func proCeiling(s *Store, f Feature) int { return s.cfg.Allowance(TierPro, f).Limit }
+
 // countLedger returns how many consumption rows exist for a (user, feature).
 func countLedger(t *testing.T, pool *pgxpool.Pool, userID int64, feature Feature) int {
 	t.Helper()
@@ -97,9 +114,9 @@ func TestConsumeSpendsTheDailyAllowanceThenRefuses(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "consume-allowance@example.test")
+	user := insertSubscriber(t, pool, "consume-allowance@example.test")
 
-	limit := s.cfg.FreeDaily(FeatureFit)
+	limit := proCeiling(s, FeatureFit)
 	for i := range limit {
 		d, err := s.Consume(ctx, user, FeatureFit, jobRef(i))
 		if err != nil {
@@ -142,14 +159,14 @@ func TestConsumeIsIdempotentByRef(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "consume-idempotent@example.test")
+	user := insertSubscriber(t, pool, "consume-idempotent@example.test")
 
 	const first = "the-job-under-test"
 	if _, err := s.Consume(ctx, user, FeatureFit, first); err != nil {
 		t.Fatalf("first consumption: %v", err)
 	}
 	// Spend the rest of the allowance on other references, then re-submit the first.
-	for i := 1; i < s.cfg.FreeDaily(FeatureFit); i++ {
+	for i := 1; i < proCeiling(s, FeatureFit); i++ {
 		if _, err := s.Consume(ctx, user, FeatureFit, jobRef(i)); err != nil {
 			t.Fatalf("consumption %d: %v", i, err)
 		}
@@ -162,7 +179,7 @@ func TestConsumeIsIdempotentByRef(t *testing.T) {
 	if d.Charge != 0 {
 		t.Errorf("the repeat charged %d, want 0", d.Charge)
 	}
-	if got, want := countLedger(t, pool, user, FeatureFit), s.cfg.FreeDaily(FeatureFit); got != want {
+	if got, want := countLedger(t, pool, user, FeatureFit), proCeiling(s, FeatureFit); got != want {
 		t.Errorf("%d ledger rows, want %d — the repeat wrote a second row", got, want)
 	}
 }
@@ -171,9 +188,9 @@ func TestANewDayNeedsNothingReset(t *testing.T) {
 	yesterday := time.Date(2026, 9, 15, 23, 30, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), yesterday)
 	ctx := context.Background()
-	user := insertUser(t, pool, "consume-rollover@example.test")
+	user := insertSubscriber(t, pool, "consume-rollover@example.test")
 
-	for i := range s.cfg.FreeDaily(FeatureFit) {
+	for i := range proCeiling(s, FeatureFit) {
 		if _, err := s.Consume(ctx, user, FeatureFit, jobRef(i)); err != nil {
 			t.Fatalf("consumption %d: %v", i, err)
 		}
@@ -192,7 +209,7 @@ func TestANewDayNeedsNothingReset(t *testing.T) {
 	if d.Used != 1 {
 		t.Errorf("the new day starts at Used = %d, want 1 — yesterday's consumption carried over", d.Used)
 	}
-	if got := usedOn(t, pool, user, FeatureFit, Day(yesterday)); got != s.cfg.FreeDaily(FeatureFit) {
+	if got := usedOn(t, pool, user, FeatureFit, Day(yesterday)); got != proCeiling(s, FeatureFit) {
 		t.Errorf("yesterday's counter now reads %d; a rollover must leave history alone, not rewrite it", got)
 	}
 }
@@ -201,7 +218,7 @@ func TestReleaseGivesBackTheDayItTookFrom(t *testing.T) {
 	lateYesterday := time.Date(2026, 9, 15, 23, 59, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), lateYesterday)
 	ctx := context.Background()
-	user := insertUser(t, pool, "release-boundary@example.test")
+	user := insertSubscriber(t, pool, "release-boundary@example.test")
 
 	if _, err := s.Consume(ctx, user, FeatureFit, "job-boundary"); err != nil {
 		t.Fatalf("consumption: %v", err)
@@ -232,7 +249,7 @@ func TestReleaseIsSafeToCallBlind(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "release-blind@example.test")
+	user := insertSubscriber(t, pool, "release-blind@example.test")
 
 	// Nothing was ever charged under this reference.
 	if err := s.Release(ctx, user, FeatureFit, "never-charged"); err != nil {
@@ -267,7 +284,7 @@ func TestAReleaseIsRecordedNotErased(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "release-recorded@example.test")
+	user := insertSubscriber(t, pool, "release-recorded@example.test")
 
 	if _, err := s.Consume(ctx, user, FeatureFit, "job-traced"); err != nil {
 		t.Fatalf("consumption: %v", err)
@@ -296,9 +313,9 @@ func TestConcurrentConsumptionsNeverOversell(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "consume-race@example.test")
+	user := insertSubscriber(t, pool, "consume-race@example.test")
 
-	limit := s.cfg.FreeDaily(FeatureFit)
+	limit := proCeiling(s, FeatureFit)
 	const attempts = 12
 
 	var wg sync.WaitGroup
@@ -332,7 +349,7 @@ func TestConcurrentConsumptionsNeverOversell(t *testing.T) {
 
 func TestProIsUnlimitedUntilTheFairUseGuard(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	s, pool := newStore(t, enforcing(), now)
+	s, pool := newStore(t, DefaultConfig().Enforcing(), now)
 	ctx := context.Background()
 	user := insertUser(t, pool, "pro-guard@example.test")
 	makePro(t, pool, user, now.Add(30*24*time.Hour))
@@ -381,7 +398,7 @@ func TestUsageReportsTheWholePlan(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "usage-report@example.test")
+	user := insertSubscriber(t, pool, "usage-report@example.test")
 
 	if _, err := s.Consume(ctx, user, FeatureFit, "job-1"); err != nil {
 		t.Fatalf("consumption: %v", err)
@@ -391,8 +408,8 @@ func TestUsageReportsTheWholePlan(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Usage: %v", err)
 	}
-	if tier != TierFree {
-		t.Errorf("tier = %q, want free", tier)
+	if tier != TierPro {
+		t.Errorf("tier = %q, want pro", tier)
 	}
 	if len(usage) != len(AllFeatures()) {
 		t.Fatalf("Usage reported %d features, want %d — an untouched feature must still be listed", len(usage), len(AllFeatures()))
@@ -400,7 +417,7 @@ func TestUsageReportsTheWholePlan(t *testing.T) {
 	for _, u := range usage {
 		switch u.Feature {
 		case FeatureFit:
-			if u.Used != 1 || u.Limit != s.cfg.FreeDaily(FeatureFit) {
+			if u.Used != 1 || u.Limit != proCeiling(s, FeatureFit) {
 				t.Errorf("fit usage = %+v", u)
 			}
 		default:
@@ -416,7 +433,7 @@ func TestUsageReportsTheWholePlan(t *testing.T) {
 
 func TestUsageOnProReportsUnlimited(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	s, pool := newStore(t, enforcing(), now)
+	s, pool := newStore(t, DefaultConfig().Enforcing(), now)
 	ctx := context.Background()
 	user := insertUser(t, pool, "usage-pro@example.test")
 	makePro(t, pool, user, now.Add(24*time.Hour))
@@ -445,11 +462,11 @@ func TestUsageOnProReportsUnlimited(t *testing.T) {
 
 func TestShadowModeRecordsWithoutRefusing(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
-	s, pool := newStore(t, notEnforcing(), now) // enforcement off
+	s, pool := newStore(t, shadowCeiling(), now) // enforcement off
 	ctx := context.Background()
-	user := insertUser(t, pool, "shadow-mode@example.test")
+	user := insertSubscriber(t, pool, "shadow-mode@example.test")
 
-	limit := s.cfg.FreeDaily(FeatureFit)
+	limit := proCeiling(s, FeatureFit)
 	over := limit + 3
 	shadowed := 0
 	for i := range over {
@@ -466,6 +483,64 @@ func TestShadowModeRecordsWithoutRefusing(t *testing.T) {
 	}
 	if got := usedOn(t, pool, user, FeatureFit, Day(now)); got != over {
 		t.Errorf("counter reads %d, want %d — shadow mode must still count, or it describes a day that did not happen", got, over)
+	}
+}
+
+// A free account has no AI at all, whatever the configuration and whatever the ledger
+// already holds: Consume refuses it before reading any allowance, and writes nothing.
+func TestConsumeRefusesAFreeAccount(t *testing.T) {
+	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
+	s, pool := newStore(t, enforcing(), now)
+	ctx := context.Background()
+	user := insertUser(t, pool, "consume-free@example.test")
+
+	d, err := s.Consume(ctx, user, FeatureFit, "job-1")
+	if !errors.Is(err, ErrRefused) {
+		t.Fatalf("a free account's consumption returned %v, want ErrRefused", err)
+	}
+	if d.Allowed || d.Tier != TierFree {
+		t.Errorf("decision = %+v, want a refusal on the free tier", d)
+	}
+	if got := countLedger(t, pool, user, FeatureFit); got != 0 {
+		t.Errorf("%d ledger rows after a free refusal, want 0", got)
+	}
+}
+
+func TestRequirePaid(t *testing.T) {
+	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
+	s, pool := newStore(t, DefaultConfig(), now)
+	ctx := context.Background()
+
+	free := insertUser(t, pool, "require-free@example.test")
+	if tier, err := s.RequirePaid(ctx, free); !errors.Is(err, ErrPaymentRequired) || tier != TierFree {
+		t.Errorf("free: RequirePaid = (%q, %v), want (free, ErrPaymentRequired)", tier, err)
+	}
+
+	lapsed := insertUser(t, pool, "require-lapsed@example.test")
+	makePro(t, pool, lapsed, now.Add(-time.Second))
+	if _, err := s.RequirePaid(ctx, lapsed); !errors.Is(err, ErrPaymentRequired) {
+		t.Errorf("lapsed pro: RequirePaid error = %v, want ErrPaymentRequired — an expired entitlement is free", err)
+	}
+
+	pro := insertSubscriber(t, pool, "require-pro@example.test")
+	if tier, err := s.RequirePaid(ctx, pro); err != nil || tier != TierPro {
+		t.Errorf("pro: RequirePaid = (%q, %v), want (pro, nil)", tier, err)
+	}
+
+	ultra := insertUser(t, pool, "require-ultra@example.test")
+	if _, err := pool.Exec(ctx, `UPDATE users SET ultra_until_granted = $2 WHERE id = $1`, ultra, subscribedUntil); err != nil {
+		t.Fatalf("make ultra: %v", err)
+	}
+	if tier, err := s.RequirePaid(ctx, ultra); err != nil || tier != TierUltra {
+		t.Errorf("ultra: RequirePaid = (%q, %v), want (ultra, nil)", tier, err)
+	}
+
+	// A read that fails is not an answer. It comes back as the error it is, never as
+	// ErrPaymentRequired (which a caller renders as an upgrade prompt) and never as nil.
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := s.RequirePaid(cancelled, pro); err == nil || errors.Is(err, ErrPaymentRequired) {
+		t.Errorf("a failed read: RequirePaid error = %v, want the read's own error", err)
 	}
 }
 

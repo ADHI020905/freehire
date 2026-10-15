@@ -35,6 +35,7 @@ func TestCVRegister_TracerLinksToggleIsCookieOnly(t *testing.T) {
 	app := fiber.New()
 	api := app.Group("/api/v1")
 	(&cvHandlers{}).register(api, middleware{
+		paidAI: markPaidAI,
 		key:    namedGate("key"),
 		cvKey:  namedGate("cvKey"),
 		cookie: namedGate("cookie"),
@@ -83,7 +84,7 @@ func tracerToggleAPI(t *testing.T) (*fiber.App, uuid.UUID) {
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	api := app.Group("/api/v1")
 	h := &cvHandlers{cvStore: cv.NewStore(&cvRepo{id: id, userID: owner, data: []byte(`{}`)})}
-	h.register(api, middleware{key: signedIn(owner), cvKey: signedIn(owner), cookie: signedIn(owner)})
+	h.register(api, middleware{paidAI: markPaidAI, key: signedIn(owner), cvKey: signedIn(owner), cookie: signedIn(owner)})
 	return app, id
 }
 
@@ -179,6 +180,7 @@ func TestCVRegister_TracerLinkStatsAreCookieOnly(t *testing.T) {
 	app := fiber.New()
 	api := app.Group("/api/v1")
 	(&cvHandlers{}).register(api, middleware{
+		paidAI: markPaidAI,
 		key:    namedGate("key"),
 		cvKey:  namedGate("cvKey"),
 		cookie: namedGate("cookie"),

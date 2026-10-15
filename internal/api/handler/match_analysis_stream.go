@@ -54,9 +54,18 @@ func (h *matchHandlers) StreamMatchAnalysis(c *fiber.Ctx) error {
 	// this gate at all — see prepareAutopilotRun). Reserving twice for one job is safe: the
 	// debit is idempotent per (user, feature, job), so a leader and a follower collapse into
 	// a single ledger row, whichever reaches it first.
+	//
+	// The analyzer is bound first, so a binding that refuses (a route mounted without the
+	// paid gate) leaves nothing reserved and no leadership claimed behind it. A caller that
+	// turns out to be a follower below never uses it — one credential lookup, against the
+	// alternative of unwinding a reservation and a claim on a path that should not exist.
+	var analyzer *matchanalysis.Analyzer
 	reserved := false
 	if hasCV {
 		var err error
+		if analyzer, err = h.boundAnalyzer(c.UserContext(), userID); err != nil {
+			return err
+		}
 		if reserved, err = h.fit.Reserve(c.Context(), userID, job.ID); err != nil {
 			if refusal, refused := renderRefusal(c, err); refused {
 				return refusal
@@ -97,9 +106,10 @@ func (h *matchHandlers) StreamMatchAnalysis(c *fiber.Ctx) error {
 		Claim:        claim,
 	}
 	if claim.IsLeader() {
-		// Bound before the stream opens: minting a credential is a network call, and making
-		// it after the headers are out would stall a stream the client is already reading.
-		req.Analyzer = h.boundAnalyzer(c.Context(), userID)
+		// Bound above, before the stream opens: minting a credential is a network call, and
+		// making it after the headers are out would stall a stream the client is already
+		// reading.
+		req.Analyzer = analyzer
 
 		// The language is captured up front, same as cvUploadedAt above: the cache write
 		// happens after the stream's own goroutine outlives this request, so the language it

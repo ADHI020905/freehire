@@ -7,7 +7,8 @@
   import { dynamicLabel, FACETS } from '$lib/facets';
   import { experienceLabel, freshnessLabel } from '$lib/filterControls';
   import { filtersFromInterpretation } from '$lib/aiFilter';
-  import { api } from '$lib/api';
+  import { api, isPlanRefusal } from '$lib/api';
+  import PlanLimitLink from '$lib/components/PlanLimitLink.svelte';
   import type { Interpretation } from '$lib/types';
   import type { FilterStore } from '$lib/filters';
   import { filtersToParams } from '$lib/facetModel';
@@ -32,6 +33,9 @@
   let refinement = $state('');
   let result = $state.raw<Interpretation | null>(null); // an API payload, only reassigned
   let error = $state<string | null>(null);
+  // The server refused for plan: AI search is paid-only, so the answer is the upgrade path,
+  // not a sentence about a filter we could not build.
+  let planRefused = $state(false);
   let busy = $state(false);
 
   const EXAMPLES = [
@@ -82,11 +86,15 @@
     if (!description.trim() || busy) return;
     busy = true;
     error = null;
+    planRefused = false;
     try {
       result = await api.interpretSearch(description, previous);
       refinement = '';
     } catch (e) {
-      error = errorMessage(e, "Couldn't build a filter from that.");
+      planRefused = isPlanRefusal(e);
+      error = planRefused
+        ? 'Describing a search in words is an AI feature, part of a paid plan.'
+        : errorMessage(e, "Couldn't build a filter from that.");
     } finally {
       busy = false;
     }
@@ -247,7 +255,12 @@
         </p>
       {/if}
 
-      {#if error}
+      {#if planRefused}
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <p class="text-sm text-muted-foreground">{error}</p>
+          <PlanLimitLink />
+        </div>
+      {:else if error}
         <p class="mt-3 text-sm text-destructive">{error}</p>
       {/if}
     </div>

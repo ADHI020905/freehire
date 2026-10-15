@@ -70,7 +70,7 @@ func (h *speechHandlers) register(api fiber.Router, mw middleware) {
 	// the composer that posts messages, so a client allowed to send one is allowed to
 	// transcribe for it; a narrower rule here would leave the control dead in the
 	// extension's side panel for no gain.
-	api.Post("/speech/transcriptions", mw.key, perCallerLimiter(transcriptionsPerHour), h.PostTranscription)
+	api.Post("/speech/transcriptions", mw.key, perCallerLimiter(transcriptionsPerHour), mw.paidAI(plan.FeatureDictation), h.PostTranscription)
 }
 
 // maxAudioUpload bounds one recording. At the ~32 kbit/s the browser's opus encoder
@@ -95,6 +95,12 @@ func (h *speechHandlers) PostTranscription(c *fiber.Ctx) error {
 	}
 	userID, err := requireUserID(c)
 	if err != nil {
+		return err
+	}
+	// A transcription is a model call that never passes through the user-call binding, so
+	// it makes the binding's check itself: a route that reached here without the paid gate
+	// is our bug, and it must not send audio upstream on anybody's account.
+	if err := requirePaidCall(c.UserContext()); err != nil {
 		return err
 	}
 	// Charged before the audio goes upstream, and given back below if nothing usable comes

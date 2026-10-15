@@ -93,13 +93,13 @@ func (h *matchHandlers) register(api fiber.Router, mw middleware) {
 	// deprecated alias a fresh allowance of the same user's quota.
 	runLimit := matchAnalysisLimiter(mw.throttler)
 	api.Get("/jobs/:slug/match-analysis", mw.key, h.GetMatchAnalysis)
-	api.Post("/jobs/:slug/match-analysis", mw.key, runLimit, h.PostMatchAnalysis)
-	api.Get("/jobs/:slug/match-analysis/stream", mw.key, runLimit, h.StreamMatchAnalysis)
+	api.Post("/jobs/:slug/match-analysis", mw.key, runLimit, mw.paidAI(plan.FeatureFit), h.PostMatchAnalysis)
+	api.Get("/jobs/:slug/match-analysis/stream", mw.key, runLimit, mw.paidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 	// Deprecated pre-rename aliases (was "fit") — kept so existing API-key clients and the
 	// CLI don't break; they hit the same handlers. Remove once callers have migrated.
 	api.Get("/jobs/:slug/fit", mw.key, h.GetMatchAnalysis)
-	api.Post("/jobs/:slug/fit", mw.key, runLimit, h.PostMatchAnalysis)
-	api.Get("/jobs/:slug/fit/stream", mw.key, runLimit, h.StreamMatchAnalysis)
+	api.Post("/jobs/:slug/fit", mw.key, runLimit, mw.paidAI(plan.FeatureFit), h.PostMatchAnalysis)
+	api.Get("/jobs/:slug/fit/stream", mw.key, runLimit, mw.paidAI(plan.FeatureFit), h.StreamMatchAnalysis)
 	// analyses lists the jobs the caller has run the AI fit analysis on.
 	api.Get("/me/tracking/analyses", mw.key, h.ListMyAnalyses)
 }
@@ -257,6 +257,12 @@ func (h *matchHandlers) PostMatchAnalysis(c *fiber.Ctx) error {
 	// risk stamping a newer CV's time on an older CV's analysis. language is captured the
 	// same way, for the same reason.
 	language := h.callerLanguage(c.Context(), userID)
+	// Bound before the reservation below, so a binding that refuses (a route mounted without
+	// the paid gate) leaves nothing reserved behind it.
+	analyzer, err := h.boundAnalyzer(c.UserContext(), userID)
+	if err != nil {
+		return err
+	}
 	// Take the credit before touching the LLM: the atomic debit IS the gate, so two
 	// concurrent runs cannot both pass a balance only one of them could afford. A recompute
 	// is free, and a run that produces nothing gives the credit back. The rule and the
@@ -280,7 +286,7 @@ func (h *matchHandlers) PostMatchAnalysis(c *fiber.Ctx) error {
 	analysis, err := h.fit.Run(c.Context(), fitanalysis.Request{
 		UserID:       userID,
 		Job:          job,
-		Analyzer:     h.boundAnalyzer(c.Context(), userID),
+		Analyzer:     analyzer,
 		Input:        h.buildAnalysisInput(c, job, userID, profile, blockers, language),
 		CVUploadedAt: cvUploadedAt,
 		Reserved:     reserved,
@@ -325,9 +331,14 @@ func (h *matchHandlers) buildAnalysisInput(c *fiber.Ctx, job db.Job, userID int6
 
 // boundAnalyzer returns the analyzer that spends under this caller's own gateway credential.
 // Binding is a network call, so a streaming caller makes it before its headers go out —
-// afterwards it would stall a stream the client is already reading.
-func (h *matchHandlers) boundAnalyzer(ctx context.Context, userID int64) *matchanalysis.Analyzer {
-	return h.matchAnalysis.As(h.llm.caller(ctx, userID, llm.Feature(tagMatchAnalysis)))
+// afterwards it would stall a stream the client is already reading. It fails closed, as the
+// binding does, for a context the paid-AI gate did not mark.
+func (h *matchHandlers) boundAnalyzer(ctx context.Context, userID int64) (*matchanalysis.Analyzer, error) {
+	caller, err := h.llm.caller(ctx, userID, llm.Feature(tagMatchAnalysis))
+	if err != nil {
+		return nil, err
+	}
+	return h.matchAnalysis.As(caller), nil
 }
 
 // autopilotAnalysis is one autopilot run's fit analysis: the cold-start fill the run's first
@@ -355,8 +366,14 @@ type autopilotAnalysis struct {
 
 // prepareAutopilotRun assembles the run's analysis while the fiber ctx is still valid. It
 // reads — profile, blockers, language, the credential binding, the Input, the CV's upload
-// stamp — and computes nothing; both halves are the caller's to run from the stream.
-func (h *matchHandlers) prepareAutopilotRun(c *fiber.Ctx, userID int64, job db.Job) *autopilotAnalysis {
+// stamp — and computes nothing; both halves are the caller's to run from the stream. The
+// one error is the binding refusing an unmarked context, which the caller turns into a
+// status before its stream opens.
+func (h *matchHandlers) prepareAutopilotRun(c *fiber.Ctx, userID int64, job db.Job) (*autopilotAnalysis, error) {
+	analyzer, err := h.boundAnalyzer(c.UserContext(), userID)
+	if err != nil {
+		return nil, err
+	}
 	profile, _ := h.userProfile.Get(c.Context(), userID)
 	blockers := h.jobBlockers(c.Context(), userID, job, profile)
 	language := h.callerLanguage(c.Context(), userID)
@@ -366,11 +383,11 @@ func (h *matchHandlers) prepareAutopilotRun(c *fiber.Ctx, userID int64, job db.J
 		req: fitanalysis.Request{
 			UserID:       userID,
 			Job:          job,
-			Analyzer:     h.boundAnalyzer(c.Context(), userID),
+			Analyzer:     analyzer,
 			Input:        h.buildAnalysisInput(c, job, userID, profile, blockers, language),
 			CVUploadedAt: cvUploadedAt,
 		},
-	}
+	}, nil
 }
 
 // ensure fills the cache before a cold-start autopilot run, whose first tool call reads it

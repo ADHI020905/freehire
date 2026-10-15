@@ -31,26 +31,42 @@ transaction. `store.go` is the transaction around it and nothing else.
   replaced a free number plus a pro fair-use figure, which could only say "free has a
   ceiling, pro does not" — and auto-apply needs the third shape, a real daily ceiling on pro.
 
-- **Every metered feature enforces on arrival — free gets none of it.** auto-apply was the
-  first to ship this way: pro's ceiling there is what the tier above is sold on, and one
-  that only counts leaves Ultra selling nothing, so shadow mode never applied to it. The
-  other five joined it by a later, explicit product decision (subscription-only AI
-  features) rather than by reading a shadow run — a free allowance of zero needs no usage
-  history to justify refusing it, unlike a positive number would. Its Ultra fair-use figure
-  is deliberately loose and admittedly unmeasured: it guards the HOST, since each attempt
-  is a browser, and the feature has run twice in its life.
+- **Free gets no AI at all, and that is a rule about the TIER, not a number.** `decide`
+  refuses a tier that is not `Paid()` before it reads any allowance — before even the
+  already-charged branch, because a recompute is still a model call and a lapsed
+  subscription does not keep buying them. There is no free allowance to configure:
+  `featureConfig` has no free field, `PLAN_FREE_DAILY_<FEATURE>` is no longer read (it once
+  reopened one without a deploy, and a lever that can only weaken an invariant is one an
+  operator pulls by accident), and `WithFreeDaily` is gone. `RequirePaid` is the same
+  question asked on its own, for the AI actions that have no allowance (extraction, the ATS
+  review, search intent, mail recall, autofill): `ErrPaymentRequired` for free, the raw
+  error for a failed read — which a caller refuses on (503) and never authorises, the
+  opposite of the meters' fail-open rule below, because what it protects is model spend.
+  `WithPaidAI`/`PaidAI` mark a context as having passed it; `internal/api/handler`'s
+  binding refuses to hand out a model client without that mark. Tests that need an
+  allowance to consume partway into pin a real PRO ceiling with `WithProCeiling`.
 
-  **The PRO/ULTRA numbers are still the unread shadow-run reading**, and that distinction
-  matters: what changed is that FREE gets nothing, not that the pro/ultra ceilings
-  themselves were re-verified. `PLAN_FREE_DAILY_<FEATURE>` remains the lever that reopens a
-  free allowance for one feature without a deploy, exactly as it always could — nothing
-  about shipping enforced removes it, since it only ever accepts a positive number.
+- **Every metered feature enforces on arrival.** auto-apply was the first to ship this
+  way: pro's ceiling there is what the tier above is sold on, and one that only counts
+  leaves Ultra selling nothing, so shadow mode never applied to it. The other five joined it
+  by a later, explicit product decision (subscription-only AI features). Its Ultra fair-use
+  figure is deliberately loose and admittedly unmeasured: it guards the HOST, since each
+  attempt is a browser, and the feature has run twice in its life.
+
+  **The PRO/ULTRA numbers are still the unread shadow-run reading**: what changed is that
+  FREE gets nothing, not that the pro/ultra ceilings themselves were re-verified.
 
 - **Two bounds on tailoring, and they stop different things.** A daily session count bounds
   how many vacancies a candidate works on; a per-session turn ceiling bounds how far one of
   them goes. Measured on production over three August weeks the median session ran 2.7
   turns and one ran 54 — and that account opened two sessions, well inside any daily count,
   while consuming $25 of model calls. Either bound alone leaves the hole this replaced.
+
+  **The turn ceiling binds only an UNPAID tier** (`decideTurn`: every paid tier runs
+  unbounded turns), and since the paid gate no unpaid account reaches a turn at all — so in
+  production it currently binds nobody. It is kept as mechanism (and tested by lapsing a
+  subscription after a session was bought); whether a paid tier should carry one is a
+  product decision this package does not make on its own.
 
 - **The turn ceiling is stored nowhere of its own.** It is the HIGHEST slot number the
   session's live charges reach, written as `<session_id>#1`, `#2`, … (`sessionRef`). That
@@ -113,10 +129,10 @@ transaction. `store.go` is the transaction around it and nothing else.
   it exists for. The values themselves cannot change — they are in `usage_ledger` and in the
   idempotency index.
 
-- **The fair-use guard belongs to the PRO plan and ignores the enforcement switch.** A free
-  account is already bounded by its daily allowance, so reaching the guard there would mean
-  the allowance was configured above it — a misconfiguration to fix, not a caller to accuse
-  of automation. Shadow protects people from ceilings nobody has verified; the guard sits
+- **The fair-use guard belongs to the UNLIMITED paid tiers and ignores the enforcement
+  switch.** A tier with a real daily ceiling is already bounded by it, so reaching the guard
+  there would mean the allowance was configured above it — a misconfiguration to fix, not a
+  caller to accuse of automation. Shadow protects people from ceilings nobody has verified; the guard sits
   ~20× above human behaviour, so what reaches it is automation, and what it protects is the
   gateway rather than a price. It logs when it fires — a guard nobody sees fire gets blamed
   for an outage it did not cause.

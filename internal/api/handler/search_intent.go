@@ -57,7 +57,7 @@ func (h *intentHandlers) register(api fiber.Router, mw middleware) {
 	// spend is attached to an interactive session, where a per-user limiter means
 	// something. An integration that wants filters has the documented facet vocabulary
 	// and /agent/jobs/search; widening this later is additive.
-	api.Post("/search/interpret", mw.cookie, searchIntentLimiter(mw.throttler), h.InterpretSearch)
+	api.Post("/search/interpret", mw.cookie, searchIntentLimiter(mw.throttler), mw.paidAI(unmeteredAI), h.InterpretSearch)
 }
 
 // interpretRequest is what the dialog posts: a description, optionally refining a
@@ -145,7 +145,11 @@ func (h *intentHandlers) InterpretSearch(c *fiber.Ctx) error {
 		req.Previous = &previous
 	}
 
-	interpreter := searchintent.NewInterpreter(h.llm.bind(c.Context(), userID, llm.Feature(tagSearchIntent)))
+	model, err := h.llm.bind(c.UserContext(), userID, llm.Feature(tagSearchIntent))
+	if err != nil {
+		return err
+	}
+	interpreter := searchintent.NewInterpreter(model)
 	res, err := interpreter.Interpret(c.Context(), req)
 	switch {
 	case errors.Is(err, searchintent.ErrDisabled):

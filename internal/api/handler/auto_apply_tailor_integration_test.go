@@ -44,10 +44,9 @@ import (
 // h.plans.StartSession runs, so this variant adds it to both assistantHandlers.plans and
 // cvHandlers.plans (refuseNewTailoring's own field).
 func newAutoApplyTailorApp(pool *pgxpool.Pool, iss *auth.Issuer, model assistant.Model) (*fiber.App, *assistantHandlers) {
-	// Tailoring's free allowance is 0 by default now (subscription-only); pinned to 1 here
-	// because several tests in this file actually run POST /tailor expecting it to pass the
-	// allowance gate, not just reach an ownership/state check ahead of it.
-	return newAutoApplyTailorAppWithPlanConfig(pool, iss, model, plan.DefaultConfig().WithFreeDaily(plan.FeatureTailor, 1))
+	// A real ceiling of 1 on the pro plan (whose shipped allowance is unlimited): several tests
+	// in this file run POST /tailor expecting it to pass the allowance gate, and one spends it.
+	return newAutoApplyTailorAppWithPlanConfig(pool, iss, model, plan.DefaultConfig().WithProCeiling(plan.FeatureTailor, 1))
 }
 
 // newAutoApplyTailorAppWithPlanConfig wires the harness with NO auto-apply orchestrator
@@ -106,6 +105,7 @@ func newAutoApplyTailorAppFull(pool *pgxpool.Pool, iss *auth.Issuer, model assis
 	api := app.Group("/api/v1")
 	keyAuth := auth.RequireAuthOrKey(iss, testVersions, apiKeys{queries})
 	mw := middleware{
+		paidAI:        markPaidAI,
 		cookie:        auth.RequireAuth(iss, testVersions),
 		key:           keyAuth,
 		autoApplyGate: autoApplyOrchestratorGate(orchestratorSecret, keyAuth, throttler),
@@ -163,6 +163,9 @@ func autoApplyTailorUser(t *testing.T, pool *pgxpool.Pool, iss *auth.Issuer, ema
 		`INSERT INTO users (email) VALUES ($1) RETURNING id`, email).Scan(&id); err != nil {
 		t.Fatalf("insert user: %v", err)
 	}
+	// On the pro plan: an unattended tailoring run is a model call made for the entry's
+	// owner, and a free owner is refused before anything else (see the free-owner test).
+	makePro(t, pool, id)
 	token, err := iss.Issue(id, testTokenVersion)
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
@@ -240,11 +243,11 @@ func TestPostAutoApplyTailor_SpentAllowanceRefusesBeforeAnyCVOrSession(t *testin
 	pool := startPostgres(t)
 	truncateAutoApplyTailorTables(t, pool)
 	iss := auth.NewIssuer("test-secret", time.Hour)
-	// Tailoring's free allowance is 0 by default now, which a bare DefaultConfig() would
+	// Free gets no AI at all, and pro's allowance is unlimited by default, which a bare DefaultConfig() would
 	// make this test vacuous — "spent" and "never had any" would look identical. Pinning a
 	// real allowance and spending it down is what actually proves a refusal fires because
 	// the allowance ran out, not merely because it never existed.
-	planCfg := plan.DefaultConfig().Enforcing().WithFreeDaily(plan.FeatureTailor, 1)
+	planCfg := plan.DefaultConfig().Enforcing().WithProCeiling(plan.FeatureTailor, 1)
 	app, _ := newAutoApplyTailorAppWithPlanConfig(pool, iss, &turnModel{}, planCfg)
 
 	userID, cookie := autoApplyTailorUser(t, pool, iss, "poor@example.test")
@@ -257,7 +260,7 @@ func TestPostAutoApplyTailor_SpentAllowanceRefusesBeforeAnyCVOrSession(t *testin
 	// sessions would be in.
 	if _, err := pool.Exec(context.Background(),
 		`INSERT INTO usage_daily (user_id, feature, day, used) VALUES ($1, 'tailor', CURRENT_DATE, $2)`,
-		userID, planCfg.FreeDaily(plan.FeatureTailor)); err != nil {
+		userID, planCfg.Allowance(plan.TierPro, plan.FeatureTailor).Limit); err != nil {
 		t.Fatalf("seed a spent allowance: %v", err)
 	}
 

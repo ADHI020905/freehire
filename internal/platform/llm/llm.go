@@ -96,6 +96,9 @@ func (c *Client) Timeout() time.Duration {
 	return c.timeout
 }
 
+// temperatureOptions is the call option a configured temperature adds. Nil adds none, which
+// is NOT the same as omitting the field upstream: langchaingo (v0.1.15) serialises its own
+// zero value, so a non-reasoning model id is sent "temperature":0 unless this sets one.
 func (c *Client) temperatureOptions() []llms.CallOption {
 	if c.temperature == nil {
 		return nil

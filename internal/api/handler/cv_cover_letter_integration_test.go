@@ -97,6 +97,7 @@ func newCoverLetterFixture(t *testing.T, pool *pgxpool.Pool) coverLetterFixture 
 	}
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	h.register(app.Group("/api/v1"), middleware{
+		paidAI: markPaidAI,
 		cookie: auth.RequireAuth(iss, testVersions),
 		key:    auth.RequireAuth(iss, testVersions),
 	})
@@ -291,10 +292,11 @@ func TestCoverLetter_UnproducedDraftLeavesTheStoreAndTheAllowanceAlone(t *testin
 	// request refuses at 409 long before the allowance is touched, and the test would pass
 	// while proving nothing about the release.
 	seedAnalysis(t, f.h, f.userID, f.jobID)
-	// Cover-letter's free allowance is 0 by default now (subscription-only); pinned to 1
-	// here so the request actually reaches the draft step (and its release) instead of
-	// refusing at 402 before ever touching the allowance this test is about.
-	f.h.plans = plan.NewStore(db.New(pool), pool, plan.DefaultConfig().WithFreeDaily(plan.FeatureCoverLetter, 1))
+	// A subscriber with a real ceiling of 1, so the request actually reaches the draft step
+	// (and its release) instead of refusing at 402 before ever touching the allowance this
+	// test is about.
+	makePro(t, pool, f.userID)
+	f.h.plans = plan.NewStore(db.New(pool), pool, plan.DefaultConfig().WithProCeiling(plan.FeatureCoverLetter, 1))
 
 	// The fixture's analyzer has no client, so Draft returns (nil, nil): the unconfigured
 	// deployment, and the shape of every "produced nothing" outcome.
@@ -407,7 +409,8 @@ func TestCoverLetter_ExhaustedAllowanceRefusesTheWriteButNotTheRead(t *testing.T
 	seedAnalysis(t, f.h, f.userID, f.jobID)
 	// Enforcement ships OFF per feature, so the refusal has to be turned on to be tested at
 	// all — which is itself worth pinning: a shadow-mode deployment never refuses.
-	f.h.plans = plan.NewStore(db.New(pool), pool, plan.DefaultConfig().WithFreeDaily(plan.FeatureCoverLetter, 0).Enforcing())
+	makePro(t, pool, f.userID) // a SPENT allowance, not the absence of a plan
+	f.h.plans = plan.NewStore(db.New(pool), pool, plan.DefaultConfig().WithProCeiling(plan.FeatureCoverLetter, 0).Enforcing())
 	model := chainFor(uuid.New(), "NEVER")
 	f.h.letter.chain = coverletter.NewAnalyzer(llm.NewWithModel(model))
 	f.h.llm = llmBinding{client: llm.NewWithModel(model)}

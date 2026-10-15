@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -67,7 +68,7 @@ func TestDefaultConfigMatchesTheSpec(t *testing.T) {
 		FeatureCoverLetter: 0,
 	}
 	for feature, want := range free {
-		if got := cfg.FreeDaily(feature); got != want {
+		if got := cfg.Allowance(TierFree, feature).Limit; got != want {
 			t.Errorf("free daily allowance for %q = %d, want %d", feature, got, want)
 		}
 	}
@@ -84,8 +85,8 @@ func TestDefaultConfigMatchesTheSpec(t *testing.T) {
 func TestFreeTierOffersNoMeteredFeature(t *testing.T) {
 	cfg := DefaultConfig()
 	for _, feature := range AllFeatures() {
-		if got := cfg.FreeDaily(feature); got != 0 {
-			t.Errorf("free daily allowance for %q = %d, want 0 — every metered feature is subscription-only", feature, got)
+		if got := cfg.Allowance(TierFree, feature); got.Limit != 0 || got.Unlimited {
+			t.Errorf("free allowance for %q = %+v, want nothing — every metered feature is subscription-only", feature, got)
 		}
 		if !cfg.Enforced(feature) {
 			t.Errorf("%q does not enforce; a zero free allowance that only counts refuses nobody", feature)
@@ -118,10 +119,28 @@ func TestUnknownFeatureIsNotSilentlyFree(t *testing.T) {
 	cfg := DefaultConfig()
 	// A feature nobody configured must not read as "unlimited on every plan" — that is
 	// how metering a new surface gets forgotten and discovered in a bill.
-	if got := cfg.FreeDaily(Feature("no-such-feature")); got != 0 {
-		t.Errorf("an unconfigured feature allows %d a day, want 0", got)
+	if got := cfg.Allowance(TierPro, Feature("no-such-feature")); got.Limit != 0 || got.Unlimited {
+		t.Errorf("an unconfigured feature allows %+v on pro, want nothing", got)
 	}
 	if a := cfg.Allowance(TierFree, Feature("no-such-feature")); a.Unlimited {
 		t.Error("an unconfigured feature reads as unlimited on the free plan")
+	}
+}
+
+func TestPaidAIMarkTravelsWithTheContext(t *testing.T) {
+	ctx := context.Background()
+	if PaidAI(ctx) {
+		t.Fatal("an unmarked context reads as paid")
+	}
+	marked := WithPaidAI(ctx)
+	if !PaidAI(marked) {
+		t.Fatal("WithPaidAI did not mark the context")
+	}
+	// A context derived from a marked one — a timeout, a cancel — keeps the mark: that is
+	// how a model call made further down the request still finds it.
+	derived, cancel := context.WithTimeout(marked, time.Minute)
+	defer cancel()
+	if !PaidAI(derived) {
+		t.Error("a context derived from a marked one lost the mark")
 	}
 }

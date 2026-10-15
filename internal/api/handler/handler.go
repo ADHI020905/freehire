@@ -171,6 +171,16 @@ type middleware struct {
 	// renders JSON into the address bar instead of sending the user back to the app.
 	optionalCookie fiber.Handler
 	moderator      fiber.Handler
+	// paidAI is the paid-entitlement gate (paid_ai.go) every route that makes a model call
+	// for its caller mounts AFTER its authentication gate. Called with the metered feature the
+	// route draws on, so a refusal names it, or with the zero Feature for an AI action that
+	// has no allowance of its own. Free gets no AI at all: an unpaid caller is a 402 before
+	// the handler runs, and a plan that cannot be read is a 503.
+	//
+	// The binding (user_llm.go) refuses to hand out a model client without the mark this
+	// leaves, so forgetting it on a new route is a 500 in that route's first test rather
+	// than model spend nobody paid for.
+	paidAI func(plan.Feature) fiber.Handler
 	// outboundFetch throttles every endpoint that makes the server fetch a
 	// caller-supplied URL, so one user's budget is spent across them rather than
 	// granted once per route.
@@ -700,7 +710,7 @@ func Register(app *fiber.App, cfg Config) {
 	geoH := newGeoHandlers()
 	trackingH := newTrackingHandlers(queries, cfg.Pool, jobSearch)
 	timelineH := newTimelineHandlers(queries)
-	resumeH := newResumeHandlers(resumeStore, structuredExtractor, facets, profileSvc, atsAnalyzer, queries)
+	resumeH := newResumeHandlers(resumeStore, structuredExtractor, facets, profileSvc, atsAnalyzer, queries, entitlementOf(plans))
 	photoH := newPhotoHandlers(photoStore)
 	// Same reason as jobSearch above: a nil *speech.Client wrapped in the transcriber
 	// interface would be a non-nil interface, and the handler's "no gateway here"
@@ -901,6 +911,7 @@ func Register(app *fiber.App, cfg Config) {
 		cookie:         cookieAuth,
 		optionalCookie: auth.OptionalCookieAuth(a.issuer, a.queries),
 		moderator:      requireModerator,
+		paidAI:         paidAIGate(entitlementOf(plans)),
 		outboundFetch:  contributionLimiter(cfg.Throttler),
 		throttler:      cfg.Throttler,
 	}

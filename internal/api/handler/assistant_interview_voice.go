@@ -54,6 +54,11 @@ func (h *assistantHandlers) PostAssistantVoiceToken(c *fiber.Ctx) error {
 		return err
 	}
 	instructions := voiceInterviewInstructions(rehearsal, h.userLanguage(c.Context(), sess.UserID))
+	// Minting a realtime credential hands the browser a live voice model, and it never
+	// passes through the user-call binding — so it makes the binding's check itself.
+	if err := requirePaidCall(c.UserContext()); err != nil {
+		return err
+	}
 	value, err := h.realtime.MintClientSecret(c.Context(), instructions)
 	if err != nil {
 		// Every failure from here is the gateway's: a refusal, a fault, an answer we

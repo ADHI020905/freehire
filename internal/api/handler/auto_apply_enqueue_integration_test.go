@@ -69,6 +69,14 @@ func seedEnqueueJob(t *testing.T, pool *pgxpool.Pool, source, slug string) int64
 	return id
 }
 
+// endPro takes an account off the pro plan, leaving it free.
+func endPro(t *testing.T, pool *pgxpool.Pool, userID int64) {
+	t.Helper()
+	if _, err := pool.Exec(context.Background(), `UPDATE users SET pro_until_granted = NULL WHERE id = $1`, userID); err != nil {
+		t.Fatalf("end pro: %v", err)
+	}
+}
+
 // makePro puts an account on the pro plan. It writes pro_until_granted, not pro_until: since
 // migration 0135 the plan column is derived from three sources and assigning it fails.
 //
@@ -163,6 +171,7 @@ func TestPostJobAutoApply_RefusesNonProCaller(t *testing.T) {
 	app, _ := newAutoApplyEnqueueApp(pool, iss, nil)
 
 	userID, cookie := autoApplyTailorUser(t, pool, iss, "free@example.test")
+	endPro(t, pool, userID) // the fixture subscribes everyone; this caller must be free
 	insertBaseCV(t, pool, userID)
 	seedEnqueueJob(t, pool, "greenhouse", "free-job")
 

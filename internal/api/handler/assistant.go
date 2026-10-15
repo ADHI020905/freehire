@@ -189,26 +189,26 @@ func (h *assistantHandlers) register(api fiber.Router, mw middleware) {
 	api.Get("/assistant/sessions", mw.key, h.ListAssistantSessions)
 	api.Get("/assistant/sessions/:id", mw.key, h.GetAssistantSession)
 	api.Delete("/assistant/sessions/:id", mw.key, h.DeleteAssistantSession)
-	api.Post("/assistant/sessions/:id/messages", mw.key, h.PostAssistantMessage)
+	api.Post("/assistant/sessions/:id/messages", mw.key, mw.paidAI(plan.FeatureAssistant), h.PostAssistantMessage)
 	api.Post("/assistant/sessions/:id/cancel", mw.key, h.CancelAssistantTurn)
 	// Buy this tailoring session another ceiling's worth of turns. Separate from starting
 	// a session because it is a distinct decision the candidate makes with what they know
 	// now — they have seen the work so far and are choosing to spend more of the day on it.
 	api.Post("/assistant/sessions/:id/extend", mw.key, h.PostAssistantExtend)
-	api.Post("/assistant/sessions/:id/opening", mw.key, h.PostAssistantOpening)
+	api.Post("/assistant/sessions/:id/opening", mw.key, mw.paidAI(plan.FeatureAssistant), h.PostAssistantOpening)
 	// Resume after a transport/model failure without appending another user message —
 	// re-sending the prompt would duplicate it in the model's context.
-	api.Post("/assistant/sessions/:id/retry", mw.key, h.PostAssistantRetry)
+	api.Post("/assistant/sessions/:id/retry", mw.key, mw.paidAI(plan.FeatureAssistant), h.PostAssistantRetry)
 	// Voice mode: mint one call's credential, then append each completed spoken turn
 	// as it finishes. The audio itself never transits here — see PostAssistantVoiceToken.
 	// The limiter guards call STARTS, the same shape as speech's transcriptionsPerHour;
 	// it is not a substitute for the client-side call-duration cap, which guards one
 	// call's length.
-	api.Post("/assistant/sessions/:id/voice-token", mw.key, perCallerLimiter(voiceTokensPerHour), h.PostAssistantVoiceToken)
+	api.Post("/assistant/sessions/:id/voice-token", mw.key, perCallerLimiter(voiceTokensPerHour), mw.paidAI(plan.FeatureAssistant), h.PostAssistantVoiceToken)
 	api.Post("/assistant/sessions/:id/voice-turns", mw.key, h.PostAssistantVoiceTurn)
 	// Cookie-only: an unattended run rewrites a CV, and the browser is the only place
 	// the candidate can watch it happen and undo it.
-	api.Post("/assistant/sessions/:id/autopilot", mw.cookie, h.PostAssistantAutopilot)
+	api.Post("/assistant/sessions/:id/autopilot", mw.cookie, mw.paidAI(plan.FeatureTailor), h.PostAssistantAutopilot)
 
 	// The external auto-apply pipeline's own two endpoints (openspec/changes/
 	// auto-apply-tailored-resume) — API key or cookie, never a session id from the caller.
@@ -220,7 +220,7 @@ func (h *assistantHandlers) register(api fiber.Router, mw middleware) {
 	// The candidate-facing trigger for the sequence above (openspec/changes/
 	// auto-apply-submit-trigger) — cookie-only, never mw.key or mw.autoApplyGate: see
 	// auto_apply_enqueue.go's own doc comment for why.
-	api.Post("/jobs/:slug/auto-apply", mw.cookie, h.PostJobAutoApply)
+	api.Post("/jobs/:slug/auto-apply", mw.cookie, mw.paidAI(plan.FeatureAutoApply), h.PostJobAutoApply)
 }
 
 // defaultAssistantMaxPrompt bounds one user message when ASSISTANT_MAX_PROMPT is
@@ -645,7 +645,10 @@ func (h *assistantHandlers) streamSSE(
 	// pollute that preset's cost bucket with turns that never touched its one distinguishing
 	// tool, defeating the reason the tag exists (AGENTS.md: "the preset is what makes them
 	// comparable").
-	turnRunner := h.boundRunner(c.Context(), turnSess)
+	turnRunner, err := h.boundRunner(c.UserContext(), turnSess)
+	if err != nil {
+		return err
+	}
 
 	// Metered BEFORE the headers go out. A refusal has to be a real status: an error frame
 	// inside a stream that already answered 200 is invisible to anything checking status
@@ -678,7 +681,12 @@ func (h *assistantHandlers) streamSSE(
 	// this handler returns, long before the turn ends. It is created HERE rather than inside
 	// the writer so the session's slot is taken while the request can still be answered — a
 	// slot taken after the handler returned could not refuse anything.
-	ctx, cancel := context.WithCancel(context.Background())
+	//
+	// Detached from the request's user context rather than from context.Background, so the
+	// mark the paid-AI gate left on it travels into the turn: a tool that makes a model call
+	// of its own (the cover-letter draft) binds through the same fail-closed check as the
+	// turn did. WithoutCancel because the turn must outlive the request it started in.
+	ctx, cancel := context.WithCancel(context.WithoutCancel(c.UserContext()))
 	slot, waiter, err := h.turns.claim(sess.ID, cancel)
 	if err != nil {
 		cancel()
@@ -807,13 +815,25 @@ func (h *assistantHandlers) streamSSE(
 // nil *llm.Client assigned into the Model INTERFACE is not a nil interface, so the runner
 // would believe it has a model and dereference it on the first round. That is a panic in
 // the stream goroutine, after the response has already begun.
-func (h *assistantHandlers) boundRunner(ctx context.Context, sess assistant.Session) *assistant.Runner {
-	bound := llmkey.Bind(ctx, h.keys, h.llm, sess.UserID, llm.Feature(tagAssistant), llm.Dimension{Name: "preset", Value: sess.Preset})
-	if bound == nil {
-		return h.runner
+//
+// It goes through the user-call binding like every other model call, so it fails closed on
+// a context the paid-AI gate did not mark — and the error comes back before any stream opens.
+func (h *assistantHandlers) boundRunner(ctx context.Context, sess assistant.Session) (*assistant.Runner, error) {
+	bound, err := h.binding().bind(ctx, sess.UserID, llm.Feature(tagAssistant), llm.Dimension{Name: "preset", Value: sess.Preset})
+	if err != nil {
+		return nil, err
 	}
-	return h.runner.With(bound)
+	if bound == nil {
+		return h.runner, nil
+	}
+	return h.runner.With(bound), nil
 }
+
+// binding is this surface's model client and credential resolver as the one user-call
+// binding every handler spends through (user_llm.go). They are held as two fields because
+// the assistant needs the bare client too; the binding is assembled where it is used so the
+// assistant cannot reach llmkey around the paid check.
+func (h *assistantHandlers) binding() llmBinding { return llmBinding{client: h.llm, keys: h.keys} }
 
 // The opening briefs. Like the autopilot's they are short on method and only say which
 // conversation this is: how to open — read the context, name the vacancy, ask the first
@@ -945,7 +965,10 @@ func (h *assistantHandlers) PostAssistantAutopilot(c *fiber.Ctx) error {
 	if job, err := h.queries.GetJob(c.Context(), *sess.JobID); err != nil {
 		log.Printf("assistant: loading job %d for the autopilot pre-run: %v", *sess.JobID, err)
 	} else {
-		analysis, jobDescription = h.prepareAutopilotAnalysis(c, sess, job), job.Description
+		if analysis, err = h.prepareAutopilotAnalysis(c, sess, job); err != nil {
+			return err
+		}
+		jobDescription = job.Description
 	}
 	return h.streamSSE(c, sess, h.meterTurn, func(ctx context.Context, runner *assistant.Runner, reg *assistant.Registry, system string, emit func(assistant.Event)) error {
 		// The pre-run happens HERE rather than in the handler above, because a handler that
@@ -1021,9 +1044,9 @@ var errNoRequirementList = errors.New("autopilot: no requirement list to walk")
 // and the refresh that follows the run — out of reads taken while c is still valid. A
 // missing match surface degrades to a nil, whose ensure and refresh are no-ops: the same
 // best-effort posture this step always had.
-func (h *assistantHandlers) prepareAutopilotAnalysis(c *fiber.Ctx, sess assistant.Session, job db.Job) *autopilotAnalysis {
+func (h *assistantHandlers) prepareAutopilotAnalysis(c *fiber.Ctx, sess assistant.Session, job db.Job) (*autopilotAnalysis, error) {
 	if h.cv == nil || h.cv.match == nil {
-		return nil
+		return nil, nil
 	}
 	return h.cv.match.prepareAutopilotRun(c, sess.UserID, job)
 }

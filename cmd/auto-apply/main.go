@@ -12,6 +12,7 @@ import (
 	"log"
 
 	"github.com/strelov1/freehire/internal/ai/llmkey"
+	"github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/api/atsapply"
 	"github.com/strelov1/freehire/internal/api/candidateprofile"
 	"github.com/strelov1/freehire/internal/application/autoapply"
@@ -123,7 +124,11 @@ func run() int {
 	// Greenhouse/Ashby endpoints internal/atsapply reuses via applyform.Fetchers are the
 	// platforms' own public job-board APIs, so its user agent, timeouts and size caps are
 	// exactly right here too.
-	sidecar := atsapply.NewClient(sources.NewClient(), llmClient, llmKeyResolver, cfg.TypesafeAPIKey, atoms, letters, cvStore, cvRenderer)
+	// Drafting asks the plan, per attempt, whether the candidate is still on a paid plan
+	// before it spends a model call for them (atsapply.Client.resolve). Only the tier is
+	// read, so the allowance figures this store is built with play no part here.
+	entitlement := plan.NewStore(queries, pool, plan.ConfigFromEnv())
+	sidecar := atsapply.NewClient(sources.NewClient(), llmClient, llmKeyResolver, cfg.TypesafeAPIKey, atoms, letters, cvStore, cvRenderer, entitlement)
 	// Stored-form fallback (openspec/changes/atsapply-recruitee-stored-schema): lets a
 	// provider with no live schema fetcher (today: Recruitee) reach field resolution
 	// instead of parking before it ever runs, by reading the form cmd/capture-apply-form

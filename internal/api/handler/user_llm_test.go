@@ -2,6 +2,10 @@ package handler
 
 import (
 	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -9,6 +13,7 @@ import (
 
 	"github.com/strelov1/freehire/internal/ai/assistant"
 	"github.com/strelov1/freehire/internal/ai/llmkey"
+	"github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/platform/llm"
 )
@@ -70,8 +75,69 @@ func TestBoundRunnerKeepsTheOriginalWhenNoClientResolves(t *testing.T) {
 		// llm is nil: this deployment has no assistant model client to re-credential.
 	}
 
-	if got := h.boundRunner(context.Background(), assistant.Session{UserID: 7, Preset: assistant.PresetChat}); got != original {
+	got, err := h.boundRunner(plan.WithPaidAI(context.Background()), assistant.Session{UserID: 7, Preset: assistant.PresetChat})
+	if err != nil {
+		t.Fatalf("boundRunner on a paid context: %v", err)
+	}
+	if got != original {
 		t.Error("an unresolved client replaced the runner's model with a typed nil; the turn would panic mid-stream")
+	}
+}
+
+// The structural half of the paid gate: a model client is handed out only for a context the
+// paid-AI middleware marked. A route that makes a model call and was mounted without the
+// middleware must fail here — on its first request and in its first test — rather than
+// spend on somebody who never paid.
+func TestTheBindingFailsClosedWithoutThePaidMark(t *testing.T) {
+	client, _, err := llm.NewClient(llm.Settings{BaseURL: "http://127.0.0.1:1", APIKey: "k", Model: "m"}, "test")
+	if err != nil {
+		t.Fatalf("llm client: %v", err)
+	}
+	b := llmBinding{client: client, keys: llmkey.NewResolver(newStubKeyQueries(), nil)}
+	unpaid := context.Background()
+
+	if got, err := b.bind(unpaid, 7, llm.Feature(tagSearchIntent)); !errors.Is(err, errUnpaidModelCall) || got != nil {
+		t.Errorf("bind on an unmarked context = (%v, %v), want (nil, errUnpaidModelCall)", got, err)
+	}
+	if _, err := b.caller(unpaid, 7, llm.Feature(tagATSReview)); !errors.Is(err, errUnpaidModelCall) {
+		t.Errorf("caller on an unmarked context error = %v, want errUnpaidModelCall", err)
+	}
+	h := &assistantHandlers{llm: client, keys: b.keys}
+	if _, err := h.boundRunner(unpaid, assistant.Session{UserID: 7, Preset: assistant.PresetChat}); !errors.Is(err, errUnpaidModelCall) {
+		t.Errorf("boundRunner on an unmarked context error = %v, want errUnpaidModelCall", err)
+	}
+
+	paid := plan.WithPaidAI(unpaid)
+	if got, err := b.bind(paid, 7, llm.Feature(tagSearchIntent)); err != nil || got == nil {
+		t.Errorf("bind on a paid context = (%v, %v), want a client", got, err)
+	}
+	if _, err := b.caller(paid, 7, llm.Feature(tagATSReview)); err != nil {
+		t.Errorf("caller on a paid context: %v", err)
+	}
+}
+
+// Every user-attributed model call in this package must go through the binding, because the
+// binding is where the paid check lives. llmkey's own Bind and Caller cannot fail and check
+// nothing, so a handler that reached for them directly would spend without anybody having
+// asked whether the caller paid. user_llm.go is the one file allowed to.
+func TestOnlyTheBindingReachesLLMKey(t *testing.T) {
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range files {
+		if f == "user_llm.go" || strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		src, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, call := range []string{"llmkey.Bind(", "llmkey.Caller("} {
+			if strings.Contains(string(src), call) {
+				t.Errorf("%s calls %s directly; spend through llmBinding.bind/caller so the paid check runs", f, call)
+			}
+		}
 	}
 }
 

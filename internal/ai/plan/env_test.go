@@ -3,13 +3,14 @@ package plan
 import (
 	"regexp"
 	"testing"
+	"time"
 )
 
 func TestConfigFromEnvDefaultsToTheShippedConfig(t *testing.T) {
 	cfg := ConfigFromEnv()
 
-	if cfg.FreeDaily(FeatureFit) != DefaultConfig().FreeDaily(FeatureFit) {
-		t.Errorf("an unset environment changed the free allowance")
+	if cfg.Allowance(TierPro, FeatureFit) != DefaultConfig().Allowance(TierPro, FeatureFit) {
+		t.Errorf("an unset environment changed the pro allowance")
 	}
 	for _, f := range AllFeatures() {
 		if !cfg.Enforced(f) {
@@ -56,15 +57,21 @@ func TestAnUnknownFeatureNameIsIgnoredNotGuessed(t *testing.T) {
 	}
 }
 
-func TestFreeAllowanceOverride(t *testing.T) {
+// PLAN_FREE_DAILY_<FEATURE> used to reopen a free allowance without a deploy. It is no longer
+// read: a host that still carries one must not be able to hand free accounts a model call.
+func TestAFreeAllowanceCannotBeSetFromTheEnvironment(t *testing.T) {
 	t.Setenv("PLAN_FREE_DAILY_MATCH", "7")
+	t.Setenv("PLAN_FREE_DAILY_COVER_LETTER", "5")
 	cfg := ConfigFromEnv()
 
-	if got := cfg.FreeDaily(FeatureFit); got != 7 {
-		t.Errorf("free daily allowance for match = %d, want 7", got)
+	for _, f := range AllFeatures() {
+		if a := cfg.Allowance(TierFree, f); a.Limit != 0 || a.Unlimited {
+			t.Errorf("free allowance for %s = %+v with PLAN_FREE_DAILY_* set, want nothing", f, a)
+		}
 	}
-	if got := cfg.FreeDaily(FeatureTailor); got != DefaultConfig().FreeDaily(FeatureTailor) {
-		t.Errorf("overriding one feature changed another (tailor = %d)", got)
+	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
+	if d := cfg.decide(TierFree, FeatureFit, 0, false, now); d.Allowed {
+		t.Error("free was allowed a fit analysis with PLAN_FREE_DAILY_MATCH set")
 	}
 }
 
@@ -74,7 +81,7 @@ func TestADashedFeatureIsOverriddenByItsUnderscoredName(t *testing.T) {
 	// so the documented lever would be unsettable on the host it exists for — and this one
 	// is a ceiling under a plan people have already bought.
 	t.Setenv("PLAN_PRO_DAILY_AUTO_APPLY", "9")
-	t.Setenv("PLAN_FREE_DAILY_COVER_LETTER", "5")
+	t.Setenv("PLAN_PRO_DAILY_COVER_LETTER", "5")
 	t.Setenv("PLAN_ULTRA_DAILY_AUTO_APPLY", "250")
 	cfg := ConfigFromEnv()
 
@@ -84,8 +91,8 @@ func TestADashedFeatureIsOverriddenByItsUnderscoredName(t *testing.T) {
 	if got := cfg.Allowance(TierUltra, FeatureAutoApply).Limit; got != 250 {
 		t.Errorf("ultra daily allowance for auto-apply = %d, want 250", got)
 	}
-	if got := cfg.FreeDaily(FeatureCoverLetter); got != 5 {
-		t.Errorf("free daily allowance for cover-letter = %d, want 5", got)
+	if got := cfg.Allowance(TierPro, FeatureCoverLetter).Limit; got != 5 {
+		t.Errorf("pro daily allowance for cover-letter = %d, want 5", got)
 	}
 }
 
@@ -102,16 +109,17 @@ func TestEveryFeatureHasASettableOverrideName(t *testing.T) {
 }
 
 func TestAnUnreadableOverrideKeepsTheDefault(t *testing.T) {
-	// A typo in a number must not silently mean zero. Zero would refuse the feature for
-	// everybody on the free plan, which looks exactly like a deliberate decision.
-	t.Setenv("PLAN_FREE_DAILY_MATCH", "three")
-	if got, want := ConfigFromEnv().FreeDaily(FeatureFit), DefaultConfig().FreeDaily(FeatureFit); got != want {
-		t.Errorf("an unparseable override left %d, want the default %d", got, want)
+	// A typo in a number must not silently mean zero. Zero would refuse the feature to every
+	// subscriber, which looks exactly like a deliberate decision.
+	want := DefaultConfig().Allowance(TierPro, FeatureFit)
+	t.Setenv("PLAN_PRO_DAILY_MATCH", "three")
+	if got := ConfigFromEnv().Allowance(TierPro, FeatureFit); got != want {
+		t.Errorf("an unparseable override left %+v, want the default %+v", got, want)
 	}
 
-	t.Setenv("PLAN_FREE_DAILY_MATCH", "-2")
-	if got, want := ConfigFromEnv().FreeDaily(FeatureFit), DefaultConfig().FreeDaily(FeatureFit); got != want {
-		t.Errorf("a negative override left %d, want the default %d", got, want)
+	t.Setenv("PLAN_PRO_DAILY_MATCH", "-2")
+	if got := ConfigFromEnv().Allowance(TierPro, FeatureFit); got != want {
+		t.Errorf("a negative override left %+v, want the default %+v", got, want)
 	}
 }
 

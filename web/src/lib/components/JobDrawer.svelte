@@ -16,7 +16,8 @@
   import MatchAnalysisFull from './MatchAnalysisFull.svelte';
   import JobMatch from './JobMatch.svelte';
   import NoteEditor from './NoteEditor.svelte';
-  import { api } from '$lib/api';
+  import { api, isPlanRefusal } from '$lib/api';
+  import PlanLimitLink from './PlanLimitLink.svelte';
   import type { EmailBody } from '$lib/api';
   import { currentUser } from '$lib/auth.svelte';
   import { statusLabel, stageImplication } from '$lib/emailStatus';
@@ -274,6 +275,7 @@
   let recall = $state.raw<MailRecallResult | null>(null);
   let recallLoading = $state(false);
   let recallError = $state<string | null>(null);
+  let recallPlanRefused = $state(false);
   // Ids resolved since the sweep, so a confirmed or dismissed row leaves at the press
   // rather than on the next load.
   let recallResolved = $state.raw<string[]>([]);
@@ -307,6 +309,7 @@
     if (!item.job || recallLoading) return;
     recallLoading = true;
     recallError = null;
+    recallPlanRefused = false;
     recallResolved = [];
     try {
       recall = await api.recallApplicationMail(item.job.public_slug);
@@ -314,7 +317,8 @@
       // Shown rather than swallowed. An empty result would read as "your mailbox holds
       // nothing", which is the wrong thing to say about a gateway being down.
       recall = null;
-      recallError = errorMessage(e, s.errors.searchMail);
+      recallPlanRefused = isPlanRefusal(e);
+      recallError = recallPlanRefused ? s.errors.searchMailNeedsPlan : errorMessage(e, s.errors.searchMail);
     } finally {
       recallLoading = false;
     }
@@ -880,7 +884,12 @@
               {/if}
             </div>
           {/if}
-          {#if recallError}
+          {#if recallPlanRefused}
+            <div class="flex flex-wrap items-center gap-3">
+              <p class="text-sm text-muted-foreground">{recallError}</p>
+              <PlanLimitLink />
+            </div>
+          {:else if recallError}
             <p class="text-sm text-destructive">{recallError}</p>
           {/if}
           {#if recallPending.length > 0}

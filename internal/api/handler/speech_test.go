@@ -44,7 +44,7 @@ func speechApp(t *testing.T, stt transcriber) (*fiber.App, string) {
 		t.Fatalf("issue token: %v", err)
 	}
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
-	app.Post("/speech/transcriptions", auth.RequireAuth(iss, testVersions),
+	app.Post("/speech/transcriptions", auth.RequireAuth(iss, testVersions), markPaidAI(unmeteredAI),
 		(&speechHandlers{stt: stt}).PostTranscription)
 	return app, token
 }
@@ -249,7 +249,7 @@ func TestTranscription_ThrottlesOneCallerRatherThanOneAddress(t *testing.T) {
 		t.Fatalf("issue token: %v", err)
 	}
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
-	app.Post("/speech/transcriptions", auth.RequireAuth(iss, testVersions), perCallerLimiter(2),
+	app.Post("/speech/transcriptions", auth.RequireAuth(iss, testVersions), perCallerLimiter(2), markPaidAI(unmeteredAI),
 		(&speechHandlers{stt: stt}).PostTranscription)
 
 	for attempt := 1; attempt <= 3; attempt++ {
@@ -276,6 +276,7 @@ func TestSpeechRegister_TakesTheMessageEndpointsGate(t *testing.T) {
 	app := fiber.New()
 	api := app.Group("/api/v1")
 	(&speechHandlers{}).register(api, middleware{
+		paidAI: markPaidAI,
 		key:    namedGate("key"),
 		cvKey:  namedGate("cvKey"),
 		cookie: namedGate("cookie"),

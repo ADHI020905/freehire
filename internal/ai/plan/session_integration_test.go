@@ -13,15 +13,17 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestStartingSessionsSpendsTheDailyAllowance(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-daily@example.test")
+	user := insertSubscriber(t, pool, "session-daily@example.test")
 
-	limit := s.cfg.FreeDaily(FeatureTailor)
+	limit := proCeiling(s, FeatureTailor)
 	for i := range limit {
 		if _, err := s.StartSession(ctx, user, sessionID(i)); err != nil {
 			t.Fatalf("starting session %d of %d was refused: %v", i+1, limit, err)
@@ -47,7 +49,7 @@ func TestTurnCeilingBoundsOneSession(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-ceiling@example.test")
+	user := insertSubscriber(t, pool, "session-ceiling@example.test")
 	const sess = "sess-ceiling"
 
 	if _, err := s.StartSession(ctx, user, sess); err != nil {
@@ -55,6 +57,7 @@ func TestTurnCeilingBoundsOneSession(t *testing.T) {
 	}
 	per := s.cfg.TailorTurnsPerSession
 
+	lapse(t, pool, user)
 	d, err := s.AllowTurn(ctx, user, sess, per-1)
 	if err != nil {
 		t.Fatalf("AllowTurn: %v", err)
@@ -75,7 +78,7 @@ func TestExtendingASessionBuysAnotherCeiling(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-extend@example.test")
+	user := insertSubscriber(t, pool, "session-extend@example.test")
 	const sess = "sess-extend"
 
 	if _, err := s.StartSession(ctx, user, sess); err != nil {
@@ -91,6 +94,7 @@ func TestExtendingASessionBuysAnotherCeiling(t *testing.T) {
 		t.Errorf("extending charged %d, want 1 — it spends another of the day's sessions", ext.Charge)
 	}
 
+	lapse(t, pool, user)
 	d, err := s.AllowTurn(ctx, user, sess, per)
 	if err != nil {
 		t.Fatalf("AllowTurn: %v", err)
@@ -104,6 +108,7 @@ func TestExtendingASessionBuysAnotherCeiling(t *testing.T) {
 
 	// The extension came out of the same daily allowance: two of the day's two sessions
 	// are now spent on this one vacancy, so a second vacancy is refused.
+	resubscribe(t, pool, user)
 	if _, err := s.StartSession(ctx, user, "sess-other"); !errors.Is(err, ErrRefused) {
 		t.Fatalf("starting another session returned %v, want ErrRefused — the extension did not come out of the daily allowance", err)
 	}
@@ -121,11 +126,12 @@ func TestExtendingAGrandfatheredSessionBuysTurns(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-grandfathered@example.test")
+	user := insertSubscriber(t, pool, "session-grandfathered@example.test")
 	const sess = "sess-predates-the-ledger" // never passed through StartSession
 
 	per := s.cfg.TailorTurnsPerSession
 
+	lapse(t, pool, user)
 	// One ceiling's worth, not zero: a live conversation is bounded, not walled off.
 	d, err := s.AllowTurn(ctx, user, sess, per-1)
 	if err != nil {
@@ -138,6 +144,7 @@ func TestExtendingAGrandfatheredSessionBuysTurns(t *testing.T) {
 		t.Fatalf("the uncharged session ran past its one ceiling (allowed=%v, err %v)", d.Allowed, err)
 	}
 
+	resubscribe(t, pool, user)
 	ext, err := s.ExtendSession(ctx, user, sess)
 	if err != nil {
 		t.Fatalf("ExtendSession: %v", err)
@@ -146,6 +153,7 @@ func TestExtendingAGrandfatheredSessionBuysTurns(t *testing.T) {
 		t.Fatalf("extending charged %d, want 1", ext.Charge)
 	}
 
+	lapse(t, pool, user)
 	d, err = s.AllowTurn(ctx, user, sess, per)
 	if err != nil {
 		t.Fatalf("AllowTurn after extending: %v", err)
@@ -162,10 +170,10 @@ func TestExtendingWithNoAllowanceLeftIsRefused(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-extend-broke@example.test")
+	user := insertSubscriber(t, pool, "session-extend-broke@example.test")
 
 	// Spend the whole daily allowance on separate sessions.
-	for i := range s.cfg.FreeDaily(FeatureTailor) {
+	for i := range proCeiling(s, FeatureTailor) {
 		if _, err := s.StartSession(ctx, user, sessionID(i)); err != nil {
 			t.Fatalf("StartSession %d: %v", i, err)
 		}
@@ -176,6 +184,7 @@ func TestExtendingWithNoAllowanceLeftIsRefused(t *testing.T) {
 
 	// The session stays exactly as it was: still readable, still bounded by the one
 	// ceiling it paid for.
+	lapse(t, pool, user)
 	d, err := s.AllowTurn(ctx, user, sessionID(0), 0)
 	if err != nil {
 		t.Fatalf("AllowTurn: %v", err)
@@ -189,7 +198,7 @@ func TestTwoSimultaneousContinuesCostOneAllowance(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-double-click@example.test")
+	user := insertSubscriber(t, pool, "session-double-click@example.test")
 	const sess = "sess-double"
 
 	if _, err := s.StartSession(ctx, user, sess); err != nil {
@@ -209,6 +218,7 @@ func TestTwoSimultaneousContinuesCostOneAllowance(t *testing.T) {
 	if got := usedOn(t, pool, user, FeatureTailor, Day(now)); got != 2 {
 		t.Fatalf("a double-clicked continue consumed %d of the day's allowance, want 2 (the start plus one extension)", got)
 	}
+	lapse(t, pool, user)
 	d, err := s.AllowTurn(ctx, user, sess, 0)
 	if err != nil {
 		t.Fatalf("AllowTurn: %v", err)
@@ -222,7 +232,7 @@ func TestOneSessionCannotBorrowAnothersCeilings(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-prefix@example.test")
+	user := insertSubscriber(t, pool, "session-prefix@example.test")
 
 	// 'sess-1' is a prefix of 'sess-12'. Without the terminator on the reference, the
 	// shorter id would count the longer one's charges as its own.
@@ -233,6 +243,7 @@ func TestOneSessionCannotBorrowAnothersCeilings(t *testing.T) {
 		t.Fatalf("StartSession sess-12: %v", err)
 	}
 
+	lapse(t, pool, user)
 	d, err := s.AllowTurn(ctx, user, "sess-1", s.cfg.TailorTurnsPerSession)
 	if err != nil {
 		t.Fatalf("AllowTurn: %v", err)
@@ -249,7 +260,7 @@ func TestReleasingAFailedBootstrapGivesTheSessionBack(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-release@example.test")
+	user := insertSubscriber(t, pool, "session-release@example.test")
 	const sess = "sess-failed"
 
 	if _, err := s.StartSession(ctx, user, sess); err != nil {
@@ -263,7 +274,7 @@ func TestReleasingAFailedBootstrapGivesTheSessionBack(t *testing.T) {
 	}
 
 	// And the whole allowance is available again, so the retry is charged once.
-	for i := range s.cfg.FreeDaily(FeatureTailor) {
+	for i := range proCeiling(s, FeatureTailor) {
 		if _, err := s.StartSession(ctx, user, sessionID(i)); err != nil {
 			t.Fatalf("retry %d after release was refused: %v", i, err)
 		}
@@ -274,10 +285,10 @@ func TestTailorTurnsDoNotTouchTheAssistantAllowance(t *testing.T) {
 	now := time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC)
 	s, pool := newStore(t, enforcing(), now)
 	ctx := context.Background()
-	user := insertUser(t, pool, "session-separate@example.test")
+	user := insertSubscriber(t, pool, "session-separate@example.test")
 
 	// Spend the whole assistant allowance in chat.
-	for i := range s.cfg.FreeDaily(FeatureAssistant) {
+	for i := range proCeiling(s, FeatureAssistant) {
 		if _, err := s.Consume(ctx, user, FeatureAssistant, jobRef(i)); err != nil {
 			t.Fatalf("assistant turn %d: %v", i, err)
 		}
@@ -298,6 +309,22 @@ func TestTailorTurnsDoNotTouchTheAssistantAllowance(t *testing.T) {
 	if !d.Allowed {
 		t.Fatal("a tailoring turn was refused because the assistant allowance was spent")
 	}
+}
+
+// The turn ceiling binds only an UNPAID tier (decideTurn): every paid one runs unbounded
+// turns. The paid gate in front of every model call now keeps an unpaid account from
+// reaching a turn at all, so these tests reach the ceiling the one way an account still can
+// hold a charged session and no subscription — the subscription lapsing after the session
+// was bought. Charging happens while subscribed (free is refused before any allowance is
+// read); the ceiling is read after the lapse.
+func lapse(t *testing.T, pool *pgxpool.Pool, user int64) {
+	t.Helper()
+	makePro(t, pool, user, time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+}
+
+func resubscribe(t *testing.T, pool *pgxpool.Pool, user int64) {
+	t.Helper()
+	makePro(t, pool, user, subscribedUntil)
 }
 
 func sessionID(i int) string { return "sess-" + jobRef(i) }

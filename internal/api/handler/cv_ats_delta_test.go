@@ -218,6 +218,7 @@ func TestCVRegister_ATSDeltaIsCookieOnly(t *testing.T) {
 	app := fiber.New()
 	api := app.Group("/api/v1")
 	(&cvHandlers{}).register(api, middleware{
+		paidAI: markPaidAI,
 		key:    namedGate("key"),
 		cvKey:  namedGate("cvKey"),
 		cookie: namedGate("cookie"),
