@@ -385,6 +385,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   feishujobs: 'Feishu Jobs',
   dassault: 'Dassault Systèmes',
   mokahr: 'MokaHR',
+  peoplesoft: 'PeopleSoft',
   pythonorg: 'Python.org',
 };
 

@@ -560,6 +560,9 @@ func All(c HTTPClient) map[string]Source {
 	// so the token a bootstrap GET mints must ride back as BOTH a header and the cookie the
 	// jar-less shared client would drop.
 	registry["dayforce"] = cookieSessionSource[dayforceHTTP](c, NewDayforce)
+	// peoplesoft's result list grows by a form postback PeopleTools accepts only inside the
+	// session the search page's GET opened. See peoplesoft.go.
+	registry["peoplesoft"] = cookieSessionSource[peoplesoftHTTP](c, NewPeopleSoft)
 	aijobsMaxNewPerRun := aijobsMaxNewPerRunFromEnv()
 	registry["aijobs"] = cookieSessionSource[aijobsHTTP](c, func(h aijobsHTTP) Source {
 		return NewAijobs(h, aijobsMaxNewPerRun)
