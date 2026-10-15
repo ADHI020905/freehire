@@ -421,6 +421,10 @@ func All(c HTTPClient) map[string]Source {
 		// and always read through its "IT and Software" job function. One JSON search request
 		// per board carries every posting with its body. See kalibrr.go.
 		NewKalibrr(c),
+		// Feishu Jobs: ByteDance's Feishu Hire ATS, one tenant careers host per board
+		// (jobs.bytedance.com, <tenant>.jobs.feishu.cn), read through the tenant's R&D
+		// category. The edge admits only a macOS browser string. See feishujobs.go.
+		macBrowserUASource(c, NewFeishuJobs),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see
@@ -625,6 +629,16 @@ func browserUASource[T any](c HTTPClient, build func(T) Source) Source {
 		return build(zero)
 	}
 	return build(any(newBrowserUAClient()).(T))
+}
+
+// macBrowserUASource is browserUASource for an edge that admits only a macOS browser string
+// (Feishu Hire). See macBrowserUserAgent.
+func macBrowserUASource[T any](c HTTPClient, build func(T) Source) Source {
+	if c == nil {
+		var zero T
+		return build(zero)
+	}
+	return build(any(newMacBrowserUAClient()).(T))
 }
 
 // reg indexes sources by provider key. A duplicate key means two adapters claim the

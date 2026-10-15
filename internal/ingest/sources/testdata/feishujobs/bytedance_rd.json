@@ -1,0 +1,717 @@
+{
+ "code": 0,
+ "data": {
+  "job_post_list": [
+   {
+    "id": "7652289717715896629",
+    "title": "Forward Deployed Engineer - BytePlus",
+    "description": "About Us\nEmbedded in customer environments, this role will rapidly develop and debug AI applications to accomplish production-grade deployment, while driving product feature iteration.\n\nResponsibilities\n- Develop a deep understanding of customers’ business scenarios, rapidly build AI application prototypes for validation, and continuously iterate them into production-grade Agent systems.\n- Design AI- and cloud-based architectures, and leverage AI-assisted development to rapidly implement solutions within customer environments, effectively integrating with customers’ application APIs and data systems while complying with their security requirements.\n- Build high-performance evaluation pipelines and observability frameworks to ensure Agent systems meet requirements for accuracy, safety, and latency.\n- Identify reusable application patterns and technical challenges, translate them into product feature requests, and help drive product evolution and improvement.\n- Work closely with customers’ engineering teams to ensure successful deployment of AI applications, achieving long-term stability, high adoption rates, and sustained business value.",
+    "requirement": "Minimum Qualification(s)\n- Bachelor's degree or above in Computer Science, Engineering, Mathematics, or a related field, or equivalent hands-on experience.\n- More than 3 years of software development experience, with strong proficiency in Vibe Coding and substantial practical application of it in real-world projects.\n- Hands-on experience building AI applications, including areas such as Prompt Engineering, Fine-Tuning, Retrieval-Augmented Generation (RAG), and Agent development.\n- Experience in cloud-based architecture design and development, including developing with cloud service APIs/SDKs, automated deployment, and designing highly available and scalable systems.\n\nPreferred Qualification(s)\n- Experience developing complex Agent systems, with proficiency in using open-source or commercial Agent development frameworks such as LangGraph, CrewAI, or Agent development SDKs provided by cloud service providers.\n- Experience delivering AI solutions for one or more industries, including but not limited to education, healthcare, automotive, financial services, telecommunications, and other sectors.",
+    "job_category": {
+     "id": "6704215862603155720",
+     "name": "研发",
+     "en_name": "R&D",
+     "i18n_name": "研发",
+     "depth": 1
+    },
+    "city_info": {
+     "code": "CT_159",
+     "name": "中国香港",
+     "en_name": "Hong Kong (China)",
+     "i18n_name": "中国香港"
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "正式",
+     "en_name": "Regular",
+     "i18n_name": "正式",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1781687702035,
+    "code": "A54965B",
+    "job_process_id": "6694104661676411150",
+    "city_list": [
+     {
+      "code": "CT_159",
+      "name": "中国香港",
+      "en_name": "Hong Kong (China)",
+      "i18n_name": "中国香港"
+     }
+    ],
+    "job_post_info": {
+     "address": "中国香港, 香港特别行政区, 香港, 中西区, 37/F, One International Finance Centre, 1 Harbour View Street",
+     "recruitment_type": {
+      "id": "101",
+      "name": "正式",
+      "en_name": "Regular",
+      "i18n_name": "正式",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "2099",
+       "name": "中国香港, 香港特别行政区, 香港, 中西区, 37/F, One International Finance Centre, 1 Harbour View Street",
+       "en_name": "37/F, One International Finance Centre, 1 Harbour View Street\nCentral and Western District\nHong Kong\nHong Kong, SAR\nHong Kong, China",
+       "district": {
+        "district_code": "DS_1002546",
+        "name": "中西区",
+        "en_name": "Central and Western District",
+        "i18n_name": "中西区"
+       },
+       "city": {
+        "city_code": "CT_159",
+        "name": "中国香港",
+        "en_name": "Hong Kong (China)",
+        "i18n_name": "中国香港",
+        "py_name": "zhongguoxianggang"
+       },
+       "state": {
+        "state_code": "ST_55",
+        "name": "香港岛",
+        "en_name": "Hong Kong Island",
+        "i18n_name": "香港岛"
+       },
+       "country": {
+        "country_code": "CN_24",
+        "name": "中国香港",
+        "en_name": "Hong Kong, China",
+        "i18n_name": "中国香港"
+       },
+       "i18n_name": "中国香港, 香港特别行政区, 香港, 中西区, 37/F, One International Finance Centre, 1 Harbour View Street",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7680112755274828037",
+    "title": "平台Agent研发工程师 - 风控",
+    "description": "团队介绍：风控团队由算法、工程、产品三大团队协同构成，为抖音、今日头条、豆包、剪映等字节跳动业务的内容、交易、流量、账号场景提供智能风控，服务十亿级用户；场景对抗性极强、推理链路长、多模态数据海量，是 AI 时代最有挑战的实战领域之一。算法团队推进 LLM/MLLM 与 Agentic AI 的工业化落地，构建下一代智能风控基建；工程团队依托高并发、大数据与大模型，搭建端云一体的多层对抗体系与情报预警；产品团队评估业务风险、制定策略、探索 AI 在风控中的边界。三线协同，打造高效、前瞻的智能风控防线。\n\n1、负责策略引擎系统&平台的设计与实现，支持字节跳动各产品线（抖音短视频、电商、直播、生活服务、用户增长等）的风控需求；\n2、负责高性能、高并发、低延迟的后台系统持续优化和演进；\n3、面向超大规模数据问题，每日处理千亿增量的；\n4、负责风控Agent应用和基建建设，调研和跟踪AI行业的技术趋势，结合风控业务探索AI解决方案的落地，打造具备自演进能力的下一代智能风控架构；\n5、结合业界AI编程和提效的最佳实践，推动风控工程研发开发流程的迭代和效率的提升。",
+    "requirement": "1、本科及以上学历，2年以上后端研发经验；\n2、熟练掌握Go、Java、C++、Rust等至少一门语言，具备扎实的编码和系统设计能力；\n3、熟悉数据库、缓存、消息队列及分布式系统，有平台型系统建设经验；\n4、具备良好的业务抽象、问题分析和项目推动能力；\n5、对大模型及Agent工程化有浓厚兴趣和实践意愿。\n\n加分项：\n1、有风控平台、运营平台、规则引擎或Agent相关经验者优先。",
+    "job_category": {
+     "id": "6704215862557018372",
+     "name": "后端",
+     "en_name": "Backend",
+     "i18n_name": "后端",
+     "depth": 2,
+     "parent": {
+      "id": "6704215862603155720",
+      "name": "研发",
+      "en_name": "R&D",
+      "i18n_name": "研发",
+      "depth": 1
+     }
+    },
+    "city_info": {
+     "code": "CT_128",
+     "name": "深圳",
+     "en_name": "Shenzhen",
+     "i18n_name": "深圳"
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "正式",
+     "en_name": "Regular",
+     "i18n_name": "正式",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1788165674598,
+    "code": "A95067A",
+    "job_process_id": "6694104661676411150",
+    "city_list": [
+     {
+      "code": "CT_128",
+      "name": "深圳",
+      "en_name": "Shenzhen",
+      "i18n_name": "深圳"
+     }
+    ],
+    "job_post_info": {
+     "address": "中国大陆广东省深圳市南山区创业路1555号景湖大厦，邮编：518052",
+     "recruitment_type": {
+      "id": "101",
+      "name": "正式",
+      "en_name": "Regular",
+      "i18n_name": "正式",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "7497171927871930371",
+       "name": "中国大陆广东省深圳市南山区创业路1555号景湖大厦，邮编：518052",
+       "en_name": "Jinghu Building, No. 1555 Chuangye Road, NanShan District, Shenzhen, Guangdong, Chinese Mainland, 518052",
+       "district": {
+        "district_code": "DS_47",
+        "name": "南山区",
+        "en_name": "Nanshan",
+        "i18n_name": "南山区"
+       },
+       "city": {
+        "city_code": "CT_128",
+        "name": "深圳",
+        "en_name": "Shenzhen",
+        "i18n_name": "深圳",
+        "py_name": "shenzhen"
+       },
+       "state": {
+        "state_code": "ST_21",
+        "name": "广东",
+        "en_name": "Guangdong",
+        "i18n_name": "广东"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "中国大陆广东省深圳市南山区创业路1555号景湖大厦，邮编：518052",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7673470671408072965",
+    "title": "Physical Design Engineer (Subsystem Level) - Singapore",
+    "description": "Team Introduction\nThe Silicon Platform Team acts as the core R&D middleware group for chip development within the company. The team covers the full spectrum of the chip design flow, including Logic Synthesis, Design for Testability (DFT), Backend Design, Physical and STA (Static Timing Analysis) Signoff, as well as Power Integrity, IR drop, and Electromagnetic Compatibility (Power/IR/EM). The team also oversees tape-out, mass production, packaging, testing, and board-level verification. They collaborate closely with front-end chip teams across business units to drive R&D progress and mass production deployment for chip.\n\nResponsibilities\n1. Own the physical implementation of a complex digital subsystem from netlist handoff through final GDS/tapeout.\n2. Drive the physical implementation strategy for the subsystem, including SoC-level partition cooperation and subsystem partitioning.\n3. Define and execute floorplanning and pin assignment.\n4. Drive PV/PI signoff at the subsystem level.\n5. Coordinate implementation activities across multiple blocks and ensure consistent methodology and QoR.",
+    "requirement": "Minimum Qualifications\n1. BS degree in Electrical Engineering, Computer Engineering, or equivalent practical experience.\n2. 5+ years of experience in physical design / physical implementation.\n3. Experience owning complex digital subsystems from netlist to tapeout.\n4. Hands-on experience with industry-standard PD tools (e.g., Synopsys ICC2, Cadence Innovus).\n5. Experience with floorplanning, partitioning, and cross-block timing closure.\n\nPreferred Qualifications\n1. Experience with 7nm/5nm/3nm/2nm or other advanced nodes.\n2. Experience owning complex subsystems such as CPU/GPU/NPU subsystems, NOC, or memory controllers for server-level chips.",
+    "job_category": {
+     "id": "6704215862603155720",
+     "name": "研发",
+     "en_name": "R&D",
+     "i18n_name": "研发",
+     "depth": 1
+    },
+    "city_info": {
+     "code": "CT_163",
+     "name": "新加坡",
+     "en_name": "Singapore",
+     "i18n_name": "新加坡"
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "正式",
+     "en_name": "Regular",
+     "i18n_name": "正式",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1786619401943,
+    "code": "A99258",
+    "job_process_id": "6694104661676411150",
+    "city_list": [
+     {
+      "code": "CT_163",
+      "name": "新加坡",
+      "en_name": "Singapore",
+      "i18n_name": "新加坡"
+     }
+    ],
+    "job_post_info": {
+     "address": "WeWork Collyer Quay, Level 13 & 14 & 15, 21 Collyer Quay\n新加坡 新加坡 049320\n新加坡",
+     "recruitment_type": {
+      "id": "101",
+      "name": "正式",
+      "en_name": "Regular",
+      "i18n_name": "正式",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "671",
+       "name": "WeWork Collyer Quay, Level 13 & 14 & 15, 21 Collyer Quay\n新加坡 新加坡 049320\n新加坡",
+       "en_name": "WeWork Collyer Quay, Level 13 & 14 & 15, 21 Collyer Quay\nSingapore Singapore 049320\nSingapore",
+       "city": {
+        "city_code": "CT_163",
+        "name": "新加坡",
+        "en_name": "Singapore",
+        "i18n_name": "新加坡",
+        "py_name": "xinjiapo"
+       },
+       "state": {
+        "state_code": "ST_100785",
+        "name": "新加坡",
+        "en_name": "Singapore",
+        "i18n_name": "新加坡"
+       },
+       "country": {
+        "country_code": "CN_25",
+        "name": "新加坡",
+        "en_name": "Singapore",
+        "i18n_name": "新加坡"
+       },
+       "i18n_name": "WeWork Collyer Quay, Level 13 & 14 & 15, 21 Collyer Quay\n新加坡 新加坡 049320\n新加坡",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7686792988366719285",
+    "title": "系统安全架构师 - DCS",
+    "description": "团队介绍：字节跳动基础设施DCS【Data Center/Cloud Service/System Service】团队，负责字节跳动全球数据中心全生命周期的运营管理，职责涵盖数据中心运维、服务器管理、资产管理、AI运维平台研发、系统服务、云服务等。致力于为抖音、豆包、今日头条、飞书、火山引擎等各类产品提供高可用、高稳定、高性能、低成本的算力资源。\n\n1、负责字节跳动百万级主机SSH登录体系的整体架构设计与建设，构建基于4A（认证Authentication、授权Authorization、账号Account、审计Audit）理念的主机访问控制与运营体系；\n2、负责堡垒机及SSH权限相关平台的设计与研发，包括统一身份认证、细粒度权限管控、主机账号全生命周期管理、登录会话与操作行为审计等核心模块，在保障登录安全的同时提升运维效率；\n3、负责SSH登录安全策略体系的制定与落地，推动安全基线、最小权限、零信任等安全理念在主机登录访问层面的实践，持续提升百万级主机登录访问的安全水位；\n4、负责堡垒机与SSH登录体系的安全运营，包括登录风险发现、访问异常监控、应急响应处置、合规审计分析等，保障主机登录访问安全可控；\n5、负责SSH登录与堡垒机领域关键技术难题攻坚，前瞻性调研业界安全技术趋势，探索AI/LLM在登录安全运营与异常检测场景的应用。",
+    "requirement": "1、本科及以上学历，计算机/信息安全相关专业优先，5年以上安全领域或主机安全架构设计工作经验；\n2、具备堡垒机、SSH登录体系、4A（认证/授权/账号/审计）、零信任等安全系统的架构设计和落地经验；\n3、具备从0到1高可用安全系统架构设计和落地经验，熟悉Linux系统原理、SSH协议、网络安全、密码学等基础知识，具备系统化的问题分析和解决能力；\n4、掌握一门编程语言，包括但不限于Golang、C、C++、Python等，深刻理解计算机原理，具备良好的数据结构和算法基础；\n5、具备良好的自驱力与学习能力，优秀的沟通能力、组织协调与项目推动能力；英语可作为工作语言者优先。",
+    "job_category": {
+     "id": "6704215862603155720",
+     "name": "研发",
+     "en_name": "R&D",
+     "i18n_name": "研发",
+     "depth": 1
+    },
+    "city_info": {
+     "code": "CT_11",
+     "name": "北京",
+     "en_name": "Beijing",
+     "i18n_name": "北京"
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "正式",
+     "en_name": "Regular",
+     "i18n_name": "正式",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1789721152259,
+    "code": "A61317",
+    "job_process_id": "6694104661676411150",
+    "city_list": [
+     {
+      "code": "CT_11",
+      "name": "北京",
+      "en_name": "Beijing",
+      "i18n_name": "北京"
+     },
+     {
+      "code": "CT_52",
+      "name": "杭州",
+      "en_name": "Hangzhou",
+      "i18n_name": "杭州"
+     }
+    ],
+    "job_post_info": {
+     "address": "中国大陆北京市海淀区北三环西路甲18号大钟寺广场2号楼，邮编：100098",
+     "recruitment_type": {
+      "id": "101",
+      "name": "正式",
+      "en_name": "Regular",
+      "i18n_name": "正式",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "1905",
+       "name": "中国大陆北京市海淀区北三环西路甲18号大钟寺广场2号楼，邮编：100098",
+       "en_name": "Building 2, Dazhongsi Plaza, No. 18, North Third Ring West Road, Haidian, Beijing, Beijing, Chinese Mainland, 100098",
+       "district": {
+        "district_code": "DS_2",
+        "name": "海淀区",
+        "en_name": "Haidian",
+        "i18n_name": "海淀区"
+       },
+       "city": {
+        "city_code": "CT_11",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京",
+        "py_name": "beijing"
+       },
+       "state": {
+        "state_code": "ST_8",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "中国大陆北京市海淀区北三环西路甲18号大钟寺广场2号楼，邮编：100098",
+       "active_status": 1
+      },
+      {
+       "id": "7522034601285468163",
+       "name": "中国大陆浙江省杭州市余杭区景兴路636号仓南广场T2号楼，邮编：311100",
+       "en_name": "Building T2, Cangnan Plaza, No. 636 Jingxing Road, Yuhang District, Hangzhou, YuHang District, Hangzhou, Zhejiang, Chinese Mainland, 311100",
+       "district": {
+        "district_code": "DS_171",
+        "name": "余杭区",
+        "en_name": "Yuhang",
+        "i18n_name": "余杭区"
+       },
+       "city": {
+        "city_code": "CT_52",
+        "name": "杭州",
+        "en_name": "Hangzhou",
+        "i18n_name": "杭州",
+        "py_name": "hangzhou"
+       },
+       "state": {
+        "state_code": "ST_30",
+        "name": "浙江",
+        "en_name": "Zhejiang",
+        "i18n_name": "浙江"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "中国大陆浙江省杭州市余杭区景兴路636号仓南广场T2号楼，邮编：311100",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7667104237897287989",
+    "title": "后端开发工程师（隐私安全） - TikTok研发",
+    "description": "团队介绍：TikTok研发团队，旨在实现TikTok业务的研发工作，搭建及维护业界领先的产品。加入我们，你能接触到包括用户增长、社交、直播、电商C端、内容创造、内容消费等核心业务场景，支持产品在全球赛道上高速发展；也能接触到包括服务架构、基础技术等方向上的技术挑战，保障业务持续高质量、高效率、且安全地为用户服务；同时还能为不同业务场景提供全面的技术解决方案，优化各项产品指标及用户体验。 \n在这里， 有大牛带队与大家一同不断探索前沿， 突破想象空间。 在这里，你的每一行代码都将服务亿万用户。在这里，团队专业且纯粹，合作氛围平等且轻松。目前在北京，上海，杭州、广州、深圳分别开放多个岗位机会。\n\n1、参与架构设计和开发，为亿级用户提供优质顺畅的信息服务和极致体验；\n2、参与设计系统技术方案，核心代码开发和系统调优；\n3、参与制定代码规范、测试规范，建立起开发质量控制方法；\n4、协助团队攻克各种高并发、大流量、系统解耦等方面的技术难关；\n5、参与各专项技术调研，新技术引入等前瞻项目。",
+    "requirement": "1、2027届获得本科及以上学历，计算机、软件工程等相关专业优先；\n2、热爱计算机科学和互联网技术，精通至少一门编程语言，包括但不仅限于：Java、C、C++、PHP、Python、Go；\n3、掌握扎实的计算机基础知识，深入理解数据结构、算法和操作系统知识；\n4、有优秀的逻辑分析能力，能够对业务逻辑进行合理的抽象和拆分；\n5、有强烈的求知欲，优秀的学习和沟通能力。",
+    "job_category": {
+     "id": "6704215862557018372",
+     "name": "后端",
+     "en_name": "Backend",
+     "i18n_name": "后端",
+     "depth": 2,
+     "parent": {
+      "id": "6704215862603155720",
+      "name": "研发",
+      "en_name": "R&D",
+      "i18n_name": "研发",
+      "depth": 1
+     }
+    },
+    "city_info": {
+     "code": "CT_125",
+     "name": "上海",
+     "en_name": "Shanghai",
+     "i18n_name": "上海"
+    },
+    "recruit_type": {
+     "id": "201",
+     "name": "正式",
+     "en_name": "Regular",
+     "i18n_name": "正式",
+     "depth": 2,
+     "parent": {
+      "id": "2",
+      "name": "校招",
+      "en_name": "Campus",
+      "i18n_name": "校招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1785136946134,
+    "code": "A21336",
+    "job_process_id": "20000",
+    "city_list": [
+     {
+      "code": "CT_125",
+      "name": "上海",
+      "en_name": "Shanghai",
+      "i18n_name": "上海"
+     },
+     {
+      "code": "CT_11",
+      "name": "北京",
+      "en_name": "Beijing",
+      "i18n_name": "北京"
+     }
+    ],
+    "job_post_info": {
+     "address": "中国大陆上海市杨浦区民府路678号上海新江湾广场T1号楼，邮编：200082",
+     "recruitment_type": {
+      "id": "201",
+      "name": "正式",
+      "en_name": "Regular",
+      "i18n_name": "正式",
+      "depth": 2,
+      "parent": {
+       "id": "2",
+       "name": "校招",
+       "en_name": "Campus",
+       "i18n_name": "校招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "2061",
+       "name": "中国大陆上海市杨浦区民府路678号上海新江湾广场T1号楼，邮编：200082",
+       "en_name": "Building T1, Shanghai Xinjiangwan Plaza, No.678 Minfu Road, Yangpu, Shanghai, Shanghai, Chinese Mainland, 200082",
+       "district": {
+        "district_code": "DS_166",
+        "name": "杨浦区",
+        "en_name": "Yangpu",
+        "i18n_name": "杨浦区"
+       },
+       "city": {
+        "city_code": "CT_125",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海",
+        "py_name": "shanghai"
+       },
+       "state": {
+        "state_code": "ST_47",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "中国大陆上海市杨浦区民府路678号上海新江湾广场T1号楼，邮编：200082",
+       "active_status": 1
+      },
+      {
+       "id": "7516808734128488476",
+       "name": "中国大陆北京市海淀区中关村南四街18号紫金数码园3号楼，邮编：100190",
+       "en_name": "中关村南四街18号紫金数码园3号楼, Haidian, Beijing, Beijing, Chinese Mainland, 100190",
+       "district": {
+        "district_code": "DS_2",
+        "name": "海淀区",
+        "en_name": "Haidian",
+        "i18n_name": "海淀区"
+       },
+       "city": {
+        "city_code": "CT_11",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京",
+        "py_name": "beijing"
+       },
+       "state": {
+        "state_code": "ST_8",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "中国大陆北京市海淀区中关村南四街18号紫金数码园3号楼，邮编：100190",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 2
+   },
+   {
+    "id": "7679892629651310901",
+    "title": "Research Intern (AI Compute) - 2027 Start (PhD)",
+    "description": "About the Team\nThe Inference Infrastructure team is the creator and open-source maintainer of AIBrix, a Kubernetes-native control plane for large-scale LLM inference. We are part of ByteDance’s Core Compute Infrastructure organization, responsible for designing and operating the platforms that power microservices, big data, distributed storage, machine learning training and inference, and edge computing across multi-cloud and global datacenters.\n\nWith ByteDance's rapidly growing businesses and a global fleet of machines running hundreds of millions of containers daily, we are building the next generation of cloud-native, GPU-optimized orchestration systems. Our mission is to deliver infrastructure that is highly performant, massively scalable, cost-efficient, and easy to use—enabling both internal and external developers to bring AI workloads from research to production at scale.\nWe are expanding our focus on LLM inference infrastructure to support new AI workloads, and are looking for engineers passionate about cloud-native systems, scheduling, and GPU acceleration. You’ll work in a hyper-scale environment, collaborate with world-class engineers, contribute to the open-source community, and help shape the future of AI inference infrastructure globally.\n\nWe are looking for talented individuals to join us for an internship. PhD internships at Our Company provide students with the opportunity to actively contribute to our products and research, as well as to the organization's future plans and emerging technologies.\nOur dynamic internship experience blends hands-on learning, enriching community-building and professional development events, and collaboration with industry experts.\nApplications will be reviewed on a rolling basis, so we encourage you to apply early. Please clearly state your availability in your resume (Start date, End date).\n\nResponsibilities\n- Design and build large-scale, container-based cluster management and orchestration systems with extreme performance, scalability, and resilience.\n- Architect next-generation cloud-native GPU and AI accelerator infrastructure to deliver cost-efficient and secure ML platforms.\n- Collaborate across teams to deliver world-class inference solutions using vLLM, SGLang, TensorRT-LLM, and other LLM engines.\n- Stay current with the latest advances in open source (Kubernetes, Ray, etc.), AI/ML and LLM infrastructure, and systems research; integrate best practices into production systems.\n- Write high-quality, production-ready code that is maintainable, testable, and scalable.",
+    "requirement": "Minimum Qualifications\n- Currently pursuing a PhD in Computer Science, Computer Engineering, Electrical Engineering, or a related technical field.\n- Able to commit to working for 12 weeks during Summer 2027\n- Strong understanding of large model inference, distributed and parallel systems, and/or high-performance networking systems.\n- Hands-on experience building cloud or ML infrastructure in areas such as resource management, scheduling, request routing, monitoring, or orchestration.\n- Solid knowledge of container and orchestration technologies (Docker, Kubernetes).\n- Proficiency in at least one major programming language (Go, Rust, Python, or C++).\n\nPreferred Qualifications\n- Experience contributing to or operating large-scale cluster management systems (e.g., Kubernetes, Ray).\n- Experience with workload scheduling, GPU orchestration, scaling, and isolation in production environments.\n- Hands-on experience with GPU programming (CUDA) or inference engines (vLLM, SGLang, TensorRT-LLM).\n- Familiarity with public cloud providers (AWS, Azure, GCP) and their ML platforms (SageMaker, Azure ML, Vertex AI).\n- Strong knowledge of ML systems (Ray, DeepSpeed, PyTorch) and distributed training/inference platforms.\n- Excellent communication skills and ability to collaborate across global, cross-functional teams.\n- Passion for system efficiency, performance optimization, and open-source innovation.",
+    "job_category": {
+     "id": "6704215862603155720",
+     "name": "研发",
+     "en_name": "R&D",
+     "i18n_name": "研发",
+     "depth": 1
+    },
+    "city_info": {
+     "code": "CT_157",
+     "name": "西雅图",
+     "en_name": "Seattle",
+     "i18n_name": "西雅图"
+    },
+    "recruit_type": {
+     "id": "202",
+     "name": "实习",
+     "en_name": "Intern",
+     "i18n_name": "实习",
+     "depth": 2,
+     "parent": {
+      "id": "2",
+      "name": "校招",
+      "en_name": "Campus",
+      "i18n_name": "校招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1788114353443,
+    "code": "A58263",
+    "job_process_id": "20000",
+    "city_list": [
+     {
+      "code": "CT_157",
+      "name": "西雅图",
+      "en_name": "Seattle",
+      "i18n_name": "西雅图"
+     }
+    ],
+    "job_post_info": {
+     "address": "Key Center, 601 108th Ave NE, 5F-7F, Bellevue,\n西雅图, 华盛顿 98004\n美国",
+     "recruitment_type": {
+      "id": "202",
+      "name": "实习",
+      "en_name": "Intern",
+      "i18n_name": "实习",
+      "depth": 2,
+      "parent": {
+       "id": "2",
+       "name": "校招",
+       "en_name": "Campus",
+       "i18n_name": "校招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "290",
+       "name": "Key Center, 601 108th Ave NE, 5F-7F, Bellevue,\n西雅图, 华盛顿 98004\n美国",
+       "en_name": "Key Center, 601 108th Ave NE, 5F-7F, Bellevue,\nSeattle, Washington 98004\nUnited States of America",
+       "city": {
+        "city_code": "CT_157",
+        "name": "西雅图",
+        "en_name": "Seattle",
+        "i18n_name": "西雅图",
+        "py_name": "xiyatu"
+       },
+       "state": {
+        "state_code": "ST_54",
+        "name": "华盛顿",
+        "en_name": "Washington",
+        "i18n_name": "华盛顿"
+       },
+       "country": {
+        "country_code": "CN_6",
+        "name": "美国",
+        "en_name": "United States of America",
+        "i18n_name": "美国"
+       },
+       "i18n_name": "Key Center, 601 108th Ave NE, 5F-7F, Bellevue,\n西雅图, 华盛顿 98004\n美国",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 2
+   }
+  ],
+  "count": 6
+ },
+ "message": "ok"
+}

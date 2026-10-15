@@ -332,6 +332,22 @@ func newBrowserUAClient() *Client {
 	return c
 }
 
+// macBrowserUserAgent is a desktop Chrome string on macOS, for Feishu Hire (feishujobs), whose
+// edge filters on the operating system in the string. Measured 2026-10-15 against the job
+// search on both jobs.bytedance.com and a customer's <tenant>.jobs.feishu.cn: the project's own
+// string, browserUserAgent (Linux), a Windows Chrome string and Go's default were all answered
+// 405 with an empty body, while "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" alone was
+// served. Neither robots.txt disallows the API path; the same line as browserUserAgent holds.
+const macBrowserUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+
+// newMacBrowserUAClient is NewClient with macBrowserUserAgent — same guarded transport, same
+// retry budget, same everything else.
+func newMacBrowserUAClient() *Client {
+	c := NewClient()
+	c.userAgent = macBrowserUserAgent
+	return c
+}
+
 // crawlerUserAgent identifies as Googlebot, for the one provider whose edge does the OPPOSITE
 // of blocking bots: energyjobline.com's job-detail pages server-render their schema.org
 // JobPosting ld+json only for a recognised search-crawler User-Agent. Both the project's own

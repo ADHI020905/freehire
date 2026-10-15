@@ -382,6 +382,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   lesta: 'Lesta Games',
   techinasia: 'Tech in Asia',
   ibm: 'IBM',
+  feishujobs: 'Feishu Jobs',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),

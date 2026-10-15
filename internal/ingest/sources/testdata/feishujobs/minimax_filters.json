@@ -1,0 +1,126 @@
+{
+ "code": 0,
+ "data": {
+  "job_type_list": [
+   {
+    "id": "6791702736615426317",
+    "name": "研发",
+    "en_name": "R&D",
+    "i18n_name": "研发",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6791702736615377165",
+    "name": "市场",
+    "en_name": "Marketing",
+    "i18n_name": "市场",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6791702736615409933",
+    "name": "产品 / 策划 / 项目",
+    "en_name": "Product / Planning / Project management",
+    "i18n_name": "产品 / 策划 / 项目",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6791702736615360781",
+    "name": "销售",
+    "en_name": "Sales",
+    "i18n_name": "销售",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6791702736615311629",
+    "name": "职能 / 支持",
+    "en_name": "Corporate function / Support",
+    "i18n_name": "职能 / 支持",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6791702736615344397",
+    "name": "设计",
+    "en_name": "Design",
+    "i18n_name": "设计",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6791702736615393549",
+    "name": "运营",
+    "en_name": "Operations",
+    "i18n_name": "运营",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   },
+   {
+    "id": "6937213309162670373",
+    "name": "金融 / 投资",
+    "en_name": "Finance / Investment",
+    "i18n_name": "金融 / 投资",
+    "depth": 2,
+    "parent": {
+     "id": "6937213309162637605"
+    }
+   },
+   {
+    "id": "6791698585115707656",
+    "name": "职能 / 支持",
+    "en_name": "Corporate function / Support",
+    "i18n_name": "职能 / 支持",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114741000"
+    }
+   },
+   {
+    "id": "6937213309162719525",
+    "name": "市场",
+    "en_name": "Marketing",
+    "i18n_name": "市场",
+    "depth": 2,
+    "parent": {
+     "id": "6937213309162637605"
+    }
+   },
+   {
+    "id": "6791702736615328013",
+    "name": "金融 / 投资",
+    "en_name": "Finance / Investment",
+    "i18n_name": "金融 / 投资",
+    "depth": 2,
+    "parent": {
+     "id": "6791698585114724616"
+    }
+   }
+  ],
+  "recruitment_type_list": [
+   {
+    "id": "1",
+    "name": "社招",
+    "en_name": "Experienced",
+    "i18n_name": "社招"
+   }
+  ]
+ },
+ "message": "ok"
+}

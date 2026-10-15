@@ -1,0 +1,604 @@
+{
+ "code": 0,
+ "data": {
+  "job_post_list": [
+   {
+    "id": "7641124619067410697",
+    "title": "AGI 服务端资深工程师-Talkie&星野",
+    "description": "我们是 MiniMax 产品研发团队。在这里，不只是做 Feature，而是在构建大模型与世界连接的新界面（Interface）、打造 SOTA 模型。\n我们正在做的\n- 多模态 Agent 矩阵： 打造 MiniMax Agent、海螺视频、星野/Talkie 等现象级产品，探索 Agent 在多场景下的能力极限。\n- 深度参与 LLM Post-Training：我们不仅使用模型，更与算法团队并肩，通过优化平台与训练链路、参与BenchMark、数据、Reward 设计，共同打造 SOTA 模型。\n我们的基因\n- AI First： 我们坚持用 AI 重新定义开发范式与组织协同，拒绝平庸的重复。\n- 最佳体验： 致力于通过多模态技术，为全球用户带来最具效率与情感价值的 AI 体验。\n如果你对最先进的模型、最新的 Agent 范式充满好奇，欢迎加入我们，一起用 AI First 改变世界！\n工作职责：\n- 负责各AI Native / AI Agent产品的服务端开发\n- 负责 LLM Post-Traning 平台、环境开发\n-领导跨端团队，定义、开发全球领先的 AI Agent / AI APP",
+    "requirement": "基础要求​\n出色的代码能力、复杂系统设计能力、优秀的技术直觉，高效沟通，强大的自驱力​\n加分项​\n对主流开源项目有深入了解，并有贡献​\n对 AI App / Agent 有浓厚兴趣，有个人产品或开源项目​\n熟悉 LLM 相关技术栈（如LangChain、Dify、MCP、vllm、ollama, etc. ），关注社区技术进展并有相应实践​\n熟悉 LLM 模型原理，有模型部署、推理优化、PostTrain实践经验",
+    "job_category": {
+     "id": "6791697805082626311",
+     "name": "后端开发",
+     "en_name": "Back-end development",
+     "i18n_name": "后端开发",
+     "depth": 3,
+     "parent": {
+      "id": "6791702736615426317",
+      "name": "研发",
+      "en_name": "R&D",
+      "i18n_name": "研发",
+      "depth": 2,
+      "parent": {
+       "id": "6791698585114724616",
+       "name": "互联网 / 电子 / 网游",
+       "en_name": "Internet / Electronics / Games",
+       "i18n_name": "互联网 / 电子 / 网游",
+       "depth": 1
+      }
+     }
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "全职",
+     "en_name": "Full-time",
+     "i18n_name": "全职",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1779088351263,
+    "job_process_id": "7009638599947847973",
+    "city_list": [
+     {
+      "code": "CT_11",
+      "name": "北京",
+      "en_name": "Beijing",
+      "i18n_name": "北京"
+     },
+     {
+      "code": "CT_125",
+      "name": "上海",
+      "en_name": "Shanghai",
+      "i18n_name": "上海"
+     }
+    ],
+    "job_post_info": {
+     "recruitment_type": {
+      "id": "101",
+      "name": "全职",
+      "en_name": "Full-time",
+      "i18n_name": "全职",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "7449386305794064388",
+       "name": "蓟门壹号大厦8层",
+       "city": {
+        "city_code": "CT_11",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京",
+        "py_name": "beijing"
+       },
+       "state": {
+        "state_code": "ST_8",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "蓟门壹号大厦8层",
+       "active_status": 1
+      },
+      {
+       "id": "7457126834251399187",
+       "name": "上海市徐汇区桂平路391号（近漕宝路）新国际商务中心B座25层",
+       "city": {
+        "city_code": "CT_125",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海",
+        "py_name": "shanghai"
+       },
+       "state": {
+        "state_code": "ST_47",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "上海市徐汇区桂平路391号（近漕宝路）新国际商务中心B座25层",
+       "active_status": 2
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7681517111994403126",
+    "title": "云原生架构师",
+    "description": "- 我们正在构建面向下一代大模型的 AI 基础设施。\n- 你将深入超大规模 GPU 集群的核心调度链路，解决异构算力管理、复杂工作负载编排、资源效率与系统稳定性等关键问题，为模型训练、推理和持续迭代提供高性能、高弹性、高可用的算力底座。\n- 这不是一个以 Kubernetes 运维为主的岗位。我们期待你能够深入调度系统，定义架构、设计机制，并将复杂的基础设施能力沉淀为简单、可靠的工程系统。\n职位描述\n1. 主导 MiniMax 大模型推理平台与机器学习平台的核心架构设计及演进，构建统一、高效、可扩展的 AI 计算基础设施；\n2. 设计超大规模 GPU 集群的资源调度系统，解决异构资源建模、拓扑感知调度、队列与配额管理、优先级与抢占、Gang Scheduling、弹性伸缩等复杂问题；\n3. 面向训练、推理、评测及数据处理等多类型工作负载，持续优化资源流转效率、任务吞吐、调度时延和 GPU 有效利用率；\n4. 推动在线与离线业务的统一资源管理，在业务稳定性、服务质量与集群利用率之间建立更优的系统平衡；\n5. 建设面向大模型研发的基础设施抽象与工程工具链，让算力申请、任务编排、服务部署、扩缩容和故障恢复更加自动化、标准化；\n6. 建立覆盖调度决策、资源供给和工作负载运行状态的可观测体系，定位系统级性能瓶颈，并推动架构持续演进；\n7. 探索 AI Coding 与 AI Agent 在研发、运维和基础设施自治中的应用，重新定义复杂工程系统的构建与迭代方式。",
+    "requirement": "1. 具备扎实的计算机体系结构、操作系统及分布式系统基础，能够对复杂系统进行抽象、拆解和架构设计；\n2. 深入理解 Kubernetes 核心机制及云原生技术体系，不止于使用 Kubernetes；熟悉 Scheduler Framework、Controller、CRD 或相关核心组件的设计与实现；\n3. 熟悉 kube-scheduler、Volcano、Koordinator 等至少一种调度系统，理解资源调度、任务编排和集群容量治理背后的核心机制；\n4. 具备大规模训练任务或在线推理服务的工程实践，拥有异构算力调度、在离线混部、弹性资源管理或集群效率优化经验；\n5. 具备优秀的系统工程能力，熟练掌握 Golang、Python、C++ 中至少一种语言，能够交付清晰、可靠、可长期演进的核心系统；\n6. 对性能、稳定性和资源效率保持敏感，善于通过指标、数据和系统分析发现真正的瓶颈，并将优化结果转化为可量化的业务价值；\n7. 具备良好的技术判断力与 Owner 意识，能够推动跨团队的复杂基础设施项目从设计走向规模化落地。\n加分项\n1. 参与过 Kubernetes 调度器、Volcano、Koordinator、Kueue、Slurm 等项目的开发或深度定制；\n2. 熟悉 GPU 拓扑，以及 NVLink、RDMA、NCCL、存储和网络对分布式训练及推理性能的影响；\n3. 具备万卡级或超大规模异构计算集群的建设与治理经验；\n4. 对大模型训练、推理引擎、分布式并行或弹性容错机制有深入理解；\n5. 具备使用 AI Agent 驱动研发流程、自动化运维或基础设施自治的实践经验。",
+    "job_category": {
+     "id": "6791702736615426317",
+     "name": "研发",
+     "en_name": "R&D",
+     "i18n_name": "研发",
+     "depth": 2,
+     "parent": {
+      "id": "6791698585114724616",
+      "name": "互联网 / 电子 / 网游",
+      "en_name": "Internet / Electronics / Games",
+      "i18n_name": "互联网 / 电子 / 网游",
+      "depth": 1
+     }
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "全职",
+     "en_name": "Full-time",
+     "i18n_name": "全职",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1788492655901,
+    "job_process_id": "7009638599947847973",
+    "city_list": [
+     {
+      "code": "CT_11",
+      "name": "北京",
+      "en_name": "Beijing",
+      "i18n_name": "北京"
+     },
+     {
+      "code": "CT_125",
+      "name": "上海",
+      "en_name": "Shanghai",
+      "i18n_name": "上海"
+     }
+    ],
+    "job_post_info": {
+     "recruitment_type": {
+      "id": "101",
+      "name": "全职",
+      "en_name": "Full-time",
+      "i18n_name": "全职",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "7449386305794064388",
+       "name": "蓟门壹号大厦8层",
+       "city": {
+        "city_code": "CT_11",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京",
+        "py_name": "beijing"
+       },
+       "state": {
+        "state_code": "ST_8",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "蓟门壹号大厦8层",
+       "active_status": 1
+      },
+      {
+       "id": "7449386326237495300",
+       "name": "桂箐路65号新研大厦B座11层",
+       "district": {
+        "district_code": "DS_43",
+        "name": "徐汇区",
+        "en_name": "Xuhui",
+        "i18n_name": "徐汇区"
+       },
+       "city": {
+        "city_code": "CT_125",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海",
+        "py_name": "shanghai"
+       },
+       "state": {
+        "state_code": "ST_47",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "桂箐路65号新研大厦B座11层",
+       "active_status": 1
+      }
+     ]
+    },
+    "tag_list": [
+     {
+      "id": "7352437247783880998",
+      "name": {
+       "name": "高优",
+       "en_name": "高优",
+       "i18n_name": "高优"
+      },
+      "order": 1,
+      "style": "{\"backgroundColor\":\"rgba(255, 136, 0, 0.2)\",\"color\":\"rgba(107, 57, 0, 1)\"}",
+      "scope_list": [
+       {
+        "id": "7496848855581952275",
+        "name": {
+         "name": "社招官网",
+         "en_name": "Experienced Hire Official Website",
+         "i18n_name": "社招官网"
+        },
+        "channel_id": "7009633427385878798"
+       },
+       {
+        "id": "7496848855581968659",
+        "name": {
+         "name": "内推平台",
+         "en_name": "Referral platform",
+         "i18n_name": "内推平台"
+        },
+        "channel_id": "3"
+       },
+       {
+        "id": "7496848855581985043",
+        "name": {
+         "name": "猎头平台",
+         "en_name": "Headhunter platform",
+         "i18n_name": "猎头平台"
+        },
+        "channel_id": "2"
+       }
+      ]
+     },
+     {
+      "id": "7352384957858367754",
+      "name": {
+       "name": "紧急",
+       "en_name": "紧急",
+       "i18n_name": "紧急"
+      },
+      "order": 0,
+      "style": "{\"backgroundColor\":\"rgba(245, 74, 69, 0.2)\",\"color\":\"rgba(98, 28, 24, 1)\"}",
+      "scope_list": [
+       {
+        "id": "7496848838557567282",
+        "name": {
+         "name": "社招官网",
+         "en_name": "Experienced Hire Official Website",
+         "i18n_name": "社招官网"
+        },
+        "channel_id": "7009633427385878798"
+       },
+       {
+        "id": "7496848838557583666",
+        "name": {
+         "name": "内推平台",
+         "en_name": "Referral platform",
+         "i18n_name": "内推平台"
+        },
+        "channel_id": "3"
+       },
+       {
+        "id": "7496848838557600050",
+        "name": {
+         "name": "猎头平台",
+         "en_name": "Headhunter platform",
+         "i18n_name": "猎头平台"
+        },
+        "channel_id": "2"
+       }
+      ]
+     }
+    ],
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7696078040379558207",
+    "title": "高性能网络工程师—AI 推理 · 网卡方向",
+    "description": "关于我们\n我们自建 GPU 集群，对上提供 AI 推理裸金属服务。团队成员来自【头部云厂商、互联网大厂、硬件厂商等】，在大规模集群和高性能系统方面有深厚积累。\n网络性能直接影响推理服务的时延、吞吐和稳定性。我们希望你在网卡与主机网络层面持续优化，全面提升集群的通信性能和可靠性。\n岗位职责\n1. 网卡与通信性能优化：深入网卡、PCIe、驱动和内核等层面，分析并优化单机内和多机间的 RDMA 通信性能，突破软硬件性能瓶颈，让带宽和时延逼近硬件上限。\n2. 推理通信链路优化：面向大模型推理场景，优化 Prefill/Decode 分离下的 KV Cache 传输、跨节点并行通信（如 EP/TP 场景下的 All2All、AllReduce）、模型权重加载等关键链路，降低端到端时延和长尾时延。\n3. 稳定性保障与问题攻关：负责丢包、时延抖动、慢节点、网卡异常等复杂问题的定位，从网卡、PCIe、驱动、内核到应用逐层分析根因，并推动问题闭环；沉淀排查方法和规范，建设集群监控告警、故障自动诊断、性能基线等能力。\n4. 技术协作与演进：和推理框架、硬件等团队协作，提升系统整体性能；和网卡厂商深度合作，攻克关键技术问题；跟踪新一代网卡、RDMA 和 GPU 互联的技术趋势，推动新技术的验证和落地。\n",
+    "requirement": "1. 本科及以上学历，计算机、通信、电子工程相关专业，3 年以上相关经验。\n2. 计算机网络和操作系统基础扎实，熟悉 RDMA 技术（QP、Verbs、内存注册、传输模式等），有 RoCEv2 或 InfiniBand 的实际使用、开发或问题定位经验。\n3. 熟悉常见的集合通信算法（如 Ring、Tree、Halving-Doubling、All2All 等）。\n4. 熟悉 Linux 系统和网络机制，了解 PCIe、NUMA 等主机架构对通信性能的影响。\n5. 有复杂问题的分析能力，能独立完成性能调优和故障排查。\n6. 熟悉 C/C++，并熟练掌握 Python、Go 或 Shell 中的至少一种，有工具或自动化开发能力。\n加分项\n- 对网卡架构有深入理解，比如网卡数据通路、固件与驱动、GPUDirect RDMA、硬件计数器与诊断机制等。\n- 在网卡厂商（NVIDIA/Mellanox、Intel、Broadcom、国产网卡厂商）做过芯片、固件或驱动相关工作。\n- 了解 NCCL、DeepEP、HCCL 等通信库中至少一种的实现原理，或有相关开发、调优经验。\n- 熟悉 vLLM、SGLang、TensorRT-LLM 等推理框架，或做过 PD 分离、KV Cache 传输（Mooncake、NIXL 等）。\n- 有大规模 GPU 集群网络相关经验。",
+    "job_category": {
+     "id": "6791697805082740999",
+     "name": "基础架构",
+     "en_name": "Infrastructure",
+     "i18n_name": "基础架构",
+     "depth": 3,
+     "parent": {
+      "id": "6791702736615426317",
+      "name": "研发",
+      "en_name": "R&D",
+      "i18n_name": "研发",
+      "depth": 2,
+      "parent": {
+       "id": "6791698585114724616",
+       "name": "互联网 / 电子 / 网游",
+       "en_name": "Internet / Electronics / Games",
+       "i18n_name": "互联网 / 电子 / 网游",
+       "depth": 1
+      }
+     }
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "全职",
+     "en_name": "Full-time",
+     "i18n_name": "全职",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1791882822890,
+    "job_process_id": "7009638599947847973",
+    "city_list": [
+     {
+      "code": "CT_11",
+      "name": "北京",
+      "en_name": "Beijing",
+      "i18n_name": "北京"
+     },
+     {
+      "code": "CT_125",
+      "name": "上海",
+      "en_name": "Shanghai",
+      "i18n_name": "上海"
+     }
+    ],
+    "job_post_info": {
+     "recruitment_type": {
+      "id": "101",
+      "name": "全职",
+      "en_name": "Full-time",
+      "i18n_name": "全职",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "7267446171898642434",
+       "name": "海淀区蓟门一号6号院8号楼8层",
+       "city": {
+        "city_code": "CT_11",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京",
+        "py_name": "beijing"
+       },
+       "state": {
+        "state_code": "ST_8",
+        "name": "北京",
+        "en_name": "Beijing",
+        "i18n_name": "北京"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "海淀区蓟门一号6号院8号楼8层",
+       "active_status": 2
+      },
+      {
+       "id": "7591497858739113180",
+       "name": "桂箐路65号新研大厦B座5层",
+       "district": {
+        "district_code": "DS_43",
+        "name": "徐汇区",
+        "en_name": "Xuhui",
+        "i18n_name": "徐汇区"
+       },
+       "city": {
+        "city_code": "CT_125",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海",
+        "py_name": "shanghai"
+       },
+       "state": {
+        "state_code": "ST_47",
+        "name": "上海",
+        "en_name": "Shanghai",
+        "i18n_name": "上海"
+       },
+       "country": {
+        "country_code": "CN_1",
+        "name": "中国大陆",
+        "en_name": "Chinese Mainland",
+        "i18n_name": "中国大陆"
+       },
+       "i18n_name": "桂箐路65号新研大厦B座5层",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   },
+   {
+    "id": "7687134817943472447",
+    "title": "Research Lead, Large Language Models",
+    "description": "About the Role\nWe are looking for a hands-on Research Lead to own and advance a key technical area within our large language model team.\nYou will define the technical roadmap for your area, lead a focused team through complex research and engineering challenges, and work closely with other technical leaders to contribute to the broader evolution of our foundation models.\nThis is a specialized technical leadership role—not an organization-wide leadership position. We expect the successful candidate to remain deeply involved in research, experimentation, and implementation.\n\nKey Responsibilities\nOwn the technical direction and roadmap for a core LLM area, such as pre-training, post-training, reasoning, agents, alignment, data, evaluation, or model architecture.\nLead a team in identifying and solving complex, high-impact research and engineering problems.\nDrive end-to-end model iterations within the designated area, from problem definition and research hypotheses to large-scale experimentation, evaluation, and model integration.\nRemain hands-on with algorithm design, experiment analysis, and critical engineering decisions.\nIdentify fundamental bottlenecks and develop technically rigorous solutions that meaningfully improve model capabilities.\nMentor team members, raise the technical bar, and foster a culture of ownership, open debate, and execution excellence.\nCollaborate closely with other research, infrastructure, and product teams to ensure that technical advances translate into broader model improvements and real-world impact.",
+    "requirement": "Qualifications\nDeep expertise and a strong track record of breakthrough work in one or more areas of large language models.\nDemonstrated experience leading a team or technical direction through difficult, open-ended problems.\nSignificant ownership of complete foundation model iterations, with a strong understanding of how research decisions affect data, training, evaluation, engineering, and deployment.\nExceptional command of both algorithmic principles and engineering implementation, with the ability to operate effectively from research ideas to large-scale systems.\nStrong first-principles thinking and the ability to make clear technical judgments in uncertain and rapidly evolving environments.\nA hands-on leadership style, high standards for technical rigor, and a strong sense of ownership.\nA genuine passion for using technological advances to create meaningful change in the real world.\n\nWhat We Value\nBreakthrough thinking grounded in rigorous execution.\nThe ability to turn ambiguous problems into clear technical priorities.\nIntellectual independence combined with strong collaboration.\nOwnership from idea to measurable model improvement.\nThe ability to inspire and develop a small, high-caliber technical team.",
+    "job_category": {
+     "id": "6791697805082708231",
+     "name": "算法",
+     "en_name": "Algorithm",
+     "i18n_name": "算法",
+     "depth": 3,
+     "parent": {
+      "id": "6791702736615426317",
+      "name": "研发",
+      "en_name": "R&D",
+      "i18n_name": "研发",
+      "depth": 2,
+      "parent": {
+       "id": "6791698585114724616",
+       "name": "互联网 / 电子 / 网游",
+       "en_name": "Internet / Electronics / Games",
+       "i18n_name": "互联网 / 电子 / 网游",
+       "depth": 1
+      }
+     }
+    },
+    "recruit_type": {
+     "id": "101",
+     "name": "全职",
+     "en_name": "Full-time",
+     "i18n_name": "全职",
+     "depth": 2,
+     "parent": {
+      "id": "1",
+      "name": "社招",
+      "en_name": "Experienced",
+      "i18n_name": "社招",
+      "depth": 1,
+      "active_status": 1,
+      "selectability": 1
+     },
+     "active_status": 1,
+     "selectability": 1
+    },
+    "publish_time": 1789800932201,
+    "job_process_id": "7009638599947847973",
+    "city_list": [
+     {
+      "code": "CT_75",
+      "name": "旧金山",
+      "en_name": "San Francisco",
+      "i18n_name": "旧金山"
+     }
+    ],
+    "job_post_info": {
+     "recruitment_type": {
+      "id": "101",
+      "name": "全职",
+      "en_name": "Full-time",
+      "i18n_name": "全职",
+      "depth": 2,
+      "parent": {
+       "id": "1",
+       "name": "社招",
+       "en_name": "Experienced",
+       "i18n_name": "社招",
+       "depth": 1,
+       "active_status": 1,
+       "selectability": 1
+      },
+      "active_status": 1,
+      "selectability": 1
+     },
+     "address_list": [
+      {
+       "id": "7460087144323104770",
+       "name": "美国",
+       "en_name": "美国",
+       "city": {
+        "city_code": "CT_75",
+        "name": "旧金山",
+        "en_name": "San Francisco",
+        "i18n_name": "旧金山",
+        "py_name": "jiujinshan"
+       },
+       "state": {
+        "state_code": "ST_31",
+        "name": "加利福尼亚州",
+        "en_name": "California",
+        "i18n_name": "加利福尼亚州"
+       },
+       "country": {
+        "country_code": "CN_6",
+        "name": "美国",
+        "en_name": "United States of America",
+        "i18n_name": "美国"
+       },
+       "i18n_name": "美国",
+       "active_status": 1
+      }
+     ]
+    },
+    "storefront_mode": 1,
+    "process_type": 1
+   }
+  ],
+  "count": 4
+ },
+ "message": "ok"
+}

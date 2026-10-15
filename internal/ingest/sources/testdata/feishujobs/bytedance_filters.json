@@ -1,0 +1,79 @@
+{
+ "code": 0,
+ "data": {
+  "job_type_list": [
+   {
+    "id": "6704215862603155720",
+    "name": "研发",
+    "en_name": "R&D",
+    "i18n_name": "研发",
+    "depth": 1
+   },
+   {
+    "id": "6704215882479962371",
+    "name": "运营",
+    "en_name": "Operations",
+    "i18n_name": "运营",
+    "depth": 1
+   },
+   {
+    "id": "6704215864629004552",
+    "name": "产品",
+    "en_name": "Product",
+    "i18n_name": "产品",
+    "depth": 1
+   },
+   {
+    "id": "6704215913488451847",
+    "name": "职能 / 支持",
+    "en_name": "Corporate Function / Support",
+    "i18n_name": "职能 / 支持",
+    "depth": 1
+   },
+   {
+    "id": "6709824272505768200",
+    "name": "销售",
+    "en_name": "Sales",
+    "i18n_name": "销售",
+    "depth": 1
+   },
+   {
+    "id": "6704215901438216462",
+    "name": "市场",
+    "en_name": "Marketing",
+    "i18n_name": "市场",
+    "depth": 1
+   },
+   {
+    "id": "6709824272514156812",
+    "name": "设计",
+    "en_name": "Design",
+    "i18n_name": "设计",
+    "depth": 1
+   },
+   {
+    "id": "6850051244971526414",
+    "name": "游戏策划",
+    "en_name": "Game Design",
+    "i18n_name": "游戏策划",
+    "depth": 1
+   },
+   {
+    "id": "6794746007419619592",
+    "name": "教研教学",
+    "en_name": "Teaching and researching",
+    "i18n_name": "教研教学",
+    "depth": 1
+   }
+  ],
+  "recruitment_type_list": [
+   {
+    "id": "1",
+    "name": "社招",
+    "en_name": "Experienced",
+    "i18n_name": "社招"
+   }
+  ]
+ },
+ "message": "ok"
+}
