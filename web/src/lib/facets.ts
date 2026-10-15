@@ -384,6 +384,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   ibm: 'IBM',
   feishujobs: 'Feishu Jobs',
   dassault: 'Dassault Systèmes',
+  mokahr: 'MokaHR',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),

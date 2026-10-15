@@ -1,0 +1,180 @@
+{
+ "code": 0,
+ "success": true,
+ "data": {
+  "jobStats": {
+   "orgId": "moonshot",
+   "total": 0
+  },
+  "jobs": [
+   {
+    "applicantLimitCheck": {
+     "duration": 6,
+     "isSetting": true,
+     "remainder": -1,
+     "total": 3
+    },
+    "attributeId": 121934,
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2025-08-29T21:05:29",
+    "deptId": 3580422,
+    "hireMode": 1,
+    "id": "0079d23b-912d-4033-b9a4-22d7d970ba08",
+    "jobDescription": "<p>成为一束光，照亮月之暗面。</p><p>人们惊叹于模型的灵光乍现，我们着迷于如何让一次惊艳成为日常。商业化关乎价值如何被衡量、能力如何被交付，以及今天的创造如何支持明天的探索。当智能不断突破边界，我们想用扎实的工程和正在进化的 Agent，重新回答这些问题。</p><p>我们看重业务结果与持续进化。氛围轻松，沟通直接。我们的人才观：通用智能 &gt; 单一技能；进化速度 &gt; 过去履历；使用 AI Scale &gt; 单线程努力；独立思考的审美 &gt; 跟随共识的安全感；追求真相的好奇心 &gt; 我一直是对的。</p><p>你会亲手打造</p><ul><li><strong>商业化平台</strong> - 抽象定价、订阅、计费与权益，让新产品、新套餐和商业实验更快上线。</li><li><strong>可靠的交易体验</strong> - 打通国内外支付、续费与权益交付，改善成功率与成本；用监控、对账与补偿保障长期运行。</li><li><strong>Agentic 工具链</strong> - 将 Agent 用于开发、测试、排障与运营，把重复劳动变成可验证、可复用的自动化。</li></ul><p>我们在找谁</p><ul><li><strong>有审美</strong> - 追求简洁的架构、恰当的抽象、清晰的接口。能把复杂业务做简单，也知道什么时候不该增加",
+    "locations": [
+     {
+      "cityId": 110108,
+      "cityName": "海淀区",
+      "country": "中国",
+      "id": 610836,
+      "provinceId": 110000,
+      "provinceName": "北京市"
+     }
+    ],
+    "multiLocale": "{\"mainLocale\":\"zh-CN\",\"secondLocale\":\"\"}",
+    "openedAt": "2025-08-29T00:00",
+    "orgId": "moonshot",
+    "prior": 1,
+    "publishedAt": "2026-09-18T10:26:50",
+    "showIsCampus": false,
+    "status": "open",
+    "title": "Agentic Commerce Engineer",
+    "updatedAt": "2026-09-18T10:26:49",
+    "zhineng": {
+     "id": 190965,
+     "name": "技术类/Technical"
+    }
+   },
+   {
+    "applicantLimitCheck": {
+     "duration": 6,
+     "isSetting": true,
+     "remainder": -1,
+     "total": 3
+    },
+    "attributeId": 121934,
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2026-09-18T12:11:16",
+    "deptId": 3458975,
+    "hireMode": 1,
+    "id": "61bf7094-7ccf-4d1c-976d-b71393c7d52c",
+    "jobDescription": "<p>为什么需要这个角色</p><p>Kimi 正在探寻将能源转换为智能的最优解。我们要把 AGI 的可能性翻译成世界听得见的叙事——而英文世界的第一印象，往往由一句话、一篇报道、一条推文决定。我们需要一个真正以英文写作为生的人：曾在外媒编辑部里，靠英文报道吃饭、被编辑打磨过每一行字的人。</p><p>我们要做的事</p><ul><li>用英文写出让世界想转发的故事——不是 press release，是让海外读者读完觉得“我理解 AI 了”的内容：从一条推文到一篇深度长文，从技术博客到海外发布会的叙事线</li><li>把模型能力、技术理念、产品哲学变成英文世界能理解、行业愿引用、媒体会记住的句子</li><li>与海外主流媒体及科技媒体建立内容层面的工作关系，让正确的叙事在国际市场上持续流动</li><li>在地缘政治、数据安全、模型伦理等复杂议题上，用准确、克制的英文讲清事实与立场</li></ul><p>我们希望你具备的</p><ul><li><strong>外媒出身的英文编辑/记者</strong>：在国际主流媒体或科技媒体（Reuters、Bloomberg、WSJ、FT、NYT、BBC、The Verge、Wired、TechCrunch 等）3 年以上英文采编经验，熟悉英文编辑部的运作方式与写作标准</li><li><strong>顶级的英文写作能力</strong",
+    "locations": [
+     {
+      "cityId": 110108,
+      "cityName": "海淀区",
+      "country": "中国",
+      "id": 610836,
+      "provinceId": 110000,
+      "provinceName": "北京市"
+     }
+    ],
+    "multiLocale": "{\"mainLocale\":\"zh-CN\",\"secondLocale\":\"\"}",
+    "openedAt": "2026-09-18T00:00",
+    "orgId": "moonshot",
+    "prior": 1,
+    "publishedAt": "2026-09-18T12:20:31",
+    "showIsCampus": false,
+    "status": "open",
+    "title": "Global PR｜海外PR内容专家",
+    "updatedAt": "2026-09-19T00:15:02",
+    "zhineng": {
+     "id": 190970,
+     "name": "职能类/Corporate Functions"
+    }
+   },
+   {
+    "applicantLimitCheck": {
+     "duration": 6,
+     "isSetting": true,
+     "remainder": -1,
+     "total": 3
+    },
+    "attributeId": 121934,
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2026-04-16T15:38:53",
+    "deptId": 3920372,
+    "hireMode": 1,
+    "id": "7e79b93b-25ec-4545-88b4-09754ec9bb79",
+    "jobDescription": "<p>AI技术正在重塑商业的底层逻辑，但商业化路径远未定型。这是一个开放式命题：参与定义AI时代\"如何把技术转化为价值\"的方法论。我们不寻找标准答案，只寻找既懂AI原生逻辑、又有商业敏锐度的人，期待你能把探索转化为pipeline和revenue，对quota负责，用你的数据证明路径有效。</p><p><br></p><p><strong>希望你做什么</strong></p><ol><li>探索多元路径。设计并验证商业化假设——客户可能藏在传统产业的数字化转型里，也可能诞生在下一个爆火的开源项目早期贡献者名单中；合作可能是一笔标准订单，也可能是一次生态共建。潜入技术前沿与商业现场的交叉地带，在趋势成为共识前完成卡位。</li><li>构建复合能力。既能写严谨的提案，也能写有感染力的技术内容；既能推进标准合同，也能设计非标准交易结构。把单点成功转化为可复用的路径知识，反哺团队和产品。</li><li>闭环与放大。将探索转化为收入、合作、生态位——用结果验证假设，用规模放大验证。我们要的是可量化的商业成果，不是过程感动自己。</li></ol><p><strong>你可以是谁</strong></p><p>背景完全开放，以下只是示例。</p><ol><li>Sales或BD出身。你深谙客户决策链条、商务谈判、关系经营——把成熟方法论带入新战场。</li><li>VC、PE或IR背景。",
+    "locations": [
+     {
+      "cityId": 440305,
+      "cityName": "南山区",
+      "country": "中国",
+      "id": 610838,
+      "provinceId": 440000,
+      "provinceName": "广东"
+     },
+     {
+      "country": "美国",
+      "id": 608852
+     },
+     {
+      "cityId": 310101,
+      "cityName": "黄浦区",
+      "country": "中国",
+      "id": 610837,
+      "provinceId": 310000,
+      "provinceName": "上海市"
+     },
+     {
+      "cityId": 110108,
+      "cityName": "海淀区",
+      "country": "中国",
+      "id": 610836,
+      "provinceId": 110000,
+      "provinceName": "北京市"
+     },
+     {
+      "country": "新加坡",
+      "id": 630593
+     }
+    ],
+    "multiLocale": "{\"mainLocale\":\"zh-CN\",\"secondLocale\":\"\"}",
+    "openedAt": "2026-04-16T00:00",
+    "orgId": "moonshot",
+    "prior": 1,
+    "publishedAt": "2026-09-09T14:56:33",
+    "showIsCampus": false,
+    "status": "open",
+    "title": "Business Builder & Ecosystem",
+    "updatedAt": "2026-09-09T14:56:33",
+    "zhineng": {
+     "id": 190969,
+     "name": "市场类/Marketing&BD"
+    }
+   },
+   {
+    "applicantLimitCheck": {
+     "duration": 6,
+     "isSetting": true,
+     "remainder": -1,
+     "total": 3
+    },
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2025-11-24T10:59:31",
+    "deptId": 3528250,
+    "hireMode": 1,
+    "id": "017f08cb-8bac-4f11-9d97-ffc212ccf25c",
+    "jobDescription": "<p>职位描述：</p><p>您将负责ToC产品的移动端测试，我们期待您在移动端（iOS和Android）测试方面有丰富的经验，并且有高质量产品交付流程经验。</p><p><br></p><p>主要职责：</p><p>对移动端</p><p>- 针对移动端应用特点进行测试设计和执行。保证版本发布质量。捍卫用户体验。</p><p>- 深入理解模型行为，对Chat和Agenic产品交互有深入理解，设计有效的测试用例。</p><p>- 编写和维护自动化测试脚本、工具支撑快速评测。</p><p>- 编写评测相关的Prompt，利用模型基础能力提升测试效率。</p><p>- 分析测试数据，对数据敏感，识别缺陷和性能瓶颈。</p><p>- 与开发团队合作，确保问题及时解决。</p><p><br></p><p>任职要求：</p><p>- 计算机科学或相关领域学位。</p><p>- 3年以上软件测试经验，移动端测试经验优先。</p><p>- 了解大模型技术，有相关经验者加分。</p><p>- 对质量要求极高，注重细节。</p><p>- 良好的沟通能力和团队合作精神。</p><p><br></p>",
+    "locations": [],
+    "openedAt": "2025-11-24T00:00",
+    "orgId": "moonshot",
+    "publishedAt": "2025-12-02T19:38:58",
+    "showIsCampus": false,
+    "status": "pause",
+    "title": "资深AI产品测试工程师",
+    "updatedAt": "2026-01-12T11:35:16",
+    "zhineng": {
+     "id": 190965,
+     "name": "技术类/Technical"
+    }
+   }
+  ]
+ }
+}

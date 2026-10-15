@@ -1,0 +1,116 @@
+{
+ "code": 0,
+ "codeType": 0,
+ "data": {
+  "jobStats": {
+   "orgId": "redotpay",
+   "total": 0
+  },
+  "jobs": [
+   {
+    "applicantLimitCheck": {
+     "isSetting": false
+    },
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2026-10-12T15:22:41",
+    "department": {
+     "id": 100058730,
+     "name": "SRE"
+    },
+    "deptId": 100058730,
+    "hireMode": 1,
+    "id": "4ba24846-db2b-4660-867b-496b36ade804",
+    "jobDescription": "<p><strong>About RedotPay</strong></p><p>RedotPay is a global crypto payment fintech integrating blockchain solutions into traditional banking and finance infrastructure. Our user-friendly crypto platform empowers millions globally to spend and send crypto assets, ensuring faster, more accessible, and inclusive financial services. RedotPay advances financial inclusion for the unbanked and supports crypto enthusiasts, driving the global adoption of secure and flexible crypto-powered financial solutions. Join us in shaping the future of finance and making a meaningful impact on a global scale.</",
+    "locations": [
+     {
+      "cityId": 810000,
+      "cityName": "香港",
+      "country": "中国",
+      "id": 100020345,
+      "provinceId": 810000,
+      "provinceName": "香港"
+     }
+    ],
+    "openedAt": "2026-10-12T00:00",
+    "orgId": "redotpay",
+    "publishedAt": "2026-10-12T15:22:41",
+    "salaryUnit": 6,
+    "showIsCampus": false,
+    "status": "open",
+    "title": "Head of Infrastructure SRE",
+    "updatedAt": "2026-10-12T15:22:41"
+   },
+   {
+    "applicantLimitCheck": {
+     "isSetting": false
+    },
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2026-10-12T14:53:35",
+    "department": {
+     "id": 100055430,
+     "name": "Security"
+    },
+    "deptId": 100055430,
+    "hireMode": 1,
+    "id": "8da86ca9-eaf5-468c-be09-3a27bf5cf4e9",
+    "jobDescription": "<p><strong>About RedotPay</strong></p><p>RedotPay is a global crypto payment fintech integrating blockchain solutions into traditional banking and finance infrastructure. Our user-friendly crypto platform empowers millions globally to spend and send crypto assets, ensuring faster, more accessible, and inclusive financial services. RedotPay advances financial inclusion for the unbanked and supports crypto enthusiasts, driving the global adoption of secure and flexible crypto-powered financial solutions. Join us in shaping the future of finance and making a meaningful impact on a global scale.</",
+    "locations": [
+     {
+      "cityId": 810000,
+      "cityName": "香港",
+      "country": "中国",
+      "id": 100020345,
+      "provinceId": 810000,
+      "provinceName": "香港"
+     }
+    ],
+    "openedAt": "2026-10-12T00:00",
+    "orgId": "redotpay",
+    "publishedAt": "2026-10-12T14:53:34",
+    "salaryUnit": 6,
+    "showIsCampus": false,
+    "status": "open",
+    "title": "Head of Security",
+    "updatedAt": "2026-10-12T14:53:35"
+   },
+   {
+    "applicantLimitCheck": {
+     "isSetting": false
+    },
+    "campusSites": [],
+    "commitment": "全职",
+    "createdAt": "2026-10-12T14:40:06",
+    "department": {
+     "id": 100057099,
+     "name": "Risk & Compliance"
+    },
+    "deptId": 100057099,
+    "hireMode": 1,
+    "id": "bf64f190-814c-431a-aa9e-09b8e3c3ac16",
+    "jobDescription": "<p><strong>About RedotPay</strong></p><p>RedotPay is a global crypto payment fintech integrating blockchain solutions into traditional banking and finance infrastructure. Our user-friendly crypto platform empowers millions globally to spend and send crypto assets, ensuring faster, more accessible, and inclusive financial services. RedotPay advances financial inclusion for the unbanked and supports crypto enthusiasts, driving the global adoption of secure and flexible crypto-powered financial solutions. Join us in shaping the future of finance and making a meaningful impact on a global scale.</",
+    "locations": [
+     {
+      "cityId": 810000,
+      "cityName": "香港",
+      "country": "中国",
+      "id": 100020345,
+      "provinceId": 810000,
+      "provinceName": "香港"
+     }
+    ],
+    "openedAt": "2026-10-12T00:00",
+    "orgId": "redotpay",
+    "publishedAt": "2026-10-12T14:40:05",
+    "salaryUnit": 6,
+    "showIsCampus": false,
+    "status": "open",
+    "title": "Head of Risk",
+    "updatedAt": "2026-10-12T14:40:06"
+   }
+  ]
+ },
+ "msg": "成功",
+ "success": true
+}

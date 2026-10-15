@@ -432,6 +432,10 @@ func All(c HTTPClient) map[string]Source {
 		// (jobs.bytedance.com, <tenant>.jobs.feishu.cn), read through the tenant's R&D
 		// category. The edge admits only a macOS browser string. See feishujobs.go.
 		macBrowserUASource(c, NewFeishuJobs),
+		// MokaHR: Chinese multi-tenant ATS, one tenant careers site (<orgId>/<siteId>) per
+		// board; app.mokahr.com encrypts its listing, hire-r1 (region "r1") does not. See
+		// mokahr.go.
+		NewMokaHR(c),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see
