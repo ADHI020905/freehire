@@ -126,6 +126,11 @@ func All(c HTTPClient) map[string]Source {
 	// crawl egresses from one IP, so their detail requests must compete for ONE token bucket.
 	// Two independent pacedSeekPoster calls would silently double the measured safe rate.
 	seekNetworkDetail := pacedSeekPoster(c)
+	// Alfa-Bank, Positive Technologies and Tochka Bank serve certificates issued by the
+	// Russian Trusted Root CA, which no standard trust store carries, so they fail the TLS
+	// handshake on the shared client. They share one client that trusts that extra root —
+	// see NewRussianTrustedRootClient for why the scope is these adapters and not the fleet.
+	russianRoot := NewRussianTrustedRootClient()
 	registry := reg(
 		NewGreenhouse(c),
 		NewLever(c),
@@ -428,11 +433,11 @@ func All(c HTTPClient) map[string]Source {
 		NewSber(c),
 		// Uzum (Uzbekistan): sitemap + per-vacancy RSC flight; see uzum.go.
 		NewUzum(c),
-		// Alfa-Bank's careers API serves a certificate issued by the Russian Trusted Root
-		// CA, which no standard trust store carries, so it fails the TLS handshake on the
-		// shared client. It gets its own client that trusts that one extra root — see
-		// NewRussianTrustedRootClient for why the scope is one adapter and not the fleet.
-		NewAlfaBank(NewRussianTrustedRootClient()),
+		NewAlfaBank(russianRoot),
+		// Positive Technologies and Tochka Bank: their postings exist only on their own
+		// Next.js careers sites, read from the server-rendered pages.
+		NewPtsecurity(russianRoot),
+		NewTochka(russianRoot),
 		NewLamoda(c),
 		NewKuper(c),
 		NewAviasales(c),

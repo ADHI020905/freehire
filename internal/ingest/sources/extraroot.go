@@ -19,13 +19,15 @@ import (
 //
 // Alfa-Bank's careers API moved to a certificate this CA issued, which no standard trust
 // store carries, so the crawl failed at the TLS handshake before any request went out —
-// 2,416 vacancies unreachable since 2026-07-29.
+// 2,416 vacancies unreachable since 2026-07-29. ptsecurity.com and hr.tochka.com serve
+// certificates chaining to the same root (verified from hydra on 2026-10-14).
 //
 //go:embed russian_trusted_root_ca.pem
 var russianTrustedRootCA []byte
 
 // NewRussianTrustedRootClient builds an ingest client that trusts the system roots PLUS
-// the certificate above, and is handed to exactly one adapter (alfabank, in All).
+// the certificate above, and is handed only to the adapters whose hosts serve a certificate
+// this CA issued (alfabank, ptsecurity and tochka, in All).
 //
 // It ADDS a root; it does not skip verification. InsecureSkipVerify would accept any
 // certificate from any host this client touches, which turns a narrow "we accept this
@@ -35,24 +37,24 @@ var russianTrustedRootCA []byte
 //
 // The scope is the load-bearing part. A state CA can issue a certificate for any name, so
 // trusting one everywhere would let its holder impersonate every source we crawl. One
-// client, one adapter, one host's worth of exposure — and the crawl sends no credentials
-// and reads only public listings, so the worst case is a forged job feed rather than a
-// leak.
+// client, three adapters, three hosts' worth of exposure — and the crawl sends no
+// credentials and reads only public listings, so the worst case is a forged job feed
+// rather than a leak.
 //
 // A system pool that cannot be read (unusual, but possible on a stripped image) degrades
-// to a pool holding only this root: alfabank still works, and any other host this client
-// touched would fail closed rather than silently unverified. Nothing else uses it.
+// to a pool holding only this root: those adapters still work, and any other host this
+// client touched would fail closed rather than silently unverified. Nothing else uses it.
 func NewRussianTrustedRootClient() *Client {
 	pool, err := x509.SystemCertPool()
 	if err != nil {
-		log.Printf("sources: system cert pool unavailable (%v); the alfabank client trusts only its embedded root", err)
+		log.Printf("sources: system cert pool unavailable (%v); the Russian-root client trusts only its embedded root", err)
 		pool = x509.NewCertPool()
 	}
 	if !pool.AppendCertsFromPEM(russianTrustedRootCA) {
 		// A PEM that does not parse leaves the client with the system store alone, which
-		// is the pre-change behaviour: alfabank fails at the handshake, loudly, and no
-		// other source is affected.
-		log.Printf("sources: embedded Russian Trusted Root CA did not parse; alfabank will keep failing its TLS handshake")
+		// is the pre-change behaviour: these adapters fail at the handshake, loudly, and
+		// no other source is affected.
+		log.Printf("sources: embedded Russian Trusted Root CA did not parse; alfabank, ptsecurity and tochka will keep failing their TLS handshakes")
 	}
 
 	c := NewClient()
