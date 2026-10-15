@@ -431,6 +431,9 @@ func All(c HTTPClient) map[string]Source {
 		// Python.org: the Python Software Foundation's own job board. One server-rendered listing
 		// names the whole catalogue; posting pages carry the body. See pythonorg.go.
 		NewPythonOrg(c),
+		// Torre: Latin-American talent marketplace. The sitemap index names the whole live
+		// catalogue; posting pages carry a schema.org JobPosting. See torre.go.
+		NewTorre(c),
 		// Tech in Asia: Southeast Asian startup board. One public Algolia index holds the whole
 		// catalogue, bodies included; the search key is read from the site's app bundle. The
 		// site's edge refuses any self-identifying User-Agent on paths robots.txt allows, hence
