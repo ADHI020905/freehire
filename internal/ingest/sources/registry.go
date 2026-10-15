@@ -414,6 +414,9 @@ func All(c HTTPClient) map[string]Source {
 		NewYandexCrowd(c),
 		NewOzon(c),
 		NewAvito(c),
+		// Kaspi.kz (Kazakhstan): the same sitemap + JobPosting ld+json shape as Avito.
+		NewKaspi(c),
+		NewX5(c),
 		NewRWB(c),
 		NewSber(c),
 		// Alfa-Bank's careers API serves a certificate issued by the Russian Trusted Root

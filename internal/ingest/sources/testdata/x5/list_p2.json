@@ -1,0 +1,88 @@
+{
+ "page": 2,
+ "page_size": 100,
+ "total": 5,
+ "pages": 2,
+ "items": [
+  {
+   "id": "76529cde-d025-4e83-9050-ff8e9e07d2b2",
+   "name": "Менеджер по экспедиции",
+   "city": null,
+   "vacancy_format": "standard",
+   "salary": null,
+   "salary_min": null,
+   "salary_max": null,
+   "employment_type": "full_time",
+   "work_format": "remote",
+   "work_schedule": null,
+   "key_features": [
+    "Опыт от 1 года на складе",
+    "Сменный график 2/2",
+    "Работа с WMS",
+    "Уверенный пользователь Excel"
+   ],
+   "category": {
+    "id": 12,
+    "name": "Руководство и администрация",
+    "parent": {
+     "id": 3,
+     "name": "Распределительный центр"
+    }
+   },
+   "business_units": [
+    {
+     "vacancy_business_unit_id": 480,
+     "business_unit": {
+      "id": 2,
+      "name": "Перекресток"
+     },
+     "is_referral": false,
+     "referral_reward_amount": null
+    }
+   ],
+   "address": null,
+   "published_at": "2026-10-14T15:35:54.106648Z"
+  },
+  {
+   "id": "79ce08af-b7a5-4cf3-a306-aba78c082a85",
+   "name": "Менеджер по безопасности",
+   "city": null,
+   "vacancy_format": "standard",
+   "salary": null,
+   "salary_min": null,
+   "salary_max": null,
+   "employment_type": "full_time",
+   "work_format": "office",
+   "work_schedule": null,
+   "key_features": [
+    "Оформление по ТК РФ",
+    "Выплаты 2 раза в месяц",
+    "Компенсация ГСМ и связи",
+    "График 5/2",
+    "Корпоративное обучение",
+    "Полный соцпакет"
+   ],
+   "category": {
+    "id": 27,
+    "name": "Безопасность",
+    "parent": {
+     "id": 9,
+     "name": "Офис"
+    }
+   },
+   "business_units": [
+    {
+     "vacancy_business_unit_id": 78,
+     "business_unit": {
+      "id": 4,
+      "name": "X5 Transport"
+     },
+     "is_referral": true,
+     "referral_reward_amount": null
+    }
+   ],
+   "address": null,
+   "published_at": "2025-12-10T11:26:28Z"
+  }
+ ]
+}
