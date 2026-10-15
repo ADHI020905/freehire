@@ -1,0 +1,168 @@
+{
+ "data": {
+  "list": [
+   {
+    "jobUnionId": "4839084480",
+    "name": "数据通道-高级Java开发工程师",
+    "jobType": "3",
+    "jobSpecialCode": "5",
+    "jobSource": "1",
+    "jobStatus": "000",
+    "jobFamily": "技术类",
+    "jobFamilyGroup": "软件",
+    "cityList": [
+     {
+      "name": "北京市",
+      "bgNode": false
+     },
+     {
+      "name": "上海市",
+      "bgNode": false
+     }
+    ],
+    "department": [
+     {
+      "name": "核心本地商业-基础研发平台",
+      "bgNode": false
+     }
+    ],
+    "jobDuty": "1. 参与美团数据库生态产品的架构设计与研发工作，同时参与新技术的预研和落地；\n2. 负责管控平台的建设与演进，完善容灾演练体系与变更管控能力，实现演练能力的持续保鲜与管控能力的持续提升；\n3. 参与 AIOps 管控智能化建设，实现以 Agent 为主体的 ChatOps + 场景自治管理形态；\n4. 跟踪 AI Agent、智能运维、BaaS 等前沿趋势，推动 DTS / DCP / DataMatrix 等平台产品进行智能演进。",
+    "jobRequirement": "1. 本科及以上学历，计算机相关专业；3-6年工作经验；\n2. 精通 Java 开发与网络编程，具备扎实的 JVM、并发编程功底，有丰富的 Java 工程实践与大型分布式系统的架构设计和模块拆分经验；\n3. 熟练使用 Python、Go，能够独立完成工具链、数据处理、算法验证与 AI 应用方向的开发；\n4. 熟悉 MySQL 传输协议，或熟悉至少一种主流关系型数据库（MySQL / PostgreSQL）的原理与调优，了解索引、事务、查询优化等核心机制；\n5. 有技术热情和较强的学习能力，有很好的问题分析和技术攻关能力，有良好的团队合作和沟通能力。",
+    "highLight": "1. 能对接公司各类业务场景，作为公司级数据基础设施，服务于全公司各业务线，快速拓宽技术视野与业务理解；\n2. 能够参与到万级服务节点的大型分布式系统建设，体验高并发、高稳定性带来的重大挑战；\n3. 能在团队里既可以持续探索技术深度，又能不断加宽广度——从引擎、平台到产品，从数据传输到 AI 智能化；\n4. 能够参与并指导公司业务开展异地多活架构升级；\n5. AIOps 与 AI in Product 正在从 0 到 1 建设，你有机会定义 DTS 基础设施的智能化形态，而不仅仅是维护存量系统。",
+    "refreshTime": 1792057074000
+   },
+   {
+    "jobUnionId": "4830558337",
+    "name": "分布式数据库运维研发岗",
+    "jobType": "3",
+    "jobSpecialCode": "5",
+    "jobSource": "1",
+    "jobStatus": "000",
+    "jobFamily": "技术类",
+    "jobFamilyGroup": "运维",
+    "cityList": [
+     {
+      "name": "北京市",
+      "bgNode": false
+     },
+     {
+      "name": "上海市",
+      "bgNode": false
+     }
+    ],
+    "department": [
+     {
+      "name": "核心本地商业-基础研发平台",
+      "bgNode": false
+     }
+    ],
+    "jobDuty": "1.负责基于TiDB云原生数据库的运维工作，包括集群的部署、配置、监控和故障排查等。\n2.负责TiDB Operator研发和能力建设，包括绑核、亲和性调度\n3.进行数据库性能分析和调优，包括索引优化、查询优化、资源调度等，提高数据库的性能和吞吐能力。\n4.负责数据库在K8s上的监控和自动化运维，制定合适的监控策略和自动化脚本，有效提升运维效率。\n5.协助开发团队解决数据库相关的问题，并提供技术支持和解决方案。",
+    "jobRequirement": "1.大学本科及以上学历，计算机相关专业。\n2.至少2年以上基于TiDB的云原生数据库运维经验，熟悉TiDB的架构和特性。\n3.至少2年以上Kubernetes相关经验，熟悉Kubernetes的架构、原理和常用工具，并有Go语言研发经验，熟悉Go语言的核心特性和常用库。\n4.具备良好的问题分析和解决能力，能够快速定位和解决数据库故障和性能问题。\n5.熟悉数据库性能优化和调优方法，具备较强的性能分析和优化能力。\n6.具备团队合作精神，能够与开发团队紧密配合，共同解决问题。",
+    "highLight": "1.在云原生数据库运维研发岗位上，有机会深入研究和应用Kubernetes的技术，发挥Kubernetes在容器编排和管理领域的优势。\n2.团队具有数据库AI Infra产品，如向量、PG、记忆、ES产品，能提升个人视野。\n3.参与数据库在K8s集群中的设计和优化，对个人技术能力的提升具有很大的促进作用。\n4.参与云原生分布式数据库运维，能学习到分布式数据库理论知识\n5.公司位于北京市、上海市，拥有良好的发展环境和广阔的职业发展空间，可以获得更多的职业机会和发展平台。",
+    "refreshTime": 1792057063000
+   },
+   {
+    "jobUnionId": "4697320043",
+    "name": "AI全栈工程师",
+    "jobType": "1",
+    "jobSpecialCode": "1",
+    "jobSource": "2",
+    "jobStatus": "000",
+    "jobFamily": "技术类",
+    "jobFamilyGroup": "软件",
+    "cityList": [
+     {
+      "name": "北京市",
+      "bgNode": false
+     },
+     {
+      "name": "上海市",
+      "bgNode": false
+     },
+     {
+      "name": "成都市",
+      "bgNode": false
+     },
+     {
+      "name": "深圳市",
+      "bgNode": false
+     }
+    ],
+    "department": [],
+    "jobDuty": "岗位职责\n1. 参与 AI 应用的全栈开发：负责 AI 产品功能的前端界面（Web/小程序）与后端服务的设计与实现，保障高可用与用户体验；\n2. 大模型能力工程化：参与LLM 应用架构设计与开发，包括 Prompt 模板工程、RAG检索管线搭建、Agent 工作流编排等；\n3. 模型效果调优与评估：参与模型输出的质量评估，分析 Bad Case，优化提示词策略与检索链路，提升 AI 回答的准确率与可用性；\n4. AI 工程基础设施建设：参与模型服务化部署、推理性能优化、流式响应设计，构建高效稳定的 AI 应用底座；\n5. 技术探索与落地：跟踪前沿AI 技术动态，参与从 0 到 1 的 AI 功能创新验证。",
+    "jobRequirement": "岗位要求\n1. 本科及以上学历，计算机科学、软件工程或相关专业；\n2. 扎实的编程基础：熟练掌握至少一门编程语言（Python / Java / TypeScript / Go 等），具备良好的代码习惯；\n3. 基本功扎实：了解前端框架（React / Vue 等）或后端框架（Spring / Django / Express 等）之一，具备完整 Web 项目开发经验；\n4. AI 素养与好奇心：熟悉大模型基本原理与应用范式，有 ChatGPT / Claude 等工具的深度使用经验，理解 Prompt Engineering 基本技巧；\n5. 学习与解决问题能力：对新技术保持敏感，能快速学习并应用 AI 领域新知识，具备良好的逻辑思维与沟通协作能力。\n6. 有独立完成AI应用（Bot/Agent/自动化工作流）从0到1上线的经历者优先",
+    "refreshTime": 1786960999000,
+    "tag": [
+     1
+    ]
+   },
+   {
+    "jobUnionId": "3647684690",
+    "name": "财务科技-AI全栈实习生",
+    "jobType": "2",
+    "jobSpecialCode": "6",
+    "jobSource": "1",
+    "jobStatus": "000",
+    "jobFamily": "技术类",
+    "jobFamilyGroup": "软件",
+    "cityList": [
+     {
+      "name": "北京市",
+      "bgNode": false
+     },
+     {
+      "name": "上海市",
+      "bgNode": false
+     },
+     {
+      "name": "成都市",
+      "bgNode": false
+     }
+    ],
+    "department": [
+     {
+      "name": "财务平台",
+      "bgNode": false
+     }
+    ],
+    "desc": "",
+    "jobDuty": "1. 从用户与业务出发，独立完成需求挖掘、产品方案设计与功能定义，对结果负责。\n2. 一个人全栈落地：自己设计、自己开发、自己上线——后端（API、业务逻辑、数据）+ 前端（界面、交互、可视化）一肩挑，快速做出可验证的产品原型并迭代。\n3. 参与 AI Agent 产品的从 0 到 1：设计并实现 Agent Loop（任务拆解、工具/Skill 调用、记忆管理），把财务真实场景跑通到能用、好用。\n4. 用数据驱动迭代：定义并跟踪核心指标（激活、留存、调用量等），快速验证假设、打磨体验。",
+    "jobRequirement": "1. 本科及以上学历，专业不限，有产品 sense + 能自己写代码者优先。\n2. 具备独立做产品的能力：能想清楚做什么、为什么做，也能动手把它实现出来。\n3. 具备全栈开发能力：熟悉前端（React / Vue + HTML/CSS/JS）与后端（如 Java / Spring Boot，或 Node/Python 等），能独立完成一个完整功能从前到后的开发。\n4. 重度使用 AI Coding 工具（Claude Code / Cursor 等），习惯用 AI 大幅提升效率；对 AI Agent / LLM 应用有理解，有 Agent、RAG、工具调用等实践者优先。\n5. 学习快、自驱强、不设边界——产品、设计、技术哪边需要就往哪补，能独立扛事。",
+    "highLight": "1. 一个人就是一个小团队：从产品到代码全由你做主，亲手把 AI 产品从 idea 推到上线，做真实业务、有真实用户。\n2. 深度玩转前沿 AI Coding / Agent 技术栈，在 AI 时代积累\"产品+技术\"双重稀缺能力。\n3. 紧贴财务科技前沿，团队工程标准高、成长空间大。\n4. 北京 / 成都 / 上海 办公环境优越，完善带教体系。",
+    "refreshTime": 1792029672000
+   },
+   {
+    "jobUnionId": "4786959491",
+    "name": "Staff Software Engineer",
+    "jobType": "3",
+    "jobSpecialCode": "5",
+    "jobSource": "1",
+    "jobStatus": "000",
+    "jobFamily": "技术类",
+    "jobFamilyGroup": "算法",
+    "cityList": [
+     {
+      "name": "旧金山",
+      "bgNode": false
+     },
+     {
+      "name": "西雅图",
+      "bgNode": false
+     }
+    ],
+    "department": [
+     {
+      "name": "核心本地商业-基础研发平台",
+      "bgNode": false
+     }
+    ],
+    "jobDuty": "Collaborate with cross-functional teams, including product, design, operations, and infrastructure, to translate requirements into technical plans and deliver application features.\nDrive technical projects from planning through launch by defining milestones, managing dependencies, resolving blockers, and communicating progress.\nTake a hands-on role in designing, coding, testing, debugging, and deploying software.\nBuild and maintain user interfaces and backend services using modern programming languages and frameworks.\nMake practical design decisions that balance delivery timelines, performance, scalability, and maintainability.\nInvestigate and resolve technical issues, including production bugs and performance bottlenecks.\nImprove code quality through code reviews, automated testing, refactoring, and targeted technical debt reduction.\nOwn key components and features end to end, including implementation, integration, release, and ongoing operation.\nProvide practical technical guidance to teammates and help resolve implementation challenges.",
+    "jobRequirement": "Bachelor’s degree in Computer Science, Computer Engineering, or a related technical field, or equivalent practical experience.\n3+ years of relevant software development experience.\nStrong programming skills in at least one relevant language and hands-on experience building and shipping software.\nExperience driving technical projects or substantial features from requirements through delivery.\nExperience with software design, testing, debugging, and performance optimization.\nAbility to work independently, manage technical dependencies, and collaborate effectively across teams.",
+    "highLight": "The role provides extensive room for growth through hands-on project ownership, cross-functional collaboration, and progressively broader technical responsibilities.",
+    "refreshTime": 1789715523000
+   }
+  ]
+ },
+ "status": 1,
+ "message": "成功"
+}

@@ -364,6 +364,9 @@ func All(c HTTPClient) map[string]Source {
 		// Alibaba: the group's experienced-hire portal, every business under one search, read
 		// through its Technology category behind a self-minted CSRF token. See alibaba.go.
 		NewAlibaba(c),
+		// Meituan: zhaopin.meituan.com, read through its Technology job family for experienced,
+		// campus and intern postings alike. See meituan.go.
+		NewMeituan(c),
 		// Garena: one keyless listing POST plus a detail GET per posting, which alone holds
 		// the responsibilities and requirements. See garena.go.
 		NewGarena(c),

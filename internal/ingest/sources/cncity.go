@@ -6,7 +6,7 @@ import "strings"
 // dictionary reads, with the country it is in.
 type cnCityPlace struct{ name, country string }
 
-// cnCities maps the Chinese city names the mainland careers sites state (Alibaba) to
+// cnCities maps the Chinese city names the mainland careers sites state (Alibaba, Meituan) to
 // English, because internal/dict/location reads no Chinese: "北京" resolves no city and no
 // country, while "Beijing" resolves both. The list is the names seen on those sites' live
 // catalogues (2026-10-15), not a gazetteer; a name it lacks keeps its Chinese spelling and states
@@ -36,7 +36,7 @@ var cnCities = map[string]cnCityPlace{
 	"昆山": {"Kunshan", "cn"}, "大连": {"Dalian", "cn"}, "烟台": {"Yantai", "cn"},
 	"潍坊": {"Weifang", "cn"}, "保定": {"Baoding", "cn"}, "桂林": {"Guilin", "cn"},
 	// Hong Kong and Macao are named with a "中国" prefix and are their own codes here.
-	"中国香港": {"Hong Kong", "hk"}, "香港": {"Hong Kong", "hk"},
+	"中国香港": {"Hong Kong", "hk"}, "香港": {"Hong Kong", "hk"}, "香港特别行政区": {"Hong Kong", "hk"},
 	"中国澳门": {"Macau", "mo"}, "澳门": {"Macau", "mo"},
 	"中国台湾": {"Taipei", "tw"},
 	// Abroad.
@@ -46,7 +46,7 @@ var cnCities = map[string]cnCityPlace{
 	"伦敦": {"London", "gb"}, "巴黎": {"Paris", "fr"}, "马德里": {"Madrid", "es"},
 	"法兰克福": {"Frankfurt", "de"}, "多伦多": {"Toronto", "ca"}, "墨西哥城": {"Mexico City", "mx"},
 	"巴西利亚": {"Brasilia", "br"}, "圣保罗": {"Sao Paulo", "br"}, "西雅图": {"Seattle", "us"},
-	"森尼韦尔": {"Sunnyvale", "us"}, "硅谷": {"Silicon Valley", "us"}, "华盛顿哥伦比亚特区": {"Washington, DC", "us"},
+	"森尼韦尔": {"Sunnyvale", "us"}, "旧金山": {"San Francisco", "us"}, "硅谷": {"Silicon Valley", "us"}, "华盛顿哥伦比亚特区": {"Washington, DC", "us"},
 }
 
 // cnCity resolves a Chinese city name, with or without the 市 ("city") suffix the sites
