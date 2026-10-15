@@ -383,6 +383,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   techinasia: 'Tech in Asia',
   ibm: 'IBM',
   feishujobs: 'Feishu Jobs',
+  dassault: 'Dassault Systèmes',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),

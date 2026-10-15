@@ -360,6 +360,9 @@ func All(c HTTPClient) map[string]Source {
 		// Garena: one keyless listing POST plus a detail GET per posting, which alone holds
 		// the responsibilities and requirements. See garena.go.
 		NewGarena(c),
+		// Dassault Systèmes: its Taleo section is not public, so the catalogue — bodies
+		// included — is read from 3ds.com's own Exalead card search. See dassault.go.
+		NewDassault(c),
 		NewLumenalta(c),
 		// Staffy: a single recruiting agency's own board, boardless like Lumenalta; both the
 		// listing and detail pages are fully static server-rendered HTML.

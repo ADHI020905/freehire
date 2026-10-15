@@ -446,6 +446,18 @@ Source ingest: the provider registry and its adapters, entry validation, the per
 - **`office` changes nothing in the API and everything in the URL.** Every office code, a made-up one included, lists the same postings, but the posting page lives at `/<office>/careers/<id>`, and the site's own links and `og:url` use `global`, so that is the URL stored. `apply_url` was empty on every posting, because applications happen on the same page.
 - **The only structured fields are the three tags.** `location` holds one city or `Remote` (no posting carried two). `job_type` maps to seniority (`Internship`, `Entry Level`, `Experienced (Team Lead)`; `Individual Contributor` names no level). `job_category` is left to the dictionaries; `Engineering and Technology` spans too many disciplines to pin one. No posting date is published anywhere.
 
+**Dassault Systèmes traps** (`dassault`; live-verified 2026-10-15):
+
+- **The Taleo section behind it is not public.** Every apply link points at `talentacquisition.3ds.com/careersection/qa/`, but that section's search page redirects to `www.3ds.com/careers` and a `jobdetail.ftl` answers 302, so the `taleo` adapter fails with "no portalNo". The catalogue comes from 3ds.com's own Exalead card search (`GET www.3ds.com/apisearch/card_search_api`), which returns XML served as `application/javascript`. Each card's `content_summary` is the posting's full body, so the crawl makes no detail requests. robots.txt disallows `*/search*`; `/apisearch/card_search_api` contains no `/search` segment.
+- **Both refinements are required.** Without `r=f/card_content_type/career` the index is 3ds.com's whole card corpus. Without `r=f/card_content_categories_facet/cards language/en` every posting comes back once per site language: 8,364 cards for 697 requisitions. The English set alone covers all 697 distinct card ids. `hf` sets the page size: 100 serves 100, and 1000 served all 697 in one answer. The adapter uses 100, which makes 7 requests and ran in 3s.
+- **`estimated` is not a completeness signal.** At `hf=100`, `estimated="true"` came back on 23 of 24 requests even though `nhits` stayed 697 and the walk read exactly 697 distinct cards. At the default page size it read `false`. `fullBoardListing` therefore rests on the distinct count equalling `nhits`, plus any page failure failing the crawl.
+- **`content_categories` is a flat `Label/value` string** whose values contain spaces and commas. All 697 postings carried the same six labels in the same order (Category, Type, Country, City, Products, Year), and the adapter anchors on that order.
+  - `City` repeats the country and often a region code (`India, MH, Pune`), so the city is its last comma-separated part.
+  - Two `Country` names carry a qualifier the dictionary cannot read: `Korea, Republic of`, and `Taiwan,China`, which the location parser reads as TWO countries. Both fall back to the part before the comma.
+  - `Year` is the page's "Experience level" (`4 to 5 years`, `More than 15 years`, `Not specified`) and sets `ExperienceYearsMin`.
+  - `content_start_datetime` is the page's "Posted on".
+- **`Products` names a brand, not an employer.** 62 postings are `MEDIDATA` and 32 are `OUTSCALE`; both are Dassault subsidiaries. They stay under the configured company, because the facet labels a product line rather than a hiring entity.
+
 ## Limitations
 - The ingest sweep has a trade-off: a missed run can leave an orphan open until a future reconcile; the change window is sized wide enough to absorb a skipped cron.
 - Self-closing sources: a missed `removed` event from the feed can leave a vacancy open until the next reindex.
