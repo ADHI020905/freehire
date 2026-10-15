@@ -2,16 +2,18 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/strelov1/freehire/internal/platform/llm"
 )
 
-// LLM holds the six environment values every LLM entrypoint needs: the provider-agnostic
-// connection triple, and the optional Langfuse tracing triple.
+// LLM holds the provider-agnostic connection triple, an optional sampling temperature,
+// and the optional Langfuse tracing triple.
 //
-// It exists because two config types read the same six env keys — the server's Settings and the
+// It exists because multiple entrypoints read the same LLM env keys — the server's Settings and the
 // enrichment worker's Enrich — and two workers that are neither loaded the ENRICHMENT config
 // purely to reach them, inheriting ENRICH_* validation they have no use for. What differs between
 // those callers is POLICY, not shape: the server degrades when the LLM is unconfigured, a worker
@@ -21,9 +23,10 @@ import (
 // llm.Settings is deliberately NOT folded in here: it is the env-free shape the library takes, so
 // internal/platform/llm depends on no configuration package. Settings() is the one mapping between them.
 type LLM struct {
-	BaseURL string
-	APIKey  string
-	Model   string
+	BaseURL     string
+	APIKey      string
+	Model       string
+	Temperature *float64
 
 	// StrictSchema says whether the model behind this gateway honours
 	// `response_format: json_schema`. Default true, because that is the stronger
@@ -49,12 +52,13 @@ type LLM struct {
 	LangfuseSecretKey string
 }
 
-// LoadLLM reads the six values permissively. Nothing is required here — see Require.
+// LoadLLM reads the LLM settings permissively. Nothing is required here — see Require.
 func LoadLLM() LLM {
 	return LLM{
 		BaseURL:           os.Getenv("LLM_BASE_URL"),
 		APIKey:            os.Getenv("LLM_API_KEY"),
 		Model:             os.Getenv("LLM_MODEL"),
+		Temperature:       envOptionalFloat("LLM_TEMPERATURE"),
 		StrictSchema:      envBool("LLM_STRICT_SCHEMA", true),
 		LangfuseBaseURL:   os.Getenv("LANGFUSE_BASE_URL"),
 		LangfusePublicKey: os.Getenv("LANGFUSE_PUBLIC_KEY"),
@@ -83,6 +87,9 @@ func (l LLM) Require() error {
 	if len(missing) > 0 {
 		return fmt.Errorf("config: missing required env: %s", strings.Join(missing, ", "))
 	}
+	if l.Temperature != nil && (math.IsNaN(*l.Temperature) || math.IsInf(*l.Temperature, 0) || *l.Temperature < 0 || *l.Temperature > 2) {
+		return fmt.Errorf("config: LLM_TEMPERATURE must be a number between 0 and 2")
+	}
 	return nil
 }
 
@@ -94,11 +101,27 @@ func (l LLM) Settings(model string) llm.Settings {
 		BaseURL:           l.BaseURL,
 		APIKey:            l.APIKey,
 		Model:             model,
+		Temperature:       l.Temperature,
 		SchemaMode:        schemaMode(l.StrictSchema),
 		LangfuseBaseURL:   l.LangfuseBaseURL,
 		LangfusePublicKey: l.LangfusePublicKey,
 		LangfuseSecretKey: l.LangfuseSecretKey,
 	}
+}
+
+// envOptionalFloat distinguishes an unset sampling parameter from an explicit zero.
+// A malformed value is carried as NaN so Require/NewClient can reject it instead of
+// silently falling back to the library's default.
+func envOptionalFloat(key string) *float64 {
+	raw, ok := os.LookupEnv(key)
+	if !ok || strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	value, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
+	if err != nil {
+		value = math.NaN()
+	}
+	return &value
 }
 
 // schemaMode turns the env's yes/no into the library's vocabulary. The two are

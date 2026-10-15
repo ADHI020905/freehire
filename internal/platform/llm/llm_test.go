@@ -33,6 +33,7 @@ func (f *fakeModel) GenerateContent(_ context.Context, msgs []llms.MessageConten
 type streamModel struct {
 	reasoning []string
 	content   []string
+	gotTemp   float64
 }
 
 func (m *streamModel) GenerateContent(ctx context.Context, _ []llms.MessageContent, opts ...llms.CallOption) (*llms.ContentResponse, error) {
@@ -40,6 +41,7 @@ func (m *streamModel) GenerateContent(ctx context.Context, _ []llms.MessageConte
 	for _, o := range opts {
 		o(&co)
 	}
+	m.gotTemp = co.Temperature
 	full := ""
 	for i := range m.content {
 		reasoning := ""
@@ -54,6 +56,18 @@ func (m *streamModel) GenerateContent(ctx context.Context, _ []llms.MessageConte
 		full += m.content[i]
 	}
 	return &llms.ContentResponse{Choices: []*llms.ContentChoice{{Content: full}}}, nil
+}
+
+func TestGenerateJSONStreamUsesConfiguredTemperature(t *testing.T) {
+	m := &streamModel{content: []string{`{"ok":true}`}}
+	c := NewWithModel(m, WithTemperature(1))
+
+	if _, err := c.GenerateJSONStream(context.Background(), "sys", "usr", nil); err != nil {
+		t.Fatalf("GenerateJSONStream: %v", err)
+	}
+	if m.gotTemp != 1 {
+		t.Errorf("temperature = %v, want 1", m.gotTemp)
+	}
 }
 func (*streamModel) Call(context.Context, string, ...llms.CallOption) (string, error) { return "", nil }
 

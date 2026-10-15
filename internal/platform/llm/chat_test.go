@@ -18,17 +18,21 @@ type chatModel struct {
 	genInfo   map[string]any
 	err       error
 
-	gotMsgs  []llms.MessageContent
-	gotTools []llms.Tool
+	gotMsgs      []llms.MessageContent
+	gotTools     []llms.Tool
+	gotTemp      float64
+	gotReasoning ReasoningEffort
 }
 
 func (m *chatModel) GenerateContent(ctx context.Context, msgs []llms.MessageContent, opts ...llms.CallOption) (*llms.ContentResponse, error) {
 	m.gotMsgs = msgs
+	m.gotReasoning = reasoningOf(ctx)
 	var co llms.CallOptions
 	for _, o := range opts {
 		o(&co)
 	}
 	m.gotTools = co.Tools
+	m.gotTemp = co.Temperature
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -46,6 +50,19 @@ func (m *chatModel) GenerateContent(ctx context.Context, msgs []llms.MessageCont
 		ToolCalls:      m.toolCalls,
 		GenerationInfo: m.genInfo,
 	}}}, nil
+}
+
+func TestChatUsesConfiguredTemperature(t *testing.T) {
+	m := &chatModel{chunks: []string{"ok"}}
+	c := NewWithModel(m, WithTemperature(1))
+
+	if _, err := c.Chat(context.Background(),
+		[]llms.MessageContent{llms.TextParts(llms.ChatMessageTypeHuman, "hi")}, nil, ChatStream{}); err != nil {
+		t.Fatalf("Chat: %v", err)
+	}
+	if m.gotTemp != 1 {
+		t.Errorf("temperature = %v, want 1", m.gotTemp)
+	}
 }
 
 func (*chatModel) Call(context.Context, string, ...llms.CallOption) (string, error) { return "", nil }
@@ -80,6 +97,28 @@ func TestChatOffersToolsAndReturnsToolCalls(t *testing.T) {
 	}
 	if len(m.gotMsgs) != 2 {
 		t.Errorf("sent %d messages, want the whole conversation", len(m.gotMsgs))
+	}
+}
+
+func TestChatDisablesReasoningForFlagshipToolCallsOnly(t *testing.T) {
+	for _, tc := range []struct {
+		model string
+		want  ReasoningEffort
+	}{
+		{model: "flagship", want: ReasoningNone},
+		{model: "gpt-6-luna", want: ReasoningNone},
+		{model: "mid", want: ReasoningDefault},
+	} {
+		t.Run(tc.model, func(t *testing.T) {
+			m := &chatModel{}
+			c := &Client{model: m, modelID: tc.model, timeout: time.Second}
+			if _, err := c.Chat(context.Background(), nil, []llms.Tool{searchTool()}, ChatStream{}); err != nil {
+				t.Fatalf("Chat: %v", err)
+			}
+			if m.gotReasoning != tc.want {
+				t.Errorf("reasoning = %q, want %q", m.gotReasoning, tc.want)
+			}
+		})
 	}
 }
 

@@ -61,6 +61,7 @@ func (c *Client) Chat(ctx context.Context, msgs []llms.MessageContent, tools []l
 		}
 		return nil
 	})}
+	opts = append(opts, c.temperatureOptions()...)
 	// Reasoning arrives on its own callback; the provider calls both, so this one
 	// reads only the reasoning half and leaves the content to OnText above.
 	if stream.OnThinking != nil {
@@ -72,6 +73,11 @@ func (c *Client) Chat(ctx context.Context, msgs []llms.MessageContent, tools []l
 		}))
 	}
 	if len(tools) > 0 {
+		// The production `flagship` alias resolves to GPT-6 Luna, which accepts tool
+		// calls only when reasoning is disabled. Keep this workaround off other models.
+		if c.modelID == "flagship" || c.modelID == "gpt-6-luna" {
+			ctx = withReasoning(ctx, ReasoningNone)
+		}
 		opts = append(opts, llms.WithTools(tools))
 	}
 

@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -37,11 +38,12 @@ const tracerShutdownTimeout = 15 * time.Second
 // Client is a thin wrapper over a langchaingo model with a per-call timeout. An
 // optional tracer observes each call; modelID and source label those observations.
 type Client struct {
-	model   llms.Model
-	modelID string
-	timeout time.Duration
-	tracer  Tracer
-	source  string
+	model       llms.Model
+	modelID     string
+	timeout     time.Duration
+	tracer      Tracer
+	source      string
+	temperature *float64
 
 	// baseURL and apiKey are retained so a schema-bound model can be built against
 	// the same endpoint: langchaingo binds the response format to the client, not to
@@ -94,6 +96,13 @@ func (c *Client) Timeout() time.Duration {
 	return c.timeout
 }
 
+func (c *Client) temperatureOptions() []llms.CallOption {
+	if c.temperature == nil {
+		return nil
+	}
+	return []llms.CallOption{llms.WithTemperature(*c.temperature)}
+}
+
 // WithTimeout returns a shallow copy of the client with a different per-call timeout,
 // so a slow use case (a reasoning-heavy multi-stage analysis) can allow longer calls
 // without raising the shared client's default for everyone. Nil-safe.
@@ -117,6 +126,14 @@ type Option func(*Client)
 func WithSchemaMode(mode SchemaMode) Option {
 	return func(c *Client) {
 		c.schemaMode = mode
+	}
+}
+
+// WithTemperature sets an optional sampling temperature on every call made by this client.
+func WithTemperature(temperature float64) Option {
+	return func(c *Client) {
+		value := temperature
+		c.temperature = &value
 	}
 }
 
@@ -165,9 +182,10 @@ func New(baseURL, apiKey, model string, opts ...Option) (*Client, error) {
 // every entrypoint (the HTTP server and both LLM workers) maps its env config into,
 // so client construction and tracing live in exactly one place.
 type Settings struct {
-	BaseURL string
-	APIKey  string
-	Model   string
+	BaseURL     string
+	APIKey      string
+	Model       string
+	Temperature *float64
 
 	// SchemaMode is how WithSchema asks for its shape. The zero value is strict
 	// mode, so a caller that says nothing keeps sending exactly what it sent
@@ -198,7 +216,13 @@ func NewClient(s Settings, source string) (*Client, func(), error) {
 	if !s.Enabled() {
 		return nil, noop, nil
 	}
+	if s.Temperature != nil && (math.IsNaN(*s.Temperature) || math.IsInf(*s.Temperature, 0) || *s.Temperature < 0 || *s.Temperature > 2) {
+		return nil, noop, fmt.Errorf("llm: temperature must be a number between 0 and 2")
+	}
 	opts := []Option{WithSchemaMode(s.SchemaMode)}
+	if s.Temperature != nil {
+		opts = append(opts, WithTemperature(*s.Temperature))
+	}
 	flush := noop
 	if tracer := NewTracer(s.LangfuseBaseURL, s.LangfusePublicKey, s.LangfuseSecretKey); tracer != nil {
 		opts = append(opts, WithTracer(tracer, source))
@@ -265,7 +289,8 @@ func (c *Client) GenerateJSON(ctx context.Context, system, user string, opts ...
 		return Generation{Model: c.modelID, System: system, User: user, Start: start, End: time.Now(), Source: c.source}
 	}
 
-	resp, err := model.GenerateContent(ctx, messages, llms.WithJSONMode())
+	callOpts := append([]llms.CallOption{llms.WithJSONMode()}, c.temperatureOptions()...)
+	resp, err := model.GenerateContent(ctx, messages, callOpts...)
 	if err != nil {
 		wrapped := fmt.Errorf("llm: generate: %w", err)
 		g := gen()
@@ -357,7 +382,8 @@ func (c *Client) GenerateJSONStream(
 		return nil
 	})
 
-	resp, err := model.GenerateContent(ctx, messages, llms.WithJSONMode(), stream)
+	callOpts := append([]llms.CallOption{llms.WithJSONMode(), stream}, c.temperatureOptions()...)
+	resp, err := model.GenerateContent(ctx, messages, callOpts...)
 	err = contextOverrules(ctx, err)
 	// The fit model is slow (tens of seconds per call); log the duration so per-stage
 	// cost stays observable without a tracer.
