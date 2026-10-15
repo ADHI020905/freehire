@@ -419,6 +419,8 @@ func All(c HTTPClient) map[string]Source {
 		NewX5(c),
 		NewRWB(c),
 		NewSber(c),
+		// Uzum (Uzbekistan): sitemap + per-vacancy RSC flight; see uzum.go.
+		NewUzum(c),
 		// Alfa-Bank's careers API serves a certificate issued by the Russian Trusted Root
 		// CA, which no standard trust store carries, so it fails the TLS handshake on the
 		// shared client. It gets its own client that trusts that one extra root — see
