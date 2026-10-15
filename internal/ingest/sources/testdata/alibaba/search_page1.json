@@ -1,0 +1,154 @@
+{
+ "success": true,
+ "errorMsg": null,
+ "errorCode": null,
+ "content": {
+  "datas": [
+   {
+    "trackId": "SSP0",
+    "positionUrl": "/off-campus/position-detail?positionId=100048720006",
+    "bucket": "DEFAULT",
+    "id": 100048720006,
+    "name": "阿里国际站-Agentic AI 算法工程师-深圳",
+    "status": null,
+    "categories": [
+     "技术类-算法"
+    ],
+    "publishTime": 1792056506000,
+    "graduationTime": null,
+    "modifyTime": 1792056507000,
+    "workLocations": [
+     "深圳"
+    ],
+    "interviewLocations": null,
+    "regionEnNameMap": {},
+    "technologyNameIdMap": {},
+    "tags": [
+     "NEW"
+    ],
+    "requirement": "我们希望你具备\n1、计算机、人工智能、机器学习、数据科学等相关专业本科及以上学历。\n2、具备大模型应用、算法研发或智能系统落地经验，熟悉 Agent、Prompt、RAG、Tool Use、Planning、Loop、Memory 等方向中的一个或多个。\n3、理解 Agentic Native 产品形态，能够围绕复杂任务设计任务分解、策略编排、状态管理和工具协同方案。\n4、具备一定的大模型业务后训练经验，理解 SFT、偏好优化、指令对齐、任务数据构造等方法，能够结合业务场景优化模型表现。\n5、具备数据分析、评测和实验迭代能力，能够基于线上反馈持续优化 Agent 的效果、稳定性和转化表现。\n6、具备良好的编码与跨团队协作能力，能够推动方案从验证走向产品落地。",
+    "description": "关于业务与机会\n阿里国际站（Alibaba.com）连接全球买家与供应商。OKKI 是面向外贸商家，帮助他们寻找客户、接待询盘、跟进商机并推动交易完成。外贸销售天然是长链路、强决策、多渠道协同的业务：客户需求散落在聊天、图片和文件中，不同商家的产品知识、目标客户和销售流程各不相同；从找到潜客到完成交付，需要持续判断并调用多种业务能力。这是适合 Agent 理解目标、规划行动、使用工具、根据反馈调整策略的 Agentic Native 场景，而不只是给传统 CRM 增加一个聊天入口。\n\n我们正推动 OKKI 从「人操作的记录系统」走向「Agentic 驱动的作业系统」。目前已在 AI 获客与营销、7×24 小时智能销售、商机自动化和 CRM 全局对话等场景落地 Agent，逐步让 AI 承担寻找并触达买家、接待与跟进询盘、维护商机、辅助报价和分析销售问题等工作。下一步，我们希望进一步解决个性化知识供给、复杂任务决策和结果交付问题，让 Agent 真正懂商家、能办事，并产生可衡量的业务价值。\n\n你将负责\n1、深入外贸场景，设计自动沟通、自动营销Agent、交易推进等Agentic任务的目标、决策策略、交付标准及人机协作方式。\n2、设计可复用的 Agentic 应用框架，围绕任务分解、Planning、执行循环、Tool Use、状态与记忆管理及多 Agent 协作，支持复杂业务任务落地。\n3、结合商家资料、历史沟通和业务反馈，优化 Recact框架、Prompt、RAG、个性化策略与垂类模型任务表现。\n4、建设真实任务评测与实验迭代机制，持续提升任务完成率、有效线索交付率、稳定性和业务转化效果。\n5、与产品、工程和运营团队协作，推动AI能力上线，并基于真实商家反馈持续优化。\n",
+    "experience": {
+     "from": 1,
+     "to": null
+    },
+    "degree": "master",
+    "department": null,
+    "project": null,
+    "positionType": null,
+    "code": "GP100048720006",
+    "categoryName": null,
+    "categoryType": null,
+    "batchName": null,
+    "batchId": null,
+    "batchWillingCount": null,
+    "channels": null,
+    "operations": [],
+    "isTongyi": false,
+    "circle": null,
+    "circleNames": null,
+    "circleCodeList": null,
+    "niuKeProjectName": null,
+    "useInternal": null,
+    "isLingYang": null,
+    "tongyi": false
+   },
+   {
+    "trackId": "SSP0",
+    "positionUrl": "/off-campus/position-detail?positionId=100049100002",
+    "bucket": "DEFAULT",
+    "id": 100049100002,
+    "name": "ATH事业群-AI Agent研发工程师/专家-AI视频生产-北京/杭州/广州/上海",
+    "status": null,
+    "categories": null,
+    "publishTime": 1792056347000,
+    "graduationTime": null,
+    "modifyTime": 1792056348000,
+    "workLocations": [
+     "北京",
+     "杭州",
+     "广州",
+     "上海"
+    ],
+    "interviewLocations": null,
+    "regionEnNameMap": {},
+    "technologyNameIdMap": {},
+    "tags": [
+     "NEW"
+    ],
+    "requirement": "● 基础条件\n1. 计算机、人工智能等相关专业本科及以上学历。\n2. 精通 Go / Python / Java / C++ / Rust 中至少一门语言，具备优秀的系统编程能力和代码规范意识。\n3. 3年以上服务端架构研发经验，有LLM应用、Agent系统或AIGC产品开发经验。\n\n● 核心技术能力\n1. 熟悉主流Agent/LLM开发框架（LangChain、LlamaIndex、CrewAI等），深入理解RAG、Function Calling、Tool Use等核心技术，能独立设计并落地高质量Agent系统。\n2. 熟悉多模态模型：了解主流图片生成、视频生成、TTS、VL等模型的能力特性与接入方式，能从模型能力边界与输出不确定性出发设计Agent方案。\n3. 良好的Prompt Engineering实践经验，熟悉CoT、Few-shot、ReAct、Self-Consistency等提示策略。\n4. 扎实的后端工程基础，能独立设计高可用Agent服务，让长链路视频生产任务在复杂环境下依然稳定运行。\n\n● 优先考虑\n1. 有视频生产、影视创作、内容平台相关AI产品的完整研发经验。\n2. 有Multi-Agent系统（多智能体协作、角色分工、冲突解决）设计与落地经验。\n3. 有模型微调经验（SFT、RLHF、DPO），能针对垂直场景对开源模型进行定向优化。\n4. 对视频美学、镜头语言、导演逻辑有一定理解，能将创作领域知识转化为系统设计输入。\n\n● 我们期待的你\n1. 模型驾驭者：具备前瞻思维，以未来设计当下，能在最新模型与最快工程落地之间找到平衡，持续将前沿模型能力转化为真实生产力。\n2. AI导演思维者：让Agent像一个有经验的导演一样理解意图、拆解任务、调度资源、自我纠错，持续探索其智能边界。\n3. 极客工程师：时刻好奇，热衷突破边界，对生成效果有匠人般的打磨精神，对技术细节有天然的偏执，代码有美感，系统有章法。\n4. 跨界沟通者： 能够与算法、产品、设计等不同背景的同事高效协作，共同定义并实现下一代视频创作范式。",
+    "description": "● 岗位定位：\n你将作为AI视频生产应用与Agent系统的核心建造者，负责打造这个时代最具创造力的“自主智能体”。我们正在用Agent重新定义视频生产的工作方式——不是让AI辅助人类操作，这个Agent将能够理解人类的创意意图，自主规划、调度并执行从创意到成片的整个视频创作流程。你将站在AI技术与视频创意的交汇点，设计并落地驱动这一切的Agent系统，让每个人都能指挥一个“AI制作团队”，让AI成为真正的\"视频生产者\"。\n\n● 核心职责\n1. AI视频生产Agent架构设计\n● 主导设计面向视频全链路生产的Multi-Agent系统架构，拆解并定义不同角色Agent的能力边界与协作协议。\n● 构建支持复杂任务分解、动态规划、自主决策、异常恢复的Agent运行框架。\n● 设计Agent间的通信机制、状态管理与记忆体系，保障长链路生产任务的一致性、可追溯性与可干预性。\n2. 多模态模型集成调优\n● 持续跟踪并将最新的图片生成、视频生成、音频生成、VL等多模态大模型集成进Agent生产链路，保持Agent能力的持续技术领先。\n● 对模型输出质量进行系统性调优，针对视频生产场景的语义一致性、运动合理性、视觉/音频质量、叙事逻辑性、指令遵循度、情绪传达力等关键指标进行专项优化。\n● 建立模型能力评测基准体系，定义质量基线与模型SLA，构建覆盖模型选型、版本对比、回归验证的数据化决策链路。\n3. 任务规划与工作流编排\n● 设计基于LLM的动态任务规划引擎，支持自然语言输入→任务图生成→并行/串行执行→结果聚合的完整链路。\n● 在平台层统一工作流引擎之上，根据不同创作意图、内容类型、生产规格，在运行时动态构建差异化的视频生产工作流。\n● 攻关长链路任务的可靠性保障：任务断点续传、局部重试、人机协同介入点设计等核心工程难题，确保复杂任务在动态工作流下依然稳定可控。\n4. 提示词工程与效果优化\n● 系统性构建面向视频生产各环节的Prompt工程体系，包括分层结构化、动态上下文、领域知识、多模态提示协同对齐等精细化设计。\n● 建立Prompt版本管理、A/B评测、自动优化机制，通过数据驱动持续提升Agent各节点输出质量。\n● 探索基于RLHF、DPO等技术的偏好对齐方法，让Agent的生产风格与用户意图高度契合，逼近\"零修改直出\"。\n5. 视频生成流程自动化\n● 端到端打通从\"创意\"到\"成片输出\"的全自动化生产流水线，以最小化人工干预节点为终极目标。\n● 构建智能质检Agent，对生成视频进行自动化质量评估、问题定位与修复决策，形成自我纠错的生产闭环。\n● 设计支持批量生产、个性化定制、多风格并行的自动化调度体系，支撑规模化内容生产的工业级需求。",
+    "experience": {
+     "from": 2,
+     "to": null
+    },
+    "degree": "bachelor",
+    "department": null,
+    "project": null,
+    "positionType": null,
+    "code": "GP100049100002",
+    "categoryName": null,
+    "categoryType": null,
+    "batchName": null,
+    "batchId": null,
+    "batchWillingCount": null,
+    "channels": null,
+    "operations": [],
+    "isTongyi": false,
+    "circle": null,
+    "circleNames": null,
+    "circleCodeList": null,
+    "niuKeProjectName": null,
+    "useInternal": null,
+    "isLingYang": null,
+    "tongyi": false
+   },
+   {
+    "trackId": "SSP0",
+    "positionUrl": "/off-campus/position-detail?positionId=100015743007",
+    "bucket": "DEFAULT",
+    "id": 100015743007,
+    "name": "Alibaba Cloud-Data Center Regional Program Expert-Seoul, Korea",
+    "status": null,
+    "categories": null,
+    "publishTime": 1789097400000,
+    "graduationTime": null,
+    "modifyTime": 1789097401000,
+    "workLocations": [
+     "首尔"
+    ],
+    "interviewLocations": null,
+    "regionEnNameMap": {},
+    "technologyNameIdMap": {},
+    "tags": null,
+    "requirement": "1. Bachelor's degree or higher in a technical discipline. Over 8 years of experience in infrastructure operations, with proven track record in colocation provider management or vendor governance.\n2. Solid understanding of critical infrastructure systems (electrical, HVAC) with demonstrated ability to orchestrate technical resources and drive engineering initiatives from concept to delivery — someone who knows how to get things done right.\n3. Proven track record in vendor governance, operational auditing, and performance improvement. Ability to establish high operational standards and drive colocation providers to exceed baseline expectations.\n4. Strong project management capabilities with a track record of delivering complex, cross-functional initiatives across multiple stakeholders and geographies. Resourceful in navigating ambiguity and pushing through organizational barriers.\n5. Experience in infrastructure risk governance, including risk identification, root cause analysis, and mitigation execution. Demonstrated ability to drive systematic improvements and close action items with discipline.\n6. Self-starter with high ownership and bias for action. Proven ability to identify opportunities, challenge existing approaches, and drive innovative solutions independently. Someone who gets energized by hard problems and is willing to go the extra mile for meaningful work.\n7. Excellent communication and stakeholder management skills, with ability to build trust and influence across diverse cultural and organizational contexts. Mandarin proficiency is a plus.\n8. Willingness to travel internationally (up to 30-40% of time).\t\t\t\t",
+    "description": "Alibaba Infrastructure Operations Team, a critical component of a leading global technology enterprise's infrastructure strategy. Our mission is to ensure the highly efficient, stable, and secure operation of the operational environment across the Globe. We are dedicated to delivering \"\"last mile customer value\"\" from our operational facilities, providing a seamless, reliable, and highly efficient service experience.\n\nJob Responsibilities:\n1. Drive the end-to-end rollout of the colocation management standard across the facilities under your remit, covering eight dimensions — Equipment, Personnel, Monitoring, Emergency Response, Drills, Change, Maintenance, and Flying-Inspection Risk — each executed against its tiered requirements. Apply rigorous project management to translate every requirement into project plans, milestones, and acceptance criteria, and track each gap to closure as a managed deliverable.\n2. Lead the EMS (Environment Monitoring System) data-integration project in accordance with the applicable integration standard. Leveraging solid expertise in infrastructure facilities and low-voltage / ELV systems (monitoring, BMS, automation controls), manage the full lifecycle of data-point mapping, connection, validation, and ongoing maintenance to ensure full-scope, accurate telemetry into the monitoring platform — including IT room temperature/humidity, busway and rack power consumption, and the status, alarm, setpoint, and log values of all route-related equipment (dedicated and shared) affecting the rooms. For new architectures or devices not covered by the standard, drive integration following the same principle.\n3. Partner closely with the local operations teams and the engineering delivery teams, providing professional project management and technical support. Drawing on strong vendor-negotiation and program-management skills, align and negotiate scope, standard compliance, SLAs, and remediation items with colocation providers and platform vendors; coordinate internal engineering, colo teams, and vendors through project plans, RACI, risk/issue logs, and delivery cadence to drive milestones to closure across multiple stakeholders and geographies.\n4. Lead the review and validation of the electrical, HVAC, and low-voltage / ELV automation control logic (including BMS networks, monitoring, and automation controls), parameters, setpoints, and closed-loop stability delivered by colocation providers and vendors. Backed by deep infrastructure facility and ELV engineering knowledge, orchestrate technical experts to validate architecture drawings, key-equipment run logic (medium-voltage logic, protection setpoints, cooling control), and redundancy / single-point-of-failure analysis, and sign off through rigorous acceptance testing to ensure production readiness.\n5. Build dashboards and scorecards for standard compliance and EMS integration health, report progress and risks to global headquarters, and drive data-based continuous improvement.\n6. Collaborate with global headquarters on standards evolution and platform roadmap, adapt global policies to the local context, and build regional capability through training, certification, and knowledge transfer.",
+    "experience": {
+     "from": 8,
+     "to": null
+    },
+    "degree": "bachelor",
+    "department": null,
+    "project": null,
+    "positionType": null,
+    "code": "GP100015743007",
+    "categoryName": null,
+    "categoryType": null,
+    "batchName": null,
+    "batchId": null,
+    "batchWillingCount": null,
+    "channels": null,
+    "operations": [],
+    "isTongyi": false,
+    "circle": null,
+    "circleNames": null,
+    "circleCodeList": null,
+    "niuKeProjectName": null,
+    "useInternal": null,
+    "isLingYang": null,
+    "tongyi": false
+   }
+  ],
+  "totalCount": 5
+ }
+}

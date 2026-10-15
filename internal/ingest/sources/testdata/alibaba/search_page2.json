@@ -1,0 +1,113 @@
+{
+ "success": true,
+ "errorMsg": null,
+ "errorCode": null,
+ "content": {
+  "datas": [
+   {
+    "trackId": "SSP0",
+    "positionUrl": "/off-campus/position-detail?positionId=100012663003",
+    "bucket": "DEFAULT",
+    "id": 100012663003,
+    "name": "诚云科技-高级消防工程师-河源/南通/内蒙/北京/上海/杭州/张北/成都/深圳",
+    "status": null,
+    "categories": null,
+    "publishTime": 1791535527000,
+    "graduationTime": null,
+    "modifyTime": 1791535528000,
+    "workLocations": [
+     "乌兰察布",
+     "成都",
+     "北京",
+     "河源",
+     "张家口",
+     "南通",
+     "深圳",
+     "杭州",
+     "上海"
+    ],
+    "interviewLocations": null,
+    "regionEnNameMap": {},
+    "technologyNameIdMap": {},
+    "tags": null,
+    "requirement": "\n1、3年以上消防相关工作经验，持有一级注册消防工程师证书\n2、有数据中心、大型制造业工厂相关的消防工作经验优先\n3、做事积极主动，责任心强，具备良好的沟通与跨团队协作能力",
+    "description": "1、负责新建数据中心消防图纸审核工作，确保消防图纸满足法律法规要求；\n2、负责新建数据中心消防系统建设全过程管理工作，严格监督施工单位依照规范及设计要求开展施工，在施工期间主动排查潜在问题，及时督促施工单位落实整改；\n3、组织开展新建数据中心消防系统的测试和验证工作，确保系统在紧急情况下可精准启动、稳定运行并充分发挥灭火与防护作用；\n4、负责数据中心消防系统的日常运维管理，对各消防系统进行巡检、维护、故障排查与维修，确保消防设备处于正常工作状态；\n5、制定和完善消防管理制度、应急预案和消防3P文档，定期组织消防演练和消防培训，提高全体员工的消防安全意识和应急处置能力；\n6、对接合作单位、行政物业，确保合作单位、行政物业的消防相关工作按照既定计划和标准落实到位，定期检查合作单位、行政物业的工作进度和质量，及时协调消防相关问题。\n\n",
+    "experience": {
+     "from": 3,
+     "to": null
+    },
+    "degree": "bachelor",
+    "department": null,
+    "project": null,
+    "positionType": null,
+    "code": "GP100012663003",
+    "categoryName": null,
+    "categoryType": null,
+    "batchName": null,
+    "batchId": null,
+    "batchWillingCount": null,
+    "channels": null,
+    "operations": [],
+    "isTongyi": false,
+    "circle": null,
+    "circleNames": null,
+    "circleCodeList": null,
+    "niuKeProjectName": null,
+    "useInternal": null,
+    "isLingYang": null,
+    "tongyi": false
+   },
+   {
+    "trackId": "SSP0",
+    "positionUrl": "/off-campus/position-detail?positionId=100009980017",
+    "bucket": "DEFAULT",
+    "id": 100009980017,
+    "name": "达摩院-BES专家/工程师-RISC V及生态",
+    "status": null,
+    "categories": [
+     "技术-芯片"
+    ],
+    "publishTime": 1792056011000,
+    "graduationTime": null,
+    "modifyTime": 1792056012000,
+    "workLocations": [
+     "杭州",
+     "上海"
+    ],
+    "interviewLocations": null,
+    "regionEnNameMap": {},
+    "technologyNameIdMap": {},
+    "tags": [
+     "NEW"
+    ],
+    "requirement": "1.熟练掌握综合实现全流程工具(DC/Genus/FC、formality/lec、VCLP/CLP、PT/PTPX/Tempus、GCA等)的熟练使用及debug\n2.熟悉低功耗实现全流程，精通sdc/upf编写及验证\n3.具备较高的和前后端工程师沟通能力\n4.熟悉提升ppa的方法，尤其是综合实现阶段的方法为佳\n5.熟悉掌握tcl/perl/python等脚本语言，善于利用脚本提升效率\n\n加分项：\n熟悉3D IC、Chiplet等先进封装技术；\n熟悉channelless，mesh clock tree，repartition等先进实现技术；",
+    "description": "1.负责从rtl2netlist的综合全流程flow开发/优化/维护工作\n2.负责综合模块或者整芯片的综合策略的制定及STA signoff标准制定\n3.负责模块或top从rtl2netlist的综合、formal、sdc编写及验证，upf编写及验证\n4.负责综合netlist/sdc的quality的验证\n5.Function eco的方案及完成\n6.和前端设计沟通设计相关问题及修改，和后端沟通物理实现相关问题\n7.制定提升PPA的综合策略",
+    "experience": {
+     "from": 5,
+     "to": null
+    },
+    "degree": "bachelor",
+    "department": null,
+    "project": null,
+    "positionType": null,
+    "code": "GP100009980017",
+    "categoryName": null,
+    "categoryType": null,
+    "batchName": null,
+    "batchId": null,
+    "batchWillingCount": null,
+    "channels": null,
+    "operations": [],
+    "isTongyi": false,
+    "circle": null,
+    "circleNames": null,
+    "circleCodeList": null,
+    "niuKeProjectName": null,
+    "useInternal": null,
+    "isLingYang": null,
+    "tongyi": false
+   }
+  ],
+  "totalCount": 5
+ }
+}

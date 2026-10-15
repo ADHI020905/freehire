@@ -361,6 +361,9 @@ func All(c HTTPClient) map[string]Source {
 		// Tencent's Workday tenant), read through the site's Technology category and hydrated
 		// from its posting API. See tencent.go.
 		NewTencent(c),
+		// Alibaba: the group's experienced-hire portal, every business under one search, read
+		// through its Technology category behind a self-minted CSRF token. See alibaba.go.
+		NewAlibaba(c),
 		// Garena: one keyless listing POST plus a detail GET per posting, which alone holds
 		// the responsibilities and requirements. See garena.go.
 		NewGarena(c),
