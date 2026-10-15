@@ -39,6 +39,11 @@ regexes = [
   '''^ABCDEF1234567890ABCDEF12$''',
   '''^KEY-abc\.def-123_xyz$''',
   '''^3aa5b098-aa6d-4f6c-950a-b92a81363cf8$''',
+  # internal/ingest/sources — itviec: listing cards' data-job-key, a public posting id
+  # every visitor's page carries (generic-api-key fires on the attribute name "job-key")
+  '''^747e3af5-f7ef-4bd9-87f2-69c6499f4914$''',
+  '''^4bf8bdb8-e735-4205-a17e-891be1e1ffbd$''',
+  '''^0721c00d-3962-48a3-bc8b-3834a3765170$''',
 ]
 
 [[allowlists]]

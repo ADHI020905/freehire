@@ -394,6 +394,9 @@ func All(c HTTPClient) map[string]Source {
 		// Japan Dev: curated Japan technology aggregator. One public sitemap lists posting URLs;
 		// detail pages carry structured Nuxt SSR state and official ATS apply links when available.
 		NewJapanDev(c),
+		// ITviec: Vietnam's IT-only board. One server-rendered listing names the whole
+		// catalogue; posting pages carry a schema.org JobPosting. Paced, see itviecRequestInterval.
+		NewITviec(pacedHTMLGetter(c, itviecRequestInterval, itviecRequestBurst)),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see
