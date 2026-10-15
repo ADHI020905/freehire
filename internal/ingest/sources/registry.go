@@ -402,6 +402,11 @@ func All(c HTTPClient) map[string]Source {
 		// ITviec: Vietnam's IT-only board. One server-rendered listing names the whole
 		// catalogue; posting pages carry a schema.org JobPosting. Paced, see itviecRequestInterval.
 		NewITviec(pacedHTMLGetter(c, itviecRequestInterval, itviecRequestBurst)),
+		// Tech in Asia: Southeast Asian startup board. One public Algolia index holds the whole
+		// catalogue, bodies included; the search key is read from the site's app bundle. The
+		// site's edge refuses any self-identifying User-Agent on paths robots.txt allows, hence
+		// the browser string. See techinasia.go.
+		browserUASource(c, NewTechInAsia),
 		// Welcome to the Jungle: European multi-company board, enumerated by WTTJ's own
 		// profession sub-category (board) over its public Algolia index, hydrating each new
 		// posting's body and apply URL from the posting API. See wttj.go.

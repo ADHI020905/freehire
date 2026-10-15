@@ -1,0 +1,865 @@
+{
+ "hits": [
+  {
+   "city": {
+    "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+    "country_name": "Indonesia",
+    "id": "92cdb8b5-3ae5-41fd-a2d6-72c829e37c5d",
+    "name": "Tangerang",
+    "work_country_name": "Indonesia"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/KvjNCFcHDHZjXBlUxmRwqZUiau8r5zWF3JQ4jkmQ.png",
+    "entity_id": "657b6684-9e5f-48b6-916f-534f5712274d",
+    "entity_slug": "sigmatech-1",
+    "entity_locations": [
+     {
+      "city_id": "",
+      "city_name": null,
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "246b30f9-142a-48c6-af46-7bac844f1981",
+      "type": "hq"
+     }
+    ],
+    "id": "ec8e1a4c-3fdb-4f72-913b-ec2e8f9961e3",
+    "name": "SIGMATECH",
+    "employee_count": "201 - 500",
+    "employee_min_count": 201,
+    "employee_max_count": 500,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p><strong>Location: Bintaro - Tangerang Selatan (Full WFO)</strong></p>\n<p><strong>Can Join Immediately</strong></p>\n<p><em><strong>Requirements:</strong></em></p>\n<p>1. Proven experience min. 5 years in software developer - Backend</p>\n<p>2. Strong knowledge in Programing with <strong>Golang</strong></p>\n<p>3. Experience with SQL and NoSQL databases</p>\n<p>4. Familliar with unit testing and clean architecture</p>\n<p>5. Experience with banking industry and enterprise architecture is a plus</p>\n<p>6. Experience handle background knowledge (menu Billpayment, ewallet and Purchase)</p>",
+   "experience": "5-10",
+   "experience_max": 10,
+   "experience_min": 5,
+   "expires_at": "2026-12-13 10:52:14",
+   "external_link": "",
+   "has_equity": 0,
+   "id": "4448ac55-d7a0-488c-9348-05f4d615d8ce",
+   "industries": [
+    {
+     "id": "36819ad7-e4b4-4ca8-bf63-2fa9f72e2c90",
+     "name": "Clean Technology IT",
+     "slug": "clean-technology-it",
+     "vertical_name": "Clean tech"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 0,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "2727fde7-cfd0-41a0-803f-6d1ba8d67d18",
+     "name": "Software Architecture"
+    },
+    {
+     "id": "32388560-b37a-4501-8709-48ff41ce66f1",
+     "name": "Architect"
+    },
+    {
+     "id": "468f3d9d-7dc9-449b-a9ea-703c0dd005cd",
+     "name": "Information Architecture"
+    },
+    {
+     "id": "70e6c52c-07ea-4179-94ab-3b57413a091c",
+     "name": "Golang"
+    },
+    {
+     "id": "711403b6-bc0e-4ec9-8e58-0ad7b3933b5f",
+     "name": "SQL"
+    },
+    {
+     "id": "7c6756bf-15a8-4173-8f32-d68dc1ecfccf",
+     "name": "NoSQL"
+    },
+    {
+     "id": "950d5136-0ea9-4579-97b1-c0e725a450c1",
+     "name": "PostgreSQL"
+    }
+   ],
+   "job_type": {
+    "id": "c083592d-7d77-476f-8682-f62007c93851",
+    "name": "Contract"
+   },
+   "position": {
+    "id": "d5c4cd55-c8dc-4892-a886-63c1241a3ed1",
+    "name": "Software Engineer"
+   },
+   "published_at": "2026-10-14 10:52:14",
+   "salary_avg": 14900000,
+   "salary_max": 15400000,
+   "salary_min": 14400000,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Senior Golang Developer - Banking Industry",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "on-site",
+   "objectID": "4448ac55-d7a0-488c-9348-05f4d615d8ce"
+  },
+  {
+   "city": {
+    "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+    "country_name": "Indonesia",
+    "id": "4bfed6fc-8ba2-48b5-b70b-c0050a3a9d41",
+    "name": "Jakarta",
+    "work_country_name": "Indonesia"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/630dfae1e5c3d8f5f7d6d8fb5bcb5d68.png",
+    "entity_id": "e54decbd-1bbb-49e4-97ef-8dbcd27668e6",
+    "entity_slug": "kumparancom",
+    "entity_locations": [
+     {
+      "city_id": "",
+      "city_name": null,
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "ac3421c5-6965-4f53-ab84-ed127944238d",
+      "type": "hq"
+     }
+    ],
+    "id": "6a8444ab-b496-45d3-900c-c079b40c39bc",
+    "name": "Kumparan",
+    "employee_count": "201 - 500",
+    "employee_min_count": 201,
+    "employee_max_count": 500,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p><strong>Scope of Work:</strong></p>\n<ul>\n  <li><strong>Offline/online</strong> marketing &amp; brand strategy development.</li>\n  <li><strong>Lead end-to-end campaign execution</strong>: concept development, budgeting, event management &amp; evaluation.</li>\n  <li>Market &amp; audience behavior research.</li>\n  <li>Collaborate with various teams &amp; vendors.</li>\n</ul>\n<p><br></p>\n<p><strong>Qualifications:</strong></p>\n<ul>\n  <li>Graduate of Marketing, Advertising, etc is considered.</li>\n  <li>Excel and <strong>experience in end-to-end campaign ideation</strong> is a must.</li>\n  <li>Relevant internship experience is a must.</li>\n  <li>Project management pro.</li>\n  <li>Fast pace ready.</li>\n  <li>Passionate about<strong> media, events &amp; marketing</strong>.</li>\n  <li><strong>Proven portfolio is a must.</strong></li>\n</ul>\n<p><br></p>",
+   "experience": "0-1",
+   "experience_max": 1,
+   "experience_min": 0,
+   "expires_at": "2026-12-11 03:10:59",
+   "external_link": "https://kumparan.darwinbox.com/ms/candidatev2/main/careers/jobDetails/a6a9fecea2376d",
+   "has_equity": 0,
+   "id": "7e44d429-0d3e-47ee-8326-e5e35c4a5405",
+   "industries": [
+    {
+     "id": "e5966cca-08d3-44d1-885d-8fb81c22812a",
+     "name": "News",
+     "slug": "news",
+     "vertical_name": "Media"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 0,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "0bb65880-73ef-4f35-859e-57327f8988f0",
+     "name": "Marketing Strategy"
+    },
+    {
+     "id": "54d9d7fe-7f31-40d8-a3c1-fb81a7d84d98",
+     "name": "Content Marketing"
+    },
+    {
+     "id": "c93e386c-260a-41e1-aacb-b4772ffe54b5",
+     "name": "Communication Skills"
+    },
+    {
+     "id": "d8f72567-4cec-4afb-a353-7441b0182787",
+     "name": "Marketing"
+    },
+    {
+     "id": "f22d04b4-23d6-42fd-b0ad-255a491b08f3",
+     "name": "Marketing Communications"
+    },
+    {
+     "id": "f7e57b0a-9a01-4663-8fed-1fa5309f6bf8",
+     "name": "Project Management"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "0e9cc0c6-1dc5-466e-9f75-3d9f8f69ac8f",
+    "name": "Event Management"
+   },
+   "published_at": "2026-10-12 03:10:59",
+   "salary_avg": 0,
+   "salary_max": 0,
+   "salary_min": 0,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Brand Communication Officer",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "on-site",
+   "objectID": "7e44d429-0d3e-47ee-8326-e5e35c4a5405"
+  },
+  {
+   "city": {
+    "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+    "country_name": "Indonesia",
+    "id": "4bfed6fc-8ba2-48b5-b70b-c0050a3a9d41",
+    "name": "Jakarta",
+    "work_country_name": "Indonesia"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/s24tcW3Uj7D3oG4iFCOzYto11rINmch484xyTdFK.jpeg",
+    "entity_id": "2b1ab400-b1c5-4d38-8c81-e6fad44c30de",
+    "entity_slug": "playmakers",
+    "entity_locations": [
+     {
+      "city_id": "",
+      "city_name": null,
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "fb4b8abf-e48b-4b0c-8ad7-bf5bad4fc000",
+      "type": "hq"
+     }
+    ],
+    "id": "6eb21262-1315-49fe-9445-622ffcfd5545",
+    "name": "Playmakers",
+    "employee_count": "11 - 50",
+    "employee_min_count": 11,
+    "employee_max_count": 50,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p>Job Description\n</p>\n\n<ul><li>Responsible to lead influencer marketing campaigns for clients</li>\n  <li>Create plan and report for influencer marketing campaign</li>\n  <li>Work closely with community officer team in delivering the influencer content</li>\n  <li>Make a good interaction with clients during the campaign process</li>\n  <li>Build a good relationship with client and agency partner</li>\n  <li>Responding to potential clients’ inquiries from multiple lead channel</li>\n</ul><p>Requirement\n</p>\n\n<ul><li>Bachelor's degree in Business, Marketing, Communications, or related field</li>\n  <li>Min. 1 years of similar experience</li>\n  <li>Proven track record of successfully managing campaign</li>\n  <li>Excellent in power point making and Google Sheets</li>\n  <li>Excellent interpersonal skills</li>\n  <li>Highly self-motivated</li>\n  <li>Strong verbal and written communication skills</li>\n  <li>Passionate to marketing strategic planning</li>\n</ul>\n\n<p><br></p>",
+   "experience": "1-5",
+   "experience_max": 5,
+   "experience_min": 1,
+   "expires_at": "2026-10-20 06:36:38",
+   "external_link": "https://noteforms.com/forms/playmakers-job-applicant-form-xufov8",
+   "has_equity": 0,
+   "id": "8522c4d6-fea4-41fc-8e7a-5ed70368a1cd",
+   "industries": [
+    {
+     "id": "00030e49-de50-4c51-a784-8af4e7d919c1",
+     "name": "Advertising",
+     "slug": "advertising",
+     "vertical_name": "Ad tech"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 0,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "0bb65880-73ef-4f35-859e-57327f8988f0",
+     "name": "Marketing Strategy"
+    },
+    {
+     "id": "2664bebe-1660-4309-bfbb-ee91edf3cafc",
+     "name": "Public Relations"
+    },
+    {
+     "id": "2bf52b58-2219-4b66-a8bf-e415458e342f",
+     "name": "Social Media Marketing"
+    },
+    {
+     "id": "368906ea-1c94-432c-96f9-ef577eb37550",
+     "name": "Client Relations"
+    },
+    {
+     "id": "54d9d7fe-7f31-40d8-a3c1-fb81a7d84d98",
+     "name": "Content Marketing"
+    },
+    {
+     "id": "623c5b28-67ba-4a6b-8a51-a62a3e697f3e",
+     "name": "Market Research & Analysis"
+    },
+    {
+     "id": "87c6b2bf-f4cc-436c-b2e1-7328b1050e9b",
+     "name": "Digital Marketing"
+    },
+    {
+     "id": "be34cf9f-0505-4903-bec9-5528c4d106ea",
+     "name": "Digital Strategy"
+    },
+    {
+     "id": "c8545b3b-08a7-4c8b-b25f-f8b264e4f85a",
+     "name": "Public Speaking"
+    },
+    {
+     "id": "d44da04f-d4cb-4a29-83a9-59f5150ce9bd",
+     "name": "Marketing Management"
+    },
+    {
+     "id": "d8f72567-4cec-4afb-a353-7441b0182787",
+     "name": "Marketing"
+    },
+    {
+     "id": "f22d04b4-23d6-42fd-b0ad-255a491b08f3",
+     "name": "Marketing Communications"
+    },
+    {
+     "id": "f6ce96f7-3b51-4867-bab4-5a50aabc4a8c",
+     "name": "Sales & Marketing"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "8ba29919-9179-4981-8570-ab185d14f915",
+    "name": "Marketing & PR"
+   },
+   "published_at": "2026-08-21 06:36:38",
+   "salary_avg": 0,
+   "salary_max": 0,
+   "salary_min": 0,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Account Strategist [Influence ID]",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "hybrid",
+   "objectID": "8522c4d6-fea4-41fc-8e7a-5ed70368a1cd"
+  },
+  {
+   "city": {
+    "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+    "country_name": "Indonesia",
+    "id": "4bfed6fc-8ba2-48b5-b70b-c0050a3a9d41",
+    "name": "Jakarta",
+    "work_country_name": "Indonesia"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/s24tcW3Uj7D3oG4iFCOzYto11rINmch484xyTdFK.jpeg",
+    "entity_id": "2b1ab400-b1c5-4d38-8c81-e6fad44c30de",
+    "entity_slug": "playmakers",
+    "entity_locations": [
+     {
+      "city_id": "",
+      "city_name": null,
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "fb4b8abf-e48b-4b0c-8ad7-bf5bad4fc000",
+      "type": "hq"
+     }
+    ],
+    "id": "6eb21262-1315-49fe-9445-622ffcfd5545",
+    "name": "Playmakers",
+    "employee_count": "11 - 50",
+    "employee_min_count": 11,
+    "employee_max_count": 50,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p><strong>About Timur Media </strong></p>\n<p>As part of a growing digital agency ecosystem that started from a strong creative foundation, our journey began with our sister company, Mediatics, a media buying agency that became the anchor for the development of multiple subsidiaries under one group.</p>\n<p>Today, the group operates under the name Playmakers Group, with 130+ employees and a proven track record of handling leading brands such as Gudang Garam, JTI, Kalbe, Xiaomi, Tecno, Traveloka, Shell, Pristine, and many more.</p>\n<p>Timur Media is the latest initiative from Playmakers Group, focusing on building a dedicated creative agency that delivers impactful and performance driven work.</p>\n<p>With strong backing from the group, Timur Media offers significant growth potential. We are looking to invest in talents who are eager to build, take ownership, and grow together as part of this journey.</p>\n<p><strong>Job Description </strong></p>\n<ul><li>⁠Develop a strong and trusting relationship with the clients and agency partners.</li>\n  <li>Identify solutions to client challenges through a comprehensive 360 digital marketing approach planning, ensuring strategies are data-driven and goal-oriented.</li>\n  <li>⁠Enforcing a comprehensive and clear way to communicate with clients and colleagues, thus creating a delightful working experience.</li>\n  <li>⁠Analyzing campaign performance to produce actionable insights &amp; supervise the optimization process.</li></ul>",
+   "experience": "2-4",
+   "experience_max": 4,
+   "experience_min": 2,
+   "expires_at": "2026-10-18 11:24:17",
+   "external_link": "https://noteforms.com/forms/playmakers-job-applicant-form-xufov8",
+   "has_equity": 0,
+   "id": "94f2aee5-d773-42c4-83c3-b264b274abfd",
+   "industries": [
+    {
+     "id": "00030e49-de50-4c51-a784-8af4e7d919c1",
+     "name": "Advertising",
+     "slug": "advertising",
+     "vertical_name": "Ad tech"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 0,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "0bb65880-73ef-4f35-859e-57327f8988f0",
+     "name": "Marketing Strategy"
+    },
+    {
+     "id": "2bf52b58-2219-4b66-a8bf-e415458e342f",
+     "name": "Social Media Marketing"
+    },
+    {
+     "id": "368906ea-1c94-432c-96f9-ef577eb37550",
+     "name": "Client Relations"
+    },
+    {
+     "id": "54d9d7fe-7f31-40d8-a3c1-fb81a7d84d98",
+     "name": "Content Marketing"
+    },
+    {
+     "id": "87c6b2bf-f4cc-436c-b2e1-7328b1050e9b",
+     "name": "Digital Marketing"
+    },
+    {
+     "id": "be34cf9f-0505-4903-bec9-5528c4d106ea",
+     "name": "Digital Strategy"
+    },
+    {
+     "id": "c8545b3b-08a7-4c8b-b25f-f8b264e4f85a",
+     "name": "Public Speaking"
+    },
+    {
+     "id": "c93e386c-260a-41e1-aacb-b4772ffe54b5",
+     "name": "Communication Skills"
+    },
+    {
+     "id": "cc09b4d3-74cf-41c9-b749-6a7eaf85ba7e",
+     "name": "Internet Marketing"
+    },
+    {
+     "id": "d44da04f-d4cb-4a29-83a9-59f5150ce9bd",
+     "name": "Marketing Management"
+    },
+    {
+     "id": "d8f72567-4cec-4afb-a353-7441b0182787",
+     "name": "Marketing"
+    },
+    {
+     "id": "e6bb0ba3-e01e-4e3e-9f60-a06258a95358",
+     "name": "Communications"
+    },
+    {
+     "id": "f22d04b4-23d6-42fd-b0ad-255a491b08f3",
+     "name": "Marketing Communications"
+    },
+    {
+     "id": "f9a62101-bc43-4878-9414-6db6e0eb2d9b",
+     "name": "Digital Media"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "8ba29919-9179-4981-8570-ab185d14f915",
+    "name": "Marketing & PR"
+   },
+   "published_at": "2026-08-19 11:24:17",
+   "salary_avg": 0,
+   "salary_max": 0,
+   "salary_min": 0,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Sr. Account Strategist [Timur Media]",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "hybrid",
+   "objectID": "94f2aee5-d773-42c4-83c3-b264b274abfd"
+  },
+  {
+   "city": {
+    "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+    "country_name": "Indonesia",
+    "id": "59f5657e-340d-49f1-ad27-829f32aaa722",
+    "name": "Yogyakarta",
+    "work_country_name": "Remote"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/ai6lqHeWsKZ56s9DFMZ7Mp7vhFa0kHWH9XjcfPRq.png",
+    "entity_id": "1a9f137c-be1f-4d2b-b995-b9865095d388",
+    "entity_slug": "seo-copilot-pte-ltd",
+    "entity_locations": [
+     {
+      "city_id": "",
+      "city_name": null,
+      "country_id": "78972d5c-0d75-4e7a-a696-2ffeabd99f9f",
+      "country_name": "Singapore",
+      "id": "db918a6c-d252-473c-94ed-2420eff5a538",
+      "type": "hq"
+     }
+    ],
+    "id": "cd2c0735-a993-4c24-9a2f-7f52de97df6f",
+    "name": "SEO Copilot Pte. LTD.",
+    "employee_count": "2 - 10",
+    "employee_min_count": 2,
+    "employee_max_count": 10,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p>We are seeking a dynamic Delivery Manager (SEO &amp; Digital Marketing) to help us to ensure the timely delivery of all digital marketing work. This role requires operational excellence to drive client satisfaction.</p>\n<p><br></p>\n<p><strong>Key Responsibilities</strong></p>\n<ul>\n  <li>Ensure timely delivery of all digital marketing work</li>\n  <li>Work with the team to coordinate deliverables</li>\n  <li>Ability to write content</li>\n  <li>Maintain regular communication to ensure client satisfaction and address concerns</li>\n</ul>\n<p><br></p>\n<p><strong>Administrative &amp; Operational Tasks</strong> </p>\n<ul>\n  <li>Generate and send accurate invoices in a timely manner</li>\n  <li>Maintain detailed records of client interactions and account status in CRM</li>\n  <li>Coordinate with internal teams to ensure seamless service delivery</li>\n</ul>\n<p><br></p>\n<p><strong>Team Development (As Needed)</strong> </p>\n<ul>\n  <li>Assist in recruitment and interview processes for account management team</li>\n  <li>Participate in onboarding and training of new team members</li>\n</ul>\n<p><br></p>\n<p><strong>Required Qualifications</strong> </p>\n<ul>\n  <li>Fluent English (written and verbal communication)</li>\n  <li><strong>2-3 years of delivery management </strong></li>\n  <li><strong>2-3 years experience of working with a team</strong></li>\n  <li><strong>2-3 years of experience in digital marketing</strong></li>\n  <li>Strong email communication and professional writing skills</li></ul>",
+   "experience": "2-10",
+   "experience_max": 10,
+   "experience_min": 2,
+   "expires_at": "2026-11-29 13:34:31",
+   "external_link": "https://forms.gle/B4XtXrYRDk4fbgNE9",
+   "has_equity": 0,
+   "id": "f166f634-94cd-49ea-8b7e-81f95e20c919",
+   "industries": [
+    {
+     "id": "93673c99-3938-42c2-bb9c-bf1fefc2024f",
+     "name": "Marketing Automation",
+     "slug": "marketing-automation",
+     "vertical_name": "Ad tech"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 1,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "04712876-6722-4d28-b857-8f39ef064379",
+     "name": "Business Development & Partnerships"
+    },
+    {
+     "id": "87c6b2bf-f4cc-436c-b2e1-7328b1050e9b",
+     "name": "Digital Marketing"
+    },
+    {
+     "id": "8cee9310-a380-4d4d-ac76-a612cdb49e81",
+     "name": "Business Development"
+    },
+    {
+     "id": "adcfa2f1-196b-4713-9a29-91a9a62c97b5",
+     "name": "Product Management"
+    },
+    {
+     "id": "f22d04b4-23d6-42fd-b0ad-255a491b08f3",
+     "name": "Marketing Communications"
+    },
+    {
+     "id": "f6ce96f7-3b51-4867-bab4-5a50aabc4a8c",
+     "name": "Sales & Marketing"
+    },
+    {
+     "id": "f7e57b0a-9a01-4663-8fed-1fa5309f6bf8",
+     "name": "Project Management"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "58fd4d82-53e3-474f-9834-12b9494f3872",
+    "name": "Project & Product Management"
+   },
+   "published_at": "2026-09-30 13:34:31",
+   "salary_avg": 13000000,
+   "salary_max": 16000000,
+   "salary_min": 10000000,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Delivery Manager (SEO & Digital Marketing)",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "remote",
+   "objectID": "f166f634-94cd-49ea-8b7e-81f95e20c919"
+  },
+  {
+   "city": null,
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/WzHO85ye2fy1A8XVf8SnIIC9P2LI30081ltbT1E2.jpeg",
+    "entity_id": "d3d5e9e9-210e-4fe3-8f20-43e0e9b09b71",
+    "entity_slug": "cakap",
+    "entity_locations": [
+     {
+      "city_id": "4bfed6fc-8ba2-48b5-b70b-c0050a3a9d41",
+      "city_name": "Jakarta",
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "3e951430-1c7d-40c4-a6b5-ea85f519cd87",
+      "type": "hq"
+     }
+    ],
+    "id": "ea8597ac-4e8d-4f7b-889d-44d93049db75",
+    "name": "Cakap",
+    "employee_count": "51 - 200",
+    "employee_min_count": 51,
+    "employee_max_count": 200,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p><strong>What you will do</strong></p>\n<p>Currently, we are looking for someone who can fill the position of Part Time Mandarin Teacher. Take a look at some points below to understand more about this role.</p>\n<p><strong>Key Responsibilities:</strong></p>\n<p><br></p>\n<ul>\n  <li>Plan, organize, and implement oral and written Mandarin language teaching programs.</li>\n  <li>Manage Mandarin classes for diverse target audiences (children, teenagers, and adults) across various levels and needs (beginners, daily conversation, Business Mandarin, and HSK/HSKK test preparation).</li>\n  <li>Periodically evaluate students' learning progress and provide clear, constructive reports.</li>\n  <li>Collaborate in designing engaging visual learning materials (as needed).</li>\n  <li>Accurately assess students' proficiency levels in accordance with current HSK levelling standards.</li>\n</ul>\n<p><strong>Core Requirements:</strong></p>\n<p><br></p>\n<ul>\n  <li>Bachelor’s degree (S1) in Chinese Literature, Mandarin Education, or graduated from a university in China. Other majors are welcome to apply provided they have equivalent Mandarin proficiency and skills.</li>\n  <li>Mandatory Mandarin proficiency certification (HSK 2.0): Minimum HSK Level 4 (HSK 5 &amp; 6 are highly preferred) and HSKK (minimum Intermediate level (中级), Advanced level (高级) preferred).</li></ul>",
+   "experience": "2-5",
+   "experience_max": 5,
+   "experience_min": 2,
+   "expires_at": "2026-12-03 13:47:47",
+   "external_link": "",
+   "has_equity": 0,
+   "id": "92bcfa64-807d-4d64-81fd-b1d97c46e7ff",
+   "industries": [
+    {
+     "id": "67cbfda6-2554-418e-963c-a8d4613fc1d2",
+     "name": "Education tech",
+     "slug": "education-tech",
+     "vertical_name": "Education"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 1,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "706a49c6-dfa3-4c0a-b511-bfeaaa84b13f",
+     "name": "Simplified Chinese Language"
+    },
+    {
+     "id": "c93e386c-260a-41e1-aacb-b4772ffe54b5",
+     "name": "Communication Skills"
+    },
+    {
+     "id": "cd8580b6-053f-42ad-a18a-0623f45d9d02",
+     "name": "Traditional Chinese Language"
+    },
+    {
+     "id": "ed3fc6b4-45ad-45a3-a101-318a23ed3bc8",
+     "name": "Teamwork"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "a0453aef-e0e5-49d4-8089-b37e928c1057",
+    "name": "Science & Academics"
+   },
+   "published_at": "2026-10-04 13:47:47",
+   "salary_avg": 0,
+   "salary_max": 0,
+   "salary_min": 0,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Part Time Mandarin Teacher",
+   "tz_offset_max": 7,
+   "tz_offset_min": 7,
+   "vacancy_count": 1,
+   "work_arrangement": "remote",
+   "objectID": "92bcfa64-807d-4d64-81fd-b1d97c46e7ff"
+  },
+  {
+   "city": {
+    "country_id": "78972d5c-0d75-4e7a-a696-2ffeabd99f9f",
+    "country_name": "Singapore",
+    "id": "085fce3e-5713-4257-86ec-1fbaa775c3b5",
+    "name": "Singapore",
+    "work_country_name": "Remote"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/BKAOz0UAqGKVIhMPfXDvJS4eva2CrmFrrKZLZKxb.png",
+    "entity_id": "c66e5268-f505-4d92-b573-211e86c4f54d",
+    "entity_slug": "mekari-pt-mid-solusi-nusantara",
+    "entity_locations": [
+     {
+      "city_id": "4bfed6fc-8ba2-48b5-b70b-c0050a3a9d41",
+      "city_name": "Jakarta",
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "24121d14-a5ae-4e5f-af3b-238930fa11fa",
+      "type": "hq"
+     }
+    ],
+    "id": "793b2204-6c6a-42c0-a49e-3918ac235a5f",
+    "name": "Mekari",
+    "employee_count": "501 - 1000",
+    "employee_min_count": 501,
+    "employee_max_count": 1000,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "SGD",
+    "currency_symbol": "$",
+    "id": "4909a6ec-e144-412b-9fce-706a6c766b3b",
+    "name": "Singapore Dollars"
+   },
+   "description": "<p>Mekari is Indonesia's no. 1 Software-as-a-Service (SaaS) company. With our ecosystem of software solutions—including Mekari Jurnal, Mekari Talenta, Mekari Qontak, and Mekari Flex, we aim to facilitate entrepreneurs and leaders as they accelerate the digital transformation of their businesses.<br>\n</p>\n<p>In our 10+ years of journey we have reached over 1 Million platform users, and we're not planning to stop any time soon. We need more people like you: builders and owners with calculated ambition who are ready to <strong>#ElevateThroughImpact</strong> and raise Indonesia's software standard.</p>\n<p><strong>Must-Have Requirements</strong></p>\n<ul>\n  <li><u>Sales &amp; Business Development Experience</u>\n    <ul>\n      <li>1–3 years of experience in B2B sales, business development, inside sales, or account management, preferably in B2B SaaS, HR Tech, Fintech, or Software industries.</li>\n      <li>Proven track record of prospecting, pipeline generation, and closing deals targeting companies in Singapore and/or Malaysia.</li>\n      <li>Experience conducting outreach, client discovery, and product demos to business decision-makers (HR leaders, Finance, and C-level).</li>\n      <li>Ability to identify, engage, and build relationships with local referral and channel partners.</li>\n    </ul>\n  </li></ul>",
+   "experience": "0-3",
+   "experience_max": 3,
+   "experience_min": 0,
+   "expires_at": "2026-12-06 07:15:41",
+   "external_link": "https://mekari.hire.trakstar.com/jobs/fk0zlxf?source=",
+   "has_equity": 0,
+   "id": "52efcfac-2cab-44ab-bfa4-ad254710ae83",
+   "industries": [
+    {
+     "id": "1ce56bc1-bce2-4388-95c4-bcde018064d5",
+     "name": "Enterprise Software",
+     "slug": "enterprise-software",
+     "vertical_name": "Enterprise solution"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 1,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "04712876-6722-4d28-b857-8f39ef064379",
+     "name": "Business Development & Partnerships"
+    },
+    {
+     "id": "4b3f7364-c112-49c4-b51c-5f8ffe25c07d",
+     "name": "Sales Strategy & Management"
+    },
+    {
+     "id": "504d702a-03fd-4e90-9794-580ccb1db342",
+     "name": "Sales"
+    },
+    {
+     "id": "700070fe-b981-4cc4-bc64-2a03af127fdf",
+     "name": "Business Analysis"
+    },
+    {
+     "id": "7199071d-c841-492d-ab94-b3dd199ffd06",
+     "name": "Salesforce"
+    },
+    {
+     "id": "8cee9310-a380-4d4d-ac76-a612cdb49e81",
+     "name": "Business Development"
+    },
+    {
+     "id": "f6ce96f7-3b51-4867-bab4-5a50aabc4a8c",
+     "name": "Sales & Marketing"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "8f7f42f6-34c6-4dbe-a571-a0489d500bc0",
+    "name": "Sales & Business Development"
+   },
+   "published_at": "2026-10-07 07:15:41",
+   "salary_avg": 0,
+   "salary_max": 0,
+   "salary_min": 0,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Business Development - Mekari Talenta (Singapore and Malaysia)",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "remote",
+   "objectID": "52efcfac-2cab-44ab-bfa4-ad254710ae83"
+  },
+  {
+   "city": {
+    "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+    "country_name": "Indonesia",
+    "id": "92cdb8b5-3ae5-41fd-a2d6-72c829e37c5d",
+    "name": "Tangerang",
+    "work_country_name": "Indonesia"
+   },
+   "company": {
+    "avatar": "https://cdn.techinasia.com/data/images/8c13fe0c4b5c89f7469055f658a8a867.jpg",
+    "entity_id": "1c74494e-84af-45ef-acc4-8ebf714f83a6",
+    "entity_slug": "bina-nusantara-group",
+    "entity_locations": [
+     {
+      "city_id": "",
+      "city_name": null,
+      "country_id": "365832f3-641f-4f3a-b8c6-6932d1deb5fe",
+      "country_name": "Indonesia",
+      "id": "02fc1c5d-bc4e-4309-8f49-aa9a06ab72b4",
+      "type": "hq"
+     }
+    ],
+    "id": "ef6963ea-b8dc-4535-8ddb-400c802fd8f0",
+    "name": "Bina Nusantara Group",
+    "employee_count": "1001 - 5000",
+    "employee_min_count": 1001,
+    "employee_max_count": 5000,
+    "employee_rating": null
+   },
+   "currency": {
+    "currency_code": "IDR",
+    "currency_symbol": "Rp",
+    "id": "4886deb5-ba2b-4234-b7a2-f0776e1c9eb0",
+    "name": "Indonesian Rupiahs"
+   },
+   "description": "<p><strong>Job Description</strong></p>\n<p>Teaching and Learning:<br>\n •\tPrepare and implement process of research and examination activities in Laboratory<br>\n •\tProvide evaluation report to related area in Research &amp; Development regarding evaluation of research methods, procedure and equipment/facilities<br></p>\n<p>Laboratory Operation and Administration:<br>\n •\tConduct operational process in related area in Research &amp; Development Department <br>\n •\tPrepare and put in place equipment schedule for use during laboratory research sessions<br>\n •\tDemonstrate care and use of equipment for research and related activities<br>\n •\tProvide effective operation process and maintenance of laboratory resources <br>\n •\tOrganize timetable with lecturers for laboratory scheduling usage <br>\n •\tOrganize with the Lecturer Services Center and Building Management for laboratory usage schedule<br>\n •\tCommunicate with Building Management (House Keeping) to maintain tidy, conducive and clean laboratory space<br>\n •\tConduct maintenance for overall equipment maintenance in Laboratory area <br>\n •\tEnhance and maintain relationship with external parties related to program development for Laboratory activities <br>\n •\tSchedule and arrange dissemination, training and coaching events on practical skills in Research &amp; Development <br>\n •\tSupport administration activities in Research &amp; Development </p>\n<p><strong>Requirements:</strong></p>\n<p>• Minimum Bachelor's Degree (S1) in Industrial E",
+   "experience": "1-5",
+   "experience_max": 5,
+   "experience_min": 1,
+   "expires_at": "2026-12-11 03:07:31",
+   "external_link": "",
+   "has_equity": 0,
+   "id": "081915a7-ea70-47f5-a9c1-fe6a79b29b6f",
+   "industries": [
+    {
+     "id": "67cbfda6-2554-418e-963c-a8d4613fc1d2",
+     "name": "Education tech",
+     "slug": "education-tech",
+     "vertical_name": "Education"
+    }
+   ],
+   "is_boosted": true,
+   "is_remote": 0,
+   "is_salary_visible": 1,
+   "job_skills": [
+    {
+     "id": "8cee9310-a380-4d4d-ac76-a612cdb49e81",
+     "name": "Business Development"
+    },
+    {
+     "id": "c93e386c-260a-41e1-aacb-b4772ffe54b5",
+     "name": "Communication Skills"
+    },
+    {
+     "id": "f7e57b0a-9a01-4663-8fed-1fa5309f6bf8",
+     "name": "Project Management"
+    }
+   ],
+   "job_type": {
+    "id": "5124b71a-19ad-42ee-8779-de3433bf7f88",
+    "name": "Full-time"
+   },
+   "position": {
+    "id": "a0453aef-e0e5-49d4-8089-b37e928c1057",
+    "name": "Science & Academics"
+   },
+   "published_at": "2026-10-12 03:07:31",
+   "salary_avg": 0,
+   "salary_max": 0,
+   "salary_min": 0,
+   "starts_featuring_at": null,
+   "taxonomies": [],
+   "title": "Industrial Engineering Laboratory Staff - BINUS ASO",
+   "tz_offset_max": null,
+   "tz_offset_min": null,
+   "vacancy_count": 1,
+   "work_arrangement": "on-site",
+   "objectID": "081915a7-ea70-47f5-a9c1-fe6a79b29b6f"
+  }
+ ],
+ "nbHits": 8,
+ "page": 0,
+ "nbPages": 1,
+ "hitsPerPage": 1000,
+ "exhaustiveNbHits": true,
+ "query": "",
+ "params": "query=&hitsPerPage=1000&page=0"
+}
