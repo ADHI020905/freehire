@@ -1,0 +1,343 @@
+{
+ "correction_text_search": "",
+ "count": 4,
+ "from_alternative": false,
+ "from_correction": false,
+ "jobs": [
+  {
+   "activation_date": "2026-10-07T06:45:21.195247+00:00",
+   "application_end_date": "2026-11-02T16:00:00+00:00",
+   "apply_redirect_url": null,
+   "base_salary": 100000,
+   "bookmarked": false,
+   "company": {
+    "code": "medgrocer",
+    "description": "MedGrocer's digitally-enabled corporate healthcare solutions and patient programs empower our customers to get their medicines, vaccines, and teleconsultations conveniently, cost-effectively, and inte",
+    "id": 22488,
+    "industry": "Hospital / Health Care",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/TQGB3PBPVF449QYWCTX9E8HQW37SW7HETR9SQBXG-5f7dcc64.png",
+    "name": "MedGrocer",
+    "verified_business": true,
+    "visible": true
+   },
+   "company_info": {
+    "code": "medgrocer",
+    "description": "MedGrocer's digitally-enabled corporate healthcare solutions and patient programs empower our customers to get their medicines, vaccines, and teleconsultations conveniently, cost-effectively, and inte",
+    "hidden": false,
+    "industry": "Hospital / Health Care",
+    "is_demo": false,
+    "logo": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/RE33M5F3ZB56RC7MX9DZHT28KV5C6XQ5R8XAMAYL-5f7dcc64.png",
+    "logo_1200x630": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/8XH397XZZ9WF7LEUNYGZTDB7FECPAN7UZBQYNPVU-5f7dcc67.jpg",
+    "logo_160x90": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/RRHWA3AHFUEREXBTM77P9WJALUMEKS2EMLXQKJLY-5f7dcc66.png",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/TQGB3PBPVF449QYWCTX9E8HQW37SW7HETR9SQBXG-5f7dcc64.png",
+    "name": "MedGrocer",
+    "url": "http://www.medgrocer.com"
+   },
+   "company_name": "MedGrocer",
+   "created_at": "2026-01-27T07:15:11.275706+00:00",
+   "description": "<p>MedGrocer’s digitally-enabled corporate healthcare solutions empower our customers to get their medicines, vaccines, and teleconsultations conveniently, cost-effectively, and intelligently.</p>\n\n<p>The <strong>IT Director</strong> is the visionary for MedGrocer’s technological ecosystem. You are responsible for the high-level architecture, data security governance, and digital transformation initiatives that ensure our platform remains the gold standard for patient care.</p>\n\n<p><strong>Why Join MedGrocer?</strong></p>\n\n<p>You will have high-level autonomy to define the company’s technical vision and lead large-scale digital transformations. Your leadership ensures the integrity and reliability of the platform that provides life-saving interventions for patients.</p>\n\n<p><strong>Key Responsibilities</strong></p>",
+   "distance_from_user": null,
+   "education_level": 550,
+   "es_is_top_brand": false,
+   "es_recruiter_last_seen": "2026-10-09T09:23:38.380937+00:00",
+   "exam_versions": [],
+   "function": "IT and Software",
+   "google_location": {
+    "address_components": {
+     "address_line_1": "Poblacion",
+     "city": "Makati",
+     "country": "Philippines",
+     "region": "Metro Manila"
+    }
+   },
+   "id": 263258,
+   "is_featured": false,
+   "is_hybrid": false,
+   "is_open_to_fresh_grads": false,
+   "is_work_from_home": false,
+   "maximum_salary": 150000,
+   "name": "IT Director | Makati",
+   "number_of_openings": 1,
+   "perks": {
+    "other": null,
+    "types": []
+   },
+   "photo_urls": [
+    "https://storage.googleapis.com/recruiter-processed-image-uploads.kalibrr.com/job-banner-url/production/6c90fd38-fce1-44e8-b0ca-945f8da2c193.avif"
+   ],
+   "priority_score": 0.5,
+   "qualifications": "<ul>\n\t<li>Bachelor's degree in Computer Science, Information Technology, or a related field.</li>\n\t<li>6-12 years of experience in IT leadership, software architecture, or systems engineering.</li>\n\t<li>Expertise in cloud infrastructure, data security standards, and enterprise digital transformation.</li>\n\t<li>Strong leadership skills with experience managing high-performing technical teams.</li>\n\t<li>Must work onsite in Makati City.</li>\n</ul>",
+   "response_rate": 96.875,
+   "salary_currency": "PHP",
+   "salary_interval": "month",
+   "salary_shown": true,
+   "slug": "it-director-makati",
+   "tenure": "Full time",
+   "visibility": "public",
+   "work_experience": 500
+  },
+  {
+   "activation_date": "2026-08-19T02:27:36.899048+00:00",
+   "application_end_date": "2026-10-17T16:00:00+00:00",
+   "apply_redirect_url": "https://forms.gle/21FTq54zj5zSuvPSA",
+   "base_salary": null,
+   "bookmarked": false,
+   "company": {
+    "code": "qne-software-philippines-inc",
+    "description": "QNE Software Philippines, Inc. is a trusted provider of Accounting and Payroll solutions that help businesses simplify operations and grow with confidence. Since 2007, we have supported thousands of c",
+    "id": 31504,
+    "industry": "Information Technology / IT",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/N9WRK3EBLV6JHHHRU262QN9RVQ724NQSZ64QD5RJ-6a0a9ffe.png",
+    "name": "QNE Software Philippines, Inc.",
+    "verified_business": true,
+    "visible": true
+   },
+   "company_info": {
+    "code": "qne-software-philippines-inc",
+    "description": "QNE Software Philippines, Inc. is a trusted provider of Accounting and Payroll solutions that help businesses simplify operations and grow with confidence. Since 2007, we have supported thousands of c",
+    "hidden": false,
+    "industry": "Information Technology / IT",
+    "is_demo": false,
+    "logo": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/666VXH45H4AWBSCZKKRJTC25V9M5PTTST3ABYS24-6a0a9ffd.png",
+    "logo_1200x630": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/7K6U6JVMES4RGGC3PSQGM4MFR3NHSTSH6AV3YZFE-6a0aa003.png",
+    "logo_160x90": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/QABEUASH3UQNKV863EQEBTXP27PVFWJD93E2FK55-6a0aa003.png",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/N9WRK3EBLV6JHHHRU262QN9RVQ724NQSZ64QD5RJ-6a0a9ffe.png",
+    "name": "QNE Software Philippines, Inc.",
+    "url": "https://qne.cloud/ph/"
+   },
+   "company_name": "QNE Software Philippines, Inc.",
+   "created_at": "2026-08-19T02:24:49.445509+00:00",
+   "description": "<ul>\n\t<li>\n\t<p>Research, evaluate, and implement emerging AI technologies to improve product innovation and internal productivity.</p>\n\t</li>\n\t<li>\n\t<p>Develop rapid prototypes, proofs-of-concept, and lightweight applications using AI-assisted development tools.</p>\n\t</li>\n\t<li>\n\t<p>Build and maintain internal productivity and customer companion applications.</p>\n\t</li>\n\t<li>\n\t<p>Design workflow automations and API integrations using modern development platforms.</p>\n\t</li>\n\t<li>\n\t<p>Collaborate with the Product teams to transform business requirements into functional prototypes.</p>\n\t</li>\n\t<li>\n\t<p>Evaluate the technical feasibility of new product ideas and recommend implementation approaches.</p>\n\t</li>\n\t<li>\n\t<p>Improve development processes, digital innovation initiatives, and experimentation through AI and automation.</p>\n\t</li>\n\t<li>\n\t<p>Maintain and continuously enhance AI-developed applications based on business needs.</p>\n\t</li>\n\t<li>\n\t<p>Perform any other tasks as required by the Company.</p>\n\t</li>\n</ul>",
+   "distance_from_user": null,
+   "education_level": 550,
+   "es_is_top_brand": false,
+   "es_recruiter_last_seen": "2026-10-06T06:16:28.590091+00:00",
+   "exam_versions": [],
+   "function": "IT and Software",
+   "google_location": {
+    "address_components": {
+     "address_line_1": null,
+     "city": "Makati",
+     "country": "Philippines",
+     "region": "Metro Manila"
+    }
+   },
+   "id": 271382,
+   "is_featured": false,
+   "is_hybrid": false,
+   "is_open_to_fresh_grads": false,
+   "is_work_from_home": false,
+   "job_sds_skills": [
+    {
+     "created_at": "2026-08-19T02:27:33.448095+00:00",
+     "job_id": 271382,
+     "sds_skill": {
+      "created_at": "2015-03-28T20:46:06.245781+00:00",
+      "custom": false,
+      "id": 564,
+      "name": "HTML",
+      "updated_at": "2015-05-03T18:31:43.555932+00:00"
+     },
+     "sds_skill_id": 564
+    },
+    {
+     "created_at": "2026-08-19T02:27:33.448095+00:00",
+     "job_id": 271382,
+     "sds_skill": {
+      "created_at": "2015-03-28T20:46:06.245781+00:00",
+      "custom": false,
+      "id": 709,
+      "name": "JavaScript",
+      "updated_at": "2015-05-03T18:31:43.555932+00:00"
+     },
+     "sds_skill_id": 709
+    },
+    {
+     "created_at": "2026-08-19T02:27:33.448095+00:00",
+     "job_id": 271382,
+     "sds_skill": {
+      "created_at": "2015-03-28T20:46:06.245781+00:00",
+      "custom": false,
+      "id": 720,
+      "name": "CSS",
+      "updated_at": "2015-05-03T18:31:43.555932+00:00"
+     },
+     "sds_skill_id": 720
+    },
+    {
+     "created_at": "2026-08-19T02:27:33.448095+00:00",
+     "job_id": 271382,
+     "sds_skill": {
+      "created_at": "2015-07-04T02:37:19.576302+00:00",
+      "custom": false,
+      "id": 3382,
+      "name": "SQL",
+      "updated_at": "2016-06-30T02:20:01.343690+00:00"
+     },
+     "sds_skill_id": 3382
+    }
+   ],
+   "maximum_salary": null,
+   "name": "Product Solutions Specialist",
+   "number_of_openings": 1,
+   "perks": {
+    "other": "<ul>\n\t<li>Out-of-town Trips</li>\n\t<li>Allowances</li>\n\t<li>Yearly Appraisal</li>\n\t<li>Retirement Plan</li>\n</ul>",
+    "types": []
+   },
+   "photo_urls": [],
+   "priority_score": 0.5,
+   "qualifications": "<ul>\n\t<li>\n\t<p>Open to candidates with a Bachelor's degree in Computer Science, Information Technology, or equivalent.</p>\n\t</li>\n\t<li>\n\t<p>1–3 years’ experience in software development, automation, or AI-assisted development</p>\n\t</li>\n\t<li>\n\t<p>Experience building web apps, workflows, or productivity solutions</p>\n\t</li>\n\t<li>\n\t<p>Familiarity with AI tools such as Cursor, ChatGPT, or GitHub Copilot</p>\n\t</li>\n\t<li>\n\t<p>Basic knowledge of HTML, CSS, JavaScript, SQL, and REST APIs</p>\n\t</li>\n\t<li>\n\t<p>Ability to quickly prototype business ideas into working solutions, with a passion for AI and emerging technologies</p>\n\t</li>\n</ul>",
+   "response_rate": null,
+   "salary_currency": null,
+   "salary_interval": null,
+   "salary_shown": true,
+   "slug": "product-solutions-specialist",
+   "tenure": "Full time",
+   "visibility": "public",
+   "work_experience": 200
+  },
+  {
+   "activation_date": "2026-10-02T06:06:15.996531+00:00",
+   "application_end_date": "2027-10-02T02:20:13.243000+00:00",
+   "apply_redirect_url": "https://forms.gle/21FTq54zj5zSuvPSA",
+   "base_salary": null,
+   "bookmarked": false,
+   "company": {
+    "code": "qne-software-philippines-inc",
+    "description": "QNE Software Philippines, Inc. is a trusted provider of Accounting and Payroll solutions that help businesses simplify operations and grow with confidence. Since 2007, we have supported thousands of c",
+    "id": 31504,
+    "industry": "Information Technology / IT",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/N9WRK3EBLV6JHHHRU262QN9RVQ724NQSZ64QD5RJ-6a0a9ffe.png",
+    "name": "QNE Software Philippines, Inc.",
+    "verified_business": true,
+    "visible": true
+   },
+   "company_info": {
+    "code": "qne-software-philippines-inc",
+    "description": "QNE Software Philippines, Inc. is a trusted provider of Accounting and Payroll solutions that help businesses simplify operations and grow with confidence. Since 2007, we have supported thousands of c",
+    "hidden": false,
+    "industry": "Information Technology / IT",
+    "is_demo": false,
+    "logo": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/666VXH45H4AWBSCZKKRJTC25V9M5PTTST3ABYS24-6a0a9ffd.png",
+    "logo_1200x630": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/7K6U6JVMES4RGGC3PSQGM4MFR3NHSTSH6AV3YZFE-6a0aa003.png",
+    "logo_160x90": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/QABEUASH3UQNKV863EQEBTXP27PVFWJD93E2FK55-6a0aa003.png",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/N9WRK3EBLV6JHHHRU262QN9RVQ724NQSZ64QD5RJ-6a0a9ffe.png",
+    "name": "QNE Software Philippines, Inc.",
+    "url": "https://qne.cloud/ph/"
+   },
+   "company_name": "QNE Software Philippines, Inc.",
+   "created_at": "2026-10-02T06:04:21.256843+00:00",
+   "description": "<ul>\n\t<li>Coordinate with consultants for support, including proposals, approvals, payments, and monitoring.</li>\n\t<li>Send product overviews and company profiles to prospective clients.</li>\n\t<li>Conduct initial qualification and follow-up of leads from marketing activities, referrals, events, and other sources.</li>\n\t<li>Act as custodian for departmental documents, including preparing quotations and maintaining records of sales and after-sales accounts.</li>\n\t<li>Assist with lead inquiries, report preparation, group demonstrations, and event engagements.</li>\n\t<li>Maintain the schedule of Consultants and coordinate demonstration appointments, client meetings, and schedule changes with prospects.</li>\n\t<li>Cold call leads and answer sales inquiries via email or phone.</li>\n\t<li>Assist Consultants during product demonstrations, client meetings, and presentations when needed.</li>\n\t<li>Coordinate the processing and proper handover of documents for closed sales to the appropriate internal teams.</li>\n\t<li>Support sales events, seminars, webinars, and other marketing activities.</li>\n\t<li>Perform any other duties as required by the company.</li>\n</ul>",
+   "distance_from_user": null,
+   "education_level": 550,
+   "es_is_top_brand": false,
+   "es_recruiter_last_seen": "2026-10-06T06:16:28.590091+00:00",
+   "exam_versions": [],
+   "function": "IT and Software",
+   "google_location": {
+    "address_components": {
+     "city": "Makati",
+     "country": "Philippines",
+     "region": "Metro Manila"
+    }
+   },
+   "id": 273103,
+   "is_featured": false,
+   "is_hybrid": false,
+   "is_open_to_fresh_grads": true,
+   "is_work_from_home": false,
+   "job_sds_skills": [],
+   "maximum_salary": null,
+   "name": "Sales Associate",
+   "number_of_openings": 1,
+   "perks": {
+    "other": null,
+    "types": []
+   },
+   "photo_urls": [],
+   "priority_score": 0.5,
+   "qualifications": "<ul>\n\t<li>Open to candidates with a Bachelor's degree in Computer Science, Information Technology, Finance, Accountancy, Banking, Marketing, or Mass Communications.</li>\n\t<li>Sales experience in the IT industry is advantageous.</li>\n\t<li>Excellent English and Filipino communication skills, both oral and written.</li>\n\t<li>Proficient in MS Office applications and data recording.</li>\n\t<li>Organized, multitasking ability, and can perform under pressure.</li>\n\t<li>Fresh graduates of Sales and Marketing are encouraged to apply.</li>\n</ul>",
+   "response_rate": null,
+   "salary_currency": null,
+   "salary_interval": null,
+   "salary_shown": true,
+   "slug": "sales-associate",
+   "tenure": "Full time",
+   "visibility": "public",
+   "work_experience": 200
+  },
+  {
+   "activation_date": "2026-10-05T17:32:36.694180+00:00",
+   "application_end_date": "2026-12-04T16:00:00+00:00",
+   "apply_redirect_url": null,
+   "base_salary": null,
+   "bookmarked": false,
+   "company": {
+    "code": "stealth",
+    "description": "WAGMI Solutions is a technology and business process outsourcing company with operations in the Philippines, servicing clients in the United States.\n\nOur mission at WAGMI is to help find solutions for",
+    "id": 27346,
+    "industry": "Business Process Outsourcing",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/GHLKTQDVFBMQDW6ZJPDNXZ9E62N28EV5FN3CPF4V-67e2e9aa.png",
+    "name": "WAGMI Solutions",
+    "verified_business": true,
+    "visible": true
+   },
+   "company_info": {
+    "code": "stealth",
+    "description": "WAGMI Solutions is a technology and business process outsourcing company with operations in the Philippines, servicing clients in the United States.\n\nOur mission at WAGMI is to help find solutions for",
+    "hidden": false,
+    "industry": "Business Process Outsourcing",
+    "is_demo": false,
+    "logo": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/JMMK9MXFUA28ESSLWHLHV523UXPWFQA83TB3D6Z6-67e2e9a9.png",
+    "logo_1200x630": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/53HMBLJHHRWABCXNETUCDQW6TEQW4VC7SVFES82F-67e2e9ac.jpg",
+    "logo_160x90": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/XVG32R9TJ7QG7ZNRJX8N6E3RHPWP93TQZ6RHYMW5-67e2e9ab.png",
+    "logo_small": "https://rec-data.kalibrr.com/www.kalibrr.com/logos/GHLKTQDVFBMQDW6ZJPDNXZ9E62N28EV5FN3CPF4V-67e2e9aa.png",
+    "name": "WAGMI Solutions",
+    "url": "http://www.wagmisolutions.io"
+   },
+   "company_name": "WAGMI Solutions",
+   "created_at": "2026-10-05T17:31:15.080983+00:00",
+   "description": "<p> Cloud Security Project Engineer (Client-Facing Professional Services)</p>\n\n<p> </p>\n\n<p>About the Role</p>\n\n<p>We are looking for a Cloud Security Project Engineer to join our team and support cloud security implementations for enterprise customers in the Australia and New Zealand (ANZ) region.</p>\n\n<p>This is a hands-on technical and client-facing role. You will work with customers, partners, and internal teams to implement, troubleshoot, and support cloud security solutions.</p>\n\n<p>You don't need to be a pure Project Manager. We are looking for someone with a strong background in networking, cloud security, firewalls, proxies, or security technologies who is also comfortable communicating with customers and managing multiple projects.</p>\n\n<p>Experience with Netskope is a strong advantage, but candidates with experience in similar technologies such as Zscaler, Palo Alto, Fortinet, Cisco, or other SASE/SSE platforms are welcome to apply.</p>\n\n<p>What You'll Do</p>\n\n<p>Manage multiple customer implementation projects from kickoff to completion.</p>\n\n<p>Work with customers and partners to understand their technical requirements and deployment needs.</p>\n\n<p>Lead or support technical meetings, workshops, and implementation sessions.</p>\n\n<p>Configure, implement, and troubleshoot cloud security solutions.</p>\n\n<p>Work with technologies such as SASE, SSE, SWG, CASB, ZTNA, and DLP.</p>",
+   "distance_from_user": -1,
+   "education_level": 550,
+   "es_is_top_brand": false,
+   "es_recruiter_last_seen": "2026-10-08T11:41:34.070302+00:00",
+   "exam_versions": [],
+   "function": "IT and Software",
+   "google_location": {
+    "address_components": {
+     "address_line_1": null,
+     "city": "Makati",
+     "country": "Philippines",
+     "region": "Metro Manila"
+    }
+   },
+   "id": 273204,
+   "is_featured": false,
+   "is_hybrid": false,
+   "is_open_to_fresh_grads": false,
+   "is_work_from_home": true,
+   "maximum_salary": null,
+   "name": "Cloud Security Project Engineer",
+   "number_of_openings": 3,
+   "perks": {
+    "other": null,
+    "types": [
+     "wfh"
+    ]
+   },
+   "photo_urls": [],
+   "priority_score": 0.5,
+   "qualifications": "<ul>\n\t<li>\n\t<p>What We're Looking For</p>\n\n\t<p>Technical Experience</p>\n\n\t<p>3+ years of experience in one or more of the following:</p>\n\n\t<p>Cloud Security</p>\n\n\t<p>Network Security</p>\n\n\t<p>Network Engineering</p>\n\n\t<p>Firewall Administration</p>\n\n\t<p>Proxy / Gateway Technologies</p>\n\n\t<p>Cybersecurity</p>\n\n\t<p>SASE / SSE</p>\n\n\t<p>Hands-on experience with AWS and/or Microsoft Azure is an advantage.</p>\n\n\t<p>Good understanding of networking concepts such as:</p>\n\n\t<p>TCP/IP</p>\n\n\t<p>DNS</p>\n\n\t<p>Routing</p>\n\n\t<p>VPN</p>\n\n\t<p>Firewalls</p>\n\n\t<p>Security Groups</p>\n\n\t<p>Proxy</p>\n\n\t<p>SSL/TLS</p>\n\n\t<p>Familiarity with SASE/SSE, SWG, CASB, ZTNA, or DLP.</p>\n\n\t<p>Experience with IPsec/GRE tunnels, PAC files, traffic steering, or SSL inspection is a plus.</p>\n\n\t<p>Netskope experience is highly preferred, but experience with similar security platforms is welcome.</p>\n\n\t<p>Project &amp; Customer Skills</p>\n\n\t<p>Experience handling customer implementations, technical projects, or client accounts.</p>\n\n\t<p>Comfortable managing several tasks or projects at the same time.</p>\n\n\t<p>Able to work independently and take ownership of assigned projects.</p>\n\n\t<p>Comfortable communicating directly with customers and technical teams.</p>\n\n\t<p>Good English communication skills, both written and verbal.</p>\n\n\t<p>Able to explain technical issues in a simple and clear way.</p>\n\n\t<p>Strong troubleshooting and problem-solving skills.</p>\n\n\t<p>Willing to learn new technologies and processes.</p>",
+   "response_rate": 0.0,
+   "salary_currency": null,
+   "salary_interval": null,
+   "salary_shown": true,
+   "slug": "cloud-security-project-engineer-2",
+   "tenure": "Full time",
+   "visibility": "public",
+   "work_experience": 300
+  }
+ ],
+ "search_text": ""
+}

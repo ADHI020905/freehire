@@ -414,6 +414,10 @@ func All(c HTTPClient) map[string]Source {
 		// profession sub-category (board) over its public Algolia index, hydrating each new
 		// posting's body and apply URL from the posting API. See wttj.go.
 		NewWTTJ(c),
+		// Kalibrr: Southeast Asian multi-company board, enumerated by country market (board)
+		// and always read through its "IT and Software" job function. One JSON search request
+		// per board carries every posting with its body. See kalibrr.go.
+		NewKalibrr(c),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see
