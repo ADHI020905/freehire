@@ -1,0 +1,28 @@
+{
+ "Code": 200,
+ "Data": {
+  "PostId": "2071854045013913600",
+  "RecruitPostId": 120825,
+  "RecruitPostName": "混元后台开发工程师（深圳/北京）",
+  "LocationId": 1,
+  "LocationName": "Shenzhen",
+  "BGId": 958,
+  "BGName": "TEG",
+  "ComCode": "",
+  "ComName": "",
+  "OuterPostTypeID": "40001001",
+  "CategoryName": "Technology",
+  "ProductName": "混元-工程平台",
+  "Responsibility": "1.研发混元官网，混元AI Studio等产品，支持基础模型和模型应用的上线，提供更友好的用户体验；\n2.建设基础模型API和垂类模型API服务，支持司内外业务接入；\n3.探索AI原生的创新产品，实践并落地最新的模型能力；\n4.研发内部工具，提升团队工作效率和团队协同效率。",
+  "Requirement": "1.计算机或相关专业本科及以上学历；\r\n2.3年及以上Linux后台开发经验，熟悉系统运维的基础知识，能够排查实际问题；\r\n3.精通GO，C++，JAVA和Python开发语言中的一种或多种，熟悉常见rpc框架；\r\n4.熟悉Mysql，Redis等常见开源组件，Flink，Hadoop，Kafka等大数据套件，掌握适用场景；\r\n5.具备owner意识，能主动推进项目进展，承担更多责任，具备团队协作意识，和良好的沟通能力。",
+  "LastUpdateTime": "October 15,2026",
+  "PostURL": "http://careers.tencent.com/jobdesc.html?postId=2071854045013913600",
+  "SourceID": 1,
+  "IsCollect": false,
+  "PostLightItem": "",
+  "ImportantItem": "",
+  "Introduction": "在腾讯，后台开发工程师不仅是“又快又稳”的问题解决专家，更是生态共创者。你将与技术团队一同沉淀优质代码，让它成为我们共有的宝贵资产。在不同的业务场景和技术发展阶段，你的架构思维也将帮助更多协作团队拓展新的思考。我们也珍视你的挑战精神，同时欢迎你一起参与团队愿景、文化和产品方向的探讨。",
+  "DepartmentIntroduction": "",
+  "RequireWorkYearsName": "> 3 years of working experience"
+ }
+}

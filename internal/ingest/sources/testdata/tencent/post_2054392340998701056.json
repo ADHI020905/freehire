@@ -1,0 +1,28 @@
+{
+ "Code": 200,
+ "Data": {
+  "PostId": "2054392340998701056",
+  "RecruitPostId": 119992,
+  "RecruitPostName": "腾讯云视频大模型推理加速工程师(",
+  "LocationId": 1,
+  "LocationName": "Shenzhen",
+  "BGId": 29294,
+  "BGName": "CSIG",
+  "ComCode": "",
+  "ComName": "",
+  "OuterPostTypeID": "40001005",
+  "CategoryName": "Technology",
+  "ProductName": "音视频PaaS",
+  "Responsibility": "1.核心攻坚多模态模型加速：聚焦图片/视频的编辑、生成类模型加速，主导深度学习云端推理引擎的核心开发与推理效率优化，实现各相关AI算法的高质量落地；\r\n2.蒸馏技术融合应用：结合生成类模型特性，将模型蒸馏技术（如DMD、CM等）融入推理引擎优化方案，在保证质量的前提下，进一步降低推理延迟。",
+  "Requirement": "1.熟练掌握C/C++, python语言，熟悉CPU/GPU异构开发，深入理解CUDA编程模型，能独立完成生成类模型的推理加速或性能调优项目；\r\n2.具备 TensorRT/TensorRT-LLM/FasterTransformer/vllm/sglang 等推理引擎深度实践经验，主导过基于上述引擎的大模型推理系统定制化开发与性能调优；精通推理引擎底层优化技术（算子融合、量化策略、动态批处理、KV 缓存优化)；\r\n3.理解生成类模型的核心架构（如扩散模型UNet/Dit结构），熟悉推理过程中的关键性能卡点；\r\n4.熟悉CPU/GPU异构加速瓶颈分析方法，有服务器端 AI 芯片、GPU加速经验优先。",
+  "LastUpdateTime": "October 15,2026",
+  "PostURL": "http://careers.tencent.com/jobdesc.html?postId=2054392340998701056",
+  "SourceID": 1,
+  "IsCollect": false,
+  "PostLightItem": "",
+  "ImportantItem": "",
+  "Introduction": "渴望为世界带来新意的人，早已对描绘未来的“热词”不陌生——人工智能、机器学习、数据科学等等。腾讯始终在业界前沿不断探索，积极布局，并为优秀的你提供无限广阔的舞台。我们坚信科技的不断革新，最终能带来美好的、撼动人心的改变。",
+  "DepartmentIntroduction": "",
+  "RequireWorkYearsName": "> 3 years of working experience"
+ }
+}

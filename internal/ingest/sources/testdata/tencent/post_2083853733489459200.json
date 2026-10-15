@@ -1,0 +1,28 @@
+{
+ "Code": 200,
+ "Data": {
+  "PostId": "2083853733489459200",
+  "RecruitPostId": 121609,
+  "RecruitPostName": "数据安全应用工程师",
+  "LocationId": 1,
+  "LocationName": "Shenzhen",
+  "BGId": 958,
+  "BGName": "TEG",
+  "ComCode": "",
+  "ComName": "",
+  "OuterPostTypeID": "40001004",
+  "CategoryName": "Technology",
+  "ProductName": "数据安全",
+  "Responsibility": "1.安全风险收敛流程建设：结合业务实际风险，理解业务特性，制定收敛目标和roadmap，建立评估-收敛-评测落地方案，沉淀形成最佳实践；\r\n2.安全风险收敛能力建设：参与安全架构设计实现，建设黑白盒例行扫描能力，联合业务开发风险止损和修复工具，有效收敛安全风险；\r\n3.技术竞争力建设：打造定制化业务特性的安全解决方案和能力，横向比较有技术竞争力。",
+  "Requirement": "1.3年以上安全防守团队经验，熟悉漏洞反入侵等数据安全防守场景；\n2.有ai赋能安全的落地经验，引入ai提升安全防守的效率和质量，并持续关注行业技术发展、快速引入试错，不坐井观天；\n3.工作作风正向，主动沟通和同步，对问题和分歧不回避、就事论事，不畏难、不内耗；\n4.有跨团队沟通协作能力，以团队目标为己任，能端到端的推动事情解决、拿交付成果，不能只是环节正确。",
+  "LastUpdateTime": "October 15,2026",
+  "PostURL": "http://careers.tencent.com/jobdesc.html?postId=2083853733489459200",
+  "SourceID": 1,
+  "IsCollect": false,
+  "PostLightItem": "",
+  "ImportantItem": "",
+  "Introduction": "相信你与所有腾讯安全人一样，都认为抵抗邪恶是一件极其热血的事。希望你与我们一起，守护用户的安全，守护产品的安全，守护科技向善的不变初心。",
+  "DepartmentIntroduction": "",
+  "RequireWorkYearsName": "> 3 years of working experience"
+ }
+}

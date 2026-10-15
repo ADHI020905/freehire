@@ -1,0 +1,28 @@
+{
+ "Code": 200,
+ "Data": {
+  "PostId": "2008500879786921984",
+  "RecruitPostId": 117083,
+  "RecruitPostName": "腾讯云安全产品-系统测试岗",
+  "LocationId": 9,
+  "LocationName": "Xi'an",
+  "BGId": 29294,
+  "BGName": "CSIG",
+  "ComCode": "YUNZHI",
+  "ComName": "Cloud&Smart Industries R&D Center",
+  "OuterPostTypeID": "40001002",
+  "CategoryName": "Technology",
+  "ProductName": "安全产品三部-BG TOB",
+  "Responsibility": "1.负责腾讯安全相关产品的性能稳定性及功能测试，负责性能及功能质量体系化提升相关工作；\r\n2.分析系统相关架构，设计度量指标，编写数据采集等工具，构建分析与监控能力；\r\n3.针对安全产品的性能、稳定性、可靠性开展专项测试与调优，以及接口自动化测试，保障和提升产品质量。",
+  "Requirement": "1.计算机本科及以上相关专业3年以上工作经验，有专项测试、测试开发及后台测试经验者优先；\r\n2.对操作系统、计算机网络和数据库等计算机和软件基础都有比较深入的理解和实践经验；\r\n3.有linux经验者优先； 熟练掌握C/C++/Java等至少一种编程语言或者对Python/Shell/Perl等至少一门脚本语言有丰富实践经历；\r\n4.有安全产品的测试经验，熟悉网络协议或有渗透测试等安全测试经验优先，有云或是大型后端服务测试经验者优先；\r\n5.具备良好的团队合作精神，善于协调沟通，具备较好的问题推动解决能力；\r\n6.备注：此岗位为腾讯集团旗下子公司编制。",
+  "LastUpdateTime": "October 14,2026",
+  "PostURL": "http://careers.tencent.com/jobdesc.html?postId=2008500879786921984",
+  "SourceID": 1,
+  "IsCollect": false,
+  "PostLightItem": "",
+  "ImportantItem": "",
+  "Introduction": "在腾讯，优秀的技术质量管理，保证腾讯每一个的产品与服务能更加稳定、顺畅、安心地被用户使用和体验。与技艺高超的同事们一同深化对架构设计、数据和产品的理解，在美好向善的世界里，成为一块闪耀的基石。",
+  "DepartmentIntroduction": "",
+  "RequireWorkYearsName": "> 3 years of working experience"
+ }
+}

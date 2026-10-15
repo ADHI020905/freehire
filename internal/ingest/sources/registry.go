@@ -357,6 +357,10 @@ func All(c HTTPClient) map[string]Source {
 		// IBM: careers.ibm.com sits behind an AWS WAF challenge, so the catalogue — bodies
 		// included — is read from IBM's own site-search API instead. See ibm.go.
 		NewIBM(c),
+		// Tencent: careers.tencent.com, the mainland-China catalogue (international hiring is
+		// Tencent's Workday tenant), read through the site's Technology category and hydrated
+		// from its posting API. See tencent.go.
+		NewTencent(c),
 		// Garena: one keyless listing POST plus a detail GET per posting, which alone holds
 		// the responsibilities and requirements. See garena.go.
 		NewGarena(c),
