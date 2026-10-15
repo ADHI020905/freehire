@@ -448,6 +448,8 @@ func All(c HTTPClient) map[string]Source {
 		NewKaspersky(c),
 		// Magnit Tech: the retail group's IT arm, a keyless JSON API (list → detail).
 		NewMagnit(c),
+		NewLesta(c),
+		NewSelectel(c),
 	)
 	// usajobs, reed, whatjobs and adzuna are the keyed sources: each needs a credential read from
 	// the environment, never from a board file. The credential gates the CRAWL registry only — a
