@@ -1,0 +1,40 @@
+{
+  "job": {
+    "related_jobs": [
+      {
+        "id": "J02067184",
+        "title": "Garena Internship Program",
+        "tags": {
+          "location": [
+            "Jakarta"
+          ],
+          "job_category": [
+            "Strategy"
+          ],
+          "job_type": [
+            "Internship"
+          ]
+        },
+        "description": "<p>Garena Internship Program offers students a chance to explore careers in gaming through real, hands-on work. The GIP participants will support projects across functions like Marketing, Product, Operations, and Growth, while learning directly from experienced professionals in the industry. It’s an opportunity to develop practical skills and discover what it’s like to be part of the Garena team.</p>"
+      }
+    ],
+    "id": "J02058270",
+    "title": "Game Mode Developer Freelance (Onsite)",
+    "tags": {
+      "location": [
+        "Jakarta"
+      ],
+      "job_category": [
+        "Engineering and Technology"
+      ],
+      "job_type": [
+        "Internship"
+      ]
+    },
+    "description": "<p>As a Game Mode Developer you will be responsible for designing and delivering engaging in-game modes (commonly called “maps”) that enhance the player experience across our games. This role combines map ideation, technical execution using the PC Editor, and end-to-end publishing of fully playable maps in-game. By aligning with player preferences, gameplay trends, and seasonal themes, the role ensures our games remain a fresh, dynamic, and competitive space for the community.</p>",
+    "job_description": "<ul><li>Propose, build, and publish new maps aligned with player trends, covering themes, objectives, gameplay mechanics, and key features.</li><li>Test and refine maps to ensure they are bug-free, balanced, and optimized for player enjoyment, including both self-developed maps and those created by professional developers.</li><li>Research and analyze player preferences and trending modes across UGC platforms, providing regular insights to guide map development and improvements.</li><li>Collaborate with product, QA, and content teams to ensure map development and publishing align with seasonal updates and event schedules.</li></ul>",
+    "job_requirements": "<ul><li>Fresh graduates or candidates with up to 2 years of experience in game development or a related field, ideally with an academic background in game development or a relevant major.</li><li>Prior exposure to UGC map design on platforms such as Roblox, Fortnite Creative, Minecraft, or similar; experience with UGC PC editors is required (experience in Craftland PC Editor experience is a strong plus)</li><li>Strong creativity and ability to design innovative, engaging gameplay environments that resonate with player interests.</li><li>Solid project management skills, with a track record of successfully delivering projects both independently and within a team.</li><li>Deep passion for games and a solid understanding of the Indonesian gaming market, including both mobile and non-mobile genres.</li><li>Excellent written and verbal communication skills in both Bahasa Indonesia and English, with the ability to collaborate effectively across teams.</li><li>Willing to work under 3 months freelance contract period for a full WFO arrangement in our office at South Jakarta</li></ul>",
+    "relevant_skills": true,
+    "apply_url": ""
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "filters": {
+    "location": [],
+    "job_type": [
+      {
+        "name": "Entry Level",
+        "display": "Entry Level"
+      },
+      {
+        "name": "Experienced (Individual Contributor)",
+        "display": "Experienced (Individual Contributor)"
+      },
+      {
+        "name": "Experienced (Team Lead)",
+        "display": "Experienced (Team Lead)"
+      },
+      {
+        "name": "Internship",
+        "display": "Internship"
+      }
+    ],
+    "job_category": [
+      {
+        "name": "Engineering and Technology",
+        "display": "Engineering & Technology",
+        "amount": 8
+      },
+      {
+        "name": "Product Management",
+        "display": "Product Management",
+        "amount": 3
+      },
+      {
+        "name": "Design",
+        "display": "Design",
+        "amount": 5
+      },
+      {
+        "name": "Game Design",
+        "display": "Game Design",
+        "amount": 5
+      },
+      {
+        "name": "Game Operations",
+        "display": "Game Operations",
+        "amount": 17
+      },
+      {
+        "name": "Esports",
+        "display": "Esports",
+        "amount": 5
+      },
+      {
+        "name": "Business Intelligence and Data Analytics",
+        "display": "Business Intelligence & Data Analytics",
+        "amount": 1
+      },
+      {
+        "name": "Marketing",
+        "display": "Marketing",
+        "amount": 12
+      },
+      {
+        "name": "Business Development and Partnerships",
+        "display": "Business Development & Partnerships",
+        "amount": 4
+      },
+      {
+        "name": "Strategy",
+        "display": "Strategy",
+        "amount": 9
+      },
+      {
+        "name": "People",
+        "display": "People",
+        "amount": 5
+      },
+      {
+        "name": "Legal and Finance",
+        "display": "Legal & Finance",
+        "amount": 0
+      },
+      {
+        "name": "Garena Management Associate Program",
+        "display": "Management Associate Program",
+        "amount": 0
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "id": "J02058270",
+      "title": "Game Mode Developer Freelance (Onsite)",
+      "tags": {
+        "location": [
+          "Jakarta"
+        ],
+        "job_category": [
+          "Engineering and Technology"
+        ],
+        "job_type": [
+          "Internship"
+        ]
+      },
+      "description": "<p>As a Game Mode Developer you will be responsible for designing and delivering engaging in-game modes (commonly called “maps”) that enhance the player experience across our games. This role combines map ideation, technical execution using the PC Editor, and end-to-end publishing of fully playable maps in-game. By aligning with player preferences, gameplay trends, and seasonal themes, the role ensures our games remain a fresh, dynamic, and competitive space for the community.</p>"
+    },
+    {
+      "id": "J02104326",
+      "title": "Senior Engineer, Backend Engineering",
+      "tags": {
+        "location": [
+          "Singapore"
+        ],
+        "job_category": [
+          "Engineering and Technology"
+        ],
+        "job_type": [
+          "Experienced (Individual Contributor)"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "J02186174",
+      "title": "Esports Marketing Lead",
+      "tags": {
+        "location": [
+          "Bangkok"
+        ],
+        "job_category": [
+          "Esports"
+        ],
+        "job_type": [
+          "Experienced (Team Lead)"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "J02187012",
+      "title": "Game Scouting Consultant (Europe - Part Time)",
+      "tags": {
+        "location": [
+          "Remote"
+        ],
+        "job_category": [
+          "Business Development and Partnerships"
+        ],
+        "job_type": [
+          "Experienced (Individual Contributor)"
+        ]
+      },
+      "description": ""
+    }
+  ]
+}

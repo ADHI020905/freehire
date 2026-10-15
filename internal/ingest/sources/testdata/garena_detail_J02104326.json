@@ -1,0 +1,40 @@
+{
+  "job": {
+    "related_jobs": [
+      {
+        "id": "J02145135",
+        "title": "AI Product Engineer",
+        "tags": {
+          "location": [
+            "Singapore"
+          ],
+          "job_category": [
+            "Engineering and Technology"
+          ],
+          "job_type": [
+            "Experienced (Individual Contributor)"
+          ]
+        },
+        "description": "<p>You will work at the intersection of AI agents, automation, and real business challenges. You will partner closely with product managers, data scientists, and business stakeholders to own, shape and deliver impactful AI products at Garena. </p><p> </p><p>These projects span both internal and external products, including AI-powered operational tools, AI-driven agents and game localization platforms, supporting real-time interactions and global users at scale.</p>"
+      }
+    ],
+    "id": "J02104326",
+    "title": "Senior Engineer, Backend Engineering",
+    "tags": {
+      "location": [
+        "Singapore"
+      ],
+      "job_category": [
+        "Engineering and Technology"
+      ],
+      "job_type": [
+        "Experienced (Individual Contributor)"
+      ]
+    },
+    "description": "",
+    "job_description": "<ul><li>Lead the development, maintenance, and optimization of backend services and key sub-components.</li><li>Work closely with engineers to design, implement, and test scalable APIs and system components.</li><li>Conduct code reviews, testing, and documentation to ensure high-quality software development.</li><li>Participate actively in system design and architecture discussions to improve performance, reliability, and scalability.</li><li>Mentor junior engineers and contribute to the team’s technical growth and best practices.</li></ul>",
+    "job_requirements": "<ul><li>Bachelor’s degree or higher in Computer Science, Information Systems, or a related field.</li><li>At least 3 years of relevant full-time working experience as a Backend Engineer, preferably in large-scale or internet-based systems.</li><li>Proficient in all the following languages: Go, Python, SQL.</li><li>Knowledge and experience in Docker and/or Kubernetes (k8s) is preferable.</li><li>Deep understanding of computer architectures, data structures and algorithms.</li><li>Strong problem solving skills and logical thinking.</li><li>Open-minded, agile and proactive mindset with a strong willingness to learn.</li><li>Good team communication and collaboration skills.</li><li>Strong sense of responsibility and accountability in delivering quality work on time.</li></ul>",
+    "relevant_skills": true,
+    "apply_url": ""
+  }
+}
