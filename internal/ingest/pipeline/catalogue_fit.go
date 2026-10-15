@@ -52,6 +52,29 @@ func outOfCatalogueTitle(title string, hasTechEvidence bool) bool {
 	return classify.ConfirmedNonTech(title, hasTechEvidence)
 }
 
+// listingRejected is the same rule asked of a posting BEFORE its body is bought — the
+// DetailGate answer a CoverageGated adapter consults so it does not pay for a body the filter
+// is going to throw away. A rejected posting is never stored, so it is never seen, so without
+// this a hydrating crawl re-buys every non-technical body on every run.
+//
+// It normalizes the body-less listing exactly as the write path will, so the answer is the
+// write path's answer rather than a second statement of the policy. That only holds while the
+// rule reads nothing the body could change, and it does not: is_tech is decided by the title
+// and the adapter's structured category/hint, and the one description-derived input
+// (NonTechFromDescription) can only fill a NON-technical category, which never supplies the
+// tech evidence that vetoes a rejection. TestListingRejectedAgreesWithTheHydratedPosting pins
+// that. A listing that does not construct answers false — the body is bought, and the write
+// path decides as it always has.
+func listingRejected(e sources.CompanyEntry) func(sources.Job) bool {
+	return func(j sources.Job) bool {
+		dj, err := normalizeJob(e, j, nil)
+		if err != nil {
+			return false
+		}
+		return outOfCatalogue(dj)
+	}
+}
+
 // loggedRejectionSamples is how many rejected titles a board's log line carries. A
 // count alone says how much was dropped but not what — and "what" is the only way to
 // tell an over-broad dictionary term from a board that is genuinely all nurses.

@@ -499,11 +499,12 @@ func All(c HTTPClient) map[string]Source {
 	// meta/uber/gusto are NOT served by the shared client: Meta's edge 400s the default Go
 	// TLS+HTTP/2 fingerprint and Uber's and Gusto's Cloudflare edges challenge it, so all three
 	// need the shared Chrome-fingerprint transport (fingerprintHTTP, also used by the
-	// bayt/gulftalent aggregators and by jobleads — whose search edge rejects the plain Go
-	// fingerprint the same way and serves a Chrome one 200, keyless). Build it only when there
+	// bayt/gulftalent aggregators, by jobleads — whose search edge rejects the plain Go
+	// fingerprint the same way and serves a Chrome one 200, keyless — and by startupjobs'
+	// Cloudflare-challenged pages). Build it only when there
 	// is a real client to serve (the c == nil marker/listing path — e.g. FilterableProviders —
 	// must stay transport-free, so these register with a nil client there; Provider()/boardless()
-	// never touch it). If the deterministic transport build ever fails, all six are left
+	// never touch it). If the deterministic transport build ever fails, all seven are left
 	// unregistered so config validation fails fast on their board entries, rather than
 	// registering a client guaranteed to be rejected by the edge.
 	if c == nil {
@@ -516,6 +517,8 @@ func All(c HTTPClient) map[string]Source {
 		// the source facet) reads this registry, and an aggregator it does not know is never
 		// suppressed in the cross-source dedup.
 		registry["jobleads"] = NewJobleads(nil)
+		// startupjobs likewise: it is an aggregator, and the dedup pass must know it as one.
+		registry["startupjobs"] = NewStartupJobs(nil, nil, nil, 0)
 	} else if fp, err := newFingerprintHTTP(); err == nil {
 		registry["meta"] = NewMetaCareers(fp)
 		registry["bayt"] = NewBayt(fp)
@@ -525,6 +528,11 @@ func All(c HTTPClient) map[string]Source {
 		// The search and detail paths are both paced through one limiter per run, wired here
 		// so every board competes for the same bucket (see pacedJobleadsPoster).
 		registry["jobleads"] = NewJobleads(pacedJobleadsPoster(fp))
+		// startup.jobs splits across both transports: its pages sit behind a Cloudflare
+		// challenge only the fingerprint passes (paced, since that edge counts requests per
+		// IP), while its sitemap CDN and its public Algolia index have no Cloudflare in front
+		// and are read over the shared client.
+		registry["startupjobs"] = NewStartupJobs(pacedStartupJobsSite(fp), c, c, 0)
 	}
 	return registry
 }

@@ -1,0 +1,158 @@
+{
+ "hits": [
+  {
+   "workplace_type_id": "on-site",
+   "city": "San Francisco",
+   "city_id": 250,
+   "country": "United States",
+   "country_code": "US",
+   "country_id": 77,
+   "experience_bucket": "1-3",
+   "highlighted": false,
+   "path": "/senior-software-engineer-fonzi-8724966",
+   "salary_currency": "USD",
+   "salary_interval": "year",
+   "salary_max": 400000,
+   "salary_max_usd": 400000,
+   "salary_min": 150000,
+   "salary_min_usd": 150000,
+   "state_id": 356,
+   "title": "Senior Software Engineer",
+   "employment_type": "full-time",
+   "employment_type_id": "full-time",
+   "company_id": 72180,
+   "company_name": "Fonzi",
+   "company_slug": "fonzi",
+   "company_logo_url": "https://startup.jobs/logos/72180",
+   "company_market_ids": [],
+   "location": "San Francisco, United States",
+   "location_parts": [
+    {
+     "type": "city",
+     "name": "San Francisco",
+     "slug": "san-francisco"
+    },
+    {
+     "type": "state",
+     "name": "California",
+     "slug": "california"
+    },
+    {
+     "type": "country",
+     "name": "U.S.",
+     "slug": "united-states"
+    }
+   ],
+   "created_at_i": 1783634523,
+   "published_at_i": 1791496978,
+   "published_at_iso8601": "2026-10-08T22:02:58Z",
+   "has_salary": true,
+   "role_ids": [
+    1,
+    2,
+    493
+   ],
+   "_tags": [
+    "Developer",
+    "Engineer",
+    "Senior"
+   ],
+   "_geoloc": {
+    "lat": 37.7749295,
+    "lng": -122.4194155
+   },
+   "objectID": "8724966",
+   "_highlightResult": {
+    "title": {
+     "value": "Senior Software Engineer",
+     "matchLevel": "none",
+     "matchedWords": []
+    },
+    "company_name": {
+     "value": "Fonzi",
+     "matchLevel": "none",
+     "matchedWords": []
+    }
+   }
+  },
+  {
+   "workplace_type_id": "on-site",
+   "city": "Montreal",
+   "city_id": 285,
+   "country": "Canada",
+   "country_code": "CA",
+   "country_id": 132,
+   "experience_bucket": null,
+   "highlighted": false,
+   "path": "/canada-impact-emerging-leaders-mcgill-university-mcgill-ca-10346420",
+   "salary_currency": "CAD",
+   "salary_interval": "year",
+   "salary_max": null,
+   "salary_max_usd": null,
+   "salary_min": null,
+   "salary_min_usd": null,
+   "state_id": null,
+   "title": "Canada Impact+ Emerging Leaders (McGill University)",
+   "employment_type": "full-time",
+   "employment_type_id": "full-time",
+   "company_id": 114751,
+   "company_name": "McGill University",
+   "company_slug": "mcgill-ca",
+   "company_logo_url": "https://startup.jobs/logos/114751",
+   "company_market_ids": [
+    8,
+    10,
+    33
+   ],
+   "location": "Montreal, Canada",
+   "location_parts": [
+    {
+     "type": "city",
+     "name": "Montreal",
+     "slug": "montreal"
+    },
+    {
+     "type": "country",
+     "name": "Canada",
+     "slug": "canada"
+    }
+   ],
+   "created_at_i": 1791477663,
+   "published_at_i": 1791492404,
+   "published_at_iso8601": "2026-10-08T20:46:44Z",
+   "has_salary": false,
+   "role_ids": [],
+   "_tags": [],
+   "_geoloc": {
+    "lat": 45.5018869,
+    "lng": -73.56739189999999
+   },
+   "objectID": "10346420",
+   "_highlightResult": {
+    "title": {
+     "value": "Canada Impact+ Emerging Leaders (McGill University)",
+     "matchLevel": "none",
+     "matchedWords": []
+    },
+    "company_name": {
+     "value": "McGill University",
+     "matchLevel": "none",
+     "matchedWords": []
+    }
+   }
+  }
+ ],
+ "nbHits": 278516,
+ "page": 0,
+ "nbPages": 250,
+ "hitsPerPage": 2,
+ "exhaustiveNbHits": true,
+ "exhaustiveTypo": true,
+ "exhaustive": {
+  "nbHits": true,
+  "typo": true
+ },
+ "query": "",
+ "processingTimeMS": 3,
+ "serverTimeMS": 4
+}

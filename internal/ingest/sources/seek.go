@@ -187,8 +187,7 @@ func (s seek) FetchNew(ctx context.Context, e CompanyEntry, seen func(externalID
 // discard them; only the body request is skipped. This matters especially for JobStreet, where
 // a first crawl spans tens of thousands of listings but a substantial share of employers are
 // already covered directly by freehire.
-func (s seek) FetchNewGated(ctx context.Context, e CompanyEntry, seen func(externalID string) bool,
-	covered func(companies []string) map[string]bool) ([]Job, error) {
+func (s seek) FetchNewGated(ctx context.Context, e CompanyEntry, seen func(externalID string) bool, gate DetailGate) ([]Job, error) {
 	m, postings, err := s.crawl(ctx, e)
 	if err != nil {
 		return nil, err
@@ -199,7 +198,7 @@ func (s seek) FetchNewGated(ctx context.Context, e CompanyEntry, seen func(exter
 			names = append(names, company)
 		}
 	}
-	return s.hydrate(ctx, e, m, postings, seen, covered(names)), nil
+	return s.hydrate(ctx, e, m, postings, seen, gate.Covered(names)), nil
 }
 
 func (s seek) hydrate(ctx context.Context, e CompanyEntry, m seekMarket, postings []seekPosting,

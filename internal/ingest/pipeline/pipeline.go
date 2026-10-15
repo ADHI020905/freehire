@@ -958,12 +958,13 @@ func (r Runner) fetchBoard(ctx context.Context, e sources.CompanyEntry, src sour
 		_, ok := set[externalid.Namespace(e.Board, externalID)]
 		return ok
 	}
-	// An adapter that can spend its hydration budget better when it knows which employers the
-	// coverage gate will discard gets the resolver, but only when that gate actually applies
-	// to this board — otherwise the answer would be a meaningless "nothing is covered".
+	// An adapter that can spend its hydration budget better when it knows which postings the
+	// run will discard gets the gate, but only when the coverage gate actually applies to this
+	// board — otherwise its coverage answer would be a meaningless "nothing is covered".
 	if cg, gated := src.(sources.CoverageGated); gated {
 		if covered := r.coverageProbe(ctx, e); covered != nil {
-			jobs, err := cg.FetchNewGated(ctx, e, seen, covered)
+			gate := sources.DetailGate{Covered: covered, Rejected: listingRejected(e)}
+			jobs, err := cg.FetchNewGated(ctx, e, seen, gate)
 			return jobs, set, err
 		}
 	}

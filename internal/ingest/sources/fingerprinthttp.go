@@ -91,7 +91,9 @@ func (c *fingerprintHTTP) get(ctx context.Context, url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("sources: GET %s: status %d", url, resp.StatusCode)
+		// The shared client's *StatusError, so detailUnreadable and isRateLimited can tell a
+		// posting that is gone (404/410) from an edge that refused us (403/429).
+		return nil, &StatusError{Method: fhttp.MethodGet, Code: resp.StatusCode, URL: url}
 	}
 	body, err := io.ReadAll(newCappedReader(resp.Body, url, maxResponseBody))
 	if err != nil {

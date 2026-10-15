@@ -164,8 +164,7 @@ func (s remotedotcom) FetchNew(ctx context.Context, _ CompanyEntry, seen func(ex
 // overwhelmingly run their own ATS, and prod measured ~4.1k of its ~5.7k listings already
 // covered. Those postings are never stored, so they are never seen, so the plain hydrating
 // crawl bought — and threw away — 4.1k bodies every hour.
-func (s remotedotcom) FetchNewGated(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool,
-	covered func(companies []string) map[string]bool) ([]Job, error) {
+func (s remotedotcom) FetchNewGated(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool, gate DetailGate) ([]Job, error) {
 	postings, err := s.crawl(ctx)
 	if err != nil {
 		return nil, err
@@ -176,7 +175,7 @@ func (s remotedotcom) FetchNewGated(ctx context.Context, _ CompanyEntry, seen fu
 			names = append(names, p.CompanyProfile.Name)
 		}
 	}
-	return s.hydrate(ctx, postings, seen, covered(names)), nil
+	return s.hydrate(ctx, postings, seen, gate.Covered(names)), nil
 }
 
 // hydrate maps the crawled listing to Jobs, buying a body only for a posting that needs one.

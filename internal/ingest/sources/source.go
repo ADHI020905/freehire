@@ -197,9 +197,10 @@ type HydratingSource interface {
 	FetchNew(ctx context.Context, e CompanyEntry, seen func(externalID string) bool) ([]Job, error)
 }
 
-// CoverageGated is a HydratingSource that can also skip a posting's detail when the pipeline's
-// aggregator-coverage gate is going to discard that posting anyway — the employer is already
-// covered by a non-aggregator source.
+// CoverageGated is a HydratingSource that can also skip a posting's detail when the pipeline is
+// going to discard that posting anyway — the aggregator-coverage gate because the employer is
+// already covered by a non-aggregator source, or the catalogue filter because the title is
+// confirmed non-technical.
 //
 // It exists because `seen` alone cannot bound the work on such a board. A discarded posting is
 // never stored, so it is never seen, so the ordinary hydrating crawl pays for its body on
@@ -208,18 +209,31 @@ type HydratingSource interface {
 // whole board on one: remote.com lists ~5.7k postings of which ~4.1k are already covered, so
 // 71% of its hydration budget bought nothing, hourly, forever.
 //
-// covered is called ONCE with every company the crawl listed and answers which of them are
-// already covered, keyed by the SAME strings passed in — the adapter states company names and
-// never has to know how freehire slugs them. The pipeline passes a resolver only when the gate
-// actually applies to this board, so an adapter that gets here can trust the answer.
+// The pipeline passes a DetailGate only when the coverage gate actually applies to this board,
+// so an adapter that gets here can trust both of its answers.
 //
-// The contract is about COST, not about the result: a covered posting is still yielded, just
-// without a body. Dropping it instead would be the adapter quietly making the gate's decision,
-// which is the pipeline's to make and to count (Stats.ATSCovered).
+// The contract is about COST, not about the result: a posting either answer condemns is still
+// yielded, just without a body. Dropping it instead would be the adapter quietly making the
+// pipeline's decision, which is the pipeline's to make and to count (Stats.ATSCovered,
+// Stats.Rejected).
 type CoverageGated interface {
 	HydratingSource
-	FetchNewGated(ctx context.Context, e CompanyEntry, seen func(externalID string) bool,
-		covered func(companies []string) map[string]bool) ([]Job, error)
+	FetchNewGated(ctx context.Context, e CompanyEntry, seen func(externalID string) bool, gate DetailGate) ([]Job, error)
+}
+
+// DetailGate is what the pipeline can say about a listed posting BEFORE its body is bought:
+// whether the posting is going to be discarded anyway. Both answers come from the pipeline's
+// own rules, so an adapter never restates catalogue policy — it only decides what to spend.
+type DetailGate struct {
+	// Covered is called ONCE with every company the crawl listed and answers which of them are
+	// already covered by a non-aggregator source, keyed by the SAME strings passed in — the
+	// adapter states company names and never has to know how freehire slugs them.
+	Covered func(companies []string) map[string]bool
+	// Rejected reports whether the catalogue filter will turn the posting away as
+	// non-technical, judged on the body-less Job the adapter built from its listing. The
+	// answer is exact, not a guess: the filter reads the title and the adapter's structured
+	// category signals, never the body (see pipeline's catalogue_fit.go).
+	Rejected func(j Job) bool
 }
 
 // CompanyDescriber is a Source that can also fetch its board's own company-level

@@ -325,3 +325,48 @@ func TestRejectionLogSilentWhenNothingRejected(t *testing.T) {
 		t.Errorf("logged a rejection line with nothing rejected: %s", buf.String())
 	}
 }
+
+// listingRejected answers BEFORE the body is bought, so it is only sound while the body cannot
+// change the answer. Each title here is judged once as the body-less listing and once beside a
+// description loaded with technical and non-technical vocabulary; a disagreement means the
+// filter started reading the description, and a CoverageGated adapter would then skip bodies
+// the write path would have kept.
+func TestListingRejectedAgreesWithTheHydratedPosting(t *testing.T) {
+	e := sources.CompanyEntry{Company: "startup.jobs", Provider: "startupjobs"}
+	bodies := []string{
+		"<p>Registered nurse, cashier and warehouse picker duties; Kubernetes, Go and PostgreSQL.</p>",
+		"<p>We are hiring a backend engineer to build distributed systems in Go.</p>",
+		"<p>Patient care in a hospital ward, night shifts, retail floor experience a plus.</p>",
+	}
+	titles := []string{
+		"Registered Nurse",
+		"Backend Engineer",
+		"Backend Engineer — Teller Systems",
+		"Team Member",
+		"Account Executive",
+		"Warehouse Associate",
+		"DevOps Engineer (HVAC IoT Platform)",
+	}
+	reject := listingRejected(e)
+	for _, title := range titles {
+		listing := sources.Job{ExternalID: "1", URL: "https://example.com/1", Title: title, Company: "Acme"}
+		want := reject(listing)
+		for _, body := range bodies {
+			hydrated := listing
+			hydrated.Description = body
+			dj, err := normalizeJob(e, hydrated, nil)
+			if err != nil {
+				t.Fatalf("normalizeJob(%q): %v", title, err)
+			}
+			if got := outOfCatalogue(dj); got != want {
+				t.Errorf("%q: listing rejected=%v, hydrated rejected=%v with body %q", title, want, got, body)
+			}
+		}
+	}
+	if !reject(sources.Job{ExternalID: "1", URL: "https://example.com/1", Title: "Registered Nurse", Company: "Acme"}) {
+		t.Error("a confirmed non-technical listing must be reported rejected")
+	}
+	if reject(sources.Job{ExternalID: "2", URL: "https://example.com/2", Title: "Backend Engineer", Company: "Acme"}) {
+		t.Error("a technical listing must not be reported rejected")
+	}
+}

@@ -725,12 +725,12 @@ func TestJobStreetFetchNewGatedSkipsCoveredEmployerDetail(t *testing.T) {
 	}
 	jobs, err := gated.FetchNewGated(context.Background(), CompanyEntry{Provider: "jobstreet", Board: "6287", Region: "ph"},
 		func(string) bool { return false },
-		func(companies []string) map[string]bool {
+		DetailGate{Covered: func(companies []string) map[string]bool {
 			if !slices.Contains(companies, "Covered Co") || !slices.Contains(companies, "New Co") {
 				t.Fatalf("coverage companies = %v", companies)
 			}
 			return map[string]bool{"Covered Co": true}
-		})
+		}})
 	if err != nil {
 		t.Fatalf("FetchNewGated: %v", err)
 	}

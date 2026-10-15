@@ -764,16 +764,20 @@ type fakeCoverageGatedSource struct {
 	gatedCalled  bool
 	askedAbout   []string
 	coveredBack  map[string]bool
-	probeReturns bool // set once the probe has answered, so nil vs empty is distinguishable
+	rejectedBack []string // titles the gate said the catalogue filter will reject
+	probeReturns bool     // set once the probe has answered, so nil vs empty is distinguishable
 }
 
 func (f *fakeCoverageGatedSource) FetchNewGated(_ context.Context, _ sources.CompanyEntry,
-	seen func(string) bool, covered func([]string) map[string]bool) ([]sources.Job, error) {
+	seen func(string) bool, gate sources.DetailGate) ([]sources.Job, error) {
 	f.gatedCalled = true
 	for _, j := range f.jobs {
 		f.askedAbout = append(f.askedAbout, j.Company)
+		if gate.Rejected(j) {
+			f.rejectedBack = append(f.rejectedBack, j.Title)
+		}
 	}
-	f.coveredBack = covered(f.askedAbout)
+	f.coveredBack = gate.Covered(f.askedAbout)
 	f.probeReturns = true
 
 	out := make([]sources.Job, len(f.jobs))
@@ -817,6 +821,30 @@ func TestRunPrefersCoverageGatedFetchForAnAggregatorBoard(t *testing.T) {
 	}
 	if src.coveredBack["Beta Corp"] {
 		t.Errorf("covered = %v, want Beta Corp uncovered", src.coveredBack)
+	}
+}
+
+// The gate also carries the catalogue filter's answer, so a CoverageGated adapter does not buy
+// the body of a posting the filter is about to reject — and the answer is the write path's own,
+// so the rejected posting is still counted where every rejection is.
+func TestCoverageGatedFetchIsToldWhatTheCatalogueFilterRejects(t *testing.T) {
+	src := &fakeCoverageGatedSource{fakeHydratingSource: fakeHydratingSource{
+		provider: "himalayas",
+		jobs: []sources.Job{
+			{ExternalID: "1", Title: "Backend Engineer", Company: "Acme", URL: "https://example.com/1"},
+			{ExternalID: "2", Title: "Registered Nurse", Company: "Acme", URL: "https://example.com/2"},
+		},
+	}}
+	r := Runner{Registry: registry(src), Store: &fakeStore{}, Coverage: &fakeCoverage{covered: map[string]bool{}}}
+	stats, err := r.Run(context.Background(), []sources.CompanyEntry{{Company: "Himalayas", Provider: "himalayas"}})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(src.rejectedBack) != 1 || src.rejectedBack[0] != "Registered Nurse" {
+		t.Errorf("gate rejected %v, want only the nurse posting", src.rejectedBack)
+	}
+	if got := stats.Total(); got.Rejected != 1 || got.Ingested != 1 {
+		t.Errorf("stats = %+v, want the rejection counted by the pipeline and the engineer ingested", got)
 	}
 }
 

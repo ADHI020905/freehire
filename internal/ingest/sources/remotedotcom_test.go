@@ -291,7 +291,7 @@ func TestRemotedotcomFetchNewGatedSkipsBodiesForCoveredEmployers(t *testing.T) {
 	}
 
 	jobs, err := NewRemotedotcom(fake).(CoverageGated).FetchNewGated(
-		context.Background(), CompanyEntry{}, func(string) bool { return false }, covered)
+		context.Background(), CompanyEntry{}, func(string) bool { return false }, DetailGate{Covered: covered})
 	if err != nil {
 		t.Fatalf("FetchNewGated: %v", err)
 	}
@@ -333,7 +333,7 @@ func TestRemotedotcomFetchNewGatedStillRefreshesSeenPostings(t *testing.T) {
 	covered := func([]string) map[string]bool { return map[string]bool{"Colibri Group": true} }
 
 	jobs, err := NewRemotedotcom(fake).(CoverageGated).FetchNewGated(
-		context.Background(), CompanyEntry{}, seen, covered)
+		context.Background(), CompanyEntry{}, seen, DetailGate{Covered: covered})
 	if err != nil {
 		t.Fatalf("FetchNewGated: %v", err)
 	}
@@ -352,7 +352,7 @@ func TestRemotedotcomFetchNewGatedWithNoCoverageHydratesEverything(t *testing.T)
 	fake := remotedotcomTwoPageFake()
 	jobs, err := NewRemotedotcom(fake).(CoverageGated).FetchNewGated(
 		context.Background(), CompanyEntry{}, func(string) bool { return false },
-		func([]string) map[string]bool { return nil })
+		DetailGate{Covered: func([]string) map[string]bool { return nil }})
 	if err != nil {
 		t.Fatalf("FetchNewGated: %v", err)
 	}
