@@ -450,6 +450,8 @@ func All(c HTTPClient) map[string]Source {
 		// Kaspersky: no public API; the listing's RSC flight carries the structured fields
 		// and the posting page the body. See kaspersky.go.
 		NewKaspersky(c),
+		// Kontur: one listing page plus a JobPosting ld+json per vacancy. Proxied — see proxy.go.
+		NewKontur(c),
 		// Magnit Tech: the retail group's IT arm, a keyless JSON API (list → detail).
 		NewMagnit(c),
 		NewLesta(c),
