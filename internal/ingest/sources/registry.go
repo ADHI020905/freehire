@@ -123,9 +123,10 @@ func Taxonomy() map[string]Source { return All(nil) }
 // A nil client builds the transport-free taxonomy registry — call Taxonomy for that.
 func All(c HTTPClient) map[string]Source {
 	// SEEK, JobStreet and JobsDB share the same frontend/GraphQL infrastructure and our
-	// crawl egresses from one IP, so their detail requests must compete for ONE token bucket.
-	// Two independent pacedSeekPoster calls would silently double the measured safe rate.
-	seekNetworkDetail := pacedSeekPoster(c)
+	// crawl egresses from one IP, so their detail requests must compete for ONE token bucket
+	// and share one ban state and run budget (seekDetailNetwork). Two independent networks would
+	// silently double the measured safe rate. The proxy lane is attached by ApplyProxyEgress.
+	seekNetworkDetail := newSeekDetailNetwork(pacedSeekPoster(c), nil)
 	// Alfa-Bank, Positive Technologies and Tochka Bank serve certificates issued by the
 	// Russian Trusted Root CA, which no standard trust store carries, so they fail the TLS
 	// handshake on the shared client. They share one client that trusts that extra root —

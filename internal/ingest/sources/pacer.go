@@ -261,6 +261,25 @@ func pacedSeekPoster(c JSONPoster) JSONPoster {
 	}
 }
 
+// The SEEK proxy lane (see seekDetailNetwork) runs on its OWN bucket, never the direct one: it
+// is a different IP, and SEEK's budget is per IP. Its pace is half the direct lane's because the
+// proxy is one static address every proxiedProviders entry already egresses through — eightfold
+// and vagas pace themselves to ~1 req/s on it — and losing it to a SEEK ban as well would leave
+// the network with no lane at all. 1 req/s still spends the whole seekDetailRunBudget inside
+// ~25 minutes, half a run's timeout, should the direct lane be refused on its first request.
+const (
+	seekProxyDetailInterval = time.Second // ~1 req/s
+	seekProxyDetailBurst    = 1
+)
+
+// pacedSeekProxyPoster wraps the proxied poster with its own fresh limiter.
+func pacedSeekProxyPoster(c JSONPoster) JSONPoster {
+	return rateLimitedJSONPoster{
+		inner:   c,
+		limiter: rate.NewLimiter(rate.Every(seekProxyDetailInterval), seekProxyDetailBurst),
+	}
+}
+
 // Eightfold rate-limits an IP to ~290 requests per window (see eightfold.go), and its crawl
 // egresses through the single shared proxy IP alongside a dozen other providers
 // (proxiedProviders) — so its own concurrency cap (eightfoldDetailWorkers) and retry backoff

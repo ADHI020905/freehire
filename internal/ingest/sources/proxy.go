@@ -156,6 +156,17 @@ func ApplyProxyEgress(registry map[string]Source) error {
 			registry[name] = build(refusalRetry)
 		}
 	}
+	// The SEEK network keeps the direct IP and gets a proxy lane for its GraphQL detail only,
+	// taken after SEEK refuses the direct one (seekDetailNetwork). Unlike refusalRetryProviders
+	// the refusal is a 200 carrying a GraphQL error, which the client cannot see, so the switch
+	// is the adapter's. Both providers are rebuilt over ONE network so they share its state.
+	seekDirect := NewClient()
+	seekNetwork := newSeekDetailNetwork(pacedSeekPoster(seekDirect), pacedSeekProxyPoster(NewProxyClient(u)))
+	for name, build := range seekNetworkProviders {
+		if _, ok := registry[name]; ok {
+			registry[name] = build(seekDirect, seekNetwork)
+		}
+	}
 	// Fingerprint-proxied providers need BOTH the Chrome fingerprint and the proxy IP, so they
 	// are rewired over a proxied fingerprint transport rather than the standard proxied client.
 	// Build it once, only when one such provider is actually registered, and fail fast if the

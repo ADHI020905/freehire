@@ -25,23 +25,30 @@ type seek struct {
 	maxPages          int
 	failAtPageCeiling bool
 	http              JSONGetter
-	graphql           JSONPoster
+	details           *seekDetailNetwork
 }
 
 // NewSeek builds the SEEK adapter. The listing and the detail take SEPARATE transports because only
 // one of them needs pacing: the search listing is ~150 requests a run and has never been refused,
 // while the GraphQL detail is metered by a per-IP budget (see seekDetailInterval). sources.All hands
-// the bare client for the first and a paced poster for the second.
-func NewSeek(list JSONGetter, detail JSONPoster) Source {
-	return seek{provider: "seek", markets: seekMarkets, maxPages: seekMaxPages, http: list, graphql: detail}
+// the bare client for the first and the network's one shared detail client for the second.
+func NewSeek(list JSONGetter, detail *seekDetailNetwork) Source {
+	return seek{provider: "seek", markets: seekMarkets, maxPages: seekMaxPages, http: list, details: detail}
 }
 
 // NewJobStreet builds the JobStreet/JobsDB adapter over the same SEEK frontend protocol.
 // JobStreet (SG/MY/ID/PH) and JobsDB (HK/TH) share SEEK's v5 search and GraphQL schemas but use
 // different market hosts/site keys, so they are one implementation with a distinct provider
 // identity and board catalogue.
-func NewJobStreet(list JSONGetter, detail JSONPoster) Source {
-	return seek{provider: "jobstreet", markets: jobStreetMarkets, maxPages: jobStreetMaxPages, failAtPageCeiling: true, http: list, graphql: detail}
+func NewJobStreet(list JSONGetter, detail *seekDetailNetwork) Source {
+	return seek{provider: "jobstreet", markets: jobStreetMarkets, maxPages: jobStreetMaxPages, failAtPageCeiling: true, http: list, details: detail}
+}
+
+// seekNetworkProviders are the adapters that share one seekDetailNetwork. ApplyProxyEgress rebuilds
+// them together over a network that has a proxy lane, so a ban either of them meets moves both.
+var seekNetworkProviders = map[string]func(JSONGetter, *seekDetailNetwork) Source{
+	"seek":      NewSeek,
+	"jobstreet": NewJobStreet,
 }
 
 func (s seek) Provider() string { return s.provider }
@@ -217,13 +224,16 @@ func (s seek) hydrate(ctx context.Context, e CompanyEntry, m seekMarket, posting
 			base.Description = "" // aggregator gate will discard it; a detail request is pure loss
 			return base, true
 		}
-		body, ok := s.detail(ctx, m, p.ID)
-		if !ok {
+		body, outcome := s.details.content(ctx, s.provider, m.host, p.ID)
+		switch outcome {
+		case detailHydrated:
+			base.Description += sanitizeHTML(body) // base.Description is the salary paragraph (or "")
+			return base, true
+		case detailFailed:
 			log.Printf("%s: detail %s/%s failed; deferring the posting to the next crawl", s.provider, e.Region, p.ID)
-			return Job{}, false
 		}
-		base.Description += body // base.Description is the salary paragraph (or "")
-		return base, true
+		// detailStopped is network-wide and was logged once when it happened, not per posting.
+		return Job{}, false
 	})
 }
 
@@ -277,49 +287,6 @@ func (p seekPosting) employer() string {
 		return ""
 	}
 	return name
-}
-
-// seekDetailQuery is the description-fetching GraphQL operation. Its variables are declared exactly
-// as used: SEEK's endpoint rejects an unused variable with GRAPHQL_VALIDATION_FAILED rather than
-// ignoring it — which is the useful half of the bargain, since a drifted field fails loudly instead
-// of silently emptying every body.
-const seekDetailQuery = `query jobDetails($jobId: ID!) {
-  jobDetails(id: $jobId) {
-    job {
-      content(platform: WEB)
-    }
-  }
-}`
-
-// seekDetailResponse is the slice of the GraphQL reply the adapter reads.
-type seekDetailResponse struct {
-	Data struct {
-		JobDetails struct {
-			Job struct {
-				Content string `json:"content"`
-			} `json:"job"`
-		} `json:"jobDetails"`
-	} `json:"data"`
-}
-
-// detail fetches a posting's description through SEEK's GraphQL endpoint and returns it sanitized.
-// ok is false on a failed request or a reply carrying no content, so the caller falls back to the
-// list-only job rather than dropping the posting.
-func (s seek) detail(ctx context.Context, m seekMarket, id string) (string, bool) {
-	body := map[string]any{
-		"operationName": "jobDetails",
-		"query":         seekDetailQuery,
-		"variables":     map[string]any{"jobId": id},
-	}
-	var resp seekDetailResponse
-	if err := s.graphql.PostJSON(ctx, m.host+"/graphql", body, &resp); err != nil {
-		return "", false
-	}
-	content := resp.Data.JobDetails.Job.Content
-	if strings.TrimSpace(content) == "" {
-		return "", false
-	}
-	return sanitizeHTML(content), true
 }
 
 // workMode maps SEEK's structured work arrangements into our work-mode vocabulary, preferring the
