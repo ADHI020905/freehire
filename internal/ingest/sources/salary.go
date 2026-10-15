@@ -34,3 +34,19 @@ func isSalaryPeriod(period string) bool {
 	}
 	return false
 }
+
+// rubMonthlySalary states a Russian employer's own salary bounds: roubles per month, the
+// convention every Russian careers site (and hh.ru) quotes in. A posting with neither bound
+// states no salary at all.
+func rubMonthlySalary(from, to *float64) (salaryMin, salaryMax *int, currency, period string) {
+	if from != nil {
+		salaryMin = roundSalaryPart(*from)
+	}
+	if to != nil {
+		salaryMax = roundSalaryPart(*to)
+	}
+	if salaryMin == nil && salaryMax == nil {
+		return nil, nil, "", ""
+	}
+	return salaryMin, salaryMax, "RUB", "month"
+}

@@ -1,0 +1,28 @@
+{
+ "cities": [
+  {
+   "id": 2374,
+   "priority": 120,
+   "title": "Удаленный формат",
+   "slug": "udalennyj-format"
+  },
+  {
+   "id": 2375,
+   "priority": 110,
+   "title": "Все города",
+   "slug": "vse-goroda"
+  },
+  {
+   "id": 1,
+   "priority": 100,
+   "title": "Москва",
+   "slug": "moskva"
+  },
+  {
+   "id": 16,
+   "priority": 0,
+   "title": "Волгоград",
+   "slug": "volgograd"
+  }
+ ]
+}

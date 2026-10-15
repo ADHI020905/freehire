@@ -313,3 +313,11 @@ func isRateLimited(err error) bool {
 	var se *StatusError
 	return errors.As(err, &se) && (se.Code == 403 || se.Code == 429)
 }
+
+// headedSection renders one body section under its heading, or "" when it is empty.
+func headedSection(heading, body string) string {
+	if strings.TrimSpace(body) == "" {
+		return ""
+	}
+	return "<h3>" + heading + "</h3>" + body
+}

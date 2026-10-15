@@ -1,0 +1,86 @@
+{
+ "page": 2,
+ "pages": 2,
+ "total": 82,
+ "vacancies": [
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 3876,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1750344039,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "vedushchij-sistemnyj-analitik-3876",
+   "specialties": [
+    "Системный анализ"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "Ведущий системный аналитик"
+  },
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 4143,
+   "organisation": {
+    "id": 1,
+    "title": "МегаФон"
+   },
+   "publishedAt": 1758107064,
+   "sector": {
+    "id": 1,
+    "title": "Бизнес-направления",
+    "slug": "biznes-napravlenia"
+   },
+   "slug": "menedzher-po-razvitiyu-proektov-na-marketplejsah-4143",
+   "specialties": [
+    "Управление продажами в рознице"
+   ],
+   "tag": null,
+   "title": "Менеджер по развитию проектов на маркетплейсах"
+  },
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 3941,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1756125680,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "sistemnyj-analitik-3941",
+   "specialties": [
+    "Архитектура",
+    "Системный анализ"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "Системный аналитик"
+  }
+ ]
+}

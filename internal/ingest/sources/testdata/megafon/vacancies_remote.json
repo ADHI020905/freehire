@@ -1,0 +1,112 @@
+{
+ "page": 1,
+ "pages": 1,
+ "total": 4,
+ "vacancies": [
+  {
+   "city": {
+    "id": 2374,
+    "title": "Удаленный формат",
+    "slug": "udalennyj-format"
+   },
+   "id": 4794,
+   "organisation": {
+    "id": 3,
+    "title": "ЕдиныйФактор"
+   },
+   "publishedAt": 1791818345,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "product-manager-na-produkt-lidogeneratsiya-4794",
+   "specialties": [
+    "Развитие продуктов"
+   ],
+   "tag": {
+    "title": "Гибридный график",
+    "code": "hybrid_shift"
+   },
+   "title": "Product Manager на продукт \"Лидогенерация\""
+  },
+  {
+   "city": {
+    "id": 2374,
+    "title": "Удаленный формат",
+    "slug": "udalennyj-format"
+   },
+   "id": 4763,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1789561922,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "android-razrabotchik-4763",
+   "specialties": [
+    "Мобильная разработка"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "Android-разработчик"
+  },
+  {
+   "city": {
+    "id": 2374,
+    "title": "Удаленный формат",
+    "slug": "udalennyj-format"
+   },
+   "id": 4733,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1786611664,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "sistemnyj-analitik-senior-4733",
+   "specialties": [
+    "Системный анализ"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "Системный аналитик (senior)"
+  },
+  {
+   "city": {
+    "id": 2374,
+    "title": "Удаленный формат",
+    "slug": "udalennyj-format"
+   },
+   "id": 4511,
+   "organisation": {
+    "id": 1,
+    "title": "МегаФон"
+   },
+   "publishedAt": 1785369600,
+   "sector": {
+    "id": 6,
+    "title": "Центр клиентского сервиса",
+    "slug": "call-centry"
+   },
+   "slug": "spetsialist-po-distantsionnomu-obsluzhivaniyu-tsentr-4511",
+   "specialties": [
+    "Call-центры"
+   ],
+   "tag": null,
+   "title": "Специалист по дистанционному обслуживанию Центр"
+  }
+ ]
+}

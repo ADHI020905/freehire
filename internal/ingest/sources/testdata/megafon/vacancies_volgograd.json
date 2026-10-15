@@ -1,0 +1,61 @@
+{
+ "page": 1,
+ "pages": 1,
+ "total": 6,
+ "vacancies": [
+  {
+   "city": {
+    "id": 16,
+    "title": "Волгоград",
+    "slug": "volgograd"
+   },
+   "id": 3876,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1750344039,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "vedushchij-sistemnyj-analitik-3876",
+   "specialties": [
+    "Системный анализ"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "Ведущий системный аналитик"
+  },
+  {
+   "city": {
+    "id": 16,
+    "title": "Волгоград",
+    "slug": "volgograd"
+   },
+   "id": 3875,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1750343791,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "devops-inzhener-3875",
+   "specialties": [
+    "DevOps/SRE"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "DevOps инженер"
+  }
+ ]
+}

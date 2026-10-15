@@ -1,0 +1,110 @@
+{
+ "page": 1,
+ "pages": 2,
+ "total": 82,
+ "vacancies": [
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 4801,
+   "organisation": {
+    "id": 1,
+    "title": "МегаФон"
+   },
+   "publishedAt": 1791985626,
+   "sector": {
+    "id": 2,
+    "title": "Сеть",
+    "slug": "set"
+   },
+   "slug": "inzhener-energetik-4801",
+   "specialties": [
+    "Эксплуатация сети"
+   ],
+   "tag": null,
+   "title": "Инженер-энергетик"
+  },
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 4800,
+   "organisation": {
+    "id": 1,
+    "title": "МегаФон"
+   },
+   "publishedAt": 1791959274,
+   "sector": {
+    "id": 2,
+    "title": "Сеть",
+    "slug": "set"
+   },
+   "slug": "starshij-inzhener-po-energeticheskim-sistemam-tsod-4800",
+   "specialties": [
+    "Эксплуатация сети"
+   ],
+   "tag": null,
+   "title": "Старший инженер по энергетическим системам ЦОД"
+  },
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 4798,
+   "organisation": {
+    "id": 6,
+    "title": "МегаТех"
+   },
+   "publishedAt": 1791896670,
+   "sector": {
+    "id": 3,
+    "title": "ИТ-решения",
+    "slug": "it-reshenia"
+   },
+   "slug": "java-razrabotchik-informatsionnyh-sistem-sobstvennoj-roznitsy-4798",
+   "specialties": [
+    "Backend"
+   ],
+   "tag": {
+    "title": "Удаленка",
+    "code": "remote"
+   },
+   "title": "Java разработчик информационных систем собственной розницы"
+  },
+  {
+   "city": {
+    "id": 1,
+    "title": "Москва",
+    "slug": "moskva"
+   },
+   "id": 4797,
+   "organisation": {
+    "id": 1,
+    "title": "МегаФон"
+   },
+   "publishedAt": 1791883931,
+   "sector": {
+    "id": 1,
+    "title": "Бизнес-направления",
+    "slug": "biznes-napravlenia"
+   },
+   "slug": "starshij-analitik-po-abonentskoj-baze-4797",
+   "specialties": [
+    "Финансы",
+    "Аналитика"
+   ],
+   "tag": {
+    "title": "Быстрый карьерный рост",
+    "code": "fast_growth"
+   },
+   "title": "Старший аналитик по абонентской базе"
+  }
+ ]
+}

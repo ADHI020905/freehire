@@ -1,0 +1,34 @@
+{
+ "page": 1,
+ "pages": 1,
+ "total": 1,
+ "vacancies": [
+  {
+   "city": {
+    "id": 2375,
+    "title": "Все города",
+    "slug": "vse-goroda"
+   },
+   "id": 3284,
+   "organisation": {
+    "id": 4,
+    "title": "МегаФон Ритейл"
+   },
+   "publishedAt": 1758153600,
+   "sector": {
+    "id": 5,
+    "title": "Офисы продаж",
+    "slug": "ofisy-prodaz"
+   },
+   "slug": "menedzher-po-prodazham-3284",
+   "specialties": [
+    "Старт карьеры"
+   ],
+   "tag": {
+    "title": "Быстрый карьерный рост",
+    "code": "fast_growth"
+   },
+   "title": "Менеджер по продажам"
+  }
+ ]
+}
