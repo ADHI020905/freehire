@@ -1,0 +1,82 @@
+{
+ "took": 15,
+ "timed_out": false,
+ "_shards": {
+  "total": 20,
+  "successful": 20,
+  "skipped": 0,
+  "failed": 0
+ },
+ "hits": {
+  "total": {
+   "value": 3,
+   "relation": "eq"
+  },
+  "max_score": null,
+  "hits": [
+   {
+    "_index": "genesis-prod-1788036777996",
+    "_id": "38be7f05ec333e27357ae5bea2506a77a6da780cab0764d6aa623351eb433275",
+    "_score": null,
+    "_source": {
+     "url": "https://careers.ibm.com/careers/JobDetail?jobId=136943",
+     "dcdate": "2026-10-13",
+     "title": "Internship Cloud FullStack Developer",
+     "body": "A career in IBM Consulting is built on long-term client relationships and close collaboration worldwide. Youâ€™ll work with leading companies across industries, helping them shape their hybrid cloud and AI journeys. With support from our strategic partners, robust IBM technology, and Red Hat, youâ€™ll have the tools to drive meaningful change and accelerate client impact. At IBM Consulting, curiosity fuels success. Youâ€™ll be encouraged to challenge the norm, explore new ideas, and create innovative solutions that deliver real results. Our culture of growth and empathy focuses on your long-term career development while valuing your unique skills and experiences. We are looking for motivated and tech-passionate new graduates to support development and running phase of application solutions. This role requires ability to understand architectures of existing applications, support development of new functionalities and/or re-engineer highly complex application components, to integrate software packages and reusable objects. You will work with senior IBM architects, analysts, and developers in order to learn how you can understand enterprise IT ecosystems, how to verify the correct executions of applications and batches, how to enhance them in order to introduce new functionalities that bring benefits and innovation to the customer solutions. Moreover, you will have access to the latest education, tools and technology, and a career path within the world’s technology leader company. Proficiency in the Italian language is required. In line with applicable pay transparency requirements, we are sharing the applicable base pay (gross). Projected salary: monthly amount 600 EUR. If you are successfully selected for offer, we will share the full details of the compensation package. We are looking for candidates with the following background and skills:  * Proficiency in the Italian language is required.  * Graduate Resources with Bachelor or Master Degree in one of the followings fields: Computer Science, Engineering, Mathematics  * Intermediate knowledge of English language  * Good interpersonal and communication skills Are very appreciated:  •    knowledge of the java programming language  •    SQL   •    Relational and Non-relational database Italy Software Engineering Hybrid Internship Multiple Cities (1413) IBM Client Innovation Center Milano S.r.l",
+     "field_keyword_05": "Italy",
+     "field_keyword_08": "Software Engineering",
+     "field_keyword_17": "Hybrid",
+     "field_keyword_18": "Internship",
+     "field_keyword_19": "Multiple Cities",
+     "field_keyword_20": "(1413) IBM Client Innovation Center Milano S.r.l",
+     "field_text_01": 136943
+    },
+    "sort": [
+     "38be7f05ec333e27357ae5bea2506a77a6da780cab0764d6aa623351eb433275"
+    ]
+   },
+   {
+    "_index": "genesis-prod-1788036777996",
+    "_id": "3bbeaf2a6bc8dd28cf5c69b18dfe15fe59caa5ee6b30ce016dca9134baebf7af",
+    "_score": null,
+    "_source": {
+     "url": "https://careers.ibm.com/careers/JobDetail?jobId=136940",
+     "dcdate": "2026-10-14",
+     "title": "DBA - Data Consultant-Data Governance",
+     "body": "A career in IBM Consulting is built on long-term client relationships and close collaboration worldwide. Youâ€™ll work with leading companies across industries, helping them shape their hybrid cloud and AI journeys. With support from our strategic partners, robust IBM technology, and Red Hat, youâ€™ll have the tools to drive meaningful change and accelerate client impact. At IBM Consulting, curiosity fuels success. Youâ€™ll be encouraged to challenge the norm, explore new ideas, and create innovative solutions that deliver real results. Our culture of growth and empathy focuses on your long-term career development while valuing your unique skills and experiences. As an Data Consultant-Data Governance, you will act as a trusted advisor to Client IT, providing expertise in infrastructure, security, and risk management. Your primary responsibility will be to ensure high-quality technical support, meeting Service Level Agreements (SLAs) and adhering to process compliance. Your primary responsibilities will include: • Analyze and Resolve Incidents: Analyze and resolve infrastructure-related incidents, minimizing downtime and ensuring prompt restoration of services. This involves identifying root causes, implementing fixes, and verifying resolution. • Provision and Deploy Infrastructure: Provision, deploy, configure, and migrate infrastructure products to meet client needs, ensuring seamless integration and minimal disruption to services. • Conduct Risk Assessments: Conduct business impact analyses and risk assessments to identify potential vulnerabilities, providing recommendations to mitigate risks and enhance overall IT resilience. • Manage and Support Infrastructure: Manage and support infrastructure products, ensuring they are running at optimal levels, meeting performance and security requirements, and adhering to process compliance. • Ensure Process Compliance: Ensure that all infrastructure-related activities are performed in accordance with established processes and procedures, meeting SLAs and regulatory requirements. In line with applicable pay transparency requirements, we are sharing the annual base pay range (gross). 27.000EUR – 57.200 EUR. These amounts are based on a full-time schedule over a full calendar year. CCNL: Contratto Collettivo Nazionale di Lavoro per l’Industria Metalmeccanica Privata e della Installazione di Impianti. CCNL category: C2-C3 The final offer will be determined in line with your skills, qualifications, and experience, as permitted under applicable local law and on the basis of objective, gender-neutral criteria.At IBM, we offer a comprehensive benefits package, which includes o Meal vouchers o Health insurance o Pension fund o Smart working o Welfare services o Career development o IBM discounts on sports, travel, cultural activities, shopping, beauty and more o Recognition (award) o Technical Certification Program o Employee Assistance Program o Employee Tax assistance If you are successfully selected for offer, we will share the full details of the compensation package. Exposure to Infrastructure Management: Experience working with infrastructure products, including provisioning, deployment, configuration, and migration, with a focus on ensuring seamless integration and minimal disruption to services.  Incident Analysis and Resolution: Exposure to analyzing and resolving infrastructure-related incidents, including identifying root causes, implementing fixes, and verifying resolution to minimize downtime and ensure prompt restoration of services.  Risk Assessment and Mitigation: Experience working with business impact analyses and risk assessments to identify potential vulnerabilities, providing recommendations to mitigate risks and enhance overall IT resilience.  Infrastructure Support and Maintenance: Exposure to managing and supporting infrastructure products, ensuring they are running at optimal levels, meeting performance and security requirements, and adhering to process compliance.  Process Compliance and SLA Management: Experience working with established processes and procedures to ensure that all infrastructure-related activities meet SLAs and regulatory requirements. As a Infrastructure Specialist, we are looking for candidates with the following background and skills:    •.         Knowledge of Databases: Oracle 19 and 11  (must have) and others.    •          Installation, configuration, server administration, creation of scripts and automatic tasks, update.  •          Excellent knowledge of various operating systems: Linux RHEL, Linux Centos, Unix in general.  •          Knowledge of IBM  WebSphere. •          Experience as a System Administrator. •          Applies knowledge of Networking, Storage, Computer, Security Services.  •          Understands SLA management, services health management and key metrics monitoring.  •           Experience as a System Administrator •          Able to produce documentation for use by team and customer. •          Good level of English is required as the candidate will be working directly with the customer’s team •          Good interpersonal and communication skills Italy Consulting Hybrid Professional Multiple Cities (1413) IBM Client Innovation Center Milano S.r.l",
+     "field_keyword_05": "Italy",
+     "field_keyword_08": "Consulting",
+     "field_keyword_17": "Hybrid",
+     "field_keyword_18": "Professional",
+     "field_keyword_19": "Multiple Cities",
+     "field_keyword_20": "(1413) IBM Client Innovation Center Milano S.r.l",
+     "field_text_01": 136940
+    },
+    "sort": [
+     "3bbeaf2a6bc8dd28cf5c69b18dfe15fe59caa5ee6b30ce016dca9134baebf7af"
+    ]
+   },
+   {
+    "_index": "genesis-prod-1788036777996",
+    "_id": "dcaab03e910480ea53cb56f0a9b1998007bf0a2a559a97c8ed819159fed33c45",
+    "_score": null,
+    "_source": {
+     "url": "https://careers.ibm.com/careers/JobDetail?jobId=136151",
+     "dcdate": "2026-10-12",
+     "title": "Data Consultant-Data Governance",
+     "body": "A career in IBM Consulting is built on long-term client relationships and close collaboration worldwide. You’ll work with leading companies across industries, helping them shape their hybrid cloud and AI journeys. With support from our strategic partners, robust IBM technology, and Red Hat, you’ll have the tools to drive meaningful change and accelerate client impact. At IBM Consulting, curiosity fuels success. You’ll be encouraged to challenge the norm, explore new ideas, and create innovative solutions that deliver real results. Our culture of growth and empathy focuses on your long-term career development while valuing your unique skills and experiences. As an Infrastructure Specialist in Platform Engineering Services, you will act as a trusted advisor to Client IT, providing expertise in infrastructure, security, and risk management. Your primary responsibility will be to ensure high-quality technical support, meeting Service Level Agreements (SLAs) and adhering to process compliance. Your primary responsibilities will include: • Analyze and Resolve Incidents: Analyze and resolve infrastructure-related incidents, minimizing downtime and ensuring prompt restoration of services. This involves identifying root causes, implementing fixes, and verifying resolution. • Provision and Deploy Infrastructure: Provision, deploy, configure, and migrate infrastructure products to meet client needs, ensuring seamless integration and minimal disruption to services. • Conduct Risk Assessments: Conduct business impact analyses and risk assessments to identify potential vulnerabilities, providing recommendations to mitigate risks and enhance overall IT resilience. • Manage and Support Infrastructure: Manage and support infrastructure products, ensuring they are running at optimal levels, meeting performance and security requirements, and adhering to process compliance. • Ensure Process Compliance: Ensure that all infrastructure-related activities are performed in accordance with established processes and procedures, meeting SLAs and regulatory requirements. As a Infrastructure Specialist, we are looking for candidates with the following background and skills:    •.         Excellent knowledge of Databases: Oracle 19 and 11  (must have) and others.    •          Installation, configuration, server administration, creation of scripts and automatic tasks, update.  •          Excellent knowledge of various operating systems: Linux RHEL, Linux Centos, Unix in general.  •          Knowledge of IBM  WebSphere. •          Experience as a System Administrator. •          Applies knowledge of Networking, Storage, Computer, Security Services.  •          Understands SLA management, services health management and key metrics monitoring.  •           Experience as a System Administrator •          Able to produce documentation for use by team and customer. •          Good level of English is required as the candidate will be working directly with the customer’s team •          Good interpersonal and communication skills • Advanced Infrastructure Knowledge: Exposure to complex infrastructure products, including provisioning, deployment, configuration, and migration, with a focus on ensuring seamless integration and minimal disruption to services. • Enhanced Incident Analysis: Exposure to advanced incident analysis and resolution techniques, including identifying root causes, implementing fixes, and verifying resolution to minimize downtime and ensure prompt restoration of services. • Risk Assessment Expertise: Exposure to conducting comprehensive business impact analyses and risk assessments to identify potential vulnerabilities, with an understanding of providing recommendations to mitigate risks and enhance overall IT resilience. Italy Consulting Hybrid Professional Bari, IT (1413) IBM Client Innovation Center Milano S.r.l",
+     "field_keyword_05": "Italy",
+     "field_keyword_08": "Consulting",
+     "field_keyword_17": "Hybrid",
+     "field_keyword_18": "Professional",
+     "field_keyword_19": "Bari, IT",
+     "field_keyword_20": "(1413) IBM Client Innovation Center Milano S.r.l",
+     "field_text_01": 136151
+    },
+    "sort": [
+     "dcaab03e910480ea53cb56f0a9b1998007bf0a2a559a97c8ed819159fed33c45"
+    ]
+   }
+  ]
+ }
+}

@@ -354,6 +354,9 @@ func All(c HTTPClient) map[string]Source {
 		NewAmazon(c),
 		NewGoogle(c),
 		NewApple(c),
+		// IBM: careers.ibm.com sits behind an AWS WAF challenge, so the catalogue — bodies
+		// included — is read from IBM's own site-search API instead. See ibm.go.
+		NewIBM(c),
 		NewLumenalta(c),
 		// Staffy: a single recruiting agency's own board, boardless like Lumenalta; both the
 		// listing and detail pages are fully static server-rendered HTML.
