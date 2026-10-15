@@ -158,6 +158,12 @@ func All(c HTTPClient) map[string]Source {
 		NewBambooHR(c),
 		NewWorkday(c),
 		NewHuntflow(c),
+		// FriendWork: Russian ATS, board = career-portal token; one keyless JSON request returns
+		// the whole list with bodies. Run sequentially at a measured pace (see pacer.go).
+		NewFriendWork(limitedFriendWorkGetter(c)),
+		// Potok: Russian ATS, board = tenant subdomain; one server-rendered listing page, bodies
+		// hydrated from posting pages for new postings only.
+		NewPotok(limitedPotokGetter(c)),
 		NewInhire(c),
 		NewHiBob(c),
 		NewGem(c),

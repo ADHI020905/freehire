@@ -131,6 +131,7 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"apply.workable.com", "workable", modePath},
 	{"jobs.deel.com", "deel", modePath},
 	{"jobs.gem.com", "gem", modePath},
+	{"jobs.friend.work", "friendwork", modePath}, // FriendWork career portal: jobs.friend.work/<token>/<id>
 	{"jobs.jobvite.com", "jobvite", modePath},
 	// HERP's board sits at /v1/<board>/… — "v1" is platform machinery, reserved below, the
 	// same shape Gusto's "boards" word already uses.
@@ -191,6 +192,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"breezy.hr", "breezy", modeSubdomain},
 	{"freshteam.com", "freshteam", modeSubdomain},
 	{"peopleforce.io", "peopleforce", modeSubdomain},
+	// Potok: <tenant>.potok.io/open/jobs/<id>. Its own infrastructure hosts share the wildcard
+	// certificate, so they are listed in platformLabelsByApex.
+	{"potok.io", "potok", modeSubdomain},
 	{"jobs.personio.com", "personio", modeSubdomain},
 	{"jobs.personio.de", "personio", modeSubdomain}, // Personio DE regional host; board = same tenant subdomain
 	{"pinpointhq.com", "pinpoint", modeSubdomain},
@@ -835,6 +839,7 @@ var platformLabels = map[string]bool{
 // board recruitee.yml actually tracks. Declining it everywhere would drop a board we crawl.
 var platformLabelsByApex = map[string][]string{
 	"hrmdirect.com": {"apply"},
+	"potok.io":      {"www", "stages", "qa", "sentry"},
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —

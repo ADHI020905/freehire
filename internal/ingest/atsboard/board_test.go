@@ -232,6 +232,11 @@ func TestRecognize(t *testing.T) {
 		{"hrmdirect upper-case host folds", "https://500DegreesStudio.HRMDirect.com/employment/job-opening.php?req=1", "hrmdirect", "500degreesstudio", "https://500DegreesStudio.HRMDirect.com", true},
 		{"hrmdirect apply host is the platform's, not a board", "https://apply.hrmdirect.com/resumes/click2apply.php?req=1", "", "", "", false},
 		{"hrmdirect bare apex no tenant", "https://hrmdirect.com/", "", "", "", false},
+		{"potok vacancy", "https://oteko.potok.io/open/jobs/1431267", "potok", "oteko", "https://oteko.potok.io", true},
+		{"potok listing", "https://domrf.potok.io/open/jobs/", "potok", "domrf", "https://domrf.potok.io", true},
+		{"potok platform host is not a tenant", "https://app.potok.io/open/jobs/1", "", "", "", false},
+		{"potok infrastructure host is not a tenant", "https://stages.potok.io/", "", "", "", false},
+		{"friendwork vacancy", "https://jobs.friend.work/TeDo/97846", "friendwork", "TeDo", "https://jobs.friend.work/TeDo/97846", true},
 		// "apply" is HRM Direct's own host and a REAL recruitee board (recruitee.yml tracks it),
 		// so the guard is scoped to the apex that needs it. Declining it everywhere would drop a
 		// board the catalogue already crawls.

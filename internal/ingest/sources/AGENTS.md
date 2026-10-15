@@ -504,6 +504,22 @@ Source ingest: the provider registry and its adapters, entry validation, the per
 - **The "Restrictions" flags are form defaults, not facts.** "No telecommuting" sits on a posting whose location reads "Warsaw (fully remote), Poland"; it is left in the body and not mapped to a work mode. The location is free text ("Remote, Remote/Worldwide, Remote/Worldwide", "100% Remote, USA Only") and is left to the location dictionary. Agencies post too ("mindIT HR Agency (on behalf of a confidential client)") and are stored under that name.
 - **Every live posting was filed under "Developer / Engineer"**, the board is Python-only, so `IsTechHint` is set. No metering seen over ~70 requests at our UA, a full 8-way concurrent crawl included.
 
+**Potok traps** (`potok`; verified live 2026-10-14):
+
+- **`*.potok.io` is a wildcard in DNS and in the certificate**, so neither names a tenant; only `GET <slug>.potok.io/open/jobs/` does (200 against 404). The tenant list was found by probing guessed slugs (780 tenants, 130 with live postings).
+- **A tenant with nothing open still renders `.postings-wrapper`, empty.** A 200 without it is not the career page, and `list` fails the board rather than reading it as empty.
+- **The listing groups postings, and the group is a department — except on a hub.** On `tehnopark-skolkovo` each group is a resident company, so that board must be added as a hub (`cmd/add-board --hub`); the adapter then files each posting under its group and falls back to the configured company for a blank one.
+- **Neither page states a salary or a publish date.** The posting page's headline renders the city and the schedule as two `sort-by-time` categories in that order; the schedule is an hh-style picklist and only `Удаленная работа` says anything about the arrangement, so only it sets `WorkMode`.
+- **No throttling at ~12 req/s from 3 workers**, the only rate measured, so `limitedPotokGetter` holds the run to 3 in flight.
+
+**FriendWork traps** (`friendwork`; verified live 2026-10-14):
+
+- **`page`/`perPage` are ignored** — the response says `perPage: 20` and carries 151 postings, and `page=2` returns the same 151 — so one request is the whole board.
+- **The API meters simultaneity:** two parallel workers drew 429s, sequential ~2 req/s did not. `limitedFriendWorkGetter` runs one request at a time at that pace; harvest probes through the same registry, so they inherit it.
+- **Salary is monthly by the platform's own rendering** (`<from> <to> <currency>/month`, read off the portal bundle), so `SalaryPeriod` is `month`; `0` means unstated, and `currency` is a numeric enum (0 RUB … 7 UZS).
+- **Unset enums are the STRING `"-1"`**, not a number or null; they map to nothing. Dates carry no zone and are read as UTC.
+- **Tokens are case-insensitive** (`TeDo` = `tedo`); the catalogue's unique index on `lower(board)` already folds them. Many portals still list postings years old — the platform says they are published, and the listing is the only evidence there is.
+
 ## Limitations
 - The ingest sweep has a trade-off: a missed run can leave an orphan open until a future reconcile; the change window is sized wide enough to absorb a skipped cron.
 - Self-closing sources: a missed `removed` event from the feed can leave a vacancy open until the next reindex.

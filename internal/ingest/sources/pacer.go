@@ -569,3 +569,36 @@ const wellfoundMaxInFlight = 1
 func limitedWellfoundGetter(c HTMLGetter) HTMLGetter {
 	return concurrencyLimitedHTMLGetter{inner: c, sem: make(chan struct{}, wellfoundMaxInFlight)}
 }
+
+// Potok served a 44k-candidate tenant probe at ~12 req/s from 3 workers without one refusal
+// (2026-10-14), and nothing faster was measured. Unbounded, a run's board workers each fan out
+// defaultDetailWorkers posting-page requests, so the in-flight count is held to that measured 3.
+const potokMaxInFlight = 3
+
+// limitedPotokGetter wraps a getter with a fresh semaphore shared across one registry build, so
+// every Potok board's listing and posting pages in a run compete for the same few slots.
+func limitedPotokGetter(c HTMLGetter) HTMLGetter {
+	return concurrencyLimitedHTMLGetter{inner: c, sem: make(chan struct{}, potokMaxInFlight)}
+}
+
+// FriendWork's API meters simultaneity AND rate: two parallel workers drew 429s, while sequential
+// requests at ~2/s were clean (2026-10-14). So its requests run one at a time AND no faster than
+// that measured pace — a single listing can be ~2 MB, and a rate limit alone would let the next
+// request start while it is still downloading.
+const (
+	friendworkMaxInFlight     = 1
+	friendworkRequestInterval = 500 * time.Millisecond // ~2 req/s
+	friendworkRequestBurst    = 1
+)
+
+// limitedFriendWorkGetter wraps a getter with one semaphore and one limiter shared across one
+// registry build, so every FriendWork board in a run is fetched sequentially at the measured pace.
+func limitedFriendWorkGetter(c JSONGetter) JSONGetter {
+	return concurrencyLimitedJSONGetter{
+		inner: rateLimitedJSONGetter{
+			inner:   c,
+			limiter: rate.NewLimiter(rate.Every(friendworkRequestInterval), friendworkRequestBurst),
+		},
+		sem: make(chan struct{}, friendworkMaxInFlight),
+	}
+}
