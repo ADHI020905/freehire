@@ -397,6 +397,10 @@ func All(c HTTPClient) map[string]Source {
 		// ITviec: Vietnam's IT-only board. One server-rendered listing names the whole
 		// catalogue; posting pages carry a schema.org JobPosting. Paced, see itviecRequestInterval.
 		NewITviec(pacedHTMLGetter(c, itviecRequestInterval, itviecRequestBurst)),
+		// Welcome to the Jungle: European multi-company board, enumerated by WTTJ's own
+		// profession sub-category (board) over its public Algolia index, hydrating each new
+		// posting's body and apply URL from the posting API. See wttj.go.
+		NewWTTJ(c),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see

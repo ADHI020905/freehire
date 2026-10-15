@@ -377,6 +377,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   isolvedhire: 'isolved Hire', hrmdirect: 'HRM Direct', catsone: 'CATS',
   alfabank: 'Alfa-Bank', aijobs: 'AI Jobs', remotedotcom: 'Remote.com',
   sber: 'Sber', uzum: 'Uzum', freshteam: 'Freshteam', startupjobs: 'startup.jobs',
+  wttj: 'Welcome to the Jungle',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),

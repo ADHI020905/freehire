@@ -1,0 +1,177 @@
+{
+ "hits": [
+  {
+   "experience_level_minimum": null,
+   "salary_period": "monthly",
+   "salary_currency": "EUR",
+   "reference": "b4c67a99-a423-4e69-b3ee-8ca88858efc7",
+   "slug": "stage-bac-5-ingenieur-informatique-ingenierie-cybersecurite-f-h_marseille",
+   "salary_maximum": 1682.0,
+   "published_at": "2026-10-15T03:02:14Z",
+   "remote": "unknown",
+   "contract_type": "internship",
+   "organization": {
+    "name": "EDF",
+    "slug": "edf"
+   },
+   "name": "STAGE – BAC+5 - Ingénieur(e) Informatique - Ingénierie Cybersécurité F/H",
+   "salary_minimum": 935.0,
+   "offices": [
+    {
+     "state": "Centre-Val de Loire",
+     "city": "Marseilles-lès-Aubigny",
+     "country": "France",
+     "country_code": "FR",
+     "district": "Cher",
+     "local_district": "Cher",
+     "local_city": "Marseilles-lès-Aubigny",
+     "local_state": "Centre-Val de Loire"
+    }
+   ],
+   "objectID": "b4c67a99-a423-4e69-b3ee-8ca88858efc7"
+  },
+  {
+   "salary_period": null,
+   "slug": "agentic-detection-response-specialist_es_iri2qklj",
+   "offices": [
+    {
+     "state": null,
+     "city": null,
+     "country": "Spain",
+     "country_code": "ES",
+     "district": null,
+     "local_district": null,
+     "local_city": null,
+     "local_state": null
+    }
+   ],
+   "published_at": "2026-10-15T00:15:30Z",
+   "salary_minimum": null,
+   "remote": "fulltime",
+   "organization": {
+    "name": "Plain Concepts",
+    "slug": "plain-concepts"
+   },
+   "contract_type": "full_time",
+   "salary_currency": null,
+   "salary_maximum": null,
+   "experience_level_minimum": 5.0,
+   "reference": "f5e30c4a-56e0-458d-a133-46079b6de0cb",
+   "name": "Agentic Detection & Response Specialist",
+   "objectID": "f5e30c4a-56e0-458d-a133-46079b6de0cb"
+  },
+  {
+   "offices": [
+    {
+     "state": null,
+     "city": "Dallas",
+     "country": "United States",
+     "country_code": "US",
+     "district": null,
+     "local_district": null,
+     "local_city": null,
+     "local_state": null
+    },
+    {
+     "state": null,
+     "city": "Boston",
+     "country": "United States",
+     "country_code": "US",
+     "district": null,
+     "local_district": null,
+     "local_city": null,
+     "local_state": null
+    },
+    {
+     "state": null,
+     "city": "Austin",
+     "country": "United States",
+     "country_code": "US",
+     "district": null,
+     "local_district": null,
+     "local_city": null,
+     "local_state": null
+    }
+   ],
+   "reference": "f1a7304c-fb1c-461f-b40e-a8872a1240e2",
+   "slug": "staff-cloud-security-engineer_san-francisco_e5e2yuhv",
+   "published_at": "2026-10-11T00:16:07Z",
+   "salary_maximum": 255000.0,
+   "salary_currency": "USD",
+   "contract_type": "full_time",
+   "remote": "unknown",
+   "salary_minimum": 147000.0,
+   "organization": {
+    "name": "Scribd",
+    "slug": "scribd"
+   },
+   "name": "Staff Cloud Security Engineer",
+   "experience_level_minimum": 7.0,
+   "salary_period": "yearly",
+   "objectID": "f1a7304c-fb1c-461f-b40e-a8872a1240e2"
+  },
+  {
+   "salary_currency": "EUR",
+   "slug": "vp-engineering-h-f_saint-cloud",
+   "reference": "85d938ac-d2cf-45dd-bcdd-5671c8999bcc",
+   "salary_period": "yearly",
+   "published_at": "2026-10-13T15:59:46Z",
+   "organization": {
+    "name": "Synapse Risk & Compliance",
+    "slug": "syspertec-group"
+   },
+   "experience_level_minimum": 10.0,
+   "remote": "partial",
+   "offices": [
+    {
+     "state": "Ile-de-France",
+     "city": "Saint-Cloud",
+     "country": "France",
+     "country_code": "FR",
+     "district": "Hauts-de-Seine",
+     "local_district": null,
+     "local_city": null,
+     "local_state": null
+    }
+   ],
+   "salary_minimum": 8.0,
+   "name": "VP Engineering H/F",
+   "contract_type": "full_time",
+   "salary_maximum": 100000.0,
+   "objectID": "85d938ac-d2cf-45dd-bcdd-5671c8999bcc"
+  },
+  {
+   "salary_period": null,
+   "slug": "agentic-detection-response-specialist_es_iri2qklj",
+   "offices": [
+    {
+     "state": null,
+     "city": null,
+     "country": "Spain",
+     "country_code": "ES",
+     "district": null,
+     "local_district": null,
+     "local_city": null,
+     "local_state": null
+    }
+   ],
+   "published_at": "2026-10-15T00:15:30Z",
+   "salary_minimum": null,
+   "remote": "fulltime",
+   "organization": {
+    "name": "Plain Concepts",
+    "slug": ""
+   },
+   "contract_type": "full_time",
+   "salary_currency": null,
+   "salary_maximum": null,
+   "experience_level_minimum": 5.0,
+   "reference": "00000000-decoy-0000-0000-000000000000",
+   "name": "Agentic Detection & Response Specialist",
+   "objectID": "00000000-decoy-0000-0000-000000000000"
+  }
+ ],
+ "nbHits": 5,
+ "page": 0,
+ "hitsPerPage": 1000
+}
