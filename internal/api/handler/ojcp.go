@@ -238,7 +238,9 @@ func (h *ojcpHandlers) JobDetail(ctx context.Context, ojcpID string) (ojcp.JobDe
 }
 
 // realityAttacher builds the function that computes the posting-reality signal and hangs it
-// on a view, which is what makes the projection's `agent_notes` say anything at all.
+// on a view — both the reality class and the ghost signal derived from it — which is what
+// makes the OJCP projection's `agent_notes`, and the ChatGPT app's `get_job` liveness fields,
+// say anything at all. Each projection publishes the part it has a field for.
 //
 // It has to be done explicitly: Ghost is NOT intrinsic to a jobview — it is time-dependent
 // and never stored, so every surface that wants it attaches it (jobs.go, search.go,
@@ -265,6 +267,7 @@ func realityAttacher(q *db.Queries) func(context.Context, db.Job, *jobview.Job) 
 
 		now := time.Now()
 		reality := jobview.ClassifyReality(row, now, int(repost), int(mass))
+		view.Reality = &reality
 		view.Ghost = jobview.ClassifyGhost(jobview.GhostInput{
 			Now:          now,
 			Closed:       row.ClosedAt.Valid,

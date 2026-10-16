@@ -64,6 +64,7 @@ func (p Projector) JobSummary(j jobview.Job) JobSummary {
 		VisaSponsorship: j.Enrichment.VisaSponsorship,
 		EnglishLevel:    j.Enrichment.EnglishLevel,
 		PostedAt:        deref(j.PostedAt),
+		FirstSeenAt:     deref(j.CreatedAt),
 		Summary:         preview(j.Description),
 		Source:          j.Source,
 		URL:             p.pageURL("/jobs/", j.PublicSlug),
@@ -101,6 +102,18 @@ func (p Projector) JobDetail(j jobview.Job, form *applyform.Form) JobResult {
 	if form != nil {
 		out.ApplyVia = form.Provider
 		out.ApplyRequires = applyRequires(*form)
+	}
+	out.LastSeenAt = deref(j.LastSeenAt)
+	if j.Reality != nil {
+		out.Reality = j.Reality.Class
+		fake := j.Reality.IsFakeFreshness
+		out.FakeFreshness = &fake
+	}
+	// Ghost is nil at level none, which is most of the catalogue, so absence on the wire
+	// already says "nothing observed".
+	if j.Ghost != nil {
+		out.GhostLevel = j.Ghost.Level
+		out.GhostCriteria = j.Ghost.Criteria
 	}
 	return out
 }

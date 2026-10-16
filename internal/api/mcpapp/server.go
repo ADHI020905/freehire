@@ -100,8 +100,9 @@ func newServer(r Reader) *mcp.Server {
 		Name:  toolGetJob,
 		Title: "Read one job posting",
 		Description: "Read one posting in full by the slug a search result carries: the whole " +
-			"description, the stated requirements, and which applicant tracking system handles " +
-			"applications.",
+			"description, the stated requirements, which applicant tracking system handles " +
+			"applications, and whether the posting still looks live — when it was last seen " +
+			"open, a reality class, and any observed signs that it is not being filled.",
 		Annotations: readOnly(),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in JobDetailInput) (*mcp.CallToolResult, JobResult, error) {
 		return toolResult(r.JobDetail(ctx, in.Slug))

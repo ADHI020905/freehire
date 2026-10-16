@@ -12,6 +12,7 @@ import (
 	"github.com/strelov1/freehire/internal/api/mcpapp"
 	"github.com/strelov1/freehire/internal/ingest/applyform"
 	"github.com/strelov1/freehire/internal/job/jobview"
+	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/search/search"
 )
 
@@ -30,16 +31,24 @@ type mcpappHandlers struct {
 	search        searcher
 	companySearch companySearcher
 	store         ojcpStore
+	// attachReality hangs the liveness signals (reality and ghost) on the posting get_job
+	// reads. A field for the reason ojcpHandlers' is one: the real lookup needs the concrete
+	// *db.Queries, and a test must still drive the seam. Nil leaves the signals off.
+	attachReality func(ctx context.Context, row db.Job, view *jobview.Job)
 	projector     mcpapp.Projector
 }
 
 func newMCPAppHandlers(s searcher, cs companySearcher, store ojcpStore, origin string) *mcpappHandlers {
-	return &mcpappHandlers{
+	h := &mcpappHandlers{
 		search:        s,
 		companySearch: cs,
 		store:         store,
 		projector:     mcpapp.NewProjector(origin),
 	}
+	if q, ok := store.(*db.Queries); ok && q != nil {
+		h.attachReality = realityAttacher(q)
+	}
+	return h
 }
 
 func (h *mcpappHandlers) register(api fiber.Router, mw middleware) {
@@ -115,6 +124,11 @@ func (h *mcpappHandlers) JobDetail(ctx context.Context, slug string) (mcpapp.Job
 	view, err := jobview.FromRow(row)
 	if err != nil {
 		return mcpapp.JobResult{}, err
+	}
+	// Computed here, on read, rather than taken from the index: the index's reality class
+	// is frozen at push time, and the ghost signal is never stored at all.
+	if h.attachReality != nil {
+		h.attachReality(ctx, row, &view)
 	}
 	return h.projector.JobDetail(view, h.applyFormFor(ctx, row.ID)), nil
 }

@@ -15,6 +15,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/api/mcpapp"
+	"github.com/strelov1/freehire/internal/job/ghost"
+	"github.com/strelov1/freehire/internal/job/jobreality"
+	"github.com/strelov1/freehire/internal/job/jobview"
 	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/search/search"
 )
@@ -193,5 +196,47 @@ func TestTheMountedRouteSpeaksMCPOverHTTP(t *testing.T) {
 	}
 	if strings.Contains(string(answer), "freehire-ojcp") {
 		t.Errorf("body = %s, want the OJCP server not to have answered", answer)
+	}
+}
+
+func TestTheAppJobDetailCarriesTheLiveLivenessSignal(t *testing.T) {
+	// Ghost and Reality are NOT intrinsic to a jobview — every surface attaches them
+	// explicitly, and the OJCP surface once published nothing for every posting because a
+	// projection read a field nothing had set. This drives the seam: the handler must call
+	// the attacher, and what it leaves behind must reach the answer. What counts as a verdict
+	// is internal/job/ghost's own business and has its own tests.
+	store := fakeOJCPStore{job: db.Job{ID: 7, PublicSlug: "go-dev-x", Title: "Go Dev", Company: "Acme"}}
+	h := mcpappUnder(&fakeSearcher{}, nil, store)
+	attached := false
+	h.attachReality = func(_ context.Context, _ db.Job, view *jobview.Job) {
+		attached = true
+		view.Reality = &jobview.Reality{Class: jobreality.ClassStale}
+		view.Ghost = &jobview.Ghost{
+			Level:         ghost.LevelLikely,
+			Criteria:      []string{ghost.CriterionATSAbsent},
+			CriteriaTotal: ghost.CriteriaTotal,
+		}
+	}
+
+	got, err := h.JobDetail(context.Background(), "go-dev-x")
+	if err != nil {
+		t.Fatalf("JobDetail: %v", err)
+	}
+	if !attached {
+		t.Fatal("the handler never asked for the liveness signal")
+	}
+	if got.Reality != jobreality.ClassStale || got.GhostLevel != ghost.LevelLikely {
+		t.Errorf("reality = %q, ghost_level = %q; the attached verdict did not reach the answer", got.Reality, got.GhostLevel)
+	}
+}
+
+func TestTheAppProductionWiringAttachesTheLivenessSignal(t *testing.T) {
+	// The seam above is worth nothing unless production fills it, and that is the one path a
+	// fake store cannot exercise.
+	if h := mcpappUnder(&fakeSearcher{}, nil, &db.Queries{}); h.attachReality == nil {
+		t.Error("attachReality is nil for a production store; get_job would never state liveness")
+	}
+	if h := mcpappUnder(&fakeSearcher{}, nil, fakeOJCPStore{}); h.attachReality != nil {
+		t.Error("attachReality is set for a store that cannot answer the lookups")
 	}
 }

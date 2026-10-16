@@ -41,6 +41,9 @@ type JobSummary struct {
 	VisaSponsorship *bool  `json:"visa_sponsorship,omitempty"`
 	EnglishLevel    string `json:"english_level,omitempty"`
 	PostedAt        string `json:"posted_at,omitempty" jsonschema:"RFC3339 UTC"`
+	// FirstSeenAt stands in for the index's reality class, which is frozen at push time and
+	// goes stale; this cannot. get_job computes the live verdict (see AGENTS.md).
+	FirstSeenAt string `json:"first_seen_at,omitempty" jsonschema:"RFC3339 UTC; when freehire first saw this posting — a posted_at far newer than this means the date was refreshed"`
 	// Summary is the search index's truncated preview, never the full body. Ten full job
 	// descriptions in one turn spend the context window on text the model will reduce to a
 	// line each; get_job is where a full body is read, for the one posting a person picked.
@@ -89,6 +92,21 @@ type JobResult struct {
 	// captured, which is most of the catalogue — an empty list would read as "this
 	// employer asks for nothing".
 	ApplyRequires []string `json:"apply_requires,omitempty" jsonschema:"what the employer's application form requires"`
+
+	// The liveness signals answer "is this posting real and still open", as the job page
+	// does. They are computed on read by the handler and are ABSENT where a lookup failed:
+	// an empty level or a false flag must never stand in for a verdict nobody issued.
+	//
+	// They are flat like the rest of this shape, and the ghost criteria travel with the
+	// level, because internal/job/ghost states facts about a posting, never an accusation
+	// about an employer — a level without its criteria would be exactly that.
+	LastSeenAt string `json:"last_seen_at,omitempty" jsonschema:"RFC3339 UTC; when a re-crawl last confirmed the posting live on its source"`
+	Reality    string `json:"reality,omitempty" jsonschema:"fresh, stale or likely-evergreen: whether the posting looks like a live opening, judged from its age and repost history"`
+	// FakeFreshness is a pointer for the reason the salary fields are: once reality was
+	// computed, a computed false must reach the wire, distinct from a lookup that failed.
+	FakeFreshness *bool    `json:"fake_freshness,omitempty" jsonschema:"true when the posted date is recent but freehire has seen the posting for 90 days or more; present whenever reality is"`
+	GhostLevel    string   `json:"ghost_level,omitempty" jsonschema:"possible or likely: observed signs that the posting is not being actively filled; absent when there is too little evidence"`
+	GhostCriteria []string `json:"ghost_criteria,omitempty" jsonschema:"the signs behind ghost_level: evergreen_posting, ats_absent (gone from the employer's own board), silent_applications, user_reports"`
 }
 
 // Requirement is one stated requirement and whether it is binding.

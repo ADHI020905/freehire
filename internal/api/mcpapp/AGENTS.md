@@ -59,6 +59,21 @@ shows. Neither is a trade worth making.
   AI jobs" and says it to a person. So a value outside a closed vocabulary is DROPPED and
   named in `ignored_params`, and the free text still runs.
 
+## Liveness is computed on read, and only in `get_job`
+
+`get_job` publishes `last_seen_at`, `reality`, `fake_freshness`, `ghost_level` and
+`ghost_criteria`, computed by the handler's `attachReality` (the same `realityAttacher` the
+OJCP surface uses). A search result carries only `first_seen_at`.
+
+- **Not the index's reality class.** It is computed when a document is pushed, and
+  `cmd/reindex` pushes only documents whose content hash moved — so a posting indexed at three
+  days old would still read "fresh" a quarter later. `first_seen_at` is a fact that cannot go
+  stale; the model can compare it with `posted_at` itself.
+- **Not ghost on search.** It costs two Postgres reads per page (absence stamps and outcome
+  evidence), and `get_job` is one call away for the posting a person actually picked.
+- **Absent, not false.** A lookup that fails leaves every signal off the wire. An empty level
+  or a `false` flag would read as a clean bill of health nobody issued.
+
 ## Annotations are load-bearing
 
 Every tool declares `readOnlyHint: true`, `destructiveHint: false`, `openWorldHint: true`.

@@ -5,6 +5,9 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/ai/enrich"
 	"github.com/strelov1/freehire/internal/ingest/applyform"
@@ -247,5 +250,75 @@ func TestAPostingWithNoCapturedFormPromisesNothingAboutItsApplication(t *testing
 
 	if got.ApplyVia != "" || got.ApplyRequires != nil {
 		t.Errorf("apply_via = %q, apply_requires = %v; want both absent", got.ApplyVia, got.ApplyRequires)
+	}
+}
+
+func TestASearchResultSaysWhenThePostingWasFirstSeen(t *testing.T) {
+	// The index's own reality class is computed when a document is pushed and goes stale
+	// with it — a posting indexed at three days old would still read "fresh" a quarter
+	// later. When we first saw the posting is a fact that cannot go stale, so that is
+	// what a result carries; the live verdict belongs to get_job.
+	seen := time.Date(2026, 9, 1, 8, 0, 0, 0, time.UTC)
+	j := aJob(t, func(row *db.Job) {
+		row.CreatedAt = pgtype.Timestamptz{Time: seen, Valid: true}
+	})
+
+	if got := NewProjector(testOrigin).JobSummary(j).FirstSeenAt; got != "2026-09-01T08:00:00Z" {
+		t.Errorf("first_seen_at = %q, want 2026-09-01T08:00:00Z", got)
+	}
+}
+
+func TestDetailStatesTheLivenessSignalsItWasHanded(t *testing.T) {
+	// The handler computes the verdict; the projection must publish it, criteria included —
+	// a level with nothing behind it would be the bare accusation internal/job/ghost exists
+	// to avoid.
+	seen := "2026-10-14T06:00:00Z"
+	j := aJob(t)
+	j.LastSeenAt = &seen
+	j.Reality = &jobview.Reality{Class: "likely-evergreen", AgeDays: 120, IsFakeFreshness: true}
+	j.Ghost = &jobview.Ghost{Level: "possible", Criteria: []string{"evergreen_posting", "ats_absent"}, CriteriaTotal: 4}
+
+	got := NewProjector(testOrigin).JobDetail(j, nil)
+
+	if got.LastSeenAt != seen {
+		t.Errorf("last_seen_at = %q, want %q", got.LastSeenAt, seen)
+	}
+	if got.Reality != "likely-evergreen" || got.FakeFreshness == nil || !*got.FakeFreshness {
+		t.Errorf("reality = %q, fake_freshness = %v; want likely-evergreen, true", got.Reality, got.FakeFreshness)
+	}
+	if got.GhostLevel != "possible" || !slices.Equal(got.GhostCriteria, []string{"evergreen_posting", "ats_absent"}) {
+		t.Errorf("ghost = %q %v; want possible with both criteria", got.GhostLevel, got.GhostCriteria)
+	}
+}
+
+func TestDetailClaimsNothingWhereNoSignalWasComputed(t *testing.T) {
+	// A lookup that failed leaves the signal off rather than failing the read. Off must
+	// then mean absent on the wire: an empty level or a false flag must not read as a
+	// clean bill of health the system never issued.
+	got := NewProjector(testOrigin).JobDetail(aJob(t), nil)
+
+	raw, err := json.Marshal(got)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, field := range []string{`"reality"`, `"fake_freshness"`, `"ghost_level"`, `"ghost_criteria"`, `"last_seen_at"`} {
+		if strings.Contains(string(raw), field) {
+			t.Errorf("%s is on the wire though nothing was computed: %s", field, raw)
+		}
+	}
+}
+
+func TestAComputedFalseFreshnessFlagIsStatedNotDropped(t *testing.T) {
+	// Absent means "not computed". Once reality WAS computed, a false flag is an answer and
+	// must reach the wire — otherwise a clean result and a failed lookup look the same.
+	j := aJob(t)
+	j.Reality = &jobview.Reality{Class: "fresh", IsFakeFreshness: false}
+
+	raw, err := json.Marshal(NewProjector(testOrigin).JobDetail(j, nil))
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(raw), `"fake_freshness":false`) {
+		t.Errorf("a computed false was dropped from the wire: %s", raw)
 	}
 }
