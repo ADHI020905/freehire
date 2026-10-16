@@ -10,7 +10,7 @@
   const canonical = $derived(`${page.url.origin}/terms`);
 
   // Static effective date — bump whenever the terms change.
-  const lastUpdated = 'August 10, 2026';
+  const lastUpdated = 'October 16, 2026';
 </script>
 
 <Seo
@@ -35,6 +35,11 @@
         class="font-medium text-foreground underline-offset-4 hover:underline">freehire.me</a
       >), including our mobile app, is a free, open-source IT job aggregator. By using it, you
       agree to these terms.
+    </p>
+
+    <p class="text-sm leading-relaxed text-muted-foreground">
+      freehire is operated by ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA (CNPJ
+      58.774.293/0001-44), Florianópolis, Brazil.
     </p>
 
     <section class="flex flex-col gap-3">

@@ -13,7 +13,7 @@
 
   // Static effective date — freehire has no Date.now-driven content, and a hard
   // date is what a privacy policy needs. Bump this whenever the policy changes.
-  const lastUpdated = 'September 16, 2026';
+  const lastUpdated = 'October 16, 2026';
 </script>
 
 <Seo
@@ -39,6 +39,11 @@
       >) is a free, open-source IT job aggregator. This policy explains what data we collect, why,
       and who we share it with. We collect only what the product needs to work, and we never sell
       your data.
+    </p>
+
+    <p class="text-sm leading-relaxed text-muted-foreground">
+      freehire is operated by ILYA STRELOV TECNOLOGIA DA INFORMACAO LTDA (CNPJ
+      58.774.293/0001-44), Florianópolis, Brazil, which is the controller of your personal data.
     </p>
 
     <section class="flex flex-col gap-3">
