@@ -33,21 +33,28 @@ const facetCacheTTL = time.Minute
 // one. The disjunctive path is intentionally not routed here: it is the interactive
 // live-modal experience, lower volume, and its per-facet fan-out keys poorly.
 func (h *searchHandlers) cachedFacetCounts(ctx context.Context, p search.FacetParams) (search.FacetResult, error) {
-	if h.cache == nil {
-		return h.facets.FacetCounts(ctx, p)
+	return cachedFacetCounts(ctx, h.facets, h.cache, p)
+}
+
+// cachedFacetCounts is the cache-through facet read, a function rather than only a method so
+// the ChatGPT app's job_market_stats shares the website's cache slots instead of computing
+// the same distributions twice. A nil cache reads straight through.
+func cachedFacetCounts(ctx context.Context, f facetCounter, c cache.Cache, p search.FacetParams) (search.FacetResult, error) {
+	if c == nil {
+		return f.FacetCounts(ctx, p)
 	}
 
 	key := facetCacheKey(p)
-	if cached, found, err := cache.GetJSON[search.FacetResult](ctx, h.cache, key); err == nil && found {
+	if cached, found, err := cache.GetJSON[search.FacetResult](ctx, c, key); err == nil && found {
 		return cached, nil
 	}
 
-	res, err := h.facets.FacetCounts(ctx, p)
+	res, err := f.FacetCounts(ctx, p)
 	if err != nil {
 		return res, err
 	}
 	// Store is best-effort: a failed write just means the next request recomputes.
-	_ = cache.SetJSON(ctx, h.cache, key, res, facetCacheTTL)
+	_ = cache.SetJSON(ctx, c, key, res, facetCacheTTL)
 	return res, nil
 }
 

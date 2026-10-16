@@ -695,6 +695,8 @@ func Register(app *fiber.App, cfg Config) {
 	// branch on error codes, this one renders ours for a language model reading prose. They
 	// share everything below the projection, so they cannot disagree about the catalogue.
 	mcpappH := newMCPAppHandlers(jobSearch, companySearch, queries, cfg.FrontendOrigin)
+	mcpappH.facets = facets
+	mcpappH.cache = cfg.Cache
 	// The completion dictionary. Left nil when search is unconfigured — same reason as
 	// jobSearch above: a nil *suggest.Service wrapped in the interface would be a
 	// non-nil interface, and the handler's "not configured" check would pass straight

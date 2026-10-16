@@ -41,6 +41,10 @@ const (
 	// connectors look for exactly these.
 	toolSearch = "search"
 	toolFetch  = "fetch"
+
+	toolSimilarJobs = "similar_jobs"
+	toolSalaryStats = "salary_stats"
+	toolMarketStats = "job_market_stats"
 )
 
 // readOnly is every tool's annotation block, written once.
@@ -168,6 +172,39 @@ func newServer(r Reader) *mcp.Server {
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in ResearchID) (*mcp.CallToolResult, ResearchDocument, error) {
 		job, err := r.JobDetail(ctx, in.ID)
 		return toolResult(researchDocument(job), err)
+	})
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:  toolSimilarJobs,
+		Title: "Find similar postings",
+		Description: "Postings most similar to one posting, by its slug, nearest first — for " +
+			"\"show me more like this\". Empty for the newest postings, whose neighbours are " +
+			"not computed yet.",
+		Annotations: readOnly(),
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in SimilarJobsInput) (*mcp.CallToolResult, SimilarJobsResult, error) {
+		return toolResult(r.SimilarJobs(ctx, in.Slug, similarLimit(in.Limit)))
+	})
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:  toolSalaryStats,
+		Title: "Salary ranges",
+		Description: "Salary percentiles (25th, median, 75th) from open postings that state " +
+			"pay, scoped by role family, seniority and country, with the sample size behind " +
+			"each figure. Currencies and pay periods are reported separately, never converted.",
+		Annotations: readOnly(),
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in SalaryInput) (*mcp.CallToolResult, SalaryStatsResult, error) {
+		return toolResult(r.SalaryStats(ctx, in))
+	})
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:  toolMarketStats,
+		Title: "Job market breakdown",
+		Description: "How many open postings match a set of filters, and their most common " +
+			"role families, seniorities, skills, work modes, countries and regions. Takes the " +
+			"same filters as a job search.",
+		Annotations: readOnly(),
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in SearchInput) (*mcp.CallToolResult, MarketStatsResult, error) {
+		return toolResult(r.MarketStats(ctx, in))
 	})
 
 	return server

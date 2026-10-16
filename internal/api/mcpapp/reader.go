@@ -18,6 +18,9 @@ type Reader interface {
 	// CheckJobsOpen answers one state per DISTINCT slug it was given, in the order given. The
 	// cap and the de-duplication are this package's, applied before the call.
 	CheckJobsOpen(ctx context.Context, slugs []string) ([]JobOpenState, error)
+	SimilarJobs(ctx context.Context, slug string, limit int) (SimilarJobsResult, error)
+	SalaryStats(ctx context.Context, in SalaryInput) (SalaryStatsResult, error)
+	MarketStats(ctx context.Context, in SearchInput) (MarketStatsResult, error)
 }
 
 // NotFoundError marks the one failure the model must be able to act on: the posting or the

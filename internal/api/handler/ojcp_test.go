@@ -28,6 +28,12 @@ type fakeOJCPStore struct {
 	// liveness answers ListJobLivenessBySlugs, which only the ChatGPT app's surface reads.
 	liveness    []db.ListJobLivenessBySlugsRow
 	livenessErr error
+	// The reads the ChatGPT app's market tools need beyond the job itself.
+	similarIDs   []int64
+	jobsByID     []db.Job
+	salary       []db.ListInsightsSalaryRow
+	salaryByCat  []db.ListInsightsSalaryByCategoryRow
+	salaryParams *db.ListInsightsSalaryParams
 }
 
 func (f fakeOJCPStore) GetJobBySlug(context.Context, string) (db.Job, error) {
@@ -40,6 +46,25 @@ func (f fakeOJCPStore) GetApplyFormByJobID(context.Context, int64) (db.GetApplyF
 
 func (f fakeOJCPStore) GetCompany(context.Context, string) (db.Company, error) {
 	return f.company, f.compErr
+}
+
+func (f fakeOJCPStore) GetSimilarJobIDs(context.Context, int64) ([]int64, error) {
+	return f.similarIDs, nil
+}
+
+func (f fakeOJCPStore) GetJobsByIDs(context.Context, []int64) ([]db.Job, error) {
+	return f.jobsByID, nil
+}
+
+func (f fakeOJCPStore) ListInsightsSalary(_ context.Context, arg db.ListInsightsSalaryParams) ([]db.ListInsightsSalaryRow, error) {
+	if f.salaryParams != nil {
+		*f.salaryParams = arg
+	}
+	return f.salary, nil
+}
+
+func (f fakeOJCPStore) ListInsightsSalaryByCategory(context.Context, string) ([]db.ListInsightsSalaryByCategoryRow, error) {
+	return f.salaryByCat, nil
 }
 
 func (f fakeOJCPStore) ListJobLivenessBySlugs(context.Context, []string) ([]db.ListJobLivenessBySlugsRow, error) {

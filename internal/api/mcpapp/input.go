@@ -103,6 +103,19 @@ type ResearchID struct {
 	ID string `json:"id" jsonschema:"a result id from search"`
 }
 
+type SimilarJobsInput struct {
+	Slug  string `json:"slug" jsonschema:"the posting's identifier, as carried by a search result's slug"`
+	Limit int    `json:"limit,omitempty" jsonschema:"how many to return, up to 20"`
+}
+
+// SalaryInput scopes salary_stats. Every field is optional; a category alone also breaks
+// the answer down by seniority.
+type SalaryInput struct {
+	Category  string `json:"category,omitempty" jsonschema:"role family, e.g. backend, frontend, devops, data"`
+	Seniority string `json:"seniority,omitempty" jsonschema:"any of intern, junior, middle, senior, lead, staff, principal, c_level"`
+	Country   string `json:"country,omitempty" jsonschema:"ISO 3166-1 alpha-2 code, e.g. DE"`
+}
+
 type CompanyDetailInput struct {
 	Slug string `json:"slug" jsonschema:"the employer's identifier, as carried by a result's company_slug"`
 }

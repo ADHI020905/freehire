@@ -208,3 +208,40 @@ type ResearchMetadata struct {
 	Reality        string `json:"reality,omitempty"`
 	GhostLevel     string `json:"ghost_level,omitempty"`
 }
+
+// SimilarJobsResult is what similar_jobs answers: the posting's nearest neighbours, nearest
+// first. Empty where none have been computed yet, which is true of the newest postings.
+type SimilarJobsResult struct {
+	Jobs []JobSummary `json:"jobs"`
+}
+
+// SalaryStatsResult is what salary_stats answers. Currencies and pay periods are never
+// combined: each band is one (seniority, currency, period), and a band below the rollup's
+// minimum sample size is absent rather than shown on too few postings.
+type SalaryStatsResult struct {
+	Bands         []SalaryBand `json:"bands"`
+	IgnoredParams []string     `json:"ignored_params,omitempty" jsonschema:"scope values that were not applied; the answer is wider than asked"`
+}
+
+type SalaryBand struct {
+	Seniority  string `json:"seniority,omitempty" jsonschema:"empty for the band across every seniority"`
+	Currency   string `json:"currency" jsonschema:"ISO 4217 code"`
+	Period     string `json:"period" jsonschema:"year, month, day or hour"`
+	SampleSize int    `json:"sample_size" jsonschema:"how many open postings stating a salary the band is computed from"`
+	P25        int    `json:"p25"`
+	P50        int    `json:"p50" jsonschema:"the median"`
+	P75        int    `json:"p75"`
+}
+
+// MarketStatsResult is what job_market_stats answers: how many open postings match, and what
+// dominates them.
+type MarketStatsResult struct {
+	Total         int                     `json:"total" jsonschema:"open postings matching the filters"`
+	Facets        map[string][]FacetCount `json:"facets,omitempty" jsonschema:"for each of category, seniority, skills, work_mode, countries, regions, employment_type, english_level, visa_sponsorship and relocation: its most common values among the matches, highest count first"`
+	IgnoredParams []string                `json:"ignored_params,omitempty" jsonschema:"filters that were not applied; the answer is wider than asked"`
+}
+
+type FacetCount struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
+}

@@ -64,6 +64,15 @@ func readerThatFinds(t *testing.T) fakeReader {
 			}
 			return out, nil
 		},
+		similarJobs: func(context.Context, string, int) (SimilarJobsResult, error) {
+			return SimilarJobsResult{Jobs: []JobSummary{p.JobSummary(aJob(t))}}, nil
+		},
+		salaryStats: func(_ context.Context, in SalaryInput) (SalaryStatsResult, error) {
+			return SalaryStatsResult{Bands: []SalaryBand{{Currency: "USD", Period: "year", SampleSize: 120, P50: 150000}}, IgnoredParams: in.Unsupported()}, nil
+		},
+		marketStats: func(_ context.Context, in SearchInput) (MarketStatsResult, error) {
+			return MarketStatsResult{Total: 1, IgnoredParams: in.Unsupported()}, nil
+		},
 	}
 }
 
@@ -85,6 +94,9 @@ func TestEveryAdvertisedToolCanActuallyBeCalled(t *testing.T) {
 		toolCheckJobsOpen:   {"slugs": []string{"senior-go-engineer-acme-abc123"}},
 		toolSearch:          {"query": "go"},
 		toolFetch:           {"id": "senior-go-engineer-acme-abc123"},
+		toolSimilarJobs:     {"slug": "senior-go-engineer-acme-abc123"},
+		toolSalaryStats:     {"category": "backend"},
+		toolMarketStats:     {"skills": []string{"go"}},
 	}
 
 	listed, err := session.ListTools(ctx, nil)
@@ -248,7 +260,8 @@ func TestNoToolDescriptionDirectsTheModelToAnotherTool(t *testing.T) {
 	if err != nil {
 		t.Fatalf("tools/list: %v", err)
 	}
-	names := []string{toolSearchJobs, toolGetJob, toolSearchCompanies, toolGetCompany, toolCheckJobsOpen, toolFetch}
+	names := []string{toolSearchJobs, toolGetJob, toolSearchCompanies, toolGetCompany, toolCheckJobsOpen, toolFetch,
+		toolSimilarJobs, toolSalaryStats, toolMarketStats}
 
 	for _, tool := range listed.Tools {
 		raw, err := json.Marshal(struct {

@@ -14,6 +14,7 @@ import (
 	"github.com/strelov1/freehire/internal/api/mcpapp"
 	"github.com/strelov1/freehire/internal/ingest/applyform"
 	"github.com/strelov1/freehire/internal/job/jobview"
+	"github.com/strelov1/freehire/internal/platform/cache"
 	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/search/search"
 )
@@ -33,6 +34,8 @@ import (
 // read check_jobs_open needs. *db.Queries satisfies it; tests inject a fake.
 type mcpappStore interface {
 	ojcpStore
+	similarReader
+	salaryReader
 	ListJobLivenessBySlugs(ctx context.Context, slugs []string) ([]db.ListJobLivenessBySlugsRow, error)
 }
 
@@ -44,7 +47,12 @@ type mcpappHandlers struct {
 	// reads. A field for the reason ojcpHandlers' is one: the real lookup needs the concrete
 	// *db.Queries, and a test must still drive the seam. Nil leaves the signals off.
 	attachReality func(ctx context.Context, row db.Job, view *jobview.Job)
-	projector     mcpapp.Projector
+	// facets and cache back job_market_stats with the website's facet read and its cache
+	// slots. Set after construction by the router, like ojcpHandlers.signer; nil facets
+	// refuses the tool rather than answering an empty market.
+	facets    facetCounter
+	cache     cache.Cache
+	projector mcpapp.Projector
 }
 
 func newMCPAppHandlers(s searcher, cs companySearcher, store mcpappStore, origin string) *mcpappHandlers {
@@ -254,4 +262,72 @@ func utcRFC3339(ts pgtype.Timestamptz) string {
 		return ""
 	}
 	return ts.Time.UTC().Format(time.RFC3339)
+}
+
+// SimilarJobs answers `similar_jobs`.
+//
+// The source posting is checked against publishedToAgents first: answering a private slug
+// with its neighbours, while an unknown one answers not found, would tell an anonymous caller
+// the private posting exists. The neighbours pass the same predicate — the website's rule
+// plus duplicates, which no tool on this surface publishes.
+func (h *mcpappHandlers) SimilarJobs(ctx context.Context, slug string, limit int) (mcpapp.SimilarJobsResult, error) {
+	row, err := h.store.GetJobBySlug(ctx, slug)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return mcpapp.SimilarJobsResult{}, mcpapp.NotFoundError{What: "posting"}
+		}
+		return mcpapp.SimilarJobsResult{}, err
+	}
+	if !publishedToAgents(row) {
+		return mcpapp.SimilarJobsResult{}, mcpapp.NotFoundError{What: "posting"}
+	}
+
+	views, err := similarViews(ctx, h.store, row.ID, limit, publishedToAgents)
+	if err != nil {
+		return mcpapp.SimilarJobsResult{}, err
+	}
+	jobs := make([]mcpapp.JobSummary, 0, len(views))
+	for _, v := range views {
+		jobs = append(jobs, h.projector.JobSummary(v))
+	}
+	return mcpapp.SimilarJobsResult{Jobs: jobs}, nil
+}
+
+// SalaryStats answers `salary_stats` from the same rollup read /insights/salary serves.
+func (h *mcpappHandlers) SalaryStats(ctx context.Context, in mcpapp.SalaryInput) (mcpapp.SalaryStatsResult, error) {
+	category, seniority, country := in.Scope()
+	bands, _, err := salaryBands(ctx, h.store, category, seniority, country)
+	if err != nil {
+		return mcpapp.SalaryStatsResult{}, err
+	}
+	out := make([]mcpapp.SalaryBand, len(bands))
+	for i, b := range bands {
+		out[i] = mcpapp.SalaryBand{
+			Seniority: b.Seniority, Currency: b.Currency, Period: b.Period,
+			SampleSize: int(b.SampleSize), P25: int(b.P25), P50: int(b.P50), P75: int(b.P75),
+		}
+	}
+	return mcpapp.SalaryStatsResult{Bands: out, IgnoredParams: in.Unsupported()}, nil
+}
+
+// MarketStats answers `job_market_stats`: the website's facet read over exactly the filter
+// search_jobs would run for the same input, re-keyed by facetView to the public parameter
+// names and cut to the top values by the projector.
+func (h *mcpappHandlers) MarketStats(ctx context.Context, in mcpapp.SearchInput) (mcpapp.MarketStatsResult, error) {
+	if h.facets == nil {
+		return mcpapp.MarketStatsResult{}, fiber.NewError(fiber.StatusServiceUnavailable, "search is not available")
+	}
+	values := in.QueryValues()
+	res, err := cachedFacetCounts(ctx, h.facets, h.cache, search.FacetParams{
+		Query:  values.Get("q"),
+		Filter: search.FilterFromValues(values),
+		Facets: facetAttributes(),
+	})
+	if err != nil {
+		return mcpapp.MarketStatsResult{}, err
+	}
+	view := facetView(res)
+	out := h.projector.MarketStats(view.Total, view.Facets)
+	out.IgnoredParams = in.Unsupported()
+	return out, nil
 }

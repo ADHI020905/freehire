@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/strelov1/freehire/internal/job/jobview"
+	"github.com/strelov1/freehire/internal/platform/db"
 )
 
 // defaultSimilarLimit / maxSimilarLimit bound how many neighbours the similar-jobs
@@ -48,30 +51,51 @@ func (h *searchHandlers) SimilarJobs(c *fiber.Ctx) error {
 
 	limit := min(max(c.QueryInt("limit", defaultSimilarLimit), 1), maxSimilarLimit)
 
-	similarIDs, err := h.queries.GetSimilarJobIDs(c.Context(), id)
+	ordered, err := similarViews(c.Context(), h.queries, id, limit, func(row db.Job) bool {
+		return !row.ClosedAt.Valid && !row.IsPrivate
+	})
 	if err != nil {
 		return err
+	}
+	return c.JSON(fiber.Map{"data": ordered})
+}
+
+// similarReader is the two reads a similar-jobs answer needs. *db.Queries satisfies it.
+type similarReader interface {
+	GetSimilarJobIDs(ctx context.Context, id int64) ([]int64, error)
+	GetJobsByIDs(ctx context.Context, ids []int64) ([]db.Job, error)
+}
+
+// similarViews returns up to limit of the job's precomputed neighbours that show admits,
+// nearest first. It is shared by GET /jobs/:slug/similar and the ChatGPT app's
+// similar_jobs; each passes its own visibility rule, and the app's is stricter (it also
+// drops duplicates, as every one of its tools does).
+//
+// It fetches the whole stored (nearest-first, capped at cmd/similar-backfill's -similar
+// count) list, not just the first `limit` ids: some may turn out closed or dangling, and
+// truncating before the filter would silently starve a limit=maxSimilarLimit request even
+// though enough open neighbours exist further down the stored list. The nearest-first order
+// is restored from the stored ids rather than trusted from GetJobsByIDs, whose order is
+// undefined for a WHERE id = ANY($1) fetch.
+func similarViews(ctx context.Context, q similarReader, id int64, limit int, show func(db.Job) bool) ([]jobview.Job, error) {
+	similarIDs, err := q.GetSimilarJobIDs(ctx, id)
+	if err != nil {
+		return nil, err
 	}
 	if len(similarIDs) == 0 {
-		return c.JSON(fiber.Map{"data": []jobview.Job{}})
+		return []jobview.Job{}, nil
 	}
 
-	// Fetch the whole stored (nearest-first, capped at cmd/similar-backfill's
-	// -similar count) list, not just the first `limit` ids: some of those ids may
-	// turn out to be closed or dangling, and truncating before the open-status
-	// filter would silently starve a limit=maxSimilarLimit request even though
-	// enough open neighbours exist further down the stored list.
-	rows, err := h.queries.GetJobsByIDs(c.Context(), similarIDs)
+	rows, err := q.GetJobsByIDs(ctx, similarIDs)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	byID := make(map[int64]int, len(rows))
 	for i, row := range rows {
-		if row.ClosedAt.Valid || row.IsPrivate {
-			continue // closed since, or private — drop, don't error.
+		if show(row) {
+			byID[row.ID] = i
 		}
-		byID[row.ID] = i
 	}
 
 	ordered := make([]jobview.Job, 0, min(len(similarIDs), limit))
@@ -81,14 +105,13 @@ func (h *searchHandlers) SimilarJobs(c *fiber.Ctx) error {
 		}
 		i, ok := byID[sid]
 		if !ok {
-			continue // closed, private, or a dangling id (hard-deleted, stale backfill entry).
+			continue // not shown, or a dangling id (hard-deleted, stale backfill entry).
 		}
 		view, err := jobview.FromRow(rows[i])
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ordered = append(ordered, view)
 	}
-
-	return c.JSON(fiber.Map{"data": ordered})
+	return ordered, nil
 }

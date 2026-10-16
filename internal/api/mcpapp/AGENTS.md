@@ -89,6 +89,27 @@ OJCP surface uses). A search result carries only `first_seen_at`.
   `JobDetail` (`research.go`); they are not a second catalogue view and add nothing to the
   `Reader`.
 
+## `similar_jobs`, `salary_stats` and `job_market_stats`
+
+All three read what the website already computes, through functions the website's own
+handlers now share, so the two cannot quote different figures:
+
+- **`similar_jobs`** — `similarViews` (handler/similar.go) over the precomputed
+  `similar_job_ids`. The SOURCE posting is checked against `publishedToAgents` first, or a
+  private slug would answer with neighbours while an unknown one answers not found. Neighbours
+  pass the same predicate (the website's rule plus duplicates). Empty for postings whose
+  neighbours `cmd/similar-backfill` has not computed yet.
+- **`salary_stats`** — `salaryBands` (handler/insights.go), the `/insights/salary` read,
+  including its per-seniority breakdown for a category alone. Unknown scope values are dropped
+  and named, as on `search_jobs`.
+- **`job_market_stats`** — `cachedFacetCounts` + `facetView` (handler/facets.go) over the
+  filter `search_jobs` would build for the same input, sharing the website's facet cache. The
+  projector keeps the top `marketTopValues` of the facets in `marketFacets`; cities are left
+  out, their long tail is noise in a chat turn.
+
+Trends (`/insights/companies`, `/insights/skills`) are deliberately not exposed yet: the
+company ranking is led by aggregator boards rather than employers.
+
 ## Descriptions say what a tool returns, never which tool to call
 
 Anthropic's directory policy rules out tool descriptions that instruct the model about other

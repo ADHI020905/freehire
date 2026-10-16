@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -537,34 +538,50 @@ func (h *statsHandlers) InsightsSalary(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	// Per-category breakdown: a category with no seniority and no country scope
-	// returns every seniority's bands (plus the category-wide '' band) in one call —
-	// what the per-category salary page needs. Each row carries its own seniority.
-	if category != "" && seniority == "" && country == "" {
-		rows, err := h.queries.ListInsightsSalaryByCategory(c.Context(), category)
-		if err != nil {
-			return err
-		}
-		data := make([]salaryBand, len(rows))
-		for i, r := range rows {
-			data[i] = salaryBand{Seniority: r.Seniority, Currency: r.Currency, Period: r.Period, SampleSize: r.SampleSize, P25: r.P25, P50: r.P50, P75: r.P75}
-		}
-		return c.JSON(fiber.Map{
-			"data": data,
-			"meta": fiber.Map{"category": category, "seniority": "", "country": "", "breakdown": "seniority"},
-		})
-	}
-
-	rows, err := h.queries.ListInsightsSalary(c.Context(), db.ListInsightsSalaryParams{Category: category, Seniority: seniority, Country: country})
+	bands, bySeniority, err := salaryBands(c.Context(), h.queries, category, seniority, country)
 	if err != nil {
 		return err
 	}
-	data := make([]salaryBand, len(rows))
-	for i, r := range rows {
-		data[i] = salaryBand{Seniority: seniority, Currency: r.Currency, Period: r.Period, SampleSize: r.SampleSize, P25: r.P25, P50: r.P50, P75: r.P75}
+	meta := fiber.Map{"category": category, "seniority": seniority, "country": country}
+	if bySeniority {
+		meta["breakdown"] = "seniority"
 	}
-	return c.JSON(fiber.Map{
-		"data": data,
-		"meta": fiber.Map{"category": category, "seniority": seniority, "country": country},
-	})
+	return c.JSON(fiber.Map{"data": bands, "meta": meta})
+}
+
+// salaryReader is the two salary rollup reads. *db.Queries satisfies it.
+type salaryReader interface {
+	ListInsightsSalary(ctx context.Context, arg db.ListInsightsSalaryParams) ([]db.ListInsightsSalaryRow, error)
+	ListInsightsSalaryByCategory(ctx context.Context, category string) ([]db.ListInsightsSalaryByCategoryRow, error)
+}
+
+// salaryBands reads the bands for one role × country scope, already validated. It is
+// shared by /insights/salary and the ChatGPT app's salary_stats, so the two cannot quote
+// different figures for the same scope.
+//
+// A category with no seniority and no country scope breaks down by seniority — every
+// seniority's bands plus the category-wide ” band, in one read — and reports bySeniority so
+// the caller can say so. Each band carries its own seniority either way.
+func salaryBands(ctx context.Context, q salaryReader, category, seniority, country string) (bands []salaryBand, bySeniority bool, err error) {
+	if category != "" && seniority == "" && country == "" {
+		rows, err := q.ListInsightsSalaryByCategory(ctx, category)
+		if err != nil {
+			return nil, false, err
+		}
+		bands = make([]salaryBand, len(rows))
+		for i, r := range rows {
+			bands[i] = salaryBand{Seniority: r.Seniority, Currency: r.Currency, Period: r.Period, SampleSize: r.SampleSize, P25: r.P25, P50: r.P50, P75: r.P75}
+		}
+		return bands, true, nil
+	}
+
+	rows, err := q.ListInsightsSalary(ctx, db.ListInsightsSalaryParams{Category: category, Seniority: seniority, Country: country})
+	if err != nil {
+		return nil, false, err
+	}
+	bands = make([]salaryBand, len(rows))
+	for i, r := range rows {
+		bands[i] = salaryBand{Seniority: seniority, Currency: r.Currency, Period: r.Period, SampleSize: r.SampleSize, P25: r.P25, P50: r.P50, P75: r.P75}
+	}
+	return bands, false, nil
 }
