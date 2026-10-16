@@ -2832,6 +2832,50 @@ func (q *Queries) ListJobIDsWithUSSubdivisionCollision(ctx context.Context) ([]i
 	return items, nil
 }
 
+const listJobLivenessBySlugs = `-- name: ListJobLivenessBySlugs :many
+SELECT public_slug, is_private, duplicate_of, closed_at, last_seen_at
+FROM jobs
+WHERE public_slug = ANY($1::text[])
+`
+
+type ListJobLivenessBySlugsRow struct {
+	PublicSlug  string             `json:"public_slug"`
+	IsPrivate   bool               `json:"is_private"`
+	DuplicateOf pgtype.Int8        `json:"duplicate_of"`
+	ClosedAt    pgtype.Timestamptz `json:"closed_at"`
+	LastSeenAt  pgtype.Timestamptz `json:"last_seen_at"`
+}
+
+// What the ChatGPT app's check_jobs_open needs to say whether each posting in a shortlist is
+// still up: the visibility columns its predicate reads plus the two liveness stamps, and
+// nothing else. One round trip for the whole list; an unknown slug is simply absent, which the
+// caller reports as not found.
+func (q *Queries) ListJobLivenessBySlugs(ctx context.Context, slugs []string) ([]ListJobLivenessBySlugsRow, error) {
+	rows, err := q.db.Query(ctx, listJobLivenessBySlugs, slugs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListJobLivenessBySlugsRow{}
+	for rows.Next() {
+		var i ListJobLivenessBySlugsRow
+		if err := rows.Scan(
+			&i.PublicSlug,
+			&i.IsPrivate,
+			&i.DuplicateOf,
+			&i.ClosedAt,
+			&i.LastSeenAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listJobSkillsForGapReport = `-- name: ListJobSkillsForGapReport :many
 SELECT j.id, s.skill::text AS skill
 FROM jobs j

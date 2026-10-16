@@ -14,12 +14,12 @@ package mcpapp
 
 // JobSummary is one posting as a search result: enough to choose from, never the full body.
 type JobSummary struct {
-	Slug    string `json:"slug" jsonschema:"the posting's identifier, to pass to get_job"`
+	Slug    string `json:"slug" jsonschema:"the posting's identifier"`
 	Title   string `json:"title"`
 	Company string `json:"company"`
 	// CompanySlug travels beside the display name because it is what get_company takes.
 	// Resolving a name back to a slug is a guess; carrying it is not.
-	CompanySlug string `json:"company_slug,omitempty" jsonschema:"the employer's identifier, to pass to get_company"`
+	CompanySlug string `json:"company_slug,omitempty" jsonschema:"the employer's identifier"`
 	Location    string `json:"location,omitempty"`
 	// Countries is the faceted geography, which Location's free text is not. A posting
 	// reading "EMEA" carries the country list the dictionaries resolved.
@@ -47,7 +47,7 @@ type JobSummary struct {
 	// Summary is the search index's truncated preview, never the full body. Ten full job
 	// descriptions in one turn spend the context window on text the model will reduce to a
 	// line each; get_job is where a full body is read, for the one posting a person picked.
-	Summary string `json:"summary,omitempty" jsonschema:"a short preview; call get_job for the full description"`
+	Summary string `json:"summary,omitempty" jsonschema:"a short preview, not the full description"`
 	// Source names the board this posting was collected from, and OfficialJobURL is the
 	// employer's own link. Both travel with every result: this channel renders results as
 	// prose, where a link is easy to drop, and a posting repeated without its source reads
@@ -117,7 +117,7 @@ type Requirement struct {
 
 // CompanySummary is one employer.
 type CompanySummary struct {
-	Slug     string `json:"slug" jsonschema:"the employer's identifier, to pass to get_company"`
+	Slug     string `json:"slug" jsonschema:"the employer's identifier"`
 	Name     string `json:"name"`
 	Tagline  string `json:"tagline,omitempty"`
 	OpenJobs int    `json:"open_jobs" jsonschema:"how many postings this employer has open right now"`
@@ -145,4 +145,66 @@ type CompanyResult struct {
 	CompanySummary
 	Industries []string `json:"industries,omitempty"`
 	HQCountry  string   `json:"hq_country,omitempty" jsonschema:"ISO 3166-1 alpha-2 code"`
+}
+
+// Posting states check_jobs_open answers with.
+const (
+	StatusOpen     = "open"
+	StatusClosed   = "closed"
+	StatusNotFound = "not_found"
+)
+
+// JobOpenState is one posting's answer to "is it still up?".
+//
+// not_found covers a slug that never existed AND one this surface refuses (private, or a
+// duplicate of another posting) — the same indistinguishability get_job keeps, because
+// whether a private posting exists under some slug is not an anonymous caller's business.
+type JobOpenState struct {
+	Slug       string `json:"slug"`
+	Status     string `json:"status" jsonschema:"open, closed or not_found"`
+	ClosedAt   string `json:"closed_at,omitempty" jsonschema:"RFC3339 UTC; when freehire saw the posting close"`
+	LastSeenAt string `json:"last_seen_at,omitempty" jsonschema:"RFC3339 UTC; when a re-crawl last confirmed the posting live"`
+}
+
+// JobsOpenResult is what check_jobs_open answers.
+type JobsOpenResult struct {
+	Jobs []JobOpenState `json:"jobs"`
+	// Unchecked names the slugs past the per-call cap. A long shortlist is neither refused
+	// nor silently cut: the model can say what is left and ask again.
+	Unchecked []string `json:"unchecked,omitempty" jsonschema:"slugs beyond the per-call cap, which were not checked"`
+}
+
+// The deep-research shapes. ChatGPT's deep-research and company-knowledge connectors call a
+// tool named `search` and one named `fetch` and read their answers in these fixed shapes; a
+// server without them is skipped by those modes entirely. They are thin adaptations of
+// search_jobs and get_job, not a second catalogue view.
+type ResearchResults struct {
+	Results []ResearchHit `json:"results"`
+}
+
+type ResearchHit struct {
+	ID    string `json:"id" jsonschema:"the posting's identifier"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
+type ResearchDocument struct {
+	ID       string           `json:"id"`
+	Title    string           `json:"title"`
+	Text     string           `json:"text"`
+	URL      string           `json:"url"`
+	Metadata ResearchMetadata `json:"metadata"`
+}
+
+// ResearchMetadata carries attribution and the liveness verdict alongside the text: a
+// research report that quotes a posting without its board reads as though freehire were the
+// employer.
+type ResearchMetadata struct {
+	Company        string `json:"company"`
+	Location       string `json:"location,omitempty"`
+	Source         string `json:"source"`
+	OfficialJobURL string `json:"official_job_url,omitempty"`
+	PostedAt       string `json:"posted_at,omitempty"`
+	Reality        string `json:"reality,omitempty"`
+	GhostLevel     string `json:"ghost_level,omitempty"`
 }

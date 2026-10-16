@@ -45,6 +45,8 @@ var checkedFacets = []struct {
 	{"category", vocab.CategoryValues, func(in SearchInput) []string { return in.Category }},
 	{"employment_type", vocab.EmploymentTypeValues, func(in SearchInput) []string { return in.EmploymentType }},
 	{"english_level", vocab.EnglishLevelValues, func(in SearchInput) []string { return in.EnglishLevel }},
+	{"regions", vocab.RegionValues, func(in SearchInput) []string { return in.Regions }},
+	{"relocation", vocab.RelocationValues, func(in SearchInput) []string { return in.Relocation }},
 }
 
 // Unsupported names the filter values this input carries that the catalogue cannot filter

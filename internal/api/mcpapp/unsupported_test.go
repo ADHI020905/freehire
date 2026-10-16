@@ -47,6 +47,8 @@ func TestEveryClosedVocabularyIsChecked(t *testing.T) {
 		{"category", SearchInput{Category: []string{"ai"}}},
 		{"employment_type", SearchInput{EmploymentType: []string{"freelance"}}},
 		{"english_level", SearchInput{EnglishLevel: []string{"fluent"}}},
+		{"regions", SearchInput{Regions: []string{"europe"}}},
+		{"relocation", SearchInput{Relocation: []string{"yes"}}},
 	}
 
 	for _, tc := range cases {
@@ -133,6 +135,10 @@ func TestEveryCheckedFacetReadsItsOwnField(t *testing.T) {
 				in.EmploymentType = []string{"probe"}
 			case "english_level":
 				in.EnglishLevel = []string{"probe"}
+			case "regions":
+				in.Regions = []string{"probe"}
+			case "relocation":
+				in.Relocation = []string{"probe"}
 			default:
 				t.Fatalf("%s is in the table but this test does not know how to set it", facet.param)
 			}

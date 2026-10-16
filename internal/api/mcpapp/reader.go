@@ -2,8 +2,9 @@ package mcpapp
 
 import "context"
 
-// Reader is everything this transport needs from the rest of the system: the four tool
-// answers, already projected. The search handlers satisfy it.
+// Reader is everything this transport needs from the rest of the system: the tool answers,
+// already projected. search and fetch need nothing of their own — they adapt SearchJobs and
+// JobDetail. The search handlers satisfy it.
 //
 // It is an interface here rather than a concrete dependency for the same reason ojcpmcp's
 // is: this package sits above nothing it can construct. handler reads Postgres, Meilisearch
@@ -14,6 +15,9 @@ type Reader interface {
 	JobDetail(ctx context.Context, slug string) (JobResult, error)
 	SearchCompanies(ctx context.Context, in CompanySearchInput) (SearchCompaniesResult, error)
 	CompanyDetail(ctx context.Context, slug string) (CompanyResult, error)
+	// CheckJobsOpen answers one state per DISTINCT slug it was given, in the order given. The
+	// cap and the de-duplication are this package's, applied before the call.
+	CheckJobsOpen(ctx context.Context, slugs []string) ([]JobOpenState, error)
 }
 
 // NotFoundError marks the one failure the model must be able to act on: the posting or the

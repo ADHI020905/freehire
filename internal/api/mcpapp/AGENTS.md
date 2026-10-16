@@ -74,6 +74,29 @@ OJCP surface uses). A search result carries only `first_seen_at`.
 - **Absent, not false.** A lookup that fails leaves every signal off the wire. An empty level
   or a `false` flag would read as a clean bill of health nobody issued.
 
+## `check_jobs_open`, `search` and `fetch`
+
+- **`check_jobs_open`** answers open / closed / not_found for up to `maxOpenChecks` (50)
+  slugs in one Postgres read (`ListJobLivenessBySlugs`). It reports a CLOSED posting as closed
+  — that is the point of the tool — so it does not reuse `publishedToAgents`, which refuses
+  closed postings; private and duplicate postings still answer not_found, as on `get_job`.
+  Slugs past the cap are named back in `unchecked`, never dropped. A failed lookup is an error,
+  never a page of not_found.
+- **`search` / `fetch`** exist for ChatGPT's deep-research and company-knowledge connectors,
+  which call exactly these names and read exactly these shapes (`{results: [{id, title, url}]}`
+  and `{id, title, text, url, metadata}`) from the tool's TEXT content — the SDK fills that
+  from the typed output when a handler leaves `Content` empty. They adapt `SearchJobs` and
+  `JobDetail` (`research.go`); they are not a second catalogue view and add nothing to the
+  `Reader`.
+
+## Descriptions say what a tool returns, never which tool to call
+
+Anthropic's directory policy rules out tool descriptions that instruct the model about other
+tools ("call get_job for the full text" was in three places). A tool or field description
+states what comes back; cross-tool guidance, where needed, goes in `serverInstructions`.
+`TestNoToolDescriptionDirectsTheModelToAnotherTool` walks the registered tools and both
+schemas to hold the line.
+
 ## Annotations are load-bearing
 
 Every tool declares `readOnlyHint: true`, `destructiveHint: false`, `openWorldHint: true`.

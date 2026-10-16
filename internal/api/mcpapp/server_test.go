@@ -2,6 +2,7 @@ package mcpapp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -56,6 +57,13 @@ func readerThatFinds(t *testing.T) fakeReader {
 		companyDetail: func(context.Context, string) (CompanyResult, error) {
 			return CompanyResult{CompanySummary: CompanySummary{Slug: "acme", Name: "Acme"}}, nil
 		},
+		checkJobsOpen: func(_ context.Context, slugs []string) ([]JobOpenState, error) {
+			out := make([]JobOpenState, 0, len(slugs))
+			for _, s := range slugs {
+				out = append(out, JobOpenState{Slug: s, Status: StatusOpen})
+			}
+			return out, nil
+		},
 	}
 }
 
@@ -74,6 +82,9 @@ func TestEveryAdvertisedToolCanActuallyBeCalled(t *testing.T) {
 		toolGetJob:          {"slug": "senior-go-engineer-acme-abc123"},
 		toolSearchCompanies: {"query": "acme"},
 		toolGetCompany:      {"slug": "acme"},
+		toolCheckJobsOpen:   {"slugs": []string{"senior-go-engineer-acme-abc123"}},
+		toolSearch:          {"query": "go"},
+		toolFetch:           {"id": "senior-go-engineer-acme-abc123"},
 	}
 
 	listed, err := session.ListTools(ctx, nil)
@@ -105,7 +116,7 @@ func TestEveryAdvertisedToolCanActuallyBeCalled(t *testing.T) {
 
 func TestEveryToolDeclaresWhatItDoesAndWhatItDoesNotTouch(t *testing.T) {
 	// Incorrect annotation of these three hints is a named rejection reason in OpenAI's own
-	// submission guidelines. All four tools read; none writes; all reach a catalogue that
+	// submission guidelines. Every tool reads; none writes; all reach a catalogue that
 	// changes outside the conversation.
 	//
 	// The test walks the REGISTERED tools rather than a list written beside it, so a fifth
@@ -222,4 +233,35 @@ func text(t *testing.T, res *mcp.CallToolResult) string {
 		}
 	}
 	return b.String()
+}
+
+func TestNoToolDescriptionDirectsTheModelToAnotherTool(t *testing.T) {
+	// Anthropic's directory policy rules out tool descriptions that instruct the model about
+	// other tools; "call get_job for the full text" was exactly that, in three places. A
+	// description says what the tool returns. Cross-tool guidance, where it is needed at all,
+	// belongs in the server instructions, which this test does not read.
+	//
+	// It walks the REGISTERED tools — descriptions and every field description in both
+	// schemas — so a new tool or field cannot reintroduce one unnoticed. "search" alone is
+	// not checked: it is also the ordinary English word every search tool's prose uses.
+	listed, err := connect(t, readerThatFinds(t)).ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("tools/list: %v", err)
+	}
+	names := []string{toolSearchJobs, toolGetJob, toolSearchCompanies, toolGetCompany, toolCheckJobsOpen, toolFetch}
+
+	for _, tool := range listed.Tools {
+		raw, err := json.Marshal(struct {
+			Description string
+			In, Out     any
+		}{tool.Description, tool.InputSchema, tool.OutputSchema})
+		if err != nil {
+			t.Fatalf("%s: marshal: %v", tool.Name, err)
+		}
+		for _, name := range names {
+			if name != tool.Name && strings.Contains(string(raw), name) {
+				t.Errorf("%s's description or schema names %s", tool.Name, name)
+			}
+		}
+	}
 }

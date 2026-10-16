@@ -115,8 +115,8 @@ func TestAStatelessCallerListsToolsWithoutAHandshake(t *testing.T) {
 		t.Fatalf("status = %d, want 200 — %s", rec.Code, rec.Body.String())
 	}
 	tools, ok := rpcResult(t, rec)["tools"].([]any)
-	if !ok || len(tools) != 4 {
-		t.Fatalf("got %d tools without a handshake, want 4", len(tools))
+	if !ok || len(tools) != 7 {
+		t.Fatalf("got %d tools without a handshake, want 7", len(tools))
 	}
 }
 
@@ -145,7 +145,7 @@ func TestAHandshakeClientCanStillListToolsInOneGo(t *testing.T) {
 		t.Fatalf("status = %d, want 200 — %s", rec.Code, rec.Body.String())
 	}
 	tools, ok := rpcResult(t, rec)["tools"].([]any)
-	if !ok || len(tools) != 4 {
-		t.Fatalf("got %d tools, want 4 — %s", len(tools), rec.Body.String())
+	if !ok || len(tools) != 7 {
+		t.Fatalf("got %d tools, want 7 — %s", len(tools), rec.Body.String())
 	}
 }

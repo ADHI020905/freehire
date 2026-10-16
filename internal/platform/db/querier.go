@@ -4005,6 +4005,11 @@ type Querier interface {
 	ListJobListMembershipForJob(ctx context.Context, arg ListJobListMembershipForJobParams) ([]ListJobListMembershipForJobRow, error)
 	// A user's job lists, most recently updated first (the account-area order).
 	ListJobLists(ctx context.Context, userID int64) ([]ListJobListsRow, error)
+	// What the ChatGPT app's check_jobs_open needs to say whether each posting in a shortlist is
+	// still up: the visibility columns its predicate reads plus the two liveness stamps, and
+	// nothing else. One round trip for the whole list; an unknown slug is simply absent, which the
+	// caller reports as not found.
+	ListJobLivenessBySlugs(ctx context.Context, slugs []string) ([]ListJobLivenessBySlugsRow, error)
 	// One chunk of the skill-gap report: every (job id, raw skill phrase) pair LLM
 	// enrichment recorded, for jobs in an id range.
 	//

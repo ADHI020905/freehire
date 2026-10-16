@@ -12,6 +12,7 @@ type fakeReader struct {
 	jobDetail       func(context.Context, string) (JobResult, error)
 	searchCompanies func(context.Context, CompanySearchInput) (SearchCompaniesResult, error)
 	companyDetail   func(context.Context, string) (CompanyResult, error)
+	checkJobsOpen   func(context.Context, []string) ([]JobOpenState, error)
 }
 
 func (f fakeReader) SearchJobs(ctx context.Context, in SearchInput) (SearchJobsResult, error) {
@@ -28,6 +29,10 @@ func (f fakeReader) SearchCompanies(ctx context.Context, in CompanySearchInput) 
 
 func (f fakeReader) CompanyDetail(ctx context.Context, slug string) (CompanyResult, error) {
 	return f.companyDetail(ctx, slug)
+}
+
+func (f fakeReader) CheckJobsOpen(ctx context.Context, slugs []string) ([]JobOpenState, error) {
+	return f.checkJobsOpen(ctx, slugs)
 }
 
 // The assertion the file exists for. A method added to Reader without a fake to answer it

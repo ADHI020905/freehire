@@ -22,7 +22,7 @@ import (
 	"github.com/strelov1/freehire/internal/search/search"
 )
 
-func mcpappUnder(s searcher, cs companySearcher, store ojcpStore) *mcpappHandlers {
+func mcpappUnder(s searcher, cs companySearcher, store mcpappStore) *mcpappHandlers {
 	return newMCPAppHandlers(s, cs, store, "https://freehire.me")
 }
 
@@ -238,5 +238,50 @@ func TestTheAppProductionWiringAttachesTheLivenessSignal(t *testing.T) {
 	}
 	if h := mcpappUnder(&fakeSearcher{}, nil, fakeOJCPStore{}); h.attachReality != nil {
 		t.Error("attachReality is set for a store that cannot answer the lookups")
+	}
+}
+
+func TestTheAppOpenCheckAnswersEverySlugInTheOrderAsked(t *testing.T) {
+	// closed is the answer this tool exists for, so a closed posting is reported as closed —
+	// unlike get_job, which refuses it. Private and duplicate postings stay indistinguishable
+	// from absent ones, exactly as get_job keeps them.
+	closedAt := time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC)
+	seenAt := time.Date(2026, 10, 15, 6, 0, 0, 0, time.UTC)
+	store := fakeOJCPStore{liveness: []db.ListJobLivenessBySlugsRow{
+		{PublicSlug: "closed-one", ClosedAt: pgtype.Timestamptz{Time: closedAt, Valid: true}},
+		{PublicSlug: "open-one", LastSeenAt: pgtype.Timestamptz{Time: seenAt, Valid: true}},
+		{PublicSlug: "private-one", IsPrivate: true},
+		{PublicSlug: "dup-one", DuplicateOf: pgtype.Int8{Int64: 9, Valid: true}},
+	}}
+
+	got, err := mcpappUnder(&fakeSearcher{}, nil, store).CheckJobsOpen(context.Background(),
+		[]string{"open-one", "closed-one", "private-one", "dup-one", "never-existed"})
+	if err != nil {
+		t.Fatalf("CheckJobsOpen: %v", err)
+	}
+
+	want := []mcpapp.JobOpenState{
+		{Slug: "open-one", Status: mcpapp.StatusOpen, LastSeenAt: "2026-10-15T06:00:00Z"},
+		{Slug: "closed-one", Status: mcpapp.StatusClosed, ClosedAt: "2026-10-01T09:00:00Z"},
+		{Slug: "private-one", Status: mcpapp.StatusNotFound},
+		{Slug: "dup-one", Status: mcpapp.StatusNotFound},
+		{Slug: "never-existed", Status: mcpapp.StatusNotFound},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d states, want %d: %+v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("state %d = %+v, want %+v", i, got[i], want[i])
+		}
+	}
+}
+
+func TestTheAppOpenCheckFailsRatherThanCallingEverythingMissing(t *testing.T) {
+	// A store that cannot answer must not read as "none of your postings exist" — that is a
+	// confident, wrong answer a person acts on.
+	store := fakeOJCPStore{livenessErr: errors.New("db down")}
+	if _, err := mcpappUnder(&fakeSearcher{}, nil, store).CheckJobsOpen(context.Background(), []string{"x"}); err == nil {
+		t.Error("a failed lookup answered as a result")
 	}
 }

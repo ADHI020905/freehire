@@ -131,6 +131,15 @@ SELECT *
 FROM jobs
 WHERE public_slug = $1;
 
+-- name: ListJobLivenessBySlugs :many
+-- What the ChatGPT app's check_jobs_open needs to say whether each posting in a shortlist is
+-- still up: the visibility columns its predicate reads plus the two liveness stamps, and
+-- nothing else. One round trip for the whole list; an unknown slug is simply absent, which the
+-- caller reports as not found.
+SELECT public_slug, is_private, duplicate_of, closed_at, last_seen_at
+FROM jobs
+WHERE public_slug = ANY(sqlc.arg('slugs')::text[]);
+
 -- name: GetJobBySourceExternalID :one
 -- Load a job by its dedup identity (source, external_id) — the key the Job
 -- aggregate's repository loads by, mirroring the CloseJobBySourceExternalID key.

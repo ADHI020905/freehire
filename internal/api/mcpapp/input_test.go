@@ -38,6 +38,11 @@ func TestEveryPublishedFilterMapsToTheParameterSearchReads(t *testing.T) {
 		{"company", SearchInput{CompanySlugs: []string{"acme"}}, "company_slug", "acme"},
 		{"source", SearchInput{Sources: []string{"greenhouse"}}, "source", "greenhouse"},
 		{"posted within days", SearchInput{PostedWithinDays: 7}, "posted_within_days", "7"},
+		{"regions", SearchInput{Regions: []string{"latam", "eu"}}, "regions", "latam,eu"},
+		{"relocation", SearchInput{Relocation: []string{"supported"}}, "relocation", "supported"},
+		{"excluded skills", SearchInput{ExcludeSkills: []string{"php"}}, "skills_exclude", "php"},
+		{"excluded companies", SearchInput{ExcludeCompanySlugs: []string{"acme"}}, "company_slug_exclude", "acme"},
+		{"all skills required", SearchInput{Skills: []string{"go", "kubernetes"}, RequireAllSkills: true}, "skills_mode", "and"},
 	}
 
 	for _, tc := range cases {
@@ -54,7 +59,8 @@ func TestAnUnsetFilterBecomesNoParameterAtAll(t *testing.T) {
 	// out as a parameter is an unspoken preference turned into a silent narrowing.
 	values := SearchInput{Query: "go"}.QueryValues()
 
-	for _, param := range []string{"countries", "work_mode", "salary_min", "visa_sponsorship", "posted_within_days"} {
+	for _, param := range []string{"countries", "work_mode", "salary_min", "visa_sponsorship", "posted_within_days",
+		"regions", "relocation", "skills_exclude", "company_slug_exclude", "skills_mode"} {
 		if _, present := values[param]; present {
 			t.Errorf("%s was written out although the caller never set it", param)
 		}
@@ -115,9 +121,21 @@ func TestACompanySearchSendsEveryCountryItWasGiven(t *testing.T) {
 // Walking vocab.SeniorityValues is the point, the same as internal/api/ojcp's guards: a
 // test that retyped the list would only agree with the tag that retyped it.
 func TestSeniorityDescriptionNamesEveryLevel(t *testing.T) {
-	field, ok := reflect.TypeOf(SearchInput{}).FieldByName("Seniority")
+	assertDescriptionNamesEvery(t, "Seniority", vocab.SeniorityValues)
+}
+
+func TestRegionsDescriptionNamesEveryRegion(t *testing.T) {
+	assertDescriptionNamesEvery(t, "Regions", vocab.RegionValues)
+}
+
+// assertDescriptionNamesEvery holds a closed facet's jsonschema description to its whole
+// vocabulary. It is a description, not an enum, so a value missing from it is still accepted
+// — and invisible to the agent reading the schema, which is how `c_level` went unaskable.
+func assertDescriptionNamesEvery(t *testing.T, fieldName string, vocabulary []string) {
+	t.Helper()
+	field, ok := reflect.TypeOf(SearchInput{}).FieldByName(fieldName)
 	if !ok {
-		t.Fatal("SearchInput has no Seniority field: this guard is pointed at the wrong name")
+		t.Fatalf("SearchInput has no %s field: this guard is pointed at the wrong name", fieldName)
 	}
 
 	described := map[string]bool{}
@@ -126,11 +144,18 @@ func TestSeniorityDescriptionNamesEveryLevel(t *testing.T) {
 		described[strings.TrimSpace(token)] = true
 	}
 
-	for _, level := range vocab.SeniorityValues {
-		if !described[level] {
-			t.Errorf("seniority %q is missing from the jsonschema description %q: the code "+
-				"still accepts it, but an agent reading the tool schema cannot know to ask "+
-				"for it", level, tag)
+	for _, value := range vocabulary {
+		if !described[value] {
+			t.Errorf("%q is missing from %s's jsonschema description %q: the code still accepts "+
+				"it, but an agent reading the tool schema cannot know to ask for it", value, fieldName, tag)
 		}
+	}
+}
+
+func TestRequiringAllSkillsWithNoSkillsNamedNarrowsNothing(t *testing.T) {
+	// skills_mode=and with no skills is not a filter on anything, so it is not written: a
+	// parameter that means nothing on its own is noise in every log line after it.
+	if _, present := (SearchInput{RequireAllSkills: true}).QueryValues()["skills_mode"]; present {
+		t.Error("skills_mode was written with no skills to apply it to")
 	}
 }

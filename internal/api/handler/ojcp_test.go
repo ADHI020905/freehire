@@ -25,6 +25,9 @@ type fakeOJCPStore struct {
 	formErr error
 	company db.Company
 	compErr error
+	// liveness answers ListJobLivenessBySlugs, which only the ChatGPT app's surface reads.
+	liveness    []db.ListJobLivenessBySlugsRow
+	livenessErr error
 }
 
 func (f fakeOJCPStore) GetJobBySlug(context.Context, string) (db.Job, error) {
@@ -37,6 +40,10 @@ func (f fakeOJCPStore) GetApplyFormByJobID(context.Context, int64) (db.GetApplyF
 
 func (f fakeOJCPStore) GetCompany(context.Context, string) (db.Company, error) {
 	return f.company, f.compErr
+}
+
+func (f fakeOJCPStore) ListJobLivenessBySlugs(context.Context, []string) ([]db.ListJobLivenessBySlugsRow, error) {
+	return f.liveness, f.livenessErr
 }
 
 // ojcpJobView projects a stored row the way every read path does. Building a jobview.Job by

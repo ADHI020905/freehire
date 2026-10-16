@@ -33,15 +33,23 @@ type SearchInput struct {
 	// WorkMode is a list rather than a flag because "remote or hybrid" is a thing people
 	// ask for and a boolean cannot express it.
 	WorkMode []string `json:"work_mode,omitempty" jsonschema:"any of remote, hybrid, onsite"`
+	// Regions are where the role can be done FROM, which is what a remote candidate asks
+	// ("remote, LATAM"). They union with countries and cities, as on the website. The list is
+	// the whole of vocab.RegionValues, held there by a test like seniority's.
+	Regions []string `json:"regions,omitempty" jsonschema:"any of global, north_america, latam, eu, uk, mena, africa, apac, cis"`
 
 	// The listed values are the WHOLE of vocab.SeniorityValues, held there by
 	// TestSeniorityDescriptionNamesEveryLevel. It is a description, not an enum, so a level
 	// missing from it is still accepted — and invisible to the agent reading the schema,
 	// which is how `c_level` went unaskable here.
-	Seniority      []string `json:"seniority,omitempty" jsonschema:"any of intern, junior, middle, senior, lead, staff, principal, c_level"`
-	Category       []string `json:"category,omitempty" jsonschema:"role family, e.g. backend, frontend, devops, data"`
-	Skills         []string `json:"skills,omitempty" jsonschema:"technologies, e.g. go, kubernetes, react"`
-	EmploymentType []string `json:"employment_type,omitempty" jsonschema:"any of full_time, part_time, contract, internship"`
+	Seniority []string `json:"seniority,omitempty" jsonschema:"any of intern, junior, middle, senior, lead, staff, principal, c_level"`
+	Category  []string `json:"category,omitempty" jsonschema:"role family, e.g. backend, frontend, devops, data"`
+	Skills    []string `json:"skills,omitempty" jsonschema:"technologies, e.g. go, kubernetes, react"`
+	// RequireAllSkills turns skills from "any of" into "all of" — "Go AND Kubernetes" is a
+	// different question from "Go OR Kubernetes", and a person means one of them.
+	RequireAllSkills bool     `json:"require_all_skills,omitempty" jsonschema:"true: every listed skill must be present, not just one"`
+	ExcludeSkills    []string `json:"exclude_skills,omitempty" jsonschema:"technologies the posting must not ask for, e.g. php"`
+	EmploymentType   []string `json:"employment_type,omitempty" jsonschema:"any of full_time, part_time, contract, internship"`
 
 	// SalaryMin is a floor, expressed in SalaryCurrency. A floor without a currency is
 	// ambiguous across a catalogue holding both, so the two travel together.
@@ -52,9 +60,11 @@ type SearchInput struct {
 	// is not needed", which is not a filter at all, while absent means nothing was said.
 	VisaSponsorship *bool    `json:"visa_sponsorship,omitempty"`
 	EnglishLevel    []string `json:"english_level,omitempty" jsonschema:"CEFR levels, e.g. B2, C1"`
+	Relocation      []string `json:"relocation,omitempty" jsonschema:"any of supported (the employer helps you move), required (the role needs you to move), not_supported"`
 
-	CompanySlugs []string `json:"company_slugs,omitempty" jsonschema:"employer identifiers, as carried by a result's company_slug"`
-	Sources      []string `json:"sources,omitempty" jsonschema:"job boards to restrict to"`
+	CompanySlugs        []string `json:"company_slugs,omitempty" jsonschema:"employer identifiers, as carried by a result's company_slug"`
+	ExcludeCompanySlugs []string `json:"exclude_company_slugs,omitempty" jsonschema:"employers to leave out, as carried by a result's company_slug"`
+	Sources             []string `json:"sources,omitempty" jsonschema:"job boards to restrict to"`
 
 	PostedWithinDays int `json:"posted_within_days,omitempty"`
 
@@ -79,6 +89,20 @@ type JobDetailInput struct {
 	Slug string `json:"slug" jsonschema:"the posting's identifier, as carried by a search result's slug"`
 }
 
+type CheckJobsOpenInput struct {
+	Slugs []string `json:"slugs" jsonschema:"posting identifiers, as carried by search results' slug; up to 50 are checked per call"`
+}
+
+// ResearchQuery and ResearchID are the inputs of search and fetch, whose shapes ChatGPT's
+// deep-research and company-knowledge connectors fix: one query string in, one id in.
+type ResearchQuery struct {
+	Query string `json:"query" jsonschema:"free text describing the jobs to find"`
+}
+
+type ResearchID struct {
+	ID string `json:"id" jsonschema:"a result id from search"`
+}
+
 type CompanyDetailInput struct {
 	Slug string `json:"slug" jsonschema:"the employer's identifier, as carried by a result's company_slug"`
 }
@@ -98,7 +122,12 @@ func (in SearchInput) QueryValues() url.Values {
 	setList(v, "countries", countryCodes(in.Countries))
 	setList(v, "cities", in.Cities)
 	setList(v, "skills", in.Skills)
+	if in.RequireAllSkills && v.Has("skills") {
+		v.Set("skills_mode", "and")
+	}
+	setList(v, "skills_exclude", in.ExcludeSkills)
 	setList(v, "company_slug", in.CompanySlugs)
+	setList(v, "company_slug_exclude", in.ExcludeCompanySlugs)
 	setList(v, "source", in.Sources)
 	// The closed-vocabulary facets come from the one table that also decides what
 	// Unsupported reports, so what is SENT and what is REPORTED cannot disagree about a

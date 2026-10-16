@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/api/mcpapp"
 	"github.com/strelov1/freehire/internal/ingest/applyform"
@@ -27,10 +29,17 @@ import (
 // surfaces read exactly the same three rows, and a second interface with the same methods
 // would be a second thing to keep in step for no gain.
 
+// mcpappStore is what the app's surface reads: the OJCP surface's store plus the one batch
+// read check_jobs_open needs. *db.Queries satisfies it; tests inject a fake.
+type mcpappStore interface {
+	ojcpStore
+	ListJobLivenessBySlugs(ctx context.Context, slugs []string) ([]db.ListJobLivenessBySlugsRow, error)
+}
+
 type mcpappHandlers struct {
 	search        searcher
 	companySearch companySearcher
-	store         ojcpStore
+	store         mcpappStore
 	// attachReality hangs the liveness signals (reality and ghost) on the posting get_job
 	// reads. A field for the reason ojcpHandlers' is one: the real lookup needs the concrete
 	// *db.Queries, and a test must still drive the seam. Nil leaves the signals off.
@@ -38,7 +47,7 @@ type mcpappHandlers struct {
 	projector     mcpapp.Projector
 }
 
-func newMCPAppHandlers(s searcher, cs companySearcher, store ojcpStore, origin string) *mcpappHandlers {
+func newMCPAppHandlers(s searcher, cs companySearcher, store mcpappStore, origin string) *mcpappHandlers {
 	h := &mcpappHandlers{
 		search:        s,
 		companySearch: cs,
@@ -197,4 +206,52 @@ func (h *mcpappHandlers) CompanyDetail(ctx context.Context, slug string) (mcpapp
 		return mcpapp.CompanyResult{}, err
 	}
 	return h.projector.CompanyDetail(company), nil
+}
+
+// CheckJobsOpen answers `check_jobs_open`: one state per slug, in the order asked.
+//
+// closed is reported as closed — telling a shortlist which postings went down is the point
+// of the tool, which is why it does not reuse publishedToAgents (that predicate refuses a
+// closed posting outright). Private and duplicate postings answer not_found, the same
+// indistinguishability get_job keeps.
+//
+// A failed lookup is an error, never a page of not_found: "none of your postings exist" is a
+// confident, wrong answer a person would act on.
+func (h *mcpappHandlers) CheckJobsOpen(ctx context.Context, slugs []string) ([]mcpapp.JobOpenState, error) {
+	rows, err := h.store.ListJobLivenessBySlugs(ctx, slugs)
+	if err != nil {
+		return nil, err
+	}
+	bySlug := make(map[string]db.ListJobLivenessBySlugsRow, len(rows))
+	for _, r := range rows {
+		bySlug[r.PublicSlug] = r
+	}
+
+	out := make([]mcpapp.JobOpenState, 0, len(slugs))
+	for _, slug := range slugs {
+		row, found := bySlug[slug]
+		out = append(out, jobOpenState(slug, row, found))
+	}
+	return out, nil
+}
+
+// jobOpenState is one slug's answer. found is false for a slug the lookup did not return.
+func jobOpenState(slug string, row db.ListJobLivenessBySlugsRow, found bool) mcpapp.JobOpenState {
+	switch {
+	case !found || row.IsPrivate || row.DuplicateOf.Valid:
+		return mcpapp.JobOpenState{Slug: slug, Status: mcpapp.StatusNotFound}
+	case row.ClosedAt.Valid:
+		return mcpapp.JobOpenState{Slug: slug, Status: mcpapp.StatusClosed, ClosedAt: utcRFC3339(row.ClosedAt)}
+	default:
+		return mcpapp.JobOpenState{Slug: slug, Status: mcpapp.StatusOpen, LastSeenAt: utcRFC3339(row.LastSeenAt)}
+	}
+}
+
+// utcRFC3339 renders a nullable timestamp the way every timestamp on this surface reads, or
+// nothing for NULL.
+func utcRFC3339(ts pgtype.Timestamptz) string {
+	if !ts.Valid {
+		return ""
+	}
+	return ts.Time.UTC().Format(time.RFC3339)
 }
