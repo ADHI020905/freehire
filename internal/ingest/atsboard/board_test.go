@@ -264,6 +264,8 @@ func TestRecognize(t *testing.T) {
 		{"gr8people host", "https://etrade.gr8people.com/jobs/4709", "gr8people", "etrade.gr8people.com", "https://etrade.gr8people.com", true},
 		{"workgr8 base-domain variant", "https://batesville.workgr8.com/jobs/1146", "gr8people", "batesville.workgr8.com", "https://batesville.workgr8.com", true},
 		{"gr8people bare apex not a board", "https://gr8people.com/", "", "", "", false},
+		{"eploy tenant host", "https://peigroupweb.eploy.net/vacancies/442/senior-reporter--private-equity.html", "eploy", "peigroupweb.eploy.net", "https://peigroupweb.eploy.net", true},
+		{"eploy marketing site is not a tenant", "https://www.eploy.com/customers/", "", "", "", false},
 		{"workgr8 bare apex not a board", "https://workgr8.com/", "", "", "", false},
 
 		// host+path mode — Workday: board is "<host>/<site>" (site case preserved)

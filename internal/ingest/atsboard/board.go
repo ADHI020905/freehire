@@ -237,6 +237,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"factorialhr", "factorial", modeHost}, // the .com.br/.pt/… base-domain variant — ONE ingest adapter serves both, and it reports "factorial"
 	{"gr8people", "gr8people", modeHost},   // <tenant>.gr8people.com
 	{"workgr8", "gr8people", modeHost},     // the workgr8.com base-domain variant — same vendor, confirmed live (identical frontend + GraphQL schema); ONE ingest adapter serves both, reporting "gr8people"
+	// Eploy: <tenant>.eploy.net is every tenant's own host and the board the adapter fetches
+	// /live-jobs.xml from. A branded careers domain is not derivable, like every other vanity host.
+	{"eploy", "eploy", modeHost},
 	// CatsOne's adapter fetches https://<board>/careers, so the board is the whole host, exactly
 	// as catsone.yml stores it. It was listed as a subdomain, which yields the bare label — a
 	// board no crawl can resolve. (Its custom-domain tenants, e.g. jobs.evoplay.com.ua, stay
@@ -840,6 +843,7 @@ var platformLabels = map[string]bool{
 var platformLabelsByApex = map[string][]string{
 	"hrmdirect.com": {"apply"},
 	"potok.io":      {"www", "stages", "qa", "sentry"},
+	"eploy":         {"www"}, // www.eploy.com is the vendor's marketing site
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —

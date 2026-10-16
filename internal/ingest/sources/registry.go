@@ -459,6 +459,9 @@ func All(c HTTPClient) map[string]Source {
 		// search host per board, hydrating bodies the search omits from each posting page. See
 		// beesite.go.
 		NewBeeSite(c),
+		// Eploy: UK ATS, one careers host per board; the vacancy list is the host's own
+		// /live-jobs.xml sitemap, the body the vacancy page. See eploy.go.
+		NewEploy(c),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see

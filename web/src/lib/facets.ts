@@ -387,6 +387,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   mokahr: 'MokaHR',
   peoplesoft: 'PeopleSoft',
   beesite: 'BeeSite',
+  eploy: 'Eploy',
   pythonorg: 'Python.org',
 };
 
