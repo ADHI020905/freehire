@@ -110,6 +110,14 @@ handlers now share, so the two cannot quote different figures:
 Trends (`/insights/companies`, `/insights/skills`) are deliberately not exposed yet: the
 company ranking is led by aggregator boards rather than employers.
 
+## Prompts
+
+`prompts.go` registers three prompts — `jobs_for_my_stack`, `check_my_shortlist`,
+`salary_check` — templates a PERSON picks in their client (Claude lists them as commands); the
+model never calls them. Each renders one plain user request and names no tool: which tool
+answers it is the server instructions' job. A missing required argument is an error; an
+omitted optional one leaves no trace in the text.
+
 ## Descriptions say what a tool returns, never which tool to call
 
 Anthropic's directory policy rules out tool descriptions that instruct the model about other

@@ -14,19 +14,21 @@ const Version = "1.0"
 
 // serverInstructions is what the model is told before it picks a tool.
 //
-// Two things belong here and nowhere else. The first is that this is an aggregator, so a
-// posting is attributed rather than offered as ours. The second is the OR: geography
-// filters union, so asking for Germany and Lisbon returns both rather than their
-// intersection — a model that assumes AND will describe the results wrongly and confidently,
-// and nothing in a result would reveal the mistake.
+// Three things belong here and nowhere else. The first is that this is an aggregator, so a
+// posting is attributed rather than offered as ours. The second is which tool answers which
+// question: tool descriptions may not point at other tools (Anthropic's directory policy),
+// so this is the one place the model learns that, and TestTheInstructionsIntroduceEveryTool
+// keeps it complete. The third is the OR: geography filters union, so asking for Germany and
+// Lisbon returns both rather than their intersection — a model that assumes AND will
+// describe the results wrongly and confidently, and nothing in a result would reveal it.
 //
 // Kept under 512 characters, which the Apps SDK guidance asks for and a test enforces.
-const serverInstructions = "freehire aggregates IT job postings from many sources and " +
-	"attributes each to the board it came from. Search first, then read one posting in full " +
-	"with get_job. Geography filters union rather than intersect: countries plus cities " +
-	"returns postings matching any of them. Values outside our vocabularies are dropped and " +
-	"named in ignored_params, so the answer is wider than asked — retry with a named value " +
-	"rather than reporting an empty catalogue."
+const serverInstructions = "freehire aggregates IT job postings and attributes each to the board it " +
+	"came from: name the source and link the employer's posting. search_jobs finds postings; " +
+	"get_job reads one, including whether it still looks live; check_jobs_open rechecks a " +
+	"shortlist; similar_jobs finds more like one; salary_stats and job_market_stats answer pay " +
+	"and market questions; search_companies and get_company cover employers. Geography filters " +
+	"union. Unknown filter values come back in ignored_params: retry with a listed value."
 
 // Tool names. Unlike the OJCP transport's, they feed no manifest — there is nothing here
 // that ADVERTISES a tool separately from registering it, so they are constants only because
@@ -93,6 +95,8 @@ func newServer(r Reader) *mcp.Server {
 		Name:    "freehire",
 		Version: Version,
 	}, &mcp.ServerOptions{Instructions: serverInstructions})
+
+	addPrompts(server)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:  toolSearchJobs,
