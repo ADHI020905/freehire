@@ -1,0 +1,336 @@
+{
+ "LanguageCode": "EN",
+ "SearchResult": {
+  "SearchResultCount": 3,
+  "SearchResultCountAll": 3,
+  "SearchResultItems": [
+   {
+    "MatchedObjectId": "17854",
+    "MatchedObjectDescriptor": {
+     "ID": "17854",
+     "PositionID": "J000017854",
+     "PositionTitle": "Consultant Leitungsrecht & Grunderwerb (f/m/d) - IE2S GmbH",
+     "PublicationCode": "a1e7b782722db43369288f4b4add5178",
+     "PositionURI": "https://jobs.porsche.com/index.php?ac=jobad&id=17854",
+     "PositionShortURI": "index.php?ac=jobad&id=17854",
+     "ApplyURI": [
+      "https://jobs.porsche.com/index.php?ac=application&jobad_id=17854"
+     ],
+     "PublicationLanguage": {
+      "Code": "1"
+     },
+     "PublicationChannel": [
+      {
+       "Id": 12,
+       "StartDate": "2025-09-09",
+       "EndDate": "2027-03-08"
+      },
+      {
+       "Id": 88,
+       "StartDate": "2025-09-09",
+       "EndDate": "2027-03-08"
+      }
+     ],
+     "PublicationEndDate": "2027-03-08",
+     "PositionIndustry": [
+      {
+       "Code": "1",
+       "Name": "Automotive/Supplier"
+      },
+      {
+       "Code": "10",
+       "Name": "Power/Supply"
+      },
+      {
+       "Code": "16",
+       "Name": "IT/IT Service"
+      },
+      {
+       "Code": "29",
+       "Name": "Management Consulting"
+      }
+     ],
+     "JobCategory": [
+      {
+       "Code": "135",
+       "Name": "Consulting"
+      }
+     ],
+     "CareerLevel": [
+      {
+       "Code": "17",
+       "Name": "Professionals"
+      }
+     ],
+     "TargetGroup": [],
+     "PositionSchedule": [
+      {
+       "Code": "1",
+       "Name": "full-time"
+      }
+     ],
+     "PositionOfferingType": [
+      {
+       "Code": "2",
+       "Name": "Permanent"
+      }
+     ],
+     "ParentOrganization": "5673",
+     "ParentOrganizationName": "MHP - A Porsche Company",
+     "PositionLocation": [
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4601",
+       "CountrySubDivisionName": "Baden-Württemberg",
+       "City": "59",
+       "CityName": "Ludwigsburg",
+       "PostalCode": "71638",
+       "StreetName": "Hindenburgstraße",
+       "BuildingNumber": "45",
+       "Longitude": 9.2029545,
+       "Latitude": 48.8910534
+      },
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4607",
+       "CountrySubDivisionName": "Hesse",
+       "City": "313",
+       "CityName": "Frankfurt am Main",
+       "PostalCode": "60549",
+       "StreetName": "Edmund-Rumpler-Straße",
+       "BuildingNumber": "3",
+       "Longitude": 8.5890213,
+       "Latitude": 50.056342
+      },
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4602",
+       "CountrySubDivisionName": "Bavaria",
+       "City": "15",
+       "CityName": "Munich",
+       "PostalCode": "80807",
+       "StreetName": "Mies-van-der-Rohe-Straße",
+       "BuildingNumber": "3",
+       "Longitude": 11.5912181,
+       "Latitude": 48.1770142
+      },
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4610",
+       "CountrySubDivisionName": "North Rhine-Westphalia",
+       "City": "46",
+       "CityName": "Düsseldorf",
+       "PostalCode": "40472",
+       "StreetName": "Wahlerstrasse ",
+       "BuildingNumber": "21",
+       "Longitude": 6.8187082,
+       "Latitude": 51.2662168
+      },
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4603",
+       "CountrySubDivisionName": "Berlin",
+       "City": "41",
+       "CityName": "Berlin",
+       "PostalCode": "10245",
+       "StreetName": "Stralauer Allee",
+       "BuildingNumber": "12",
+       "Longitude": 13.4599572,
+       "Latitude": 52.4983203
+      }
+     ],
+     "Organization": "8086 8083 8087 8081 8076",
+     "OrganizationName": "Ludwigsburg (MHP) Frankfurt am Main (MHP) München (MHP) Düsseldorf (MHP) Berlin (MHP)",
+     "PublicationStartDate": "2025-09-09"
+    },
+    "RelevanceScore": 0,
+    "RelevanceRank": 1
+   },
+   {
+    "MatchedObjectId": "16329",
+    "MatchedObjectDescriptor": {
+     "ID": "16329",
+     "PositionID": "J000016329",
+     "PositionTitle": "Kfz-Mechatroniker (m/w/d)",
+     "PublicationCode": "c0416b5fc904e01210c37f217f49611f",
+     "PositionURI": "https://jobs.porsche.com/index.php?ac=jobad&id=16329",
+     "PositionShortURI": "index.php?ac=jobad&id=16329",
+     "ApplyURI": [
+      "https://jobs.porsche.com/index.php?ac=application&jobad_id=16329"
+     ],
+     "PublicationLanguage": {
+      "Code": "1"
+     },
+     "PublicationChannel": [
+      {
+       "Id": 12,
+       "StartDate": "2025-04-28",
+       "EndDate": "2026-12-16"
+      }
+     ],
+     "PublicationEndDate": "2026-12-16",
+     "PositionIndustry": [
+      {
+       "Code": "1",
+       "Name": "Automotive/Supplier"
+      }
+     ],
+     "JobCategory": [
+      {
+       "Code": "143",
+       "Name": "Workshop & Repair"
+      }
+     ],
+     "CareerLevel": [
+      {
+       "Code": "1",
+       "Name": "Qualified Employees"
+      }
+     ],
+     "TargetGroup": [],
+     "PositionSchedule": [
+      {
+       "Code": "1",
+       "Name": "full-time"
+      }
+     ],
+     "PositionOfferingType": [
+      {
+       "Code": "2",
+       "Name": "Permanent"
+      }
+     ],
+     "ParentOrganization": "8501",
+     "ParentOrganizationName": "Porsche Zentrum Bonn",
+     "PositionLocation": [
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4610",
+       "CountrySubDivisionName": "North Rhine-Westphalia",
+       "City": "208",
+       "CityName": "Bonn",
+       "PostalCode": "53119",
+       "StreetName": "Brühler Straße",
+       "BuildingNumber": "2",
+       "Longitude": 7.0740597,
+       "Latitude": 50.7416885
+      }
+     ],
+     "Organization": "8421",
+     "OrganizationName": "Bonn (Porsche Zentrum)",
+     "PublicationStartDate": "2025-04-28"
+    },
+    "RelevanceScore": 0,
+    "RelevanceRank": 2
+   },
+   {
+    "MatchedObjectId": "15853",
+    "MatchedObjectDescriptor": {
+     "ID": "15853",
+     "PositionID": "J000015853",
+     "PositionTitle": "Service Techniker/Kfz-Mechatroniker (m/w/d)",
+     "PublicationCode": "fa9d192d5f6364e847cdb2b7f1daa17f",
+     "PositionURI": "https://jobs.porsche.com/index.php?ac=jobad&id=15853",
+     "PositionShortURI": "index.php?ac=jobad&id=15853",
+     "ApplyURI": [
+      "https://jobs.porsche.com/index.php?ac=application&jobad_id=15853"
+     ],
+     "PublicationLanguage": {
+      "Code": "1"
+     },
+     "PublicationChannel": [
+      {
+       "Id": 12,
+       "StartDate": "2025-03-17",
+       "EndDate": "2027-09-16"
+      }
+     ],
+     "PublicationEndDate": "2027-09-16",
+     "PositionIndustry": [
+      {
+       "Code": "1",
+       "Name": "Automotive/Supplier"
+      }
+     ],
+     "JobCategory": [
+      {
+       "Code": "143",
+       "Name": "Workshop & Repair"
+      }
+     ],
+     "CareerLevel": [
+      {
+       "Code": "1",
+       "Name": "Qualified Employees"
+      }
+     ],
+     "TargetGroup": [],
+     "PositionSchedule": [
+      {
+       "Code": "1",
+       "Name": "full-time"
+      }
+     ],
+     "PositionOfferingType": [
+      {
+       "Code": "2",
+       "Name": "Permanent"
+      }
+     ],
+     "ParentOrganization": "8549",
+     "ParentOrganizationName": "Porsche Zentrum Freiburg",
+     "PositionLocation": [
+      {
+       "Continent": "1",
+       "ContinentName": "Europe",
+       "Country": "46",
+       "CountryName": "Germany",
+       "CountryCode": "DE",
+       "CountrySubDivision": "4601",
+       "CountrySubDivisionName": "Baden-Württemberg",
+       "City": "203",
+       "CityName": "Freiburg",
+       "PostalCode": "79115",
+       "StreetName": "Basler Straße",
+       "BuildingNumber": "94",
+       "Longitude": 7.824057,
+       "Latitude": 47.9846304
+      }
+     ],
+     "Organization": "8445",
+     "OrganizationName": "Freiburg (Porsche Zentrum)",
+     "PublicationStartDate": "2025-03-17"
+    },
+    "RelevanceScore": 0,
+    "RelevanceRank": 3
+   }
+  ],
+  "UserArea": {
+   "ExecutionError": 0
+  }
+ }
+}

@@ -455,6 +455,10 @@ func All(c HTTPClient) map[string]Source {
 		// board; app.mokahr.com encrypts its listing, hire-r1 (region "r1") does not. See
 		// mokahr.go.
 		NewMokaHR(c),
+		// BeeSite: milch & zucker's German corporate career portals, one <name>.app.beesite.de
+		// search host per board, hydrating bodies the search omits from each posting page. See
+		// beesite.go.
+		NewBeeSite(c),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see
