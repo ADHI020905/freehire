@@ -388,6 +388,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   peoplesoft: 'PeopleSoft',
   beesite: 'BeeSite',
   eploy: 'Eploy',
+  hiringroom: 'HiringRoom',
   pythonorg: 'Python.org',
 };
 

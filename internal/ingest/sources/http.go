@@ -119,6 +119,13 @@ type HeaderFormPoster interface {
 	PostFormWithHeaders(ctx context.Context, url string, headers map[string]string, values url.Values) (*html.Node, error)
 }
 
+// FormJSONPoster POSTs a form-urlencoded body and decodes the JSON response, for an endpoint
+// that reads its parameters the way a jQuery $.ajax call sends them (HiringRoom's listing,
+// which refuses the same parameters as JSON or as a query string).
+type FormJSONPoster interface {
+	PostFormJSON(ctx context.Context, url string, values url.Values, v any) error
+}
+
 // HTTPClient is the full transport surface, composing every capability role. The real
 // Client implements it; sources.All holds one and passes it to each adapter, which then
 // narrows it to the role(s) it actually uses.
@@ -136,6 +143,7 @@ type HTTPClient interface {
 	HeaderJSONGetter
 	HeaderJSONPoster
 	HeaderFormPoster
+	FormJSONPoster
 	CookieReader
 }
 
@@ -679,6 +687,20 @@ func (c *Client) PostFormWithHeaders(ctx context.Context, url string, headers ma
 		},
 	})
 	return node, err
+}
+
+// PostFormJSON POSTs values form-urlencoded and decodes the JSON response into v.
+func (c *Client) PostFormJSON(ctx context.Context, url string, values url.Values, v any) error {
+	return c.do(ctx, request{
+		method:      http.MethodPost,
+		url:         url,
+		body:        []byte(values.Encode()),
+		contentType: "application/x-www-form-urlencoded",
+		accept:      "application/json",
+		decode: func(resp *http.Response) error {
+			return json.NewDecoder(resp.Body).Decode(v)
+		},
+	})
 }
 
 // request is the parameters of a single HTTP exchange issued by do. A non-nil body is

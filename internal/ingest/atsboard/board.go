@@ -226,6 +226,10 @@ var atsBoards = []struct{ host, source, mode string }{
 	// application forms live on the platform's own apply.hrmdirect.com — see this apex's entry
 	// in platformLabelsByApex, without which every apply link on the platform names a board.
 	{"hrmdirect.com", "hrmdirect", modeSubdomain},
+	// HiringRoom: one <tenant>.hiringroom.com portal per employer; the board is the label. The
+	// vendor's own hosts (marketing, the Venezuelan instance and its API, a sales form) are in
+	// platformLabelsByApex.
+	{"hiringroom.com", "hiringroom", modeSubdomain},
 
 	// --- subdomainchain: board = every label under the apex (tenant nested under a region) ---
 	{"huntflow.io", "huntflow", modeSubdomainChain},
@@ -841,9 +845,10 @@ var platformLabels = map[string]bool{
 // which a bare subdomain rule reads as a company called "apply", while apply.recruitee.com is a
 // board recruitee.yml actually tracks. Declining it everywhere would drop a board we crawl.
 var platformLabelsByApex = map[string][]string{
-	"hrmdirect.com": {"apply"},
-	"potok.io":      {"www", "stages", "qa", "sentry"},
-	"eploy":         {"www"}, // www.eploy.com is the vendor's marketing site
+	"hrmdirect.com":  {"apply"},
+	"potok.io":       {"www", "stages", "qa", "sentry"},
+	"eploy":          {"www"}, // www.eploy.com is the vendor's marketing site
+	"hiringroom.com": {"www", "ve", "api-ve", "contacto-comercial"},
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —

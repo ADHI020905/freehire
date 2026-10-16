@@ -236,6 +236,9 @@ func TestRecognize(t *testing.T) {
 		{"potok listing", "https://domrf.potok.io/open/jobs/", "potok", "domrf", "https://domrf.potok.io", true},
 		{"potok platform host is not a tenant", "https://app.potok.io/open/jobs/1", "", "", "", false},
 		{"potok infrastructure host is not a tenant", "https://stages.potok.io/", "", "", "", false},
+		{"hiringroom vacancy", "https://tatachile.hiringroom.com/jobs/get_vacancy/6acfeaf91c677c42c9135f1a", "hiringroom", "tatachile", "https://tatachile.hiringroom.com", true},
+		{"hiringroom marketing host is not a tenant", "https://www.hiringroom.com/jobs", "", "", "", false},
+		{"hiringroom apply host names no tenant", "https://hiringroom.com/jobs/get_vacancy/6acfeaf91c677c42c9135f1a/candidates/new", "", "", "", false},
 		{"friendwork vacancy", "https://jobs.friend.work/TeDo/97846", "friendwork", "TeDo", "https://jobs.friend.work/TeDo/97846", true},
 		// "apply" is HRM Direct's own host and a REAL recruitee board (recruitee.yml tracks it),
 		// so the guard is scoped to the apex that needs it. Declining it everywhere would drop a

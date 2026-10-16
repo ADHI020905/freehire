@@ -1,0 +1,84 @@
+{
+ "result": "success",
+ "data": {
+  "htmlContent": "<a href=\"/jobs/get_vacancy/66708149410915a44e5d9e93\" class=\"text-decoration-none hrc-black\">\n    <div class=\"card p-3 mb-2 hoverable rounded border-0\">\n        \n        <div class=\"card-vacancy align-items-center mb-1\">\n            \n            <div class=\"card-body p-0 d-flex flex-column\">\n                <h4 class=\"font-black m-0 mb-2 fs-20 name__vacancy\">\n                    Service Manager\n                                            <i class=\"hr-Discapacity fs-14 hrc-black\"></i>\n                                    </h4>\n\n                                    <p class=\"card-text text-truncate m-0 mb-1 fs-14 text-color\">\n                        <span class=\"font-weight-light\">\n                            <i class=\"hr-Location-pin hrc-black\"></i>\n                            Miraflores, Lima, Peru                        </span>\n                    </p>\n                \n                                    <p class=\"card-text text-truncate m-0 fs-14 text-color mb-2\">\n                        <span class=\"font-weight-light\">\n                            <i class=\"hr-Work-area hrc-black\"></i>\n                            Tecnología, Sistemas y Telecomunicaciones / Liderazgo de Proyecto                        </span>\n                    </p>\n                                <div class=\"align-items-center justify-content-between card-responsive modalityShow\">\n                    <div class=\"d-flex align-items-center align-self-start vacancy-tags\">\n                                                    <p class=\"m-0 mr-2\">\n                                <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                    <i class=\"hr-Clock mr-1 hrc-black\"></i>\n                                    Full-time                                </span>\n                            </p>\n                        \n                                                    <p class=\"m-0 mr-2\">\n                                <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                    <i class=\"hrc-black hr-Company mr-1\"></i>\n                                    Presencial                                </span>\n                            </p>\n                        \n                                                    <p class=\"m-0\">\n                                <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                    <i class=\"hr-Campus mr-1 hrc-black\"></i>\n                                    Semi Senior                                </span>\n                            </p>\n                                            </div>\n\n                    <p class=\"vacancy-time card-text text-truncate align-self-end m-0 font-weight-light fs-12\">\n                                                \n                        Hace 2 años                    </p>\n                </div>\n                \n\n\n            </div>\n        </div>\n            <!-- Se oculta o muestra dependiendo la resolucione -->\n            <div class=\"align-items-center justify-content-between card-responsive showAndHide\">\n                <div class=\"d-flex align-items-center align-self-start vacancy-tags\">\n                                            <p class=\"m-0 mr-2\">\n                            <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                <i class=\"hr-Clock mr-1 hrc-black\"></i>\n                                Full-time                            </span>\n                        </p>\n                    \n                                            <p class=\"m-0 mr-2\">\n                            <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                <i class=\"hr-Company mr-1 hrc-black\"></i>\n                                Presencial                            </span>\n                        </p>\n                    \n                                            <p class=\"m-0\">\n                            <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                <i class=\"hr-Campus mr-1 hrc-black\"></i>\n                                Semi Senior                            </span>\n                        </p>\n                                    </div>\n                \n                <p class=\"card-text text-truncate align-self-end m-0 font-weight-light fs-12\">\n                                        \n                    Hace 2 años                </p>\n            </div>\n    </div>\n</a>",
+  "pagination": "",
+  "paginationLabel": "",
+  "total_vacancies": 3,
+  "filtersOptions": {
+   "localitiesOptions": [
+    {
+     "value": "6156241d178850318523c6b0",
+     "name": "Lima, Lima, Peru",
+     "count": 4
+    },
+    {
+     "value": "645bb576f774eb140aa91b1e",
+     "name": "Miraflores, Lima, Peru",
+     "count": 24
+    },
+    {
+     "value": "649232abddb5a42aba84eb80",
+     "name": "La Molina, Lima, Peru",
+     "count": 1
+    },
+    {
+     "value": "663a4b4cc232ad08665b2a9b",
+     "name": "San Isidro, Lima, Peru",
+     "count": 1
+    },
+    {
+     "value": "669844f221a27b85097614f0",
+     "name": "Surquillo, Lima, Peru",
+     "count": 1
+    }
+   ],
+   "areasOptions": [
+    {
+     "value": "1",
+     "name": "Administración, Contabilidad y Finanzas",
+     "count": 1
+    },
+    {
+     "value": "19",
+     "name": "Tecnología, Sistemas y Telecomunicaciones",
+     "count": 30
+    }
+   ],
+   "typeJobsOptions": [
+    {
+     "name": "Full-time",
+     "value": "Full-time",
+     "count": 5
+    },
+    {
+     "name": "No especificado",
+     "value": "No especificado",
+     "count": 4
+    },
+    {
+     "name": "Sin especificar",
+     "value": null,
+     "count": 22
+    }
+   ],
+   "workModalitiesOptions": [
+    {
+     "name": "Presencial",
+     "value": 1,
+     "count": 21
+    },
+    {
+     "name": "Híbrido",
+     "value": 3,
+     "count": 9
+    },
+    {
+     "name": "Remoto",
+     "value": 2,
+     "count": 1
+    }
+   ]
+  }
+ }
+}

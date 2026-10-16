@@ -1,0 +1,49 @@
+{
+ "result": "success",
+ "data": {
+  "htmlContent": "<a href=\"/jobs/get_vacancy/69b1d48a1121b4005a5cce59\" class=\"text-decoration-none hrc-black\">\n    <div class=\"card p-3 mb-2 hoverable rounded border-0\">\n        \n        <div class=\"card-vacancy align-items-center mb-1\">\n            \n            <div class=\"card-body p-0 d-flex flex-column\">\n                <h4 class=\"font-black m-0 mb-2 fs-20 name__vacancy\">\n                    Account Executive (Hunter) - España\n                                    </h4>\n\n                                    <p class=\"card-text text-truncate m-0 mb-1 fs-14 text-color\">\n                        <span class=\"font-weight-light\">\n                            <i class=\"hr-Location-pin hrc-black\"></i>\n                            Madrid, España                        </span>\n                    </p>\n                \n                                    <p class=\"card-text text-truncate m-0 fs-14 text-color mb-2\">\n                        <span class=\"font-weight-light\">\n                            <i class=\"hr-Work-area hrc-black\"></i>\n                            Comercial, Ventas y Negocios / Comercial                        </span>\n                    </p>\n                                <div class=\"align-items-center justify-content-between card-responsive modalityShow\">\n                    <div class=\"d-flex align-items-center align-self-start vacancy-tags\">\n                                                    <p class=\"m-0 mr-2\">\n                                <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                    <i class=\"hr-Clock mr-1 hrc-black\"></i>\n                                    Full-time                                </span>\n                            </p>\n                        \n                                                    <p class=\"m-0 mr-2\">\n                                <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                    <i class=\"hrc-black hr-Company mr-1\"></i>\n                                    Híbrido                                </span>\n                            </p>\n                        \n                                                    <p class=\"m-0\">\n                                <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                    <i class=\"hr-Campus mr-1 hrc-black\"></i>\n                                    Senior                                </span>\n                            </p>\n                                            </div>\n\n                    <p class=\"vacancy-time card-text text-truncate align-self-end m-0 font-weight-light fs-12\">\n                                                \n                        Hace 7 meses                    </p>\n                </div>\n                \n\n\n            </div>\n        </div>\n            <!-- Se oculta o muestra dependiendo la resolucione -->\n            <div class=\"align-items-center justify-content-between card-responsive showAndHide\">\n                <div class=\"d-flex align-items-center align-self-start vacancy-tags\">\n                                            <p class=\"m-0 mr-2\">\n                            <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                <i class=\"hr-Clock mr-1 hrc-black\"></i>\n                                Full-time                            </span>\n                        </p>\n                    \n                                            <p class=\"m-0 mr-2\">\n                            <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                <i class=\"hr-Company mr-1 hrc-black\"></i>\n                                Híbrido                            </span>\n                        </p>\n                    \n                                            <p class=\"m-0\">\n                            <span class=\"tag-vacancy d-flex align-items-center justify-content-center fs-12\">\n                                <i class=\"hr-Campus mr-1 hrc-black\"></i>\n                                Senior                            </span>\n                        </p>\n                                    </div>\n                \n                <p class=\"card-text text-truncate align-self-end m-0 font-weight-light fs-12\">\n                                        \n                    Hace 7 meses                </p>\n            </div>\n    </div>\n</a>",
+  "pagination": "",
+  "paginationLabel": "",
+  "total_vacancies": 1,
+  "filtersOptions": {
+   "localitiesOptions": [
+    {
+     "value": "59d0098903c264aa96f47d61",
+     "name": "Capital Federal, Capital Federal, Argentina",
+     "count": 4
+    },
+    {
+     "value": "69b1d374342b7451b848dd5e",
+     "name": "Madrid, España",
+     "count": 1
+    }
+   ],
+   "areasOptions": [
+    {
+     "value": "6",
+     "name": "Comercial, Ventas y Negocios",
+     "count": 3
+    },
+    {
+     "value": "19",
+     "name": "Tecnología, Sistemas y Telecomunicaciones",
+     "count": 2
+    }
+   ],
+   "typeJobsOptions": [
+    {
+     "name": "Full-time",
+     "value": "Full-time",
+     "count": 5
+    }
+   ],
+   "workModalitiesOptions": [
+    {
+     "name": "Híbrido",
+     "value": 3,
+     "count": 5
+    }
+   ]
+  }
+ }
+}

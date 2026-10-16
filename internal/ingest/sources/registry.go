@@ -462,6 +462,9 @@ func All(c HTTPClient) map[string]Source {
 		// Eploy: UK ATS, one careers host per board; the vacancy list is the host's own
 		// /live-jobs.xml sitemap, the body the vacancy page. See eploy.go.
 		NewEploy(c),
+		// HiringRoom: LatAm ATS, one <tenant>.hiringroom.com portal per board, listed through the
+		// portal's own JSON pager and hydrated from each vacancy page. See hiringroom.go.
+		NewHiringRoom(c),
 		// EDJOIN: California's K-12 education board, multi-company aggregator enumerated by
 		// job type (board) over one central index, hydrating bodies from each posting page's
 		// schema.org block. The board is a job type and not a district on purpose — see
