@@ -13,8 +13,20 @@ function deferred<T = void>() {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-const staleProfile = { skills: ['go'] } as UserProfile;
-const freshProfile = { skills: ['rust'] } as UserProfile;
+const staleProfile: UserProfile = {
+  specializations: [],
+  skills: ['go'],
+  seniorities: [],
+  excluded_skills: [],
+  excluded_sources: [],
+  excluded_companies: [],
+  location_preferences: null,
+  derived_location: null,
+  cv: null,
+  created_at: null,
+  updated_at: null,
+};
+const freshProfile = { ...staleProfile, skills: ['rust'] };
 
 const { profileStoreMock, ensureLoaded, update } = vi.hoisted(() => ({
   profileStoreMock: { profile: null as UserProfile | null },
@@ -34,14 +46,32 @@ vi.mock('$lib/savedSearches.svelte', () => ({
   },
 }));
 
-// Not the behavior under test — a stable, distinguishable query per call is enough
-// to tell which call's write landed.
-vi.mock('$lib/filters', () => ({
-  filtersFromProfile: (p: UserProfile) => p,
-  filtersToParams: (p: UserProfile) => ({ toString: () => `skills=${p.skills.join(',')}` }),
-}));
+// Exercise the real query builder without importing the SvelteKit-bound filter store.
+vi.mock('$lib/filters', async () => {
+  const { filtersFromProfile, filtersToParams } = await import('./facetModel');
+  return { filtersFromProfile, filtersToParams };
+});
 
 describe('syncProfileAlert', () => {
+  it('updates an existing alert when seniority preferences change and removes them when cleared', async () => {
+    const { syncProfileAlert } = await import('./profileAlertSync');
+    update.mockReset().mockResolvedValue(undefined);
+    profileStoreMock.profile = { ...staleProfile, seniorities: ['junior', 'middle'] };
+    await syncProfileAlert();
+    profileStoreMock.profile = { ...staleProfile, seniorities: ['senior'] };
+    await syncProfileAlert();
+    profileStoreMock.profile = staleProfile;
+    await syncProfileAlert();
+
+    expect(update).toHaveBeenCalledTimes(3);
+    expect(update.mock.calls.every(([id]) => id === 42)).toBe(true);
+    const queries = update.mock.calls.map(([, payload]) => new URLSearchParams(payload.query));
+    expect(queries[0]?.get('seniority_exclude')).toBe('intern,senior,lead,staff,principal,c_level');
+    expect(queries[1]?.get('seniority_exclude')).toBe('intern,junior,middle,lead,staff,principal,c_level');
+    expect(queries[2]?.has('seniority_exclude')).toBe(false);
+    expect(queries.every((p) => !p.has('seniority'))).toBe(true);
+  });
+
   it('does not start a second sync while the first is still in flight, and the second reads the profile as it stands when its turn comes', async () => {
     const { syncProfileAlert } = await import('./profileAlertSync');
     profileStoreMock.profile = staleProfile;

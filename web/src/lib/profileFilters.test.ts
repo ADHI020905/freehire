@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { filtersFromProfile, filtersToParams, emptyFilters } from './facetModel';
+import { filtersFromProfile, filtersFromParams, filtersToParams, emptyFilters } from './facetModel';
+import { SENIORITY_VALUES } from './generated/contracts';
 import type { LocationPreferences, UserProfile } from './types';
 
 // Build a UserProfile with just the fields the seeder reads.
@@ -28,8 +29,43 @@ function mkProfile(
 // filtersFromProfile is the pure reset-and-seed used by "Apply my profile": from a
 // clean slate it stages the user's profile specializations as `category` values, skills
 // as `skills` values, and (when present) the location block as the location facets.
+// Seniority preferences exclude unselected levels without requiring a classified level.
 // StagedFilters.applyProfile is a thin wrapper over it.
 describe('filtersFromProfile', () => {
+  it('excludes unselected seniorities without requiring a seniority on the posting', () => {
+    const profile = { ...mkProfile([], []), seniorities: ['junior', 'middle'] };
+    const p = filtersToParams(filtersFromProfile(profile));
+
+    expect(p.get('seniority_exclude')).toBe('intern,senior,lead,staff,principal,c_level');
+    expect(p.has('seniority')).toBe(false);
+  });
+
+  it('does not filter seniority when no preference is selected', () => {
+    const p = filtersToParams(filtersFromProfile(mkProfile([], [])));
+
+    expect(p.has('seniority')).toBe(false);
+    expect(p.has('seniority_exclude')).toBe(false);
+  });
+
+  it('does not filter seniority when every level is selected', () => {
+    const profile = { ...mkProfile([], []), seniorities: [...SENIORITY_VALUES] };
+    const p = filtersToParams(filtersFromProfile(profile));
+
+    expect(p.has('seniority')).toBe(false);
+    expect(p.has('seniority_exclude')).toBe(false);
+  });
+
+  it('preserves seniority exclusions through the saved-search URL round trip', () => {
+    const profile = { ...mkProfile(['backend'], ['go']), seniorities: ['junior', 'middle'] };
+    const query = filtersToParams(filtersFromProfile(profile)).toString();
+    const restored = filtersFromParams(new URLSearchParams(query));
+    const p = filtersToParams(restored);
+
+    expect(p.get('seniority_exclude')).toBe('intern,senior,lead,staff,principal,c_level');
+    expect(p.has('seniority')).toBe(false);
+    expect(p.toString()).toBe(query);
+  });
+
   it('seeds category from specializations and skills from skills, and nothing else', () => {
     const f = filtersFromProfile(mkProfile(['backend', 'devops'], ['go', 'kubernetes']));
     const p = filtersToParams(f);

@@ -6,6 +6,7 @@
 // `<param>_exclude` and `<param>_mode=and` conventions.
 
 import { FACETS, type FacetSelection } from './facets';
+import { SENIORITY_VALUES } from './generated/contracts';
 import type { UserProfile } from './types';
 
 /** The three states a facet value can hold. */
@@ -559,6 +560,14 @@ export function filtersFromProfile(profile: UserProfile): JobFilters {
   const seed = (values: string[]) => values.reduce(facetAdd, emptyFacet());
   const f = emptyFilters();
   f.facets.category = seed(profile.specializations);
+  // Exclude unselected levels rather than including selected ones so postings with
+  // no seniority remain eligible. An empty preference list imposes no restriction.
+  if (profile.seniorities?.length) {
+    f.facets.seniority = SENIORITY_VALUES.reduce(
+      (st, v) => profile.seniorities.includes(v) ? st : facetSetSign(st, v, 'exclude'),
+      emptyFacet(),
+    );
+  }
   // Skills: wanted → include, avoided → exclude. Only stage an exclude for a token not
   // already wanted (signOf === 'off'), so a stray overlap keeps the wanted value.
   f.facets.skills = charBudget(profile.excluded_skills ?? [], SKILL_CHAR_BUDGET).reduce(
