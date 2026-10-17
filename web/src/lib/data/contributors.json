@@ -390,10 +390,17 @@
       "accountType": "User",
       "role": "contributor",
       "firstContributionAt": "2026-09-02T21:28:39Z",
-      "lastContributionAt": "2026-10-16T16:32:58Z",
-      "mergedPullRequests": 0,
+      "lastContributionAt": "2026-10-17T02:40:53Z",
+      "mergedPullRequests": 1,
       "openedIssues": 7,
-      "recentPullRequests": []
+      "recentPullRequests": [
+        {
+          "number": 3237,
+          "title": "Respect seniority preferences in profile-derived searches",
+          "mergedAt": "2026-10-17T02:40:53Z",
+          "url": "https://github.com/strelov1/freehire/pull/3237"
+        }
+      ]
     },
     {
       "login": "Manan-Santoki",
@@ -550,10 +557,34 @@
       "accountType": "User",
       "role": "maintainer",
       "firstContributionAt": "2026-06-11T03:56:53Z",
-      "lastContributionAt": "2026-10-16T19:12:15Z",
-      "mergedPullRequests": 2769,
+      "lastContributionAt": "2026-10-16T23:38:39Z",
+      "mergedPullRequests": 2773,
       "openedIssues": 91,
       "recentPullRequests": [
+        {
+          "number": 3227,
+          "title": "Add the HiringRoom source adapter",
+          "mergedAt": "2026-10-16T23:38:39Z",
+          "url": "https://github.com/strelov1/freehire/pull/3227"
+        },
+        {
+          "number": 3226,
+          "title": "Add the Eploy source adapter",
+          "mergedAt": "2026-10-16T23:23:29Z",
+          "url": "https://github.com/strelov1/freehire/pull/3226"
+        },
+        {
+          "number": 3236,
+          "title": "Name the legal entity that operates freehire in the privacy policy and terms",
+          "mergedAt": "2026-10-16T23:18:04Z",
+          "url": "https://github.com/strelov1/freehire/pull/3236"
+        },
+        {
+          "number": 3235,
+          "title": "Refresh the contributor snapshot",
+          "mergedAt": "2026-10-16T23:18:03Z",
+          "url": "https://github.com/strelov1/freehire/pull/3235"
+        },
         {
           "number": 3229,
           "title": "Add the BeeSite source adapter",
@@ -649,30 +680,6 @@
           "title": "Add the Tencent careers source adapter",
           "mergedAt": "2026-10-15T10:23:37Z",
           "url": "https://github.com/strelov1/freehire/pull/3216"
-        },
-        {
-          "number": 3214,
-          "title": "Add the Dassault Systèmes single-company source adapter",
-          "mergedAt": "2026-10-15T10:04:51Z",
-          "url": "https://github.com/strelov1/freehire/pull/3214"
-        },
-        {
-          "number": 3215,
-          "title": "Add the Feishu Jobs (ByteDance) source adapter",
-          "mergedAt": "2026-10-15T09:40:41Z",
-          "url": "https://github.com/strelov1/freehire/pull/3215"
-        },
-        {
-          "number": 3213,
-          "title": "Add the Garena single-company source adapter",
-          "mergedAt": "2026-10-15T09:17:10Z",
-          "url": "https://github.com/strelov1/freehire/pull/3213"
-        },
-        {
-          "number": 3211,
-          "title": "Add the Kalibrr source adapter",
-          "mergedAt": "2026-10-15T08:50:01Z",
-          "url": "https://github.com/strelov1/freehire/pull/3211"
         }
       ]
     },
