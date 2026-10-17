@@ -487,6 +487,9 @@ func All(c HTTPClient) map[string]Source {
 		NewAvito(c),
 		// Kaspi.kz (Kazakhstan): the same sitemap + JobPosting ld+json shape as Avito.
 		NewKaspi(c),
+		// Halyk Bank (Kazakhstan): one HTML listing, then a page per vacancy. The path
+		// number is a list position, not an id — see halyk.go.
+		NewHalyk(c),
 		NewX5(c),
 		NewRWB(c),
 		NewSber(c),
