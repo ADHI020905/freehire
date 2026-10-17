@@ -2738,6 +2738,13 @@ type Querier interface {
 	// the two must be changed together. It is not shared because the catalogue's version
 	// selects rows and this one describes one row, and a caller cannot ask the first
 	// "and what about me".
+	//
+	// COALESCE is the difference from that WHERE. There, a NULL comparison simply drops the
+	// row. Here the same comparison is a column scanned into a Go bool, and
+	// `resume_structured_uploaded_at = resume_uploaded_at` is NULL when the extract stamp is
+	// missing — which is the ordinary state of a CV that was uploaded and not yet parsed.
+	// TRUE AND NULL is NULL, so a member in that state used to 500 the settings read. Not
+	// listed is the answer, the same one the catalogue already gives by excluding them.
 	GetTalentNetworkVisibility(ctx context.Context, id int64) (GetTalentNetworkVisibilityRow, error)
 	// The caller's linked Telegram chat (link-status endpoint + delivery resolution).
 	GetTelegramLink(ctx context.Context, userID int64) (TelegramLink, error)

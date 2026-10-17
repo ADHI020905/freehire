@@ -434,12 +434,19 @@ WHERE id = $1;
 -- the two must be changed together. It is not shared because the catalogue's version
 -- selects rows and this one describes one row, and a caller cannot ask the first
 -- "and what about me".
+--
+-- COALESCE is the difference from that WHERE. There, a NULL comparison simply drops the
+-- row. Here the same comparison is a column scanned into a Go bool, and
+-- `resume_structured_uploaded_at = resume_uploaded_at` is NULL when the extract stamp is
+-- missing — which is the ordinary state of a CV that was uploaded and not yet parsed.
+-- TRUE AND NULL is NULL, so a member in that state used to 500 the settings read. Not
+-- listed is the answer, the same one the catalogue already gives by excluding them.
 SELECT talent_network_visibility,
        talent_handle,
-       (talent_network_visibility <> 'off'
+       COALESCE((talent_network_visibility <> 'off'
         AND talent_handle IS NOT NULL
         AND resume_uploaded_at IS NOT NULL
-        AND resume_structured_uploaded_at = resume_uploaded_at)::boolean AS listed
+        AND resume_structured_uploaded_at = resume_uploaded_at), false)::boolean AS listed
 FROM users
 WHERE id = $1;
 
