@@ -80,6 +80,37 @@
       ]
     },
     {
+      "login": "AymenBoukadida",
+      "id": 133040670,
+      "avatarUrl": "https://avatars.githubusercontent.com/u/133040670?u=b969c1ec61c1013af5e465d50e7fc80b5799beea&v=4",
+      "accountType": "User",
+      "role": "contributor",
+      "firstContributionAt": "2026-10-18T04:18:55Z",
+      "lastContributionAt": "2026-10-18T04:18:55Z",
+      "mergedPullRequests": 0,
+      "openedIssues": 1,
+      "recentPullRequests": []
+    },
+    {
+      "login": "charansaiponnada",
+      "id": 144141737,
+      "avatarUrl": "https://avatars.githubusercontent.com/u/144141737?u=0dcb3b6b57b47ed0dc386e6f83b1d300aa93ec5d&v=4",
+      "accountType": "User",
+      "role": "contributor",
+      "firstContributionAt": "2026-10-18T14:36:39Z",
+      "lastContributionAt": "2026-10-18T14:36:39Z",
+      "mergedPullRequests": 1,
+      "openedIssues": 0,
+      "recentPullRequests": [
+        {
+          "number": 3249,
+          "title": "docs: add host dependencies section to CONTRIBUTING.md",
+          "mergedAt": "2026-10-18T14:36:39Z",
+          "url": "https://github.com/strelov1/freehire/pull/3249"
+        }
+      ]
+    },
+    {
       "login": "dependabot",
       "id": 49699333,
       "avatarUrl": "https://avatars.githubusercontent.com/in/29110?v=4",
@@ -557,10 +588,70 @@
       "accountType": "User",
       "role": "maintainer",
       "firstContributionAt": "2026-06-11T03:56:53Z",
-      "lastContributionAt": "2026-10-16T23:38:39Z",
-      "mergedPullRequests": 2773,
+      "lastContributionAt": "2026-10-18T11:50:39Z",
+      "mergedPullRequests": 2783,
       "openedIssues": 91,
       "recentPullRequests": [
+        {
+          "number": 3248,
+          "title": "Stop crediting OAuth and checkout returns as GA traffic sources",
+          "mergedAt": "2026-10-18T11:50:39Z",
+          "url": "https://github.com/strelov1/freehire/pull/3248"
+        },
+        {
+          "number": 3247,
+          "title": "Give social services, science and manufacturing a category",
+          "mergedAt": "2026-10-18T11:32:56Z",
+          "url": "https://github.com/strelov1/freehire/pull/3247"
+        },
+        {
+          "number": 3243,
+          "title": "Keep every categorised posting: the catalogue is broader than IT",
+          "mergedAt": "2026-10-18T04:19:18Z",
+          "url": "https://github.com/strelov1/freehire/pull/3243"
+        },
+        {
+          "number": 3242,
+          "title": "Remove cmd/prune; move the tracer-click retention sweep to its own worker",
+          "mergedAt": "2026-10-18T03:56:48Z",
+          "url": "https://github.com/strelov1/freehire/pull/3242"
+        },
+        {
+          "number": 3245,
+          "title": "Add the WORK180 source adapter",
+          "mergedAt": "2026-10-18T03:55:06Z",
+          "url": "https://github.com/strelov1/freehire/pull/3245"
+        },
+        {
+          "number": 3244,
+          "title": "Add the HerKey source adapter",
+          "mergedAt": "2026-10-18T03:38:59Z",
+          "url": "https://github.com/strelov1/freehire/pull/3244"
+        },
+        {
+          "number": 3241,
+          "title": "Add the Jobboardly job board source adapter",
+          "mergedAt": "2026-10-18T03:21:17Z",
+          "url": "https://github.com/strelov1/freehire/pull/3241"
+        },
+        {
+          "number": 3240,
+          "title": "Keep a missing CV extract from 500ing the Talent Network setting",
+          "mergedAt": "2026-10-17T12:51:14Z",
+          "url": "https://github.com/strelov1/freehire/pull/3240"
+        },
+        {
+          "number": 3239,
+          "title": "Add the Halyk Bank source adapter",
+          "mergedAt": "2026-10-17T12:07:03Z",
+          "url": "https://github.com/strelov1/freehire/pull/3239"
+        },
+        {
+          "number": 3238,
+          "title": "Refresh the contributor snapshot",
+          "mergedAt": "2026-10-17T02:57:56Z",
+          "url": "https://github.com/strelov1/freehire/pull/3238"
+        },
         {
           "number": 3227,
           "title": "Add the HiringRoom source adapter",
@@ -620,66 +711,6 @@
           "title": "Publish posting liveness on the ChatGPT app's get_job",
           "mergedAt": "2026-10-16T13:37:35Z",
           "url": "https://github.com/strelov1/freehire/pull/3230"
-        },
-        {
-          "number": 3228,
-          "title": "Require a paid plan for every user-initiated AI call",
-          "mergedAt": "2026-10-15T14:33:01Z",
-          "url": "https://github.com/strelov1/freehire/pull/3228"
-        },
-        {
-          "number": 3225,
-          "title": "Add the PeopleSoft Candidate Gateway source adapter",
-          "mergedAt": "2026-10-15T14:13:28Z",
-          "url": "https://github.com/strelov1/freehire/pull/3225"
-        },
-        {
-          "number": 3221,
-          "title": "Add the Torre source adapter",
-          "mergedAt": "2026-10-15T13:42:09Z",
-          "url": "https://github.com/strelov1/freehire/pull/3221"
-        },
-        {
-          "number": 3224,
-          "title": "Stop SEEK detail hydration from hammering a RATE_LIMITED network",
-          "mergedAt": "2026-10-15T11:51:33Z",
-          "url": "https://github.com/strelov1/freehire/pull/3224"
-        },
-        {
-          "number": 3206,
-          "title": "Add Potok and FriendWork source adapters",
-          "mergedAt": "2026-10-15T11:43:07Z",
-          "url": "https://github.com/strelov1/freehire/pull/3206"
-        },
-        {
-          "number": 3218,
-          "title": "Add the Meituan careers source adapter",
-          "mergedAt": "2026-10-15T11:41:05Z",
-          "url": "https://github.com/strelov1/freehire/pull/3218"
-        },
-        {
-          "number": 3217,
-          "title": "Add the Alibaba careers source adapter",
-          "mergedAt": "2026-10-15T11:17:04Z",
-          "url": "https://github.com/strelov1/freehire/pull/3217"
-        },
-        {
-          "number": 3220,
-          "title": "Add the Python.org job board source adapter",
-          "mergedAt": "2026-10-15T11:02:05Z",
-          "url": "https://github.com/strelov1/freehire/pull/3220"
-        },
-        {
-          "number": 3219,
-          "title": "Add the MokaHR source adapter",
-          "mergedAt": "2026-10-15T10:40:43Z",
-          "url": "https://github.com/strelov1/freehire/pull/3219"
-        },
-        {
-          "number": 3216,
-          "title": "Add the Tencent careers source adapter",
-          "mergedAt": "2026-10-15T10:23:37Z",
-          "url": "https://github.com/strelov1/freehire/pull/3216"
         }
       ]
     },
