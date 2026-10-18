@@ -26,34 +26,39 @@ const (
 	lastmodField     = "updated_at"
 )
 
-// jobSitemapFilter narrows the JOB sitemap to what this site claims to be. The index
-// itself stays wide — a non-tech posting is a legitimate result behind an explicit
-// is_tech facet, and it keeps its page, its canonical and its place in /jobs. A
-// sitemap is a different kind of statement: it asserts what is worth crawling, and
-// two thirds of the index contradicted the assertion (measured on prod 2026-09-08:
-// 1,295,388 of 2,014,462 documents are is_tech=non_tech, against 97,222 in
-// software_engineering).
+// jobSitemapFilter narrows the JOB sitemap to the postings this site vouches for. The
+// index is already the findable catalogue (cmd/reindex's splitJobs: open, canonical,
+// public, with a body and a resolved category), so the sitemap names all of it bar one
+// reality class — technical postings and the categories beyond IT alike.
 //
-// `is_tech = "tech"`, not `!= "non_tech"`: the attribute is written
-// tech-or-non_tech-or-ABSENT, so the negation would also admit the ~48k postings
-// neither the title dictionary nor enrichment could classify. Since the sitemap
-// asserts, silence has to read as "not asserted", not as "tech".
+// It used to be `is_tech = "tech" AND ...`, written when two thirds of the index was
+// uncurated non-technical bulk (measured 2026-09-08: 1,295,388 of 2,014,462 documents
+// non_tech). The catalogue has since grown deliberate non-technical categories —
+// healthcare, retail, logistics, education and the rest — each with its own
+// dictionary, so a categorised posting is a page the site claims whether or not it is
+// technical. The undifferentiated bulk the old filter kept out never reaches the index
+// in the first place: search.CategoryUnresolved excludes it there, so this filter does
+// not need to. Measured on prod 2026-10-18 the change takes the job sitemap from 803,850
+// URLs to 2,630,886.
+//
+// is_tech still decides what we SPEND on — enrichment, embeddings, the social digest —
+// and orders Google's Indexing API budget (internal/job/searchping). It no longer
+// decides what the sitemap asserts.
 //
 // likely-evergreen is excluded and `stale` deliberately is NOT. The reality classes
 // are not a liveness verdict (see internal/job/jobreality): `fresh` is "at most 14
 // days old", `likely-evergreen` needs two converging ghost signals, and `stale` is
-// the classifier's own "everything else" — 461,069 ordinary open tech postings whose
-// only fault is being more than a fortnight old. Excluding it would drop them for
-// their age and churn the whole sitemap every two weeks, faster than this site's
-// crawl budget reaches it. likely-evergreen is the one class that accuses, and
-// /features/ghost-jobs publishes that accusation on the very pages the sitemap would
-// otherwise invite a crawler to; it is 1,538 documents, so it moves no number and
-// closes a contradiction.
+// the classifier's own "everything else" — ordinary open postings whose only fault is
+// being more than a fortnight old. Excluding it would drop them for their age and
+// churn the whole sitemap every two weeks, faster than this site's crawl budget
+// reaches it. likely-evergreen is the one class that accuses, and /features/ghost-jobs
+// publishes that accusation on the very pages the sitemap would otherwise invite a
+// crawler to.
 //
-// Both attributes are already declared in facetSettings().FilterableAttributes, so
-// this needs no settings patch and no reindex — the "settings must reach the LIVE
-// index before the binary that filters on it" hazard documented there does not apply.
-const jobSitemapFilter = `is_tech = "tech" AND reality.class != "likely-evergreen"`
+// The attribute is already declared in facetSettings().FilterableAttributes, so this
+// needs no settings patch and no reindex — the "settings must reach the LIVE index
+// before the binary that filters on it" hazard documented there does not apply.
+const jobSitemapFilter = `reality.class != "likely-evergreen"`
 
 // sitemapPage is the shared body of the two sitemap readers: one offset-addressed
 // page of an index, projected down to a slug and a lastmod, plus the index's total
@@ -79,10 +84,11 @@ const jobSitemapFilter = `is_tech = "tech" AND reality.class != "likely-evergree
 // Re-measured on prod 2026-09-08 at 2.01M job documents, 10k-document pages, this
 // projection: the deepest unfiltered page (offset 1.9M) takes 4.43s and the deepest
 // filtered one (offset 660k) 4.07s, while the single-document request
-// CountSitemapDocuments issues takes 0.035s. An earlier note here recorded 0.25s at
-// offset 1.2M with 1.26M documents; that margin has since narrowed from ~40x to ~2.5x
-// against this route's 10s fetch timeout, and it keeps narrowing as the catalogue
-// grows. The chunk size is the lever when it runs out.
+// CountSitemapDocuments issues takes 0.035s. Measured again 2026-10-18 when the filter
+// widened to 2.63M documents, engine-side at limit=10,000: 0.39s at offset 0, 0.73s at
+// 1M, 0.55s at 2M and 0.25s at 2.62M — flat in the offset, against this route's 10s
+// fetch timeout. The 2026-09-08 figures were taken with the host under load and are the
+// ones to plan against; the chunk size is the lever if that margin runs out.
 //
 // Offset paging is not a stable cursor: documents added or removed between two page
 // requests shift later pages. That is acceptable here and nowhere else — a sitemap
@@ -164,8 +170,18 @@ func (c *Client) ListSitemapPage(ctx context.Context, offset, limit int) ([]Site
 // attributes do not raise it.
 const freshSitemapSort = "created_at:desc"
 
+// freshSitemapFilter narrows the fresh window to technical postings, unlike the paged
+// files, which carry the whole public catalogue. The window is a constant 40k URLs read
+// newest first, and with the catalogue open beyond IT it measured on prod (2026-10-18)
+// at about two hours of mostly non-technical intake, against 3.5 days of technical
+// postings before. Worse, Meilisearch returned that wider sorted window out of order
+// part-way through (offset 22k today, 24k June), which the technical-only filter does
+// not do through 39k. The fresh file is the crawl-budget signal, so it stays on the
+// postings this board exists for; the rest are still reachable through the paged files.
+const freshSitemapFilter = jobSitemapFilter + ` AND is_tech = "tech"`
+
 // ListFreshSitemapPage returns one offset-addressed page of the live jobs index
-// narrowed to jobSitemapFilter and ordered newest first.
+// narrowed to freshSitemapFilter and ordered newest first.
 //
 // It returns no total, unlike ListSitemapPage. The total exists there because the
 // sitemap index TILES the paged files by it (CountSitemapDocuments); the fresh window
@@ -175,8 +191,8 @@ const freshSitemapSort = "created_at:desc"
 //
 // It searches rather than paging documents, and that is the entire point of its
 // existence: Meilisearch's /documents route — which ListSitemapPage uses, and which is
-// what lets the paged sub-sitemaps address any offset in a 700k-document index
-// cheaply — returns documents in internal storage order and accepts no sort. Sorting
+// what lets the paged sub-sitemaps address any offset in a multi-million-document
+// index cheaply — returns documents in internal storage order and accepts no sort. Sorting
 // exists only on /search. So the two readers are not duplicates of each other: one
 // buys full coverage at the price of arbitrary order, the other buys order at the
 // price of a bounded window, and web-ssr-seo asks for both.
@@ -190,7 +206,7 @@ func (c *Client) ListFreshSitemapPage(ctx context.Context, offset, limit int) ([
 	resp, err := c.facet.SearchWithContext(ctx, "", &meilisearch.SearchRequest{
 		Offset:               int64(offset),
 		Limit:                int64(limit),
-		Filter:               jobSitemapFilter,
+		Filter:               freshSitemapFilter,
 		Sort:                 []string{freshSitemapSort},
 		AttributesToRetrieve: []string{jobSlugField, lastmodField},
 	})

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -61,11 +62,11 @@ func TestListFreshSitemapPageSortsNewestFirst(t *testing.T) {
 	}
 }
 
-// The fresh reader must narrow to exactly the population the paged sub-sitemap
-// serves. Asserting against jobSitemapFilter itself rather than against a copy of its
-// text is deliberate: a literal would keep passing if the shared filter gained a
-// predicate and this reader did not, which is the drift that would put a non-tech
-// posting in front of a crawler.
+// The fresh reader narrows to the paged sub-sitemap's population AND to technical
+// postings (freshSitemapFilter). Asserting against the constants rather than a copy of
+// their text is deliberate: a literal would keep passing if the shared filter gained a
+// predicate and this reader did not, which would put a posting the paged sitemap
+// refuses in front of a crawler.
 func TestListFreshSitemapPageUsesTheSharedFilter(t *testing.T) {
 	p := newMeiliSearchProbe(t, nil)
 	c := NewClient(p.srv.URL, "key")
@@ -74,8 +75,11 @@ func TestListFreshSitemapPageUsesTheSharedFilter(t *testing.T) {
 		t.Fatalf("ListFreshSitemapPage: %v", err)
 	}
 
-	if got := p.body["filter"]; got != jobSitemapFilter {
-		t.Errorf("filter = %v, want %v", got, jobSitemapFilter)
+	if got := p.body["filter"]; got != freshSitemapFilter {
+		t.Errorf("filter = %v, want %v", got, freshSitemapFilter)
+	}
+	if !strings.HasPrefix(freshSitemapFilter, jobSitemapFilter) {
+		t.Errorf("freshSitemapFilter %q no longer extends jobSitemapFilter %q", freshSitemapFilter, jobSitemapFilter)
 	}
 }
 

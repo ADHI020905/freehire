@@ -9,9 +9,10 @@
 // before it is reachable.
 //
 // The budget is the design constraint, not the plumbing. Google's Indexing API grants
-// 200 publish calls a day by default against ~14k new technical postings a day, so
+// 200 publish calls a day by default against thousands of new postings a day, so
 // this package can never announce everything and must not pretend otherwise: it
-// chooses the newest eligible postings each run and records what it sent, rather than
+// chooses the newest eligible postings each run — technical ones first, then the rest
+// of the catalogue with whatever that left — and records what it sent, rather than
 // draining a queue that would only grow. See migrations/0162_job_search_pings.sql.
 package searchping
 
@@ -96,6 +97,25 @@ const (
 	KindCompany Kind = "company"
 )
 
+// Tier is which half of the catalogue a new-posting pass draws from. It is not stored —
+// the ledger records the event, and a posting belongs to exactly one tier — it exists to
+// order the passes and to name them in the run's report.
+//
+// The split is a PRIORITY, not an eligibility rule. Every posting the search index holds
+// is eligible to be announced, technical or not; what differs is who gets a scarce
+// budget first. Google's 200 calls a day go to the technical tier, and the rest of the
+// catalogue — healthcare, retail, logistics and the other categories beyond IT — is
+// offered only what that left.
+type Tier string
+
+const (
+	// TierTech is the postings is_tech confidently marks technical.
+	TierTech Tier = "tech"
+
+	// TierBeyondTech is every other posting with a resolved category.
+	TierBeyondTech Tier = "beyond-tech"
+)
+
 // isCompany reports whether a pass is about company pages rather than postings. The
 // distinction decides three things at once: which ledger records it, which URL prefix it
 // takes, and — through Engine.Accepts — whether an engine may be told about it at all.
@@ -104,10 +124,10 @@ func (k Kind) isCompany() bool { return k == KindCompany }
 // Repository is the ledger: which postings an engine has already been told about, for
 // which event, and the record that it has.
 type Repository interface {
-	// JobsToPing returns the newest eligible postings this engine has not been sent,
-	// newest first. The eligibility gate lives in SQL beside the query — see
-	// internal/platform/db/queries/job_search_pings.sql.
-	JobsToPing(ctx context.Context, engine string, limit int32) ([]Candidate, error)
+	// JobsToPing returns the newest eligible postings of one tier this engine has not
+	// been sent, newest first. The eligibility gate and the tier predicate live in SQL
+	// beside the query — see internal/platform/db/queries/job_search_pings.sql.
+	JobsToPing(ctx context.Context, engine string, tier Tier, limit int32) ([]Candidate, error)
 
 	// ClosedJobsToPing returns postings that closed after this engine was told they
 	// existed, most recently closed first. Bounded by construction: it can never exceed
@@ -158,8 +178,11 @@ func budgetDayStart(now time.Time) time.Time {
 
 // Report is what one run did, for one engine and one event.
 type Report struct {
-	Engine    string
-	Kind      Kind
+	Engine string
+	Kind   Kind
+	// Tier names which half of the catalogue a KindCreated pass drew from; empty for
+	// the other kinds, which are not split.
+	Tier      Tier
 	Offered   int
 	Accepted  int
 	Recorded  int
@@ -206,20 +229,37 @@ func (r *Runner) pageURL(kind Kind, slug string) string {
 	return r.origin + "/jobs/" + slug
 }
 
-// passes is the order the three events compete for one engine's day, and the order is
-// the policy.
+// pass is one (event, tier) pair competing for an engine's day.
+type pass struct {
+	kind Kind
+	tier Tier // KindCreated only
+}
+
+// passes is the order the events compete for one engine's day, and the order is the
+// policy.
 //
-// A new posting first: it is what brings a visitor. Then the company page, which is the
-// page that actually WINS — measured 2026-09-15, Bing's highest-impression pages are
-// /companies/<slug> and the queries behind them are all "<company name> careers", and
-// Google's own August data agrees. It sits second only because a posting is perishable
+// A new posting first: it is what brings a visitor. Within that, a technical posting
+// before one beyond IT — the catalogue's core before its breadth — so Google's 200 calls
+// go to the technical tier and the rest of the catalogue gets what that left. Then the
+// company page, which is the page that actually WINS — measured 2026-09-15, Bing's
+// highest-impression pages are /companies/<slug> and the queries behind them are all
+// "<company name> careers", and Google's own August data agrees. It sits after the
+// postings only because a posting is perishable
 // and a company page is not: the posting's moment passes, the employer's page keeps.
 // Closures last: they tidy an index we do not own.
 //
-// Google never reaches the second pass at all — Accepts declines it, because its
+// Google never reaches the company pass at all — Accepts declines it, because its
 // Indexing API admits only JobPosting pages. The ordering matters for IndexNow, which
 // accepts everything and has no quota, and for whatever engine comes next.
-var passes = []Kind{KindCreated, KindCompany, KindClosed}
+//
+// An unbounded engine is not rationed by this order at all: walk gives each of its
+// passes a full batch, so IndexNow hears about both tiers every run.
+var passes = []pass{
+	{kind: KindCreated, tier: TierTech},
+	{kind: KindCreated, tier: TierBeyondTech},
+	{kind: KindCompany},
+	{kind: KindClosed},
+}
 
 // Run announces one batch per engine, per event. An engine that fails does not stop
 // another: the engines are independent services and a shared run is an implementation
@@ -239,7 +279,7 @@ func (r *Runner) Preview(ctx context.Context, batch int) []Report {
 // through its passes in order. Shared for Run and Preview so a dry run cannot drift from
 // what the real one would choose — the budget arithmetic is the part most worth seeing
 // before it spends anything.
-func (r *Runner) walk(ctx context.Context, batch int, pass func(context.Context, Engine, Kind, int) Report) []Report {
+func (r *Runner) walk(ctx context.Context, batch int, run func(context.Context, Engine, pass, int) Report) []Report {
 	reports := make([]Report, 0, len(r.engines)*len(passes))
 	for _, engine := range r.engines {
 		left, err := r.remainingToday(ctx, engine, batch)
@@ -247,11 +287,11 @@ func (r *Runner) walk(ctx context.Context, batch int, pass func(context.Context,
 			reports = append(reports, Report{Engine: engine.Name(), Remaining: -1, Err: err})
 			continue
 		}
-		for _, kind := range passes {
+		for _, p := range passes {
 			// An engine that will not take this kind of page is not offered it, and the
 			// pass is not reported either — a line saying "google/company: nothing to
 			// announce" would read like an empty catalogue rather than a rule.
-			if !engine.Accepts(kind) {
+			if !engine.Accepts(p.kind) {
 				continue
 			}
 			// An unbounded engine is not spending anything shared, so each of its passes
@@ -260,22 +300,31 @@ func (r *Runner) walk(ctx context.Context, batch int, pass func(context.Context,
 			if engine.DailyBudget() > 0 {
 				limit = left
 			}
-			report := pass(ctx, engine, kind, limit)
+			report := run(ctx, engine, p, limit)
 			reports = append(reports, report)
 			left -= report.spent()
+			// The passes are in priority order, so a budgeted engine whose candidate
+			// lookup failed stops there: the empty answer would otherwise hand the day's
+			// allowance to the tiers meant to get only what technical postings left. A
+			// pass that failed AFTER offering something (a send or a ledger write) has
+			// already been charged for what the engine took, so it does not stop the
+			// rest. An unbounded engine shares nothing between passes, so it carries on.
+			if report.Err != nil && report.Offered == 0 && engine.DailyBudget() > 0 {
+				break
+			}
 		}
 	}
 	return reports
 }
 
-func (r *Runner) candidates(ctx context.Context, engine Engine, kind Kind, limit int) ([]Candidate, error) {
-	switch kind {
+func (r *Runner) candidates(ctx context.Context, engine Engine, p pass, limit int) ([]Candidate, error) {
+	switch p.kind {
 	case KindClosed:
 		return r.repo.ClosedJobsToPing(ctx, engine.Name(), int32(limit))
 	case KindCompany:
 		return r.repo.CompaniesToPing(ctx, engine.Name(), int32(limit))
 	default:
-		return r.repo.JobsToPing(ctx, engine.Name(), int32(limit))
+		return r.repo.JobsToPing(ctx, engine.Name(), p.tier, int32(limit))
 	}
 }
 
@@ -283,8 +332,8 @@ func (r *Runner) candidates(ctx context.Context, engine Engine, kind Kind, limit
 // empty candidate slice covers all three ways a pass has nothing to do — the day's
 // budget is spent, the query failed, or nothing is eligible — so neither caller needs to
 // tell them apart, and the one that did is the report's own Err.
-func (r *Runner) plan(ctx context.Context, engine Engine, kind Kind, limit int) (Report, []Candidate) {
-	report := Report{Engine: engine.Name(), Kind: kind, Remaining: -1}
+func (r *Runner) plan(ctx context.Context, engine Engine, p pass, limit int) (Report, []Candidate) {
+	report := Report{Engine: engine.Name(), Kind: p.kind, Tier: p.tier, Remaining: -1}
 	if engine.DailyBudget() > 0 {
 		// Clamped, though walk never passes a negative: Remaining is a tri-state where
 		// -1 means "unbounded", so a negative leaking in here would make a spent engine
@@ -295,7 +344,7 @@ func (r *Runner) plan(ctx context.Context, engine Engine, kind Kind, limit int) 
 		return report, nil
 	}
 
-	candidates, err := r.candidates(ctx, engine, kind, limit)
+	candidates, err := r.candidates(ctx, engine, p, limit)
 	if err != nil {
 		report.Err = fmt.Errorf("list candidates: %w", err)
 		return report, nil
@@ -303,17 +352,17 @@ func (r *Runner) plan(ctx context.Context, engine Engine, kind Kind, limit int) 
 	return report, candidates
 }
 
-func (r *Runner) previewPass(ctx context.Context, engine Engine, kind Kind, limit int) Report {
-	report, candidates := r.plan(ctx, engine, kind, limit)
+func (r *Runner) previewPass(ctx context.Context, engine Engine, p pass, limit int) Report {
+	report, candidates := r.plan(ctx, engine, p, limit)
 	for _, c := range candidates {
-		report.URLs = append(report.URLs, r.pageURL(kind, c.Slug))
+		report.URLs = append(report.URLs, r.pageURL(p.kind, c.Slug))
 	}
 	report.Offered = len(report.URLs)
 	return report
 }
 
-func (r *Runner) runPass(ctx context.Context, engine Engine, kind Kind, limit int) Report {
-	report, candidates := r.plan(ctx, engine, kind, limit)
+func (r *Runner) runPass(ctx context.Context, engine Engine, p pass, limit int) Report {
+	report, candidates := r.plan(ctx, engine, p, limit)
 	if len(candidates) == 0 {
 		return report
 	}
@@ -321,7 +370,7 @@ func (r *Runner) runPass(ctx context.Context, engine Engine, kind Kind, limit in
 	bySlug := make(map[string]Candidate, len(candidates))
 	urls := make([]string, 0, len(candidates))
 	for _, c := range candidates {
-		url := r.pageURL(kind, c.Slug)
+		url := r.pageURL(p.kind, c.Slug)
 		bySlug[url] = c
 		urls = append(urls, url)
 	}
@@ -350,7 +399,7 @@ func (r *Runner) runPass(ctx context.Context, engine Engine, kind Kind, limit in
 			log.Printf("searchping: %s accepted an unoffered url %q", engine.Name(), url)
 			continue
 		}
-		if err := r.repo.RecordPing(ctx, c, engine.Name(), kind); err != nil {
+		if err := r.repo.RecordPing(ctx, c, engine.Name(), p.kind); err != nil {
 			recordErrs = append(recordErrs, fmt.Errorf("record %s: %w", url, err))
 			continue
 		}

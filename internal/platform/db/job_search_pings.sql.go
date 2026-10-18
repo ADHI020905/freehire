@@ -187,20 +187,25 @@ FROM jobs j
 WHERE j.closed_at IS NULL
   AND j.duplicate_of IS NULL
   AND NOT j.is_private
-  AND j.is_tech IS TRUE
   AND j.public_slug IS NOT NULL
+  AND j.description <> ''
+  AND (j.is_tech IS TRUE
+       OR j.category <> ''
+       OR COALESCE(j.enrichment->>'category', '') NOT IN ('', 'other'))
+  AND (j.is_tech IS TRUE) = $1::boolean
   AND NOT EXISTS (
       SELECT 1
       FROM job_search_pings p
       WHERE p.job_id = j.id
-        AND p.engine = $1
+        AND p.engine = $2
         AND p.kind = 'created'
   )
 ORDER BY j.created_at DESC
-LIMIT $2
+LIMIT $3
 `
 
 type ListJobsToPingParams struct {
+	Technical bool   `json:"technical"`
 	Engine    string `json:"engine"`
 	BatchSize int32  `json:"batch_size"`
 }
@@ -210,15 +215,28 @@ type ListJobsToPingRow struct {
 	PublicSlug string `json:"public_slug"`
 }
 
-// The newest eligible postings this engine has not been told about yet, for
-// cmd/search-ping. The gate mirrors needsRecentFeed in cmd/ingest/store.go — open,
-// canonical, public, technical — because a URL worth announcing is a URL the site
-// itself claims, and those are the same postings.
+// The newest eligible postings of ONE tier this engine has not been told about yet, for
+// cmd/search-ping. The gate is what the search index admits (cmd/reindex's splitJobs):
+// open, canonical, public, carrying a body (search.DescriptionMissing), and with a
+// resolved category (search.CategoryUnresolved — the column answers, or enrichment does
+// with something other than "other", or is_tech is confidently true). A URL worth
+// announcing is a URL the site itself claims, and the sitemap claims exactly what the
+// index holds. The body test is the raw column, not the stripped text the index tests;
+// a body that is only empty markup is the same small residual companies.sql names.
 //
-// NEWEST FIRST is the whole selection policy, and it is doing two jobs. The obvious
-// one: a posting is most worth announcing while it is still open, and the budget is
-// far smaller than the catalogue, so anything but recency spends it on pages whose
-// moment has passed. The second is a quality guard we get for free — the sitemap
+// `technical` picks the tier, and the two tiers partition the gate: true is the
+// is_tech postings, false is every other posting with a resolved category — the
+// catalogue beyond IT. The split is not an eligibility rule, it is a PRIORITY one: an
+// engine with a scarce daily budget (Google, 200/day) asks for the technical tier
+// first and offers the rest only what that left, while an unbounded engine takes a
+// batch of each (see passes in internal/job/searchping). Two calls of one query rather
+// than an ORDER BY is_tech DESC, because that ordering cannot be served by the
+// created_at index and would sort every open posting to pick 200.
+//
+// NEWEST FIRST is the whole selection policy within a tier, and it is doing two jobs.
+// The obvious one: a posting is most worth announcing while it is still open, and the
+// budget is far smaller than the catalogue, so anything but recency spends it on pages
+// whose moment has passed. The second is a quality guard we get for free — the sitemap
 // additionally excludes the "likely-evergreen" reality class, which lives only in the
 // search index and cannot be joined here, but that class is earned by a posting
 // staying open for a long time, so the newest rows have not had the chance to qualify.
@@ -226,9 +244,11 @@ type ListJobsToPingRow struct {
 // divergence is worth naming rather than leaving to be discovered.
 //
 // The anti-join is served by job_search_pings_pkey; the ORDER BY by the same
-// open-and-recent index the public feed uses.
+// open-and-recent index the public feed uses (jobs_open_created_idx), every other
+// predicate being a filter on that walk. `description <> ”` costs no de-TOAST: text
+// inequality compares the stored lengths first.
 func (q *Queries) ListJobsToPing(ctx context.Context, arg ListJobsToPingParams) ([]ListJobsToPingRow, error) {
-	rows, err := q.db.Query(ctx, listJobsToPing, arg.Engine, arg.BatchSize)
+	rows, err := q.db.Query(ctx, listJobsToPing, arg.Technical, arg.Engine, arg.BatchSize)
 	if err != nil {
 		return nil, err
 	}

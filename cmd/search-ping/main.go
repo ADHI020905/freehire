@@ -1,6 +1,8 @@
 // Command search-ping announces the newest job pages to the external search engines
 // that accept being told, instead of waiting to be crawled. One run sends one batch per
-// configured engine and exits; schedule it hourly.
+// configured engine and event and exits; schedule it hourly. Every posting the search
+// index holds is eligible, technical or not; Google's scarce daily quota goes to the
+// technical ones first.
 //
 //	./search-ping                 # announce
 //	./search-ping -dry-run        # print what would be sent, send nothing
@@ -166,6 +168,9 @@ func report(reports []searchping.Report) int {
 		// engine and event both, always: the passes share one allowance, so a line that
 		// named only the engine would leave "which one spent the day" unanswerable.
 		who := fmt.Sprintf("%s/%s", r.Engine, r.Kind)
+		if r.Tier != "" {
+			who += "/" + string(r.Tier)
+		}
 		switch {
 		case r.Err != nil:
 			log.Printf("search-ping: %s offered=%d accepted=%d recorded=%d: %v",

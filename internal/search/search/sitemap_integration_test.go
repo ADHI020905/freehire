@@ -47,10 +47,10 @@ func indexJobsForSitemap(t *testing.T, c *Client, jobs []db.Job, classes []strin
 }
 
 // TestIntegration_JobSitemapScope locks the sitemap's scope spec scenarios against a
-// real engine: of four indexed, findable postings only the plain tech one is named.
-// The non_tech and the unclassified postings stay INDEXED and searchable — this is a
-// sitemap-scope filter, not an indexing one — which is why the assertion is about what
-// ListSitemapPage returns and not about what the index holds.
+// real engine: every indexed posting is named, technical or not, except the one whose
+// reality class accuses it. The index is already the findable catalogue (open,
+// canonical, categorised, with a body), so a categorised posting beyond IT — and one
+// whose is_tech is unknown — is a page the site claims like any other.
 func TestIntegration_JobSitemapScope(t *testing.T) {
 	ctx := context.Background()
 	c := startMeili(t)
@@ -65,8 +65,8 @@ func TestIntegration_JobSitemapScope(t *testing.T) {
 	jobs := []db.Job{
 		{ID: 1, Title: "Senior Go Engineer", Company: "Acme", PublicSlug: "tech-fresh", Category: "backend", IsTech: yes},
 		{ID: 2, Title: "Staff Platform Engineer", Company: "Acme", PublicSlug: "tech-stale", Category: "backend", IsTech: yes},
-		{ID: 3, Title: "Warehouse Cleaner", Company: "Beta", PublicSlug: "non-tech", IsTech: no},
-		{ID: 4, Title: "Yard Coordinator", Company: "Gamma", PublicSlug: "unclassified", IsTech: unknown},
+		{ID: 3, Title: "Registered Nurse", Company: "Beta", PublicSlug: "non-tech", Category: "healthcare", IsTech: no},
+		{ID: 4, Title: "Store Manager", Company: "Gamma", PublicSlug: "unclassified", Category: "retail", IsTech: unknown},
 		{ID: 5, Title: "Backend Engineer", Company: "Delta", PublicSlug: "tech-evergreen", Category: "backend", IsTech: yes},
 	}
 	classes := []string{
@@ -81,7 +81,7 @@ func TestIntegration_JobSitemapScope(t *testing.T) {
 	}
 	indexJobsForSitemap(t, c, jobs, classes)
 
-	t.Run("names tech postings, fresh and stale alike", func(t *testing.T) {
+	t.Run("names every posting but the evergreen one, fresh and stale alike", func(t *testing.T) {
 		docs, total, err := c.ListSitemapPage(ctx, 0, 100)
 		if err != nil {
 			t.Fatalf("ListSitemapPage: %v", err)
@@ -90,18 +90,16 @@ func TestIntegration_JobSitemapScope(t *testing.T) {
 		for _, d := range docs {
 			got[d.Slug] = true
 		}
-		for _, want := range []string{"tech-fresh", "tech-stale"} {
+		for _, want := range []string{"tech-fresh", "tech-stale", "non-tech", "unclassified"} {
 			if !got[want] {
 				t.Errorf("sitemap should name %q, got %v", want, got)
 			}
 		}
-		for _, unwanted := range []string{"non-tech", "unclassified", "tech-evergreen"} {
-			if got[unwanted] {
-				t.Errorf("sitemap should not name %q, got %v", unwanted, got)
-			}
+		if got["tech-evergreen"] {
+			t.Errorf("sitemap should not name the likely-evergreen posting, got %v", got)
 		}
-		if total != 2 {
-			t.Errorf("total = %d, want 2", total)
+		if total != 4 {
+			t.Errorf("total = %d, want 4", total)
 		}
 	})
 
@@ -133,8 +131,8 @@ func TestIntegration_JobSitemapScope(t *testing.T) {
 		if len(docs) != 0 {
 			t.Errorf("docs past the end = %v, want none", docs)
 		}
-		if total != 2 {
-			t.Errorf("total past the end = %d, want the unchanged 2", total)
+		if total != 4 {
+			t.Errorf("total past the end = %d, want the unchanged 4", total)
 		}
 	})
 }
@@ -223,20 +221,30 @@ func TestIntegration_FreshJobSitemapOrder(t *testing.T) {
 		}
 	})
 
-	// The fresh reader must narrow to the same population the paged one does. Proving
-	// it against the engine rather than against the filter string is what catches a
-	// filter that parses but selects differently under a sort.
-	t.Run("applies the same scope as the paged reader", func(t *testing.T) {
-		nonTech := db.Job{ID: 4, Title: "Warehouse Cleaner", Company: "Gamma", PublicSlug: "non-tech-fresh", IsTech: pgtype.Bool{Bool: false, Valid: true}, CreatedAt: at(21)}
-		indexJobsForSitemap(t, c, []db.Job{nonTech}, []string{jobreality.ClassFresh})
+	// The fresh reader narrows to the paged reader's population AND to technical
+	// postings (freshSitemapFilter). Proving it against the engine rather than against
+	// the filter string is what catches a filter that parses but selects differently
+	// under a sort.
+	t.Run("applies the paged scope, technical postings only", func(t *testing.T) {
+		nonTech := db.Job{ID: 4, Title: "Registered Nurse", Company: "Gamma", PublicSlug: "non-tech-fresh", Category: "healthcare", IsTech: pgtype.Bool{Bool: false, Valid: true}, CreatedAt: at(21)}
+		evergreen := db.Job{ID: 5, Title: "Backend Engineer", Company: "Delta", PublicSlug: "evergreen-newest", Category: "backend", IsTech: yes, CreatedAt: at(22)}
+		indexJobsForSitemap(t, c, []db.Job{nonTech, evergreen}, []string{jobreality.ClassFresh, jobreality.ClassLikelyEvergreen})
 
 		docs, err := c.ListFreshSitemapPage(ctx, 0, 100)
 		if err != nil {
 			t.Fatalf("ListFreshSitemapPage: %v", err)
 		}
+		if len(docs) == 0 || docs[0].Slug != "newest" {
+			t.Fatalf("fresh sitemap = %v, want the newest technical posting first", docs)
+		}
 		for _, d := range docs {
 			if d.Slug == "non-tech-fresh" {
-				t.Fatalf("fresh sitemap named a non-tech posting, even though it is the newest: %v", docs)
+				t.Fatalf("fresh sitemap named a non-technical posting, though the paged files carry it: %v", docs)
+			}
+		}
+		for _, d := range docs {
+			if d.Slug == "evergreen-newest" {
+				t.Fatalf("fresh sitemap named a likely-evergreen posting, even though it is the newest: %v", docs)
 			}
 		}
 	})

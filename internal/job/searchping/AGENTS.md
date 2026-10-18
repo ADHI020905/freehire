@@ -24,8 +24,8 @@ crawled months later is stale before it is reachable.
 
 ## The budget is the design, not the plumbing
 
-Google's Indexing API grants **200 publish calls a day** by default against ~14k new
-postings a day. Everything else follows from that.
+Google's Indexing API grants **200 publish calls a day** by default against tens of
+thousands of new postings a day. Everything else follows from that.
 
 **A ledger, not an outbox.** Every other queue in this schema (`search_outbox`,
 `recent_feed_outbox`, `enrichment_outbox`) drains faster than it fills. This one cannot.
@@ -50,6 +50,31 @@ class is *earned by staying open a long time*, so the newest rows have not had t
 to qualify. Google adjusts the quota by the quality of what is submitted, which is why
 the divergence is named rather than left to be discovered.
 
+## Every indexed posting is eligible; technical ones go first
+
+A posting is eligible when the search index would hold it: open, canonical, public, with
+a body and a resolved category (`search.CategoryUnresolved`, `search.DescriptionMissing`)
+— **technical or not**. The catalogue is broader than IT on purpose; a healthcare or
+logistics posting with a category is a page the site claims, sits in the sitemap, and
+carries the same `JobPosting` markup, so it is as legitimate a page to announce.
+
+`is_tech` no longer gates this package; it **orders** it. New postings are drawn in two
+tiers — `TierTech` (`is_tech` true), then `TierBeyondTech` (every other categorised
+posting) — and the tiers are two passes over one query, not an `ORDER BY is_tech DESC`,
+because that ordering cannot be served by the `created_at` index and would sort every
+open posting to choose 200. For Google the tier order is the whole policy: the day's
+allowance goes to technical postings first and the rest of the catalogue gets what that
+left, so at 200/day against thousands of technical postings a day the second tier
+usually gets nothing. That is the owner's call, not an accident: the scarce budget goes
+to the catalogue's core. IndexNow is unbounded, so each tier gets a full batch per run.
+
+The tier is not stored. The ledger records the event (`created`), and a posting belongs
+to exactly one tier, so "already told" is shared across them.
+
+What stays `is_tech`-gated is what costs money or speaks for the brand: LLM enrichment,
+embeddings and the social digest. They are not this package's concern, and widening this
+one does not widen them.
+
 ## The two events, and which wins
 
 A posting is announced twice: once when it appears (`created`), once after it closes
@@ -59,9 +84,9 @@ three ways Google documents for retiring a posting — so a closure needs a *re-
 a deletion. Sending `URL_DELETED` for a page that is still online is a misuse of the API,
 and the API's penalty is the quota.
 
-**New postings take the budget first.** The two events share one engine's daily
-allowance, and the order is the policy: a new posting brings a visitor, a closure only
-tidies an index we do not own. While the allowance is 200/day against ~14k new postings,
+**New postings take the budget first** — both tiers of them. The events share one
+engine's daily allowance, and the order is the policy: a new posting brings a visitor, a
+closure only tidies an index we do not own. While the allowance is 200/day against ~14k new postings,
 the first pass consumes all of it and the second does nothing — which is correct.
 Closures start flowing when the allowance grows, with no code change.
 

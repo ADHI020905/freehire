@@ -21,8 +21,12 @@ func NewPostgresRepository(q *db.Queries) *PostgresRepository {
 	return &PostgresRepository{q: q}
 }
 
-func (r *PostgresRepository) JobsToPing(ctx context.Context, engine string, limit int32) ([]Candidate, error) {
-	rows, err := r.q.ListJobsToPing(ctx, db.ListJobsToPingParams{Engine: engine, BatchSize: limit})
+func (r *PostgresRepository) JobsToPing(ctx context.Context, engine string, tier Tier, limit int32) ([]Candidate, error) {
+	rows, err := r.q.ListJobsToPing(ctx, db.ListJobsToPingParams{
+		Technical: tier == TierTech,
+		Engine:    engine,
+		BatchSize: limit,
+	})
 	if err != nil {
 		return nil, err
 	}
