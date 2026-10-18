@@ -89,6 +89,22 @@ adapter contract and the dedup/lifecycle conventions. In short:
 - Always validate board slugs against the live provider before adding them — a
   board that yields nothing looks identical to a healthy one in the logs.
 
+## Host dependencies
+
+The `Dockerfile` installs what the server needs. If you run the backend outside
+Docker (`make run`), put these tools on your `PATH`:
+
+| Binary | Package | Needed for | If missing |
+| :--- | :--- | :--- | :--- |
+| `pdftotext` | `poppler-utils` | CV text extraction (résumé upload) | Uploads fail with a generic "invalid PDF" error, because a missing binary is reported the same way as a corrupt file |
+| `typst` | `typst` (pinned to `0.15.0` in the `Dockerfile`) | CV PDF export | The PDF endpoint returns `501`; the rest of the CV builder still works. Set `TYPST_BIN` if it isn't on `PATH` |
+| `google-chrome` / `chromium` | Chrome or Chromium | Optional: only when an auto-apply run (`cmd/auto-apply`) or a source that uses the headless-browser tier (e.g. echojobs) executes | That run or source fails to launch a browser; everything else works without it |
+
+On Debian/Ubuntu, `sudo apt-get install -y poppler-utils` installs `pdftotext`.
+`typst` isn't in apt: the `Dockerfile` downloads the static release tarball from
+[GitHub releases](https://github.com/typst/typst/releases). Install Chrome or
+Chromium from your usual source.
+
 ## Questions?
 
 Ask in [GitHub Discussions](https://github.com/strelov1/freehire/discussions).
