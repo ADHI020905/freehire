@@ -324,11 +324,23 @@ func (h *assistantHandlers) marketFitTool() assistant.Tool {
 }
 
 // assistantFilterSchema is the JSON schema of the shared facet-filter argument.
+//
+// Every facet name is declared as a property and nothing else is admitted. An open
+// map left the model to guess the keys, and it guessed from the nearest vocabulary
+// it had seen — get_profile's `specializations` instead of `category` — which cost a
+// refused call and an error chip on screen before it retried. values() still rejects
+// an unknown name: a model is free to ignore a schema.
 func assistantFilterSchema(description string) map[string]any {
+	list := map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
+	props := make(map[string]any, len(search.StringFacets))
+	for name := range search.StringFacets {
+		props[name] = list
+	}
 	return map[string]any{
 		"type":                 "object",
-		"description":          description + " Keys are facet names from the facets tool; each value is a list.",
-		"additionalProperties": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+		"description":          description + " Each value is a list of values from the facets tool.",
+		"properties":           props,
+		"additionalProperties": false,
 	}
 }
 

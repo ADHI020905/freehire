@@ -128,6 +128,25 @@ func TestSearchJobsToolRejectsAnUnknownFacet(t *testing.T) {
 	}
 }
 
+// The model reads the filter's keys from the schema, so the schema must name every
+// facet values() accepts and admit nothing else — an open map is what let it guess
+// `specializations` for `category`.
+func TestFilterSchemaDeclaresEveryFacetAndNothingElse(t *testing.T) {
+	schema := assistantFilterSchema("x")
+	if schema["additionalProperties"] != false {
+		t.Errorf("additionalProperties = %v, want false", schema["additionalProperties"])
+	}
+	props, _ := schema["properties"].(map[string]any)
+	if len(props) != len(search.StringFacets) {
+		t.Errorf("schema declares %d facets, search accepts %d", len(props), len(search.StringFacets))
+	}
+	for name := range search.StringFacets {
+		if _, ok := props[name]; !ok {
+			t.Errorf("facet %q is accepted by values() but missing from the schema", name)
+		}
+	}
+}
+
 func TestSearchJobsToolCapsTheResultCount(t *testing.T) {
 	s := &recordingSearcher{}
 	a := assistantWith(&searchHandlers{search: s, descriptions: fixedDescriptions{}}, nil)
