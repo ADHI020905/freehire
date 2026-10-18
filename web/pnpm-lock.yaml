@@ -9,7 +9,7 @@ overrides:
   postcss@<8.5.23: 8.5.23
   nanoid@<3.3.18: 3.3.18
   dompurify@<3.4.16: 3.4.16
-  undici@<8.10.2: 8.10.2
+  undici@<8.12.2: 8.12.2
   fflate@<0.7.5: 0.7.5
   ai@<6.0.203: 6.0.203
   '@ai-sdk/provider-utils@<4.0.33': 4.0.33
@@ -4696,8 +4696,8 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
-  undici@8.10.2:
-    resolution: {integrity: sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==}
+  undici@8.12.2:
+    resolution: {integrity: sha512-XtuDWVdqTLr3NAxm2ly9/hU6kUsJOgGh1RASzMBbsw6aWCOaQzHdW+QQDfdERjfJ2V5vL5pRPa4RetO9UfivDg==}
     engines: {node: '>=22.19.0'}
 
   unhead@2.1.17:
@@ -7040,14 +7040,14 @@ snapshots:
     dependencies:
       '@scalar/helpers': 0.12.0
       pathe: 2.0.3
-      undici: 8.10.2
+      undici: 8.12.2
       yaml: 2.9.1
 
   '@scalar/json-magic@0.15.6':
     dependencies:
       '@scalar/helpers': 0.16.2
       pathe: 2.0.3
-      undici: 8.10.2
+      undici: 8.12.2
       yaml: 2.9.1
 
   '@scalar/localization@0.2.0(typescript@6.0.3)':
@@ -9073,7 +9073,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.2
-      undici: 8.10.2
+      undici: 8.12.2
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -10517,7 +10517,7 @@ snapshots:
 
   undici-types@8.9.0: {}
 
-  undici@8.10.2: {}
+  undici@8.12.2: {}
 
   unhead@2.1.17:
     dependencies:

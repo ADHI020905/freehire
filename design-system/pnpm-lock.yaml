@@ -6,7 +6,7 @@ settings:
 
 overrides:
   postcss@<8.5.23: 8.5.23
-  undici@<8.10.2: 8.10.2
+  undici@<8.12.2: 8.12.2
 
 importers:
 
@@ -2569,8 +2569,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici@8.11.2:
-    resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
+  undici@8.12.2:
+    resolution: {integrity: sha512-XtuDWVdqTLr3NAxm2ly9/hU6kUsJOgGh1RASzMBbsw6aWCOaQzHdW+QQDfdERjfJ2V5vL5pRPa4RetO9UfivDg==}
     engines: {node: '>=22.19.0'}
 
   uri-js@4.4.1:
@@ -4297,7 +4297,7 @@ snapshots:
       parse5: 8.0.1
       saxes: 6.0.0
       tough-cookie: 6.0.2
-      undici: 8.11.2
+      undici: 8.12.2
       w3c-xmlserializer: 6.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -4992,7 +4992,7 @@ snapshots:
 
   typescript@6.0.3: {}
 
-  undici@8.11.2: {}
+  undici@8.12.2: {}
 
   uri-js@4.4.1:
     dependencies:

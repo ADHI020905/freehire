@@ -43,7 +43,12 @@ overrides:
   # a version it has never seen. The alternative Snyk proposes, a major bump of
   # isomorphic-dompurify to 4.x, moves nothing: 4.1.0 declares the same
   # jsdom ^30.0.0 and dompurify ^3.4.12, and differs only in its Node engines.
-  undici@<8.10.2: 8.10.2
+  # Raised to 8.12.2 for eight more advisories fixed there, four high: a
+  # malicious server crashing the process through TLS 1.2 renegotiation, the
+  # Agent again dropping function-valued TLS options, cross-origin redirect
+  # cache poisoning, and an oversized Content-Encoding chain crashing the
+  # process (SNYK-JS-UNDICI-21181005 .. -21185768).
+  undici@<8.12.2: 8.12.2
   # GHSA-px8p-9vwx-vf98 / CVE-2026-45820: fflate's unzipSync can loop forever
   # parsing a malformed ZIP64 central-directory entry (missing extra-field tag
   # 0x0001 after a 0xFFFFFFFF size sentinel). Reached transitively via
