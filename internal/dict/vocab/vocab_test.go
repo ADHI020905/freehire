@@ -86,6 +86,7 @@ func TestConsumerCategoriesAreNonTech(t *testing.T) {
 	for _, c := range []string{
 		"healthcare", "skilled_trades", "retail", "hospitality",
 		"logistics", "education", "personal_services", "administration",
+		"social_services", "science", "manufacturing",
 	} {
 		if !slices.Contains(CategoryValues, c) {
 			t.Errorf("CategoryValues must contain %q", c)

@@ -832,7 +832,7 @@ func TestCoverageGatedFetchIsToldWhatTheCatalogueFilterRejects(t *testing.T) {
 		provider: "himalayas",
 		jobs: []sources.Job{
 			{ExternalID: "1", Title: "Backend Engineer", Company: "Acme", URL: "https://example.com/1"},
-			{ExternalID: "2", Title: "Social Worker", Company: "Acme", URL: "https://example.com/2"},
+			{ExternalID: "2", Title: refusedTitle, Company: "Acme", URL: "https://example.com/2"},
 		},
 	}}
 	r := Runner{Registry: registry(src), Store: &fakeStore{}, Coverage: &fakeCoverage{covered: map[string]bool{}}}
@@ -840,7 +840,7 @@ func TestCoverageGatedFetchIsToldWhatTheCatalogueFilterRejects(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	if len(src.rejectedBack) != 1 || src.rejectedBack[0] != "Social Worker" {
+	if len(src.rejectedBack) != 1 || src.rejectedBack[0] != refusedTitle {
 		t.Errorf("gate rejected %v, want only the social worker posting", src.rejectedBack)
 	}
 	if got := stats.Total(); got.Rejected != 1 || got.Ingested != 1 {

@@ -190,6 +190,7 @@ linters:
         - indonesien
         - profissional
         - educacional
+        - technicien
 
 formatters:
   enable:

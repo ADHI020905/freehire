@@ -114,8 +114,11 @@ func TestConfirmedNonTech_AnyCategoryVetoes(t *testing.T) {
 		}
 	}
 
-	// A non-technical title no category files is still refused.
-	for _, title := range []string{"Social Worker", "Lab Technician"} {
+	// A non-technical title no category files is still refused. Every term in the
+	// non-tech list now names a category of its own, so what reaches the refusal is a
+	// title an earlier categoryNone pin claims: the pin files it nowhere, and the term
+	// still says it is not technical.
+	for _, title := range []string{"Public Safety Officer / Social Worker"} {
 		if Parse(title).Category != "" {
 			t.Fatalf("precondition: %q must resolve no category, got %q", title, Parse(title).Category)
 		}

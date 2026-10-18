@@ -108,7 +108,7 @@ func TestRunReportsNoBoardForABoardlessEntry(t *testing.T) {
 // refusing it would spare exactly the non-tech-heavy boards where stale rows accumulate.
 func TestRunReportsQualifyingBoardWhenEveryPostingWasRejected(t *testing.T) {
 	src := fakeSource{provider: "greenhouse", jobs: []sources.Job{
-		{ExternalID: "1", Title: "Lab Technician", Company: "Acme"},
+		{ExternalID: "1", Title: refusedTitle2, Company: "Acme"},
 	}}
 	r := Runner{Registry: registry(src), Store: &fakeStore{}}
 

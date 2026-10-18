@@ -55,9 +55,26 @@ excludes anyway (`search.CategoryUnresolved`).
 So growing the catalogue is a dictionary change, not a filter change: give the role a
 category and the next crawl admits it. Every term in the non-tech list that names a job
 outright is filed in `categoryTable` — in a block declared after every technical block,
-so a title some alias above already resolves keeps exactly the category it had. The
-terms still filed nowhere (`social worker`, `lab technician`, `community liaison`) are
-waiting for a category that fits them, not for an exception.
+so a title some alias above already resolves keeps exactly the category it had. As of
+`social_services`, `science` and `manufacturing` every term in that list is filed, so the
+refusal is now reached only by a title an earlier `categoryNone` pin claims. A new
+non-tech term with no category to file it under is a category waiting to be added, not
+an exception to carve out.
+
+## Social services, science, manufacturing
+
+Named after their SOC major groups — 21 (community and social service), 19 (life,
+physical and social science), 51 (production) — all `vocab.NonTechCategories`, all
+declared at the very END of `categoryTable`, after the media crafts, so they only reach a
+title nothing else resolves. The one deliberate move is the production-floor spellings
+(`production operator/associate/supervisor`, `machine operator`), re-filed from
+`skilled_trades` in place; the heavy-equipment operator stays a trade. There is no bare
+`scientist` and no bare `research associate`: "Research Scientist", "Applied Scientist"
+and "Research Associate" (equity research) are software, ML or finance as often as
+laboratory, so only the discipline-named and laboratory spellings are aliases. The
+clinical laboratory (`medical lab technician`, `clinical laboratory scientist`,
+`histotechnologist`, `cath lab`) is declared first in the science block and resolves
+`healthcare`, as SOC 29-2010 files it.
 
 The hazard this moves: an alias that was harmless while the filter refused every
 non-technical title can now admit one into a TECHNICAL category. "Front End Cashier"

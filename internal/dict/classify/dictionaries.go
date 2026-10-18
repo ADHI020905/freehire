@@ -1706,6 +1706,9 @@ var categoryTable = []aliasEntry{
 	{"sales associate", "retail"},
 	{"retail associate", "retail"},
 	{"retail service specialist", "retail"},
+	// The factory-floor spelling of the shop-floor title. Declared here, above the bare
+	// "team member", because the production block below sits too late to take it.
+	{"production team member", "manufacturing"},
 	{"team member", "retail"},
 	{"cashier", "retail"},
 	{"merchandiser", "retail"},
@@ -1981,10 +1984,13 @@ var categoryTable = []aliasEntry{
 	{"auto body", "skilled_trades"},
 	{"oil change", "skilled_trades"},
 	{"lube technician", "skilled_trades"},
-	{"production operator", "skilled_trades"},
-	{"production associate", "skilled_trades"},
-	{"production supervisor", "skilled_trades"},
-	{"machine operator", "skilled_trades"},
+	// The production floor is `manufacturing` (SOC 51), not a trade. These four keep
+	// the precedence they were declared with; the rest of that family is filed in the
+	// manufacturing block at the end of this table.
+	{"production operator", "manufacturing"},
+	{"production associate", "manufacturing"},
+	{"production supervisor", "manufacturing"},
+	{"machine operator", "manufacturing"},
 	{"maintenance supervisor", "skilled_trades"},
 	{"maintenance worker", "skilled_trades"},
 	{"equipment operator", "skilled_trades"},
@@ -2244,6 +2250,9 @@ var categoryTable = []aliasEntry{
 	{"воспитателя", "education"},
 	{"воспитатель", "education"},
 	{"преподаватель", "education"},
+	// A school's social worker, not a teacher: declared above the bare "педагог" that
+	// would otherwise take it.
+	{"социальный педагог", "social_services"},
 	{"педагог", "education"},
 	{"методист", "education"},
 
@@ -2318,7 +2327,9 @@ var categoryTable = []aliasEntry{
 	// — "инженер" heads far fewer resolved titles here — and its qualified forms are
 	// declared above it, so `Parse` stays correct.
 
-	// Media production, declared LAST on purpose. Every craft here is also a tool or a
+	// Media production, declared after every discipline block on purpose (only the
+	// three SOC families below follow it, and they reach no title anything above
+	// resolves). Every craft here is also a tool or a
 	// second hat named inside someone else's title — "Marketing Specialist (Photoshop,
 	// Illustrator)", "Graphic Designer & Photographer", "Junior Motion Designer /
 	// Animator". This table resolves in declaration order, so declaring these anywhere
@@ -2354,4 +2365,252 @@ var categoryTable = []aliasEntry{
 	// Also the Adobe product, which is why it is here rather than beside the crafts it
 	// belongs with: a design or marketing title that names the tool keeps its own row.
 	{"illustrator", "creative"},
+
+	// SOCIAL SERVICES, SCIENCE AND MANUFACTURING — the three families the catalogue
+	// filed nowhere once it grew past IT, so ingest refused them and search excluded
+	// them. Declared after every other block, the media crafts included, so a title any
+	// alias above resolves keeps exactly the category it had: these lines only reach a
+	// title that named nothing else. The one deliberate move is the four production-
+	// floor spellings above, re-filed from `skilled_trades` in place.
+	//
+	// Community and social service (SOC 21). Counsellors and therapists who treat
+	// mental health stay in `healthcare`, where they already resolve. A bare "case
+	// manager" is a nurse as often as a social worker and resolves `management` far
+	// above; only the qualified forms are here.
+	{"social worker", "social_services"},
+	{"social workers", "social_services"},
+	{"social work", "social_services"},
+	{"social services", "social_services"},
+	{"social service", "social_services"},
+	// Qualified: a bare "human services" is also a consulting practice ("Health and
+	// Human Services Strategy").
+	{"human services worker", "social_services"},
+	{"human services specialist", "social_services"},
+	{"human services assistant", "social_services"},
+	{"human services professional", "social_services"},
+	{"lcsw", "social_services"},
+	{"lmsw", "social_services"},
+	{"licsw", "social_services"},
+	{"case worker", "social_services"},
+	{"caseworker", "social_services"},
+	{"child welfare", "social_services"},
+	{"child protective", "social_services"},
+	{"foster care", "social_services"},
+	{"community liaison", "social_services"},
+	{"outreach worker", "social_services"},
+	{"community health worker", "social_services"},
+	{"youth worker", "social_services"},
+	{"youth care worker", "social_services"},
+	{"youth counselor", "social_services"},
+	{"family advocate", "social_services"},
+	{"victim advocate", "social_services"},
+	{"victim services", "social_services"},
+	{"substance abuse counselor", "social_services"},
+	{"substance use counselor", "social_services"},
+	{"addiction counselor", "social_services"},
+	{"drug and alcohol counselor", "social_services"},
+	{"recovery coach", "social_services"},
+	{"rehabilitation counselor", "social_services"},
+	// An after-school counselor runs the afternoon club, not the guidance office; it
+	// would otherwise reach "school counselor" across the hyphen.
+	{"after school counselor", "education"},
+	{"after-school counselor", "education"},
+	{"school counselor", "social_services"},
+	{"guidance counselor", "social_services"},
+	{"probation officer", "social_services"},
+	{"parole officer", "social_services"},
+	{"chaplain", "social_services"},
+	{"pastor", "social_services"},
+	{"социальный работник", "social_services"},
+	{"соцработник", "social_services"},
+	{"социальной работе", "social_services"}, // "специалист по социальной работе"
+	{"социальной работы", "social_services"}, // "... ведения социальной работы"
+	// German has no morphology here either: the -in and -en forms are their own
+	// words, while the gender star and colon are word boundaries ("Sozialpädagog*in").
+	{"sozialarbeiter", "social_services"},
+	{"sozialarbeiterin", "social_services"},
+	{"schulsozialarbeiter", "social_services"},
+	{"schulsozialarbeiterin", "social_services"},
+	{"sozialpädagoge", "social_services"},
+	{"sozialpädagogin", "social_services"},
+	{"sozialpädagogen", "social_services"},
+	{"sozialpädagog", "social_services"},
+	{"travailleur social", "social_services"},
+	{"travailleuse sociale", "social_services"},
+	{"assistant social", "social_services"},
+	{"assistante sociale", "social_services"},
+	{"éducateur spécialisé", "social_services"},
+	{"éducatrice spécialisée", "social_services"},
+	{"assistente social", "social_services"},
+	{"trabajador social", "social_services"},
+	{"trabajadora social", "social_services"},
+
+	// Science (SOC 19): the laboratory and the named sciences.
+	//
+	// The clinical laboratory comes first and goes to `healthcare`: SOC files medical
+	// and clinical laboratory technologists and technicians under 29-2010, the
+	// healthcare practitioners, not with the science technicians of 19-4000. The
+	// hospital lab is staffed and hired as part of patient care. A cath lab is a
+	// cardiac procedure room, not a laboratory at all.
+	{"medical lab technician", "healthcare"},
+	{"medical laboratory technician", "healthcare"},
+	{"medical lab tech", "healthcare"},
+	{"medical laboratory technologist", "healthcare"},
+	{"medical laboratory scientist", "healthcare"},
+	{"medical lab scientist", "healthcare"},
+	{"clinical lab technician", "healthcare"},
+	{"clinical laboratory technician", "healthcare"},
+	{"clinical laboratory technologist", "healthcare"},
+	{"clinical laboratory scientist", "healthcare"},
+	{"clinical lab scientist", "healthcare"},
+	{"histotechnician", "healthcare"},
+	{"histotechnologist", "healthcare"},
+	{"histology technician", "healthcare"},
+	{"med lab tech", "healthcare"},
+	{"med lab scientist", "healthcare"},
+	{"clinical lab assistant", "healthcare"},
+	{"clinical laboratory assistant", "healthcare"},
+	{"pathology lab assistant", "healthcare"},
+	{"pathology laboratory assistant", "healthcare"},
+	{"cath lab", "healthcare"},
+	{"ep lab", "healthcare"},
+	{"sleep lab", "healthcare"},
+	// The school or campus computer lab is IT support, filed beside "it technician".
+	{"computer lab technician", "support"},
+	{"computer laboratory technician", "support"},
+	{"computer lab assistant", "support"},
+	// There is deliberately NO bare "scientist" and NO bare "research associate".
+	// "Research Scientist", "Applied Scientist", "Computer Scientist" and "Principal
+	// NLP Scientist" are software and machine-learning roles as often as laboratory
+	// ones, and "Research Associate" is an equity analyst at a bank; none of them
+	// resolves a category today and a bare alias would file them all as lab science.
+	// Only spellings that name the laboratory or the discipline are here. A "QA Lab
+	// Technician" never reaches them: "qa" resolves far above.
+	{"lab technician", "science"},
+	{"laboratory technician", "science"},
+	{"lab tech", "science"},
+	{"lab assistant", "science"},
+	{"laboratory assistant", "science"},
+	{"lab analyst", "science"},
+	{"laboratory analyst", "science"},
+	{"laboratory associate", "science"},
+	{"lab scientist", "science"},
+	{"laboratory scientist", "science"},
+	{"research technician", "science"},
+	{"associate scientist", "science"},
+	{"bench scientist", "science"},
+	{"environmental scientist", "science"},
+	{"food scientist", "science"},
+	{"soil scientist", "science"},
+	{"forensic scientist", "science"},
+	{"materials scientist", "science"},
+	{"chemist", "science"},
+	{"chemists", "science"},
+	{"biochemist", "science"},
+	{"geochemist", "science"},
+	{"biologist", "science"},
+	{"microbiologist", "science"},
+	{"geologist", "science"},
+	{"hydrogeologist", "science"},
+	{"geoscientist", "science"},
+	{"geophysicist", "science"},
+	{"hydrologist", "science"},
+	{"physicist", "science"},
+	{"toxicologist", "science"},
+	{"epidemiologist", "science"},
+	{"ecologist", "science"},
+	{"agronomist", "science"},
+	{"meteorologist", "science"},
+	// Environmental monitoring, not the plant's quality line: declared above the
+	// manufacturing "quality technician".
+	{"water quality technician", "science"},
+	{"лаборант", "science"},
+	{"лаборантка", "science"},
+	{"химик", "science"},
+	{"биолог", "science"},
+	{"микробиолог", "science"},
+	{"геолог", "science"},
+	{"chemiker", "science"},
+	{"chemikerin", "science"},
+	{"laborant", "science"},
+	{"laborantin", "science"},
+	{"chimiste", "science"},
+	{"technicien de laboratoire", "science"},
+	{"technicienne de laboratoire", "science"},
+	{"técnico de laboratorio", "science"},
+	{"técnico de laboratório", "science"},
+	{"auxiliar de laboratório", "science"},
+	{"laboratorista", "science"},
+
+	// Manufacturing (SOC 51): the production floor. Engineers stay in
+	// `industrial_engineering` ("production engineer" resolves there far above), and
+	// the construction and repair trades — the heavy-equipment operator included —
+	// stay in `skilled_trades`. "Сборщик заказов" is a warehouse picker and resolves
+	// `logistics` above, so the bare "сборщик" here only reaches the assemblers.
+	{"production worker", "manufacturing"},
+	{"production technician", "manufacturing"},
+	{"production lead", "manufacturing"},
+	{"production line", "manufacturing"},
+	{"line operator", "manufacturing"},
+	{"line worker", "manufacturing"},
+	{"manufacturing technician", "manufacturing"},
+	{"manufacturing associate", "manufacturing"},
+	{"manufacturing operator", "manufacturing"},
+	{"manufacturing worker", "manufacturing"},
+	{"manufacturing supervisor", "manufacturing"},
+	{"process operator", "manufacturing"},
+	{"plant operator", "manufacturing"},
+	{"press operator", "manufacturing"},
+	{"assembler", "manufacturing"},
+	{"assemblers", "manufacturing"},
+	{"assembly technician", "manufacturing"},
+	{"assembly operator", "manufacturing"},
+	{"assembly worker", "manufacturing"},
+	{"assembly associate", "manufacturing"},
+	{"assembly line", "manufacturing"},
+	{"cnc operator", "manufacturing"},
+	{"packaging operator", "manufacturing"},
+	{"packaging technician", "manufacturing"},
+	{"quality inspector", "manufacturing"},
+	{"quality control inspector", "manufacturing"},
+	{"qc inspector", "manufacturing"},
+	{"quality technician", "manufacturing"},
+	{"quality control technician", "manufacturing"},
+	{"qc technician", "manufacturing"},
+	{"fabricator", "manufacturing"},
+	{"fabricators", "manufacturing"},
+	{"оператор производственной линии", "manufacturing"},
+	{"оператор линии", "manufacturing"},
+	{"оператор производства", "manufacturing"},
+	{"оператор станка", "manufacturing"},
+	{"оператор станков", "manufacturing"},
+	{"оператор чпу", "manufacturing"},
+	{"рабочий на производство", "manufacturing"},
+	{"рабочий производства", "manufacturing"},
+	{"рабочий в цех", "manufacturing"},
+	{"контролер отк", "manufacturing"},
+	{"контролёр отк", "manufacturing"},
+	{"сборщик", "manufacturing"},
+	{"сборщица", "manufacturing"},
+	{"produktionsmitarbeiter", "manufacturing"},
+	{"produktionsmitarbeiterin", "manufacturing"},
+	{"produktionshelfer", "manufacturing"},
+	{"produktionshelferin", "manufacturing"},
+	{"maschinenbediener", "manufacturing"},
+	{"maschinenbedienerin", "manufacturing"},
+	{"maschinenführer", "manufacturing"},
+	{"maschinenführerin", "manufacturing"},
+	{"anlagenführer", "manufacturing"},
+	{"anlagenführerin", "manufacturing"},
+	{"opérateur de production", "manufacturing"},
+	{"opératrice de production", "manufacturing"},
+	{"agent de production", "manufacturing"},
+	{"operador de producción", "manufacturing"},
+	{"operario de producción", "manufacturing"},
+	{"trabajador de producción", "manufacturing"},
+	{"operador de produção", "manufacturing"},
+	{"auxiliar de produção", "manufacturing"},
+	{"ajudante de produção", "manufacturing"},
+	{"operador de máquina", "manufacturing"},
+	{"operador de máquinas", "manufacturing"},
 }

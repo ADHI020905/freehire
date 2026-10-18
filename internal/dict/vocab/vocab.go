@@ -97,6 +97,14 @@ var (
 		// personal and facility services. Same placement as the four above — non-
 		// technical, and deliberately NOT craft-protected.
 		"logistics", "education", "personal_services", "administration",
+		// Three families the broader-than-IT catalogue keeps meeting and had no seat
+		// for, each named after its SOC major group: community and social service
+		// (SOC 21), life, physical and social science (SOC 19 — the laboratory, not the
+		// research lab of a software company), and production (SOC 51 — the plant
+		// floor, distinct from the construction and repair trades). With no category a
+		// posting is refused at ingest and excluded from search, so a role nobody can
+		// file is a role the catalogue loses.
+		"social_services", "science", "manufacturing",
 		"marketing", "sales", "support",
 		// IT-company roles added by expand-role-taxonomy (4 technical, 6 business)
 		"business_analysis", "solutions_engineering", "developer_relations", "technical_writing",
@@ -129,6 +137,7 @@ var (
 		"engineering_design", "industrial_engineering", "occupational_safety",
 		"healthcare", "skilled_trades", "retail", "hospitality",
 		"logistics", "education", "personal_services", "administration",
+		"social_services", "science", "manufacturing",
 	}
 	// TechCategories are the CategoryValues for recognized technical roles: every
 	// category that is neither a NonTechCategories member nor the residual "other".
