@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 
 export default defineConfig({
   // Strip Sentry's tracing/debug code at build time. We run errors-only
@@ -53,69 +52,6 @@ export default defineConfig({
     }),
     tailwindcss(),
     sveltekit(),
-    // Installable PWA: precaches the built app shell (JS/CSS/fonts, manifest
-    // icons) for fast repeat loads. Deliberately carries NO runtime-caching
-    // entry for /api/* or navigations — every job listing, filter result and
-    // /me/* response is personalized or live (and some are SSE streams), so the
-    // only safe policy is "never served from cache", which for generateSW means
-    // not registering a handler for them at all rather than trying to tune a
-    // NetworkFirst TTL. `injectRegister: null` because svelte.config.js's CSP
-    // has no 'unsafe-inline' script-src — the SW is registered from a real
-    // module import in +layout.svelte instead of an auto-injected inline script.
-    //
-    // `workbox.navigateFallback: null` makes that "no navigations" claim true.
-    // Left unset, @vite-pwa/sveltekit defaults it to '/' (SvelteKitPWA's
-    // configureSvelteKitOptions), which registers a NavigationRoute backed by
-    // createHandlerBoundToURL('/') — and since adapter-node/full SSR never
-    // precaches '/', that handler throws `non-precached-url` the moment the SW
-    // tries to route a navigation. Harmless today only because the throw is
-    // swallowed; if this app ever starts prerendering '/', the same route would
-    // start serving one visitor's cached (session-personalized) shell to the
-    // next. Disable it outright rather than rely on it staying broken.
-    SvelteKitPWA({
-      strategies: 'generateSW',
-      registerType: 'autoUpdate',
-      injectRegister: null,
-      workbox: {
-        navigateFallback: null,
-        // /docs/api dynamically imports @scalar/api-reference (Vue-based),
-        // several MB once bundled — a docs-reference library, not part of the
-        // app shell, not worth precaching for offline use like the rest of the
-        // client bundle. Its chunk gets a content-hashed filename that isn't
-        // predictable across builds, so this excludes it by SIZE instead of by
-        // name: nothing this large belongs in the app-shell precache regardless
-        // of what it turns out to be. The raised ceiling keeps a build from
-        // hard-failing on a chunk this size; manifestTransforms is what
-        // actually keeps it out of the precached set.
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        manifestTransforms: [
-          (entries) => ({ manifest: entries.filter((e) => (e.size ?? 0) < 1024 * 1024) }),
-        ],
-      },
-      manifest: {
-        // Name/description echo the WebSite JSON-LD copy in src/lib/seo.ts
-        // (SITE_DESCRIPTION) — same product description, not re-derived from it,
-        // since a build-config file has no access to the $lib alias.
-        name: 'freehire — the open-source search engine for every job',
-        short_name: 'freehire',
-        description:
-          'An open-source search engine for tech jobs: millions of openings indexed straight from company career boards, deduplicated and tagged with stack, seniority and location.',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#0a0a0a',
-        icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          {
-            src: 'pwa-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
-    }),
   ],
   server: {
     port: 5173,

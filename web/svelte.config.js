@@ -19,28 +19,13 @@ export default {
     // was served has been replaced. Without this Kit never checks, `updated.current`
     // stays false forever, and the first the tab hears of a deploy is a dynamic
     // import 404ing for a chunk the release deleted — which reaches the reader as
-    // the 500 page. The service-worker fix below removed one route to that failure;
-    // this closes the other, for a tab that simply sat open across a release.
-    // Five minutes: a deploy runs every few hours, and the file is a few bytes.
+    // the 500 page. Five minutes: a deploy runs every few hours, and the file is a few bytes.
     version: { pollInterval: 300_000 },
 
-    // Absolute asset paths. Kit defaults `relative` to true, which sets Vite's
-    // `base` to './' — and @vite-pwa/sveltekit reads that base directly
-    // (`base = viteOptions.base ?? "/"`) to build the service-worker registration.
-    // The result shipped as `new Workbox('./sw.js', { scope: './' })`, which the
-    // browser resolves against the CURRENT url: /sw.js from the home page, but
-    // /jobs/<slug>/sw.js or /collections/<slug>/sw.js from anywhere else — 404,
-    // ~5.7k a day in the SSR log. So the worker only ever registered for someone
-    // who arrived at '/', and an already-installed one (scope '/', so it controls
-    // the whole site) never re-registered for anyone landing deeper from search.
-    // It kept serving a precached app shell naming _app/immutable chunks that the
-    // next deploy had deleted, and the failed dynamic import surfaces to the user
-    // as the 500 error page. Mostly seen on phones, where a session outlives a
-    // deploy. nginx never logged any of it: /_app/immutable/ has access_log off,
-    // and the 500 is drawn client-side over an HTTP 200.
-    //
-    // Relative paths only buy anything when the app can be served from an unknown
-    // prefix; this one is adapter-node on its own domain.
+    // Absolute asset paths. Relative paths only buy anything when the app can be
+    // served from an unknown prefix; this one is adapter-node on its own domain.
+    // (They were also how the since-removed service worker registered at
+    // /jobs/<slug>/sw.js and 404ed from every page but '/'.)
     paths: { relative: false },
 
     // Content-Security-Policy: defence-in-depth against stored/reflected XSS. Only

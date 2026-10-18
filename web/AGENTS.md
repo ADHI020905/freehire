@@ -60,15 +60,13 @@ production; in dev the Vite proxy (`web/vite.config.ts`) forwards `/api` to the 
   returned 403 from any shared address; `$lib/server/github` holds one process-wide hourly
   cache, shared with `/open`. `stars: null` is a valid answer — the badge drops the number,
   never errors. Unauthenticated even server-side, so a busy IP still degrades to null.
-- The PWA service worker (`web/vite.config.ts`, `SvelteKitPWA`) precaches only the built app
-  shell — no runtime-caching entry for `/api/*` or navigations, since every job listing,
-  filter result and `/me/*` response is personalized or live. `workbox.navigateFallback` is
-  explicitly `null`: left unset it defaults to `'/'`, and since this app is full SSR with no
-  prerendered `/`, that would route every navigation through a handler bound to a URL that was
-  never precached — on a shared device that's a session-personalized shell served to the next
-  visitor. `registerType: 'autoUpdate'` reloads open tabs on a new deploy; `onNeedReload` in
-  `+layout.svelte` gates that behind a confirmation so it can't silently drop an in-progress
-  CV edit or application form.
+- **There is no PWA any more** (removed 2026-10-18). It bought an icon and a window without an
+  address bar: nothing was cached for offline use (every listing is live or personal), the
+  hashed assets already carry a year-long immutable cache, and there is no web push. What it
+  cost was a stale precached shell serving deleted chunks as the 500 page, and from 2026-09-08
+  a precache whose every URL 404ed. `web/static/sw.js` is a kill switch for browsers that still
+  have the old worker registered — it clears their caches and unregisters itself; nothing
+  registers it otherwise. Do not bring a service worker back without a reason it serves.
 
 ## Worth knowing
 

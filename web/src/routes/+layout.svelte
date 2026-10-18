@@ -24,7 +24,6 @@
   import ConfirmTailorDialog from '$lib/components/ConfirmTailorDialog.svelte';
   import CvRefreshDialog from '$lib/components/CvRefreshDialog.svelte';
   import SupportToast from '$lib/components/SupportToast.svelte';
-  import { ConfirmDialog } from '$lib/ui';
   import '../app.css';
   // Country-flag icon sheet (used by $lib/components/Flag.svelte). References its
   // SVGs by URL, so the browser only fetches flags actually rendered.
@@ -96,7 +95,6 @@
   // in app.html already set the class before paint.
   onMount(() => {
     initTheme();
-    registerPwaServiceWorker();
   });
 
   // hooks.server.ts sets `<html lang>` on the initial SSR response, but a live
@@ -106,34 +104,6 @@
   $effect(() => {
     document.documentElement.lang = page.data.locale;
   });
-
-  // `injectRegister: null` in vite.config.ts (the CSP has no 'unsafe-inline'
-  // script-src, so an auto-injected inline registration script would be blocked)
-  // — register from this real module import instead. In dev, `devOptions` is
-  // left disabled in vite.config.ts, so this resolves to a no-op there.
-  //
-  // `registerType: 'autoUpdate'` skips the browser's own update prompt, and
-  // vite-plugin-pwa's default behaviour for that mode is to force
-  // `window.location.reload()` on every open tab the instant a new build
-  // activates — including a tab mid-edit in the CV editor, an application
-  // form, or an assistant chat. `onNeedReload` replaces that unconditional
-  // reload with a confirmation, so a new deploy never silently drops unsaved
-  // work.
-  let showReloadPrompt = $state(false);
-
-  async function registerPwaServiceWorker() {
-    const { registerSW } = await import('virtual:pwa-register');
-    registerSW({
-      immediate: true,
-      onNeedReload() {
-        showReloadPrompt = true;
-      },
-    });
-  }
-
-  function reloadForUpdate() {
-    window.location.reload();
-  }
 
   // Drop every per-user store the moment the session ends. logout() re-resolves via
   // invalidateAll() — a soft client navigation, so these module-singleton stores
@@ -156,14 +126,10 @@
   // poll (see svelte.config.js) sees a new build; leaving through a full page load
   // instead of a client-side one fetches the new manifest and the chunk resolves.
   //
-  // Not a second copy of the service worker's onNeedReload prompt above: that one
-  // asks a tab sitting still whether to reload NOW, and takes a confirmation because
-  // saying yes drops whatever is half-typed. This one waits until the reader is
-  // already leaving, where nothing they were looking at survives the navigation
-  // either way — so it needs no prompt, and costs only the round trip. It also
-  // covers the tab whose service worker never registered, which is how these 404s
-  // outlived the `paths.relative` fix. `willUnload` means the browser is handling
-  // the navigation itself (external link, reload) and there is nothing to intercept.
+  // It waits until the reader is already leaving, where nothing they were looking at
+  // survives the navigation either way — so it needs no prompt, and costs only the
+  // round trip. `willUnload` means the browser is handling the navigation itself
+  // (external link, reload) and there is nothing to intercept.
   beforeNavigate(({ willUnload, to }) => {
     if (updated.current && !willUnload && to?.url) location.href = to.url.href;
   });
@@ -242,13 +208,6 @@
 <CvRefreshDialog />
 
 <ConfirmTailorDialog />
-
-<ConfirmDialog
-  bind:open={showReloadPrompt}
-  title="A new version of freehire is available"
-  confirmLabel="Reload now"
-  onConfirm={reloadForUpdate}
-/>
 
 <style>
   /* Indeterminate sweep: the segment slides across the track on repeat while a
