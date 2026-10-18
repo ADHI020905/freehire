@@ -57,6 +57,35 @@ One asymmetry to keep in mind when touching that copy: a read answers `key_ids` 
 where a write requires `["*"]`, and echoing the null back mints a key pinned to no
 provider key at all.
 
+### Editing the template does not reach the keys already minted
+
+The copy happens ONCE, at mint. Nothing re-reads the template afterwards, so a change to
+its `provider_configs` reaches new accounts only — every existing `freehire-user-*` key
+keeps the policy it was born with. **After editing the template, resync the user keys by
+hand.** No worker does it: the template changes rarely, and an hourly pass rewriting
+nothing almost every run was judged not worth its cost.
+
+This has already broken the assistant for every signed-in user (2026-10-18). The template
+had moved `flagship` to openai, but 8532 user keys still allowed it only on zai; the day
+zai lost its `flagship` alias, every turn ended in `400 Unknown Model`. Testing with the
+service key showed nothing wrong, because the assistant calls with the USER's key — so
+reproduce with a user's own key (`users.llm_key`), and read the gateway's `/api/logs`,
+whose `virtual_key_name` says which key a failing call used. Langfuse does not see
+assistant turns.
+
+The resync, as admin against `/api/governance/virtual-keys`:
+
+1. Back up the full listing first (`GET` it to a file).
+2. Build the body from the template: `{"provider_configs": [...]}`, every entry's
+   `key_ids` set to `["*"]` (the null-on-read trap above).
+3. `PUT` it only to the `freehire-user-*` keys whose `(provider, allowed_models)` set
+   differs from the template's.
+4. Compare each `PUT` response with what you sent. The gateway answers "updated
+   successfully" and sometimes drops a field anyway.
+5. Expect HTTP 500 on a quarter of the writes at 8 in parallel. Run 1–2 in parallel and
+   repeat the pass until nothing differs. A re-run is free, because step 3 skips a key
+   that already matches.
+
 ## Three rules that are easy to get wrong
 
 **The usage read authenticates as the administrator, scoped by the credential's id —
