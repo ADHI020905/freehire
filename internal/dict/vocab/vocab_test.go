@@ -69,9 +69,7 @@ func TestEngineeringDesignIsNonTech(t *testing.T) {
 }
 
 // TestCreativeIsTech pins the placement of the media-production category. It is
-// technical, so its postings are enriched and embedded like design and product,
-// and — because cmd/prune's business rule deletes from NonTechCategories — a
-// posting can never become removable by resolving to it.
+// technical, so its postings are enriched and embedded like design and product.
 func TestCreativeIsTech(t *testing.T) {
 	if !slices.Contains(CategoryValues, "creative") {
 		t.Fatal("CategoryValues must contain creative")
@@ -80,46 +78,7 @@ func TestCreativeIsTech(t *testing.T) {
 		t.Error("creative must be a TechCategories member")
 	}
 	if slices.Contains(NonTechCategories, "creative") {
-		t.Error("creative must not be a NonTechCategories member — that set is what prune deletes from")
-	}
-}
-
-// TestCraftCategoriesAreNonTech pins the set cmd/prune's business rule subtracts.
-// Those categories are non-technical because the CRAFT sits outside IT, not because
-// the posting is back-office work at a software employer — deleting them would take
-// out an engineering employer's whole catalogue the moment its board is retired.
-// A member that is not non-technical would mean the subtraction is pointless; a craft
-// category left out of the set becomes deletable in silence.
-func TestCraftCategoriesAreNonTech(t *testing.T) {
-	if len(NonTechCraftCategories) == 0 {
-		t.Fatal("NonTechCraftCategories must not be empty")
-	}
-	for _, c := range NonTechCraftCategories {
-		if !slices.Contains(NonTechCategories, c) {
-			t.Errorf("craft category %q is not a NonTechCategories member, so subtracting it is meaningless", c)
-		}
-		if !slices.Contains(CategoryValues, c) {
-			t.Errorf("craft category %q is not a member of CategoryValues", c)
-		}
-	}
-	for _, want := range []string{"engineering_design", "industrial_engineering"} {
-		if !slices.Contains(NonTechCraftCategories, want) {
-			t.Errorf("NonTechCraftCategories must contain %q", want)
-		}
-	}
-	// The consumer industries are deliberately NOT craft-protected. They are exactly
-	// the non-technical business prune's rule exists to remove at a company with no
-	// technical history, and leaving them out is also what keeps this vocabulary
-	// growth behaviour-neutral: the same postings match ruleUnknown before and
-	// ruleBusiness after. Adding one here would make a quarter of a million postings
-	// newly undeletable — a policy change wearing a vocabulary change's clothes.
-	for _, notCraft := range []string{
-		"healthcare", "skilled_trades", "retail", "hospitality",
-		"logistics", "education", "personal_services", "administration",
-	} {
-		if slices.Contains(NonTechCraftCategories, notCraft) {
-			t.Errorf("%q must NOT be craft-protected: it is the business prune exists to remove", notCraft)
-		}
+		t.Error("creative must not be a NonTechCategories member")
 	}
 }
 
@@ -153,21 +112,14 @@ func TestIndustrialEngineeringIsNonTech(t *testing.T) {
 	}
 }
 
-// Occupational safety is craft-protected for the reason engineering_design is, and the
-// test says so separately because the two arguments are not the same one. Craft
-// membership here is what keeps prune's business rule off an oil & gas or construction
-// employer: that rule deletes non-technical categories at a company with no technical
-// history, and an HSE department is the whole non-technical staff such an employer
-// posts. Without the subtraction, retiring one board removes that employer's catalogue.
-func TestOccupationalSafetyIsNonTechCraft(t *testing.T) {
+// Occupational safety is a real craft, but not the IT work enrichment and embeddings
+// are spent on, so it is non-technical like engineering_design.
+func TestOccupationalSafetyIsNonTech(t *testing.T) {
 	if !slices.Contains(CategoryValues, "occupational_safety") {
 		t.Fatal("CategoryValues must contain occupational_safety")
 	}
 	if !slices.Contains(NonTechCategories, "occupational_safety") {
 		t.Error("occupational_safety must be a NonTechCategories member: it is a real craft, but not the IT work this catalogue serves")
-	}
-	if !slices.Contains(NonTechCraftCategories, "occupational_safety") {
-		t.Error("occupational_safety must be craft-protected, or prune's business rule deletes an HSE employer's whole catalogue")
 	}
 	if slices.Contains(TechCategories, "occupational_safety") {
 		t.Error("occupational_safety must not be a TechCategories member")

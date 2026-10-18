@@ -42,18 +42,29 @@ are mostly the business categories, so "Software Design Engineer - Sales Tools" 
 `Categories`, `CategoryAliases` — because the last two feed a CV profile and the
 generated web contracts.
 
-Two consumers of `vocab.TechCategories` DELETE — the ingest catalogue filter and the
-prune title rule, both through `ConfirmedNonTech`, plus prune's business rule which
-reads `NonTechCategories` directly. A resolved **non-technical CRAFT** category vetoes
-all of them: this dictionary and the non-tech title list describe the same physical
-trades, so a match between them is not the accidental kind the veto was built for.
+## What the ingest filter refuses
 
-The veto reads `vocab.NonTechCraftCategories` rather than naming a member, so this
-paragraph does not have to list them and cannot go stale as the set grows — which it
-already did once, when it named only `engineering_design` while `industrial_engineering`
-was also a member. `occupational_safety` joined in 2026-09, and it is the sharpest case:
-the non-tech title list carries "охрана труда" outright, so without the veto every
-Russian occupational-safety title is turned away at ingest and hard-deleted.
+The catalogue is broader than IT. The ingest catalogue filter refuses a crawled posting
+only through `ConfirmedNonTech`: its title names a role from the non-tech title list
+(`nontech.go`) AND nothing places it — no technical evidence, and **no category of any
+kind**. A resolved category, technical or not, is a deliberate placement: the posting is
+kept, filed under that facet, and only `is_tech = false` follows. A non-technical title
+the dictionary cannot FILE is refused, because a posting no facet reaches is one search
+excludes anyway (`search.CategoryUnresolved`).
+
+So growing the catalogue is a dictionary change, not a filter change: give the role a
+category and the next crawl admits it. Every term in the non-tech list that names a job
+outright is filed in `categoryTable` — in a block declared after every technical block,
+so a title some alias above already resolves keeps exactly the category it had. The
+terms still filed nowhere (`social worker`, `lab technician`, `community liaison`) are
+waiting for a category that fits them, not for an exception.
+
+The hazard this moves: an alias that was harmless while the filter refused every
+non-technical title can now admit one into a TECHNICAL category. "Front End Cashier"
+(the supermarket checkout lane) resolved to `frontend` all along and nobody saw it,
+because the cashier was turned away. Before adding a broad technical alias, run it
+against the titles the filter used to refuse — the ingest log's `rejected N/M postings
+as non-technical, e.g. ...` lines carry two per board.
 
 ## The one place category and `is_tech` disagree on purpose
 

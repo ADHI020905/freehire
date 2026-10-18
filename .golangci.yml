@@ -184,6 +184,7 @@ linters:
       # fixtures), not English typos.
       ignore-rules:
         - administrativo
+        - assistante
         - processos
         - operacional
         - indonesien

@@ -22,7 +22,7 @@ import (
 // window, and have its live postings closed under a diagnosis that was never true of it.
 func TestRecordSuccessReportsReachedWhenEveryPostingWasRejected(t *testing.T) {
 	src := fakeSource{provider: "greenhouse", jobs: []sources.Job{
-		{ExternalID: "1", Title: "Line Cook", Company: "Acme"},
+		{ExternalID: "1", Title: "Lab Technician", Company: "Acme"},
 	}}
 	health := &fakeHealth{}
 	r := Runner{Registry: registry(src), Store: &fakeStore{}, BoardHealth: health}

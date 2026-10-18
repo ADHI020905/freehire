@@ -17,7 +17,7 @@ import (
 // to be too broad, removing it re-admits the postings on the next pass.
 func TestRunRejectsNonTechPostings(t *testing.T) {
 	src := fakeSource{provider: "greenhouse", jobs: []sources.Job{
-		{ExternalID: "1", Title: "Registered Nurse", Company: "Acme"},
+		{ExternalID: "1", Title: "Social Worker", Company: "Acme"},
 		{ExternalID: "2", Title: "Backend Engineer", Company: "Acme"},
 	}}
 	store := &fakeStore{}
@@ -44,7 +44,7 @@ func TestRunRejectsNonTechPostings(t *testing.T) {
 // forever — on one Workday board that is 25k of its 25.6k stored postings.
 func TestRunDoesNotRefreshARejectedPosting(t *testing.T) {
 	src := &fakeHydratingSource{provider: "workday", jobs: []sources.Job{
-		{ExternalID: "1", Title: "Registered Nurse", Company: "Acme", URL: "u"},
+		{ExternalID: "1", Title: "Social Worker", Company: "Acme", URL: "u"},
 		{ExternalID: "2", Title: "Backend Engineer", Company: "Acme", URL: "u"},
 	}}
 	// Both are already ingested, so both come back as liveness refreshes. Neither row carries
@@ -129,7 +129,7 @@ func TestRunKeepsBusinessRolesTheCompanyRuleOwns(t *testing.T) {
 // twice; a rejection reaching only one path would leak on half the catalogue.
 func TestRunRejectsNonTechInStreamPath(t *testing.T) {
 	src := fakeStreamingSource{provider: "jobtech", failAfter: -1, jobs: []sources.Job{
-		{ExternalID: "1", Title: "Line Cook", Company: "Acme"},
+		{ExternalID: "1", Title: "Lab Technician", Company: "Acme"},
 		{ExternalID: "2", Title: "Backend Engineer", Company: "Acme"},
 	}}
 	store := &fakeStore{}
@@ -154,7 +154,7 @@ func TestRunRejectsNonTechInStreamPath(t *testing.T) {
 // every save fails look like a board full of non-technical postings.
 func TestRunCountsRejectionsSeparatelyFromSkips(t *testing.T) {
 	src := fakeSource{provider: "greenhouse", jobs: []sources.Job{
-		{ExternalID: "1", Title: "Registered Nurse", Company: "Acme"},
+		{ExternalID: "1", Title: "Social Worker", Company: "Acme"},
 		{ExternalID: "2", Title: "Backend Engineer", Company: "Acme"},
 	}}
 	store := &fakeStore{err: errors.New("write failed")}
@@ -168,7 +168,7 @@ func TestRunCountsRejectionsSeparatelyFromSkips(t *testing.T) {
 	}
 	got := stats.Total()
 	if got.Rejected != 1 {
-		t.Errorf("Rejected = %d, want 1 (the nurse posting)", got.Rejected)
+		t.Errorf("Rejected = %d, want 1 (the social worker posting)", got.Rejected)
 	}
 	if got.Skipped != 1 {
 		t.Errorf("Skipped = %d, want 1 (the engineer posting failed to save)", got.Skipped)
@@ -212,8 +212,8 @@ func TestRunKeepsTechnicalTitlesThatMatchANonTechTerm(t *testing.T) {
 // is the normal case on the non-tech-heavy national feeds, not the edge case.
 func TestRunTreatsAllRejectedStreamProgressAsSuccess(t *testing.T) {
 	src := fakeStreamingSource{provider: "jobtech", failAfter: 2, jobs: []sources.Job{
-		{ExternalID: "1", Title: "Line Cook", Company: "Acme"},
-		{ExternalID: "2", Title: "Registered Nurse", Company: "Acme"},
+		{ExternalID: "1", Title: "Lab Technician", Company: "Acme"},
+		{ExternalID: "2", Title: "Social Worker", Company: "Acme"},
 		{ExternalID: "3", Title: "Backend Engineer", Company: "Acme"},
 	}}
 	health := &fakeHealth{}
@@ -273,8 +273,8 @@ func TestRejectionLogCarriesShareAndSamples(t *testing.T) {
 	defer log.SetOutput(prev)
 
 	src := fakeSource{provider: "greenhouse", jobs: []sources.Job{
-		{ExternalID: "1", Title: "Registered Nurse", Company: "Acme"},
-		{ExternalID: "2", Title: "Line Cook", Company: "Acme"},
+		{ExternalID: "1", Title: "Social Worker", Company: "Acme"},
+		{ExternalID: "2", Title: "Lab Technician", Company: "Acme"},
 		{ExternalID: "3", Title: "Backend Engineer", Company: "Acme"},
 	}}
 	r := Runner{Registry: registry(src), Store: &fakeStore{}}
@@ -297,7 +297,7 @@ func TestRejectionLogCarriesShareAndSamples(t *testing.T) {
 	if line == "" {
 		t.Fatalf("no rejection line logged:\n%s", out)
 	}
-	for _, want := range []string{"2/3", "67%", "Registered Nurse", "Line Cook"} {
+	for _, want := range []string{"2/3", "67%", "Social Worker", "Lab Technician"} {
 		if !strings.Contains(line, want) {
 			t.Errorf("log line missing %q: %s", want, line)
 		}
@@ -339,7 +339,7 @@ func TestListingRejectedAgreesWithTheHydratedPosting(t *testing.T) {
 		"<p>Patient care in a hospital ward, night shifts, retail floor experience a plus.</p>",
 	}
 	titles := []string{
-		"Registered Nurse",
+		"Social Worker",
 		"Backend Engineer",
 		"Backend Engineer — Teller Systems",
 		"Team Member",
@@ -363,7 +363,7 @@ func TestListingRejectedAgreesWithTheHydratedPosting(t *testing.T) {
 			}
 		}
 	}
-	if !reject(sources.Job{ExternalID: "1", URL: "https://example.com/1", Title: "Registered Nurse", Company: "Acme"}) {
+	if !reject(sources.Job{ExternalID: "1", URL: "https://example.com/1", Title: "Social Worker", Company: "Acme"}) {
 		t.Error("a confirmed non-technical listing must be reported rejected")
 	}
 	if reject(sources.Job{ExternalID: "2", URL: "https://example.com/2", Title: "Backend Engineer", Company: "Acme"}) {

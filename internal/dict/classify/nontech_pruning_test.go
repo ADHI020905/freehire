@@ -2,9 +2,9 @@ package classify
 
 import "testing"
 
-// The terms added for the catalogue-pruning campaign. These are not merely labels: the
-// prune worker deletes on them permanently, so each carries a negative case naming a
-// real technical title that must not match. The negatives are chosen to share a word
+// The terms added for the catalogue-pruning campaign. These are not merely labels: a
+// title matching one and filed under no category is refused at ingest, so each carries
+// a negative case naming a real technical title that must not match. The negatives are chosen to share a word
 // with the term — a term is dangerous exactly where it nearly collides.
 func TestPruningTermsMatchTheirCluster(t *testing.T) {
 	positive := []string{

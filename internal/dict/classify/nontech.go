@@ -1,10 +1,8 @@
 package classify
 
 import (
-	"slices"
 	"strings"
 
-	"github.com/strelov1/freehire/internal/dict/vocab"
 	"github.com/strelov1/freehire/internal/dict/wordmatch"
 )
 
@@ -185,31 +183,22 @@ var nonTechTitleTerms = []string{
 }
 
 // ConfirmedNonTech reports whether a title states a non-technical role AND nothing
-// technical overrides it. It exists because IsNonTech alone is not a safe basis for
-// removing a posting: the dictionary matches its terms anywhere in a title, and it was
-// written on the contract stated above — consulted only after the tech check. Callers
-// that DELETE on this signal (the ingest filter, the prune rule) must go through here,
-// so the precedence cannot be forgotten in one of them and not the other.
+// places it in the catalogue. It exists because IsNonTech alone is not a safe basis for
+// turning a posting away: the dictionary matches its terms anywhere in a title, and it
+// was written on the contract stated above — consulted only after the tech check. The
+// ingest filter, which refuses on this signal, goes through here so the precedence
+// cannot be forgotten.
 //
-// A resolved NON-TECHNICAL CRAFT category vetoes deletion on its own, without technical
-// evidence. Those categories and this dictionary describe the same physical trades from
-// two sides — the list anchors "hvac", "sheet metal", "machinist"; `engineering_design`
-// resolves the draughting titles those same employers post, and `occupational_safety`
-// resolves the safety department they staff, which the list names outright in Russian
-// ("охрана труда") — so a word match here is not the accidental kind the veto was built
-// for. What is decisive is that a resolved category is a DELIBERATE placement: the title
-// named a discipline, the catalogue keeps the posting under that facet, and only
-// `is_tech=false` follows from it. While the draughting titles lived in `design`,
-// TechCategories supplied this veto for free; splitting them out would otherwise turn an
-// "HVAC Designer" away at ingest and hard-delete the stored rows through prune, and
-// without the Russian half of the veto every "Инженер по охране труда" meets the same end.
-//
-// The condition reads vocab.NonTechCraftCategories rather than naming its members. That
-// is the same reasoning the set itself carries: a category named inline here could be
-// added to the vocabulary, by someone with no reason to open this file, and miss the
-// veto in silence. `cmd/prune`'s business rule already reads the set the same way.
+// Any resolved category vetoes the refusal, technical or not. The catalogue is broader
+// than IT: a posting the title dictionary files under a facet — `healthcare`, `retail`,
+// `industrial_engineering`, any of them — belongs in it and is searchable under that
+// facet; only `is_tech=false` follows from the placement. So a "Registered Nurse" is
+// kept (healthcare), while a title that names a non-technical role the dictionary
+// cannot FILE is still refused, because a posting no facet reaches is one search
+// excludes anyway (search.CategoryUnresolved). Growing the catalogue is therefore a
+// dictionary change: give the role a category and the next crawl admits it.
 func ConfirmedNonTech(title string, hasTechEvidence bool) bool {
-	if hasTechEvidence || slices.Contains(vocab.NonTechCraftCategories, Parse(title).Category) {
+	if hasTechEvidence || Parse(title).Category != "" {
 		return false
 	}
 	return IsNonTech(title)

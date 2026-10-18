@@ -9,9 +9,11 @@ import (
 	"github.com/strelov1/freehire/internal/job/job"
 )
 
-// outOfCatalogue reports whether a crawled posting does not belong on an IT job board
-// and must not be persisted. A generic ATS board carries a company's whole hiring, not
-// its engineering org, so most of what a crawl returns is nurses, cooks and cashiers.
+// outOfCatalogue reports whether a crawled posting does not belong in the catalogue and
+// must not be persisted. The catalogue is broader than IT: a generic ATS board carries a
+// company's whole hiring, and the nurses, cooks and cashiers on it are kept whenever the
+// title dictionary files them under a category. What is refused is a non-technical title
+// no category reaches — search would exclude it anyway (search.CategoryUnresolved).
 //
 // Technical evidence vetoes the rejection, and that ordering is not optional. The
 // non-tech dictionary matches its terms anywhere in a title, and it was written on the
@@ -26,11 +28,9 @@ import (
 // happened.
 //
 // Below that veto the rule is the non-tech TITLE dictionary, deliberately not the
-// tri-state is_tech. A business role — sales, recruiting, finance — resolves
-// is_tech=false through its category, but whether it belongs in the catalogue depends
-// on whether the company is an IT company, which the crawl cannot know. Rejecting on
-// is_tech==false would quietly drop every sales and recruiting job at every employer
-// on the board.
+// tri-state is_tech. Every categorised non-technical role — sales, finance, healthcare,
+// retail — resolves is_tech=false through its category and belongs in the catalogue
+// all the same; rejecting on is_tech==false would drop all of them.
 //
 // This is catalogue policy, not derivation, which is why it lives here rather than in
 // jobderive: the aggregate still constructs a non-technical posting without complaint,

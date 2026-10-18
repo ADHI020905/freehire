@@ -31,7 +31,7 @@ var techTitleTerms = []string{
 	// title category-less, leaving this detector as the only thing that reads it as
 	// technical. The "-ing" spelling needs a term of its own too — boundaries mean
 	// "engineer" cannot see "engineering", and "Software Design Engineering Manager"
-	// would otherwise be unknown, which is prune's ruleUnknown bucket.
+	// would otherwise be unknown.
 	"software design engineer", "software design engineering",
 	"site reliability engineer", "platform engineer",
 	"backend engineer", "back-end engineer", "frontend engineer", "front-end engineer",

@@ -1656,12 +1656,12 @@ func TestParse_ServiceSectors(t *testing.T) {
 		{"Receptionist", "administration", ""},
 		{"Secretary", "administration", ""},
 		{"Legal Secretary", "administration", ""},
-		// These two stay `operations`, where they already resolve. An IT company's
-		// office manager IS its operations, and taking the row would be the theft this
-		// line of work keeps guarding against — the front-desk and paperwork titles
-		// that resolved to NOTHING are what this category is for.
+		// Office Manager stays `operations`: an IT company's office manager IS its
+		// operations. The assistants moved here from `operations`, because the
+		// virtual, executive and administrative assistant are one job and splitting
+		// them across two facets hid half of it from whoever filtered on either.
 		{"Office Manager", "operations", ""},
-		{"Administrative Assistant", "operations", ""},
+		{"Administrative Assistant", "administration", ""},
 		{"Data Entry Specialist", "administration", ""},
 		{"Администратор", "administration", ""},
 		{"Секретарь руководителя", "administration", ""},
@@ -1787,6 +1787,31 @@ func TestParse_AdminVAAndImmigration(t *testing.T) {
 		{"Front Desk Coordinator", "administration", ""},
 		{"Virtual Assistant", "administration", ""},
 		{"Executive Virtual Assistant", "administration", ""},
+		{"Executive Assistant to the CEO", "administration", ""},
+		{"Executive Assistant to General Manager", "administration", "the manager is who is assisted, not the role"},
+		{"Personal Assistant to General Manager", "administration", ""},
+		{"Remote Executive Assistant", "administration", ""},
+		{"Personal Assistant", "administration", ""},
+		{"Medical Virtual Assistant (MVA)", "administration", ""},
+		{"Virtual Medical Assistant", "administration", "a clinic's VA, not the clinical seat"},
+		{"Real Estate Virtual Assistant", "administration", ""},
+		{"Online Assistant", "administration", ""},
+		{"Asistente Virtual", "administration", ""},
+		{"Assistente Administrativo", "administration", ""},
+		{"Assistante de direction (H/F)", "administration", ""},
+		{"Ассистент руководителя", "administration", ""},
+		{"Личный помощник руководителя", "administration", ""},
+		// The "VA" abbreviation is never an alias: in this catalogue it is a US state,
+		// Veterans Affairs, or the Swedish water-and-sewage trade.
+		{"Business Analyst (Hybrid, local to DC/MD/VA)", "business_analysis", ""},
+		{"Erfaren VA-projektör", "", "Swedish water and sewage, not a virtual assistant"},
+		{"Customer Service Advisor", "support", ""},
+		{"Nissan Service Advisor", "support", "a dealership's customer desk"},
+		// The supermarket checkout lane, not a frontend developer.
+		{"Front End Cashier", "retail", ""},
+		{"Front End Clerk (Cashier or Courtesy Clerk)", "retail", ""},
+		{"Heavy Equipment/ Large Front End Loader Operator", "skilled_trades", ""},
+		{"Senior Front End Developer", "frontend", ""},
 
 		// The bare-"assistant" exclusion: grade words and non-administrative trades
 		// must stay unresolved, exactly as they are today.
@@ -1888,10 +1913,9 @@ func TestParse_AnalystIsQualifiedOrNothing(t *testing.T) {
 // decides nothing. See TestCategories_ServiceOverlaps.
 //
 // What it cost was invisible from inside this package. `security` is in
-// vocab.TechCategories, and jobderive.TechEvidence treats a technical CATEGORY as enough
-// to set is_tech TRUE on its own — ahead of the non-tech dictionary, deliberately, so
-// that "Backend Engineer — Teller Systems" is not deleted on its accidental "teller"
-// match. So the bare alias did not merely mis-file a mall guard's facet: it asserted the
+// vocab.TechCategories, and jobderive treats a technical CATEGORY as enough to set
+// is_tech TRUE on its own — ahead of the non-tech dictionary, deliberately, so that
+// "Backend Engineer — Teller Systems" is not refused on its accidental "teller" match. So the bare alias did not merely mis-file a mall guard's facet: it asserted the
 // guard was a technical posting, and no later evidence could take that back. Measured
 // over the 150 commonest live titles carrying the word (10 276 open postings), it
 // declared 10 156 of them technical; with the qualified forms, 5 917.

@@ -89,12 +89,9 @@ var (
 		"occupational_safety",
 		"product", "project_management", "management",
 		// The consumer industries a broad multi-industry ATS crawl carries in with the
-		// boards it wants. They are here to be FILTERABLE — a facet excludes as well as
-		// it selects, and 225k unfilterable postings are worse than four options no IT
-		// candidate will choose. Deliberately NOT members of NonTechCraftCategories:
-		// unlike the two engineering categories, these are exactly the non-technical
-		// business cmd/prune's rule exists to remove, and leaving them out is what
-		// keeps categorising them behaviour-neutral.
+		// boards it wants. They are FILTERABLE — a facet excludes as well as it
+		// selects — and, since the catalogue is broader than IT, a posting filed
+		// under one is kept at ingest and searchable under it.
 		"healthcare", "skilled_trades", "retail", "hospitality",
 		// The service sectors: moving goods, teaching, the front desk, and the
 		// personal and facility services. Same placement as the four above — non-
@@ -124,10 +121,8 @@ var (
 	// `engineering_design` — mechanical, electrical, civil and architectural draughting
 	// — joins them for the same reason: it is engineering, but not the IT work this
 	// catalogue serves, so it is filterable without spending LLM or embedding budget on
-	// it. Note that two DELETE paths read TechCategories as a veto over the non-tech
-	// title dictionary; `classify.ConfirmedNonTech` and `prune`'s business rule spare
-	// this category explicitly, so membership here does not make its postings
-	// removable.
+	// it. Membership here never makes a posting refusable: the ingest filter
+	// (`classify.ConfirmedNonTech`) keeps every posting that resolves ANY category.
 	NonTechCategories = []string{
 		"marketing", "sales", "support", "management",
 		"recruiting", "hr", "finance", "legal", "operations", "customer_success",
@@ -135,25 +130,6 @@ var (
 		"healthcare", "skilled_trades", "retail", "hospitality",
 		"logistics", "education", "personal_services", "administration",
 	}
-	// NonTechCraftCategories are the NonTechCategories members that are non-technical
-	// because the CRAFT sits outside IT — not because the posting is back-office or
-	// go-to-market work at a software employer. The distinction is not decorative:
-	// `cmd/prune`'s business rule deletes non-technical categories at a company with no
-	// technical history, and applied to these it would take out an engineering
-	// employer's entire catalogue the moment its board was retired. That rule
-	// SUBTRACTS this set.
-	//
-	// It lives here rather than in prune because it states what a category MEANS, and
-	// because the alternative has already been tried: the exception was one category
-	// named inline at the rule, which meant the second craft category could be added to
-	// the vocabulary — by someone with no reason to open cmd/prune — and become
-	// deletable in silence. A test asserts every member is also a NonTechCategories
-	// member, so the two cannot drift.
-	// `occupational_safety` is a member for the same reason, arrived at from the other
-	// direction: an oil & gas, mining or construction employer's HSE department is the
-	// whole non-technical staff it posts, so the business rule applied to it would take
-	// out that employer's catalogue the moment its board was retired.
-	NonTechCraftCategories = []string{"engineering_design", "industrial_engineering", "occupational_safety"}
 	// TechCategories are the CategoryValues for recognized technical roles: every
 	// category that is neither a NonTechCategories member nor the residual "other".
 	// It is the single source of truth for "is this a technical category?" that the

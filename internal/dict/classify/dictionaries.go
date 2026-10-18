@@ -327,6 +327,17 @@ var categoryTable = []aliasEntry{
 	// and the query returned no suggestion at all.
 	{"backend developer", "backend"},
 	{"back-end developer", "backend"},
+	// In a supermarket the "front end" is the checkout lane, and a grocery chain's
+	// "Front End Cashier" is the single largest spelling the bare alias below would
+	// file as a frontend developer. These were harmless while the ingest filter turned
+	// every cashier away; once a categorised title is kept, they would reach the
+	// catalogue as technical. The heavy-equipment "front end loader" is the same trap.
+	{"front end cashier", "retail"},
+	{"front-end cashier", "retail"},
+	{"front end clerk", "retail"},
+	{"front end assistant", "retail"},
+	{"front end associate", "retail"},
+	{"front end loader", "skilled_trades"},
 	{"frontend", "frontend"},
 	{"front-end", "frontend"},
 	{"front end", "frontend"},
@@ -452,7 +463,7 @@ var categoryTable = []aliasEntry{
 	// technical, and "Security Supervisor" (149) and bare "Security" (91) behind them.
 	// The bare alias sent every one of those to the security category, and because
 	// `security` is in vocab.TechCategories that category is enough for
-	// jobderive.TechEvidence to set is_tech TRUE on its own, ahead of the non-tech
+	// jobderive to set is_tech TRUE on its own, ahead of the non-tech
 	// dictionary. So a mall guard was filed as an IT security role — in search, and
 	// (since 2026-09-14) in what cmd/search-ping spends Google's Indexing API quota on.
 	//
@@ -996,8 +1007,16 @@ var categoryTable = []aliasEntry{
 	{"ops manager", "operations"},
 	{"head of operations", "operations"},
 	{"office manager", "operations"},
-	{"executive assistant", "operations"},
-	{"administrative assistant", "operations"},
+	// The assistant family is `administration` (see that block below), but these
+	// spellings must resolve HERE, at the precedence they always had: "Executive
+	// Assistant to the General Manager" names a manager after the role, and the
+	// management aliases declared between this line and the administration block
+	// would take it.
+	{"executive assistant", "administration"},
+	{"administrative assistant", "administration"},
+	{"personal assistant", "administration"},
+	{"ассистент руководителя", "administration"},
+	{"помощник руководителя", "administration"},
 	{"procurement", "operations"},
 	{"procurement manager", "operations"},
 	{"purchasing manager", "operations"},
@@ -1006,8 +1025,6 @@ var categoryTable = []aliasEntry{
 	{"операционный директор", "operations"},
 	{"операционный менеджер", "operations"},
 	{"офис-менеджер", "operations"},
-	{"ассистент руководителя", "operations"},
-	{"помощник руководителя", "operations"},
 	{"специалист по закупкам", "operations"},
 	{"закупщик", "operations"},
 	{"business analyst", "business_analysis"},
@@ -1227,7 +1244,7 @@ var categoryTable = []aliasEntry{
 	// Board Certified Behavior Analysts — school ABA therapists — and the rest
 	// investment, purchasing, risk, pricing, research, policy and tax analysts. All
 	// 102,222 had is_tech = true, so all of them were eligible for the enrichment budget,
-	// and TechEvidence's veto shielded every one from the non-technical dictionary.
+	// and that technical category shielded every one from the non-technical dictionary.
 	//
 	// The technical families it was hiding are named individually instead, each in its
 	// own block above and each resolving MORE precisely than this ever did: test,
@@ -1601,6 +1618,14 @@ var categoryTable = []aliasEntry{
 	// a "Field Service Technician" is a trade, and both must be settled before any
 	// bare technician or engineer word is reached.
 	//
+	// A virtual assistant who works for a clinic is still a virtual assistant — remote
+	// scheduling, refills, prior authorisations — and is filed with the rest of that
+	// family in `administration`. Declared above the healthcare block because the
+	// "Virtual Medical Assistant" spelling contains "medical assistant", which would
+	// otherwise take it. ("Medical Virtual Assistant" needs no entry: it contains
+	// "virtual assistant" and nothing above that.)
+	{"virtual medical assistant", "administration"},
+
 	// HEALTHCARE first, because its qualified spellings are the ones that would
 	// otherwise fall to the trades.
 	{"medication technician", "healthcare"},
@@ -1752,8 +1777,6 @@ var categoryTable = []aliasEntry{
 	// ADMINISTRATION — the front desk and the paperwork, not an IT company's
 	// back-office (that is `operations`, and filing a court clerk there would muddy a
 	// facet that works).
-	{"administrative assistant", "administration"},
-	{"executive assistant", "administration"},
 	{"office manager", "administration"},
 	{"office assistant", "administration"},
 	{"receptionist", "administration"},
@@ -1772,6 +1795,38 @@ var categoryTable = []aliasEntry{
 	{"administrative specialist", "administration"},
 	{"front desk", "administration"},
 	{"virtual assistant", "administration"},
+	// The rest of the assistant family, in every language the catalogue carries it.
+	// Executive and administrative assistants used to resolve to `operations`, which
+	// split one job across two facets: "Virtual Assistant" in administration,
+	// "Executive Assistant" in operations. They now resolve here too, from entries
+	// declared up beside `operations` so they keep the precedence they had.
+	//
+	// The abbreviation "VA" is deliberately never an alias. In this catalogue it is far
+	// more often Virginia ("Vienna, VA office", "Arlington VA") or the US Veterans
+	// Affairs, and in Swedish titles it is the water-and-sewage trade ("VA-projektör").
+	// The spelled-out phrase carries the volume.
+	{"online assistant", "administration"},
+	{"asistente virtual", "administration"},
+	{"assistente virtual", "administration"},
+	{"assistant virtuel", "administration"},
+	{"assistante virtuelle", "administration"},
+	{"virtuelle assistenz", "administration"},
+	{"virtueller assistent", "administration"},
+	{"asistente ejecutiva", "administration"},
+	{"asistente ejecutivo", "administration"},
+	{"asistente administrativa", "administration"},
+	{"asistente administrativo", "administration"},
+	{"assistente executiva", "administration"},
+	{"assistente executivo", "administration"},
+	{"assistente administrativa", "administration"},
+	{"assistente administrativo", "administration"},
+	{"auxiliar administrativo", "administration"},
+	{"recepcionista", "administration"},
+	{"assistante de direction", "administration"},
+	{"assistant de direction", "administration"},
+	{"assistante administrative", "administration"},
+	{"assistant administratif", "administration"},
+	{"file clerk", "administration"},
 
 	// PERSONAL AND FACILITY SERVICES.
 	{"master stylist", "personal_services"},
@@ -1849,6 +1904,195 @@ var categoryTable = []aliasEntry{
 	{"geotechnical engineer", "industrial_engineering"},
 	{"planning engineer", "industrial_engineering"},
 	{"resident engineer", "industrial_engineering"},
+	// The physical engineering disciplines. nontech.go named them as non-technical long
+	// before this block existed, and with no category to file them under the ingest
+	// filter turned every one of them away. A software role in the same domain does not
+	// contain the phrase ("Electrical Systems Engineer" is pinned to no category far
+	// above), and a hardware one resolves through "hardware" first.
+	{"electrical engineer", "industrial_engineering"},
+	{"mechanical engineer", "industrial_engineering"},
+	{"civil engineer", "industrial_engineering"},
+	{"structural engineer", "industrial_engineering"},
+	{"quantity surveyor", "industrial_engineering"},
+
+	// The non-technical title dictionary's own vocabulary (nontech.go), filed. Those
+	// terms said a posting was not technical but not what it WAS, and a posting the
+	// dictionary placed nowhere is one ingest refuses and search excludes. Each term
+	// below names the job outright, so it earns the category it names.
+	//
+	// Declared HERE — after every technical block and after the industrial seats —
+	// so that a title any alias above already resolves keeps exactly the category it
+	// had. That is what makes this block safe to add in bulk: "HVAC Controls Engineer"
+	// stays industrial and "DevOps Engineer (HVAC IoT Platform)" stays devops, and only
+	// a title that named nothing else reaches these lines.
+	//
+	// Healthcare.
+	{"behavior technician", "healthcare"},
+	{"rbt", "healthcare"},
+	{"behavioral health", "healthcare"},
+	{"language pathologist", "healthcare"},
+	{"therapy assistant", "healthcare"},
+	{"care aide", "healthcare"},
+	{"care assistant", "healthcare"},
+	{"nursing", "healthcare"},
+	{"home health", "healthcare"},
+	{"hospice", "healthcare"},
+	{"veterinary", "healthcare"},
+	{"dentist", "healthcare"},
+	{"pharmacist", "healthcare"},
+	{"paramedic", "healthcare"},
+	{"medical scribe", "healthcare"},
+	{"medical technologist", "healthcare"},
+	{"patient care", "healthcare"},
+	{"patient access", "healthcare"},
+	{"surgical technologist", "healthcare"},
+	{"scrub tech", "healthcare"},
+	{"respiratory therapist", "healthcare"},
+	{"speech therapist", "healthcare"},
+	{"mental health technician", "healthcare"},
+	{"mental health counselor", "healthcare"},
+	{"mental health therapist", "healthcare"},
+	{"mental health associate", "healthcare"},
+	{"clinical research coordinator", "healthcare"},
+	{"clinical research associate", "healthcare"},
+	{"primary care provider", "healthcare"},
+	{"advanced practice provider", "healthcare"},
+	{"family medicine", "healthcare"},
+	{"medical director", "healthcare"},
+	{"care coordinator", "healthcare"},
+	// The service advisor is the customer-facing desk of a car dealership, a bank
+	// branch or a member service — `support` in every case. "Customer Service Advisor"
+	// resolves there through "customer service" far above.
+	{"service advisor", "support"},
+	// Trades and the production floor.
+	{"ironworker", "skilled_trades"},
+	{"iron worker", "skilled_trades"},
+	{"laborer", "skilled_trades"},
+	{"general labor", "skilled_trades"},
+	{"pipefitter", "skilled_trades"},
+	{"stone mason", "skilled_trades"},
+	{"brick mason", "skilled_trades"},
+	{"bricklayer", "skilled_trades"},
+	{"roofer", "skilled_trades"},
+	{"hvac", "skilled_trades"},
+	{"boilermaker", "skilled_trades"},
+	{"sheet metal", "skilled_trades"},
+	{"automotive service", "skilled_trades"},
+	{"auto body", "skilled_trades"},
+	{"oil change", "skilled_trades"},
+	{"lube technician", "skilled_trades"},
+	{"production operator", "skilled_trades"},
+	{"production associate", "skilled_trades"},
+	{"production supervisor", "skilled_trades"},
+	{"machine operator", "skilled_trades"},
+	{"maintenance supervisor", "skilled_trades"},
+	{"maintenance worker", "skilled_trades"},
+	{"equipment operator", "skilled_trades"},
+	{"heavy equipment", "skilled_trades"},
+	// Hospitality.
+	{"food service", "hospitality"},
+	{"banquet", "hospitality"},
+	{"waiter", "hospitality"},
+	{"waitress", "hospitality"},
+	{"concierge", "hospitality"},
+	{"valet", "hospitality"},
+	{"crew member", "hospitality"},
+	{"restaurant team", "hospitality"},
+	{"room attendant", "hospitality"},
+	{"guest service", "hospitality"},
+	{"dietary aide", "hospitality"},
+	// Retail.
+	{"stocker", "retail"},
+	{"store associate", "retail"},
+	{"store clerk", "retail"},
+	{"car rental", "retail"},
+	{"merchandise associate", "retail"},
+	{"retail keyholder", "retail"},
+	{"beauty advisor", "retail"},
+	{"store mgr", "retail"},
+	// Logistics and transport.
+	{"forklift", "logistics"},
+	{"order picker", "logistics"},
+	{"picker", "logistics"},
+	{"packer", "logistics"},
+	{"material handler", "logistics"},
+	{"package handler", "logistics"},
+	{"flight attendant", "logistics"},
+	{"parking attendant", "logistics"},
+	// Education, childcare and group fitness (the instructors sit beside the swim and
+	// chess instructors above).
+	{"pilates instructor", "education"},
+	{"yoga instructor", "education"},
+	{"fitness instructor", "education"},
+	{"teaching assistant", "education"},
+	{"preschool", "education"},
+	{"childcare", "education"},
+	{"child care", "education"},
+	{"daycare", "education"},
+	{"camp counselor", "education"},
+	{"paraprofessional", "education"},
+	{"adjunct faculty", "education"},
+	// Personal care and facilities.
+	{"caretaker", "personal_services"},
+	{"personal trainer", "personal_services"},
+	{"cosmetologist", "personal_services"},
+	{"hairstylist", "personal_services"},
+	{"manicurist", "personal_services"},
+	{"nail technician", "personal_services"},
+	{"massage therapist", "personal_services"},
+	{"janitorial", "personal_services"},
+	{"cleaner", "personal_services"},
+	{"custodial", "personal_services"},
+	{"groundskeeper", "personal_services"},
+	{"environmental services", "personal_services"},
+	// Retail banking and insurance. An insurance agent sells policies (SOC 41-3021).
+	{"bank teller", "finance"},
+	{"teller", "finance"},
+	{"loan officer", "finance"},
+	{"underwriter", "finance"},
+	{"claims adjuster", "finance"},
+	{"personal banker", "finance"},
+	{"relationship banker", "finance"},
+	{"associate banker", "finance"},
+	{"financial advisor", "finance"},
+	{"insurance agent", "sales"},
+
+	// The Brazilian-Portuguese half of the same vocabulary — the gupy tail.
+	{"operador de caixa", "retail"},
+	{"operador de loja", "retail"},
+	{"atendente de loja", "retail"},
+	{"repositor", "retail"},
+	{"frentista", "retail"},
+	{"açougueiro", "retail"},
+	{"estoquista", "logistics"},
+	{"motorista", "logistics"},
+	{"motoboy", "logistics"},
+	{"entregador", "logistics"},
+	{"cozinheiro", "hospitality"},
+	{"auxiliar de cozinha", "hospitality"},
+	{"padeiro", "hospitality"},
+	{"garçom", "hospitality"},
+	{"copeiro", "hospitality"},
+	{"camareira", "hospitality"},
+	{"pedreiro", "skilled_trades"},
+	{"pintor", "skilled_trades"},
+	{"soldador", "skilled_trades"},
+	{"eletricista", "skilled_trades"},
+	{"encanador", "skilled_trades"},
+	{"mecânico", "skilled_trades"},
+	{"servente", "skilled_trades"},
+	{"ajudante geral", "skilled_trades"},
+	{"técnico de enfermagem", "healthcare"},
+	{"auxiliar de enfermagem", "healthcare"},
+	{"enfermeiro", "healthcare"},
+	{"cuidador", "healthcare"},
+	{"auxiliar de limpeza", "personal_services"},
+	{"faxineiro", "personal_services"},
+	{"zelador", "personal_services"},
+	{"porteiro", "personal_services"},
+	{"vigilante", "personal_services"},
+	{"jardineiro", "personal_services"},
+	{"babá", "personal_services"},
 
 	// 1С (the RU enterprise/ERP dev platform) resolves last so a more specific role word in the
 	// title wins first ("Аналитик 1С" → data_analytics, "Тестировщик 1С" → qa); a title whose only
@@ -1980,6 +2224,10 @@ var categoryTable = []aliasEntry{
 	{"секретарь", "administration"},
 	{"администратор", "administration"},
 	{"офис-менеджер", "administration"},
+	{"личный помощник", "administration"},
+	{"личный ассистент", "administration"},
+	{"виртуальный ассистент", "administration"},
+	{"виртуальный помощник", "administration"},
 
 	{"сборщик заказов", "logistics"},
 	{"заведующий складом", "logistics"},
@@ -2004,6 +2252,55 @@ var categoryTable = []aliasEntry{
 	{"уборщик", "personal_services"},
 	{"уборщица", "personal_services"},
 	{"сиделка", "personal_services"},
+
+	// The Russian half of the non-technical title dictionary, filed (see the English
+	// block above the 1С entries for why). Bare tokens, as everywhere in Russian here:
+	// "Продавец-кассир" and "Продавец-консультант" are reached by "продавец", since a
+	// hyphen is a word boundary.
+	{"медицинская сестра", "healthcare"},
+	{"санитарка", "healthcare"},
+	{"логопед", "healthcare"},
+	{"электрогазосварщик", "skilled_trades"},
+	{"сантехник", "skilled_trades"},
+	{"токарь", "skilled_trades"},
+	{"фрезеровщик", "skilled_trades"},
+	{"штукатур", "skilled_trades"},
+	{"каменщик", "skilled_trades"},
+	{"бетонщик", "skilled_trades"},
+	{"арматурщик", "skilled_trades"},
+	{"стропальщик", "skilled_trades"},
+	{"монтажник", "skilled_trades"},
+	{"машинист", "skilled_trades"},
+	{"тракторист", "skilled_trades"},
+	{"разнорабочий", "skilled_trades"},
+	{"подсобный рабочий", "skilled_trades"},
+	{"повар", "hospitality"},
+	{"пекарь", "hospitality"},
+	{"кондитер", "hospitality"},
+	{"официант", "hospitality"},
+	{"официантка", "hospitality"},
+	{"бармен", "hospitality"},
+	{"посудомойщик", "hospitality"},
+	{"кухонный рабочий", "hospitality"},
+	{"продавец", "retail"},
+	{"кассир", "retail"},
+	{"товаровед", "retail"},
+	{"мерчендайзер", "retail"},
+	{"директор магазина", "retail"},
+	{"комплектовщик", "logistics"},
+	{"упаковщик", "logistics"},
+	{"фасовщик", "logistics"},
+	{"приёмщик", "logistics"},
+	{"приемщик", "logistics"},
+	{"дворник", "personal_services"},
+	{"вахтер", "personal_services"},
+	{"вахтёр", "personal_services"},
+	{"сторож", "personal_services"},
+	{"консьерж", "personal_services"},
+	{"няня", "personal_services"},
+	{"маникюрша", "personal_services"},
+	{"косметолог", "personal_services"},
+	{"учитель", "education"},
 
 	// NO bare English "engineer", though 689 open postings spell it exactly. It was
 	// tried and the existing suite rejected it, which is the answer: "Product

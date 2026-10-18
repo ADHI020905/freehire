@@ -38,7 +38,13 @@ func Parse(title string) Classification {
 // matchCategory resolves the role category of an already-lowercased title. It is the
 // ordered table walk plus one translation: categoryNone, the sentinel a blind alias
 // carries, is served as "" (see the categoryNone doc comment).
+//
+// The Brazilian-Portuguese gender parentheticals are folded first, as IsNonTech folds
+// them: "Operador(a) de Caixa" is the common written form, and a category reader that
+// saw it differently from the non-tech reader would leave the posting recognised as
+// non-technical but filed nowhere — which the ingest filter refuses.
 func matchCategory(lower string) string {
+	lower = ptGenderSuffix.Replace(lower)
 	if c := matchOrdered(lower, categoryTable); c != categoryNone {
 		return c
 	}
