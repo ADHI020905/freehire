@@ -89,9 +89,11 @@ role-noun form) to `devops`.
 ### Requirement: New aliases never steal from a more specific existing alias
 
 Every alias added for this change SHALL be ordered above the generic terminal
-fall-throughs it could otherwise be caught by (e.g. bare `{"analyst", "data_analytics"}`,
-bare `{"manager", "management"}`), and SHALL NOT be reordered relative to any other
-existing specific alias.
+fall-throughs it could otherwise be caught by, and SHALL NOT be reordered relative to any
+other existing specific alias. (Both generic fall-throughs this was written against —
+bare `{"analyst", "data_analytics"}` and bare `{"manager", "management"}` — have since been
+removed; the `management` category itself is retired, and a manager title resolves the
+craft it names or nothing.)
 
 #### Scenario: Vulnerability Analyst is not stolen by the bare analyst fall-through
 - **WHEN** a title is "Vulnerability Analyst"
@@ -99,8 +101,8 @@ existing specific alias.
 
 #### Scenario: Agile Transformation Manager is not stolen by the bare manager fall-through
 - **WHEN** a title is "Agile Transformation Manager"
-- **THEN** the derived category is `project_management`, not `management`
+- **THEN** the derived category is `project_management`
 
 #### Scenario: Data Governance Manager is not stolen by the bare manager fall-through
 - **WHEN** a title is "Data Governance Manager"
-- **THEN** the derived category is `data_engineering`, not `management`
+- **THEN** the derived category is `data_engineering`

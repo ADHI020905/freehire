@@ -4,9 +4,9 @@ import type { FacetCounts } from './types';
 
 // What an empty search box offers. The point is to answer "I don't know what I can
 // type here", so the list has to show the SHAPE of the catalogue rather than its
-// biggest buckets — measured on production those are Management (266,883), Sales
-// (179,993) and Support (127,110), which read as a different website to someone who
-// came for engineering work.
+// biggest buckets — measured on production those were Management (266,883, a category
+// since retired), Sales (179,993) and Support (127,110), which read as a different
+// website to someone who came for engineering work.
 
 const counts = (category: Record<string, number>): FacetCounts =>
   ({ total: 0, facets: { category } }) as unknown as FacetCounts;
@@ -14,7 +14,7 @@ const counts = (category: Record<string, number>): FacetCounts =>
 describe('starterSuggestions', () => {
   it('leads with engineering, not with the biggest bucket', () => {
     const got = starterSuggestions(
-      counts({ management: 266883, sales: 179993, backend: 8000, software_engineering: 89465 }),
+      counts({ healthcare: 266883, sales: 179993, backend: 8000, software_engineering: 89465 }),
     );
     expect(got[0]?.slug).toBe('software_engineering');
   });
@@ -84,7 +84,7 @@ describe('starterSuggestions', () => {
         data_analytics: 77404, data_engineering: 42090,
         security: 73684, qa: 28985,
         design: 40023, creative: 9000,
-        management: 267971, project_management: 68851,
+        product: 57120, project_management: 68851,
         sales: 180253, hr: 15369, healthcare: 78498,
       }),
     );
@@ -94,7 +94,7 @@ describe('starterSuggestions', () => {
       'data_analytics', 'data_engineering',
       'security', 'qa',
       'design', 'creative',
-      'management', 'project_management',
+      'project_management', 'product',
     ]);
     expect(slugs).not.toContain('sales');
     expect(slugs).not.toContain('healthcare');

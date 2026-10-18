@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/strelov1/freehire/internal/dict/vocab"
 )
 
 // StringFacets maps an equality-facet query param to its index attribute. It is
@@ -81,11 +83,13 @@ var locationFacets = map[string]bool{"regions": true, "countries": true, "cities
 const RegionUnspecified = "none"
 
 // facetEq builds a facet's include fragment: an equality, except the regions
-// unspecified sentinel, which becomes IS EMPTY.
+// unspecified sentinel, which becomes IS EMPTY, and the retired management category,
+// which becomes the role_type equality (see retiredCategory).
 func facetEq(param, attr, val string) string {
 	if param == "regions" && val == RegionUnspecified {
 		return IsEmpty(attr)
 	}
+	attr, val = retiredCategory(param, attr, val)
 	if trueOrAbsentParams[param] {
 		return trueOrAbsentFragment(attr, val)
 	}
@@ -137,7 +141,30 @@ func facetNeq(param, attr, val string) string {
 	if param == "regions" && val == RegionUnspecified {
 		return IsNotEmpty(attr)
 	}
+	attr, val = retiredCategory(param, attr, val)
 	return Neq(attr, val)
+}
+
+// retiredCategory answers `category=management` — a value vocab.CategoryValues no
+// longer holds (vocab.RetiredCategoryManagement) — with the facet it was a proxy for:
+// role_type=people_manager. Saved searches, alert subscriptions and shared links written
+// before the retirement carry it (measured on prod at retirement: 85 saved searches, 56
+// of them with an active subscription), usually ORed with other categories
+// ("category=sales&category=management"), so the translation happens per VALUE, inside
+// the category group: the old link keeps meaning "sales OR people managers" rather than
+// being narrowed to "sales AND people managers", and `category_exclude=management`
+// excludes the people managers.
+//
+// Nothing is dropped, so nothing widens and there is nothing for meta.ignored_params to
+// report: the filter still narrows on the axis the value named. An unknown category value
+// was never reported either — it narrows to nothing rather than widening.
+//
+// Every other (attr, val) pair is returned unchanged.
+func retiredCategory(param, attr, val string) (string, string) {
+	if param == "category" && val == vocab.RetiredCategoryManagement {
+		return StringFacets["role_type"], vocab.RoleTypeValues[0]
+	}
+	return attr, val
 }
 
 // FilterFromValues turns the facet params of a parsed search query into a

@@ -87,7 +87,14 @@ var (
 		// facet) and 1,454 sitting in `management` because the bare `manager`
 		// fall-through outranked a block that did not exist.
 		"occupational_safety",
-		"product", "project_management", "management",
+		// There is no "management": it was retired 2026-10. It held the titles whose
+		// only resolved word was "manager" — about 6% of the open catalogue, a Burger
+		// King Assistant Manager beside a Tax Manager — and said nothing about the work.
+		// A manager title now resolves the craft it manages, and whether it manages
+		// PEOPLE is the role_type facet (RoleTypeValues, internal/dict/roletype). An old
+		// link or saved search carrying category=management is translated to
+		// role_type=people_manager by the search filter (RetiredCategoryManagement).
+		"product", "project_management",
 		// The consumer industries a broad multi-industry ATS crawl carries in with the
 		// boards it wants. They are FILTERABLE — a facet excludes as well as it
 		// selects — and, since the catalogue is broader than IT, a posting filed
@@ -105,6 +112,10 @@ var (
 		// posting is refused at ingest and excluded from search, so a role nobody can
 		// file is a role the catalogue loses.
 		"social_services", "science", "manufacturing",
+		// The protective services, SOC major group 33: police, sheriffs, corrections,
+		// firefighters, security guards, lifeguards, crossing guards. Not information
+		// security — that is `security`, and the two must never share a facet.
+		"public_safety",
 		"marketing", "sales", "support",
 		// IT-company roles added by expand-role-taxonomy (4 technical, 6 business)
 		"business_analysis", "solutions_engineering", "developer_relations", "technical_writing",
@@ -132,12 +143,12 @@ var (
 	// it. Membership here never makes a posting refusable: the ingest filter
 	// (`classify.ConfirmedNonTech`) keeps every posting that resolves ANY category.
 	NonTechCategories = []string{
-		"marketing", "sales", "support", "management",
+		"marketing", "sales", "support",
 		"recruiting", "hr", "finance", "legal", "operations", "customer_success",
 		"engineering_design", "industrial_engineering", "occupational_safety",
 		"healthcare", "skilled_trades", "retail", "hospitality",
 		"logistics", "education", "personal_services", "administration",
-		"social_services", "science", "manufacturing",
+		"social_services", "science", "manufacturing", "public_safety",
 	}
 	// TechCategories are the CategoryValues for recognized technical roles: every
 	// category that is neither a NonTechCategories member nor the residual "other".
@@ -279,6 +290,14 @@ var (
 		JobChallengeOther,
 	}
 )
+
+// RetiredCategoryManagement is the category value that no longer exists. Saved
+// searches, alert subscriptions, shared links and user profiles written before its
+// retirement still carry it, so the two places that read stored values know it by
+// name: the search filter answers it with role_type=people_manager (the axis it was
+// a proxy for), and a profile save drops it from the specializations. Nothing may
+// write it again — it is deliberately absent from CategoryValues.
+const RetiredCategoryManagement = "management"
 
 // JobChallengeOther is the JobChallengeValues member that admits a written note. Named
 // rather than spelled inline because two places depend on the exact string — the survey's

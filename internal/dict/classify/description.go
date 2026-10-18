@@ -61,10 +61,13 @@ var descriptionSeniorityPhrases = []struct {
 // matches incidental text ("work with our sales team", "our support engineers"),
 // so every phrase is a full role noun. Anchors that could shadow a technical role
 // are deliberately absent: there is no loose "hiring a sales" (it would fire on
-// "sales engineer"), and the management phrases name only administrative roles —
+// "sales engineer"), and the manager phrases name only back-office roles —
 // engineering/product/project/data manager forms are never listed, because those
-// are technical categories, not `management`. Matching uses wordmatch on word
-// boundaries. Values are the vocab.NonTechCategories members.
+// are technical categories. Each manager phrase resolves the function it names, the
+// way the title dictionary files it ("Office Manager" and "Operations Manager" are
+// `operations`, "HR Manager" `hr`); "general manager" names no function and is not
+// here, now that there is no management category to file it under. Matching uses
+// wordmatch on word boundaries. Values are the vocab.NonTechCategories members.
 var descriptionNonTechPhrases = []struct {
 	category string
 	phrases  []string
@@ -84,9 +87,8 @@ var descriptionNonTechPhrases = []struct {
 		"customer success manager", "customer success specialist",
 		"support representative", "help desk technician", "help desk specialist",
 	}},
-	{"management", []string{
-		"office manager", "operations manager", "general manager", "hr manager",
-	}},
+	{"operations", []string{"office manager", "operations manager"}},
+	{"hr", []string{"hr manager"}},
 }
 
 // NonTechFromDescription derives a confidently non-technical category

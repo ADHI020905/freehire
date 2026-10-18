@@ -123,9 +123,9 @@ func TestEngineeringResolvesTheSameCraftAsEngineer(t *testing.T) {
 		{"Software Engineer Intern", "software_engineering"},
 		{"Software Engineering Lead", "software_engineering"},
 		{"Software Engineering Co-op", "software_engineering"},
-		// The manager spelling is a management role and stays one: "engineering manager"
-		// sits earlier in the table and must keep winning.
-		{"Software Engineering Manager", "management"},
+		// The manager spelling resolves the craft the team practises; whether it manages
+		// people is the role_type facet's answer, not a category's.
+		{"Software Engineering Manager", "software_engineering"},
 	}
 	for _, tt := range tests {
 		if got := Parse(tt.title).Category; got != tt.want {

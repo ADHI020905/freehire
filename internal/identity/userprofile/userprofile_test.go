@@ -113,6 +113,20 @@ func TestSave_UpsertsWithOwnerNormalizedSpecializationsAndSkills(t *testing.T) {
 	}
 }
 
+// 829 stored profiles carried the retired `management` category, and the form sends the
+// stored list back on every save: refusing it would lock those users out of saving
+// until they removed a value the picker no longer shows. It is dropped instead.
+func TestSave_DropsTheRetiredManagementCategory(t *testing.T) {
+	repo := &fakeRepo{}
+	_, err := userprofile.New(repo).Save(context.Background(), 7, []string{"backend", "management", "sales"}, []string{"go"}, nil, nil, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	if got := strings.Join(repo.upserted.Specializations, ","); got != "backend,sales" {
+		t.Errorf("Specializations = %q, want backend,sales", got)
+	}
+}
+
 func TestSave_RejectsUnknownSpecialization(t *testing.T) {
 	repo := &fakeRepo{}
 	_, err := userprofile.New(repo).Save(context.Background(), 7, []string{"backend", "wizardry"}, []string{"go"}, nil, nil, nil, nil, nil)
@@ -284,6 +298,9 @@ func TestSave_RejectsEmptySpecializations(t *testing.T) {
 		{"nil", nil},
 		{"empty slice", []string{}},
 		{"only blanks", []string{"  ", ""}},
+		// The retired category is dropped like a blank, so a profile that carried
+		// nothing else has to choose again.
+		{"only the retired management category", []string{"management"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

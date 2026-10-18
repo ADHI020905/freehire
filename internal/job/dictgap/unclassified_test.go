@@ -20,11 +20,11 @@ func titleCounts(pairs ...any) []TitleCount {
 // that matter.
 func TestUnclassifiedTitlesRanksByCount(t *testing.T) {
 	got := UnclassifiedTitles(titleCounts(
-		"Швея", 12,
-		"Музыкальный руководитель", 40,
-		"Горничная", 25,
+		"Мастер СМР", 12,
+		"Техник КИП и А", 40,
+		"Животновод", 25,
 	))
-	want := []string{"Музыкальный руководитель", "Горничная", "Швея"}
+	want := []string{"Техник КИП и А", "Животновод", "Мастер СМР"}
 	if len(got) != len(want) {
 		t.Fatalf("got %d candidates, want %d: %+v", len(got), len(want), got)
 	}
@@ -42,10 +42,10 @@ func TestUnclassifiedTitlesRanksByCount(t *testing.T) {
 func TestUnclassifiedTitlesExcludesATechTitle(t *testing.T) {
 	got := UnclassifiedTitles(titleCounts(
 		"Senior Software Engineer", 100,
-		"Швея", 5,
+		"Мастер СМР", 5,
 	))
-	if len(got) != 1 || got[0].Title != "Швея" {
-		t.Fatalf("got %+v, want only the seamstress", got)
+	if len(got) != 1 || got[0].Title != "Мастер СМР" {
+		t.Fatalf("got %+v, want only the site foreman", got)
 	}
 }
 
@@ -60,10 +60,10 @@ func TestUnclassifiedTitlesExcludesACategorisedTitle(t *testing.T) {
 	}
 	got := UnclassifiedTitles(titleCounts(
 		"Project Manager", 100,
-		"Швея", 5,
+		"Мастер СМР", 5,
 	))
-	if len(got) != 1 || got[0].Title != "Швея" {
-		t.Fatalf("got %+v, want only the seamstress", got)
+	if len(got) != 1 || got[0].Title != "Мастер СМР" {
+		t.Fatalf("got %+v, want only the site foreman", got)
 	}
 }
 
@@ -73,31 +73,31 @@ func TestUnclassifiedTitlesExcludesACategorisedTitle(t *testing.T) {
 // than its true total would rank the wrong things first.
 func TestUnclassifiedTitlesSumsRepeatedTitles(t *testing.T) {
 	got := UnclassifiedTitles(titleCounts(
-		"Швея", 10,
-		"Горничная", 15,
-		"Швея", 12,
+		"Мастер СМР", 10,
+		"Животновод", 15,
+		"Мастер СМР", 12,
 	))
 	if len(got) != 2 {
 		t.Fatalf("got %d candidates, want 2: %+v", len(got), got)
 	}
-	if got[0].Title != "Швея" || got[0].Count != 22 {
-		t.Errorf("got %+v, want Швея with 22 (10+12) ranked first", got[0])
+	if got[0].Title != "Мастер СМР" || got[0].Count != 22 {
+		t.Errorf("got %+v, want Мастер СМР with 22 (10+12) ranked first", got[0])
 	}
 }
 
 // Ties break on the title so two runs over the same data print the same list — a
 // report a curator diffs against last week's run is worth more than one they cannot.
 func TestUnclassifiedTitlesBreaksTiesDeterministically(t *testing.T) {
-	got := UnclassifiedTitles(titleCounts("Горничная", 7, "Швея", 7))
-	if len(got) != 2 || got[0].Title != "Горничная" {
-		t.Fatalf("got %+v, want Горничная first on the tie", got)
+	got := UnclassifiedTitles(titleCounts("Животновод", 7, "Мастер СМР", 7))
+	if len(got) != 2 || got[0].Title != "Животновод" {
+		t.Fatalf("got %+v, want Животновод first on the tie", got)
 	}
 }
 
 // An empty title is never a candidate: it names no role, so no dictionary entry could
 // ever place it and a curator can do nothing with it.
 func TestUnclassifiedTitlesSkipsAnEmptyTitle(t *testing.T) {
-	if got := UnclassifiedTitles(titleCounts("", 900, "Швея", 3)); len(got) != 1 || got[0].Title != "Швея" {
-		t.Fatalf("got %+v, want only the seamstress", got)
+	if got := UnclassifiedTitles(titleCounts("", 900, "Мастер СМР", 3)); len(got) != 1 || got[0].Title != "Мастер СМР" {
+		t.Fatalf("got %+v, want only the site foreman", got)
 	}
 }

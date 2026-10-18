@@ -51,12 +51,19 @@ const VALUES_OVERRIDE: Record<string, string> = {
     'people_manager — the title names a people-management role. One value only: carrying nothing means no management marker was found, NOT that the posting is individual-contributor work, so role_type_exclude means "no marker", not "IC"',
 };
 
+// A note appended to a facet's value list rather than replacing it. `management` is no
+// longer a category, but an integration built before its retirement still sends it, and
+// the filter answers it rather than matching nothing (search.retiredCategory).
+const VALUES_NOTE: Record<string, string> = {
+  category: '. The retired value management is still accepted and answered as role_type=people_manager',
+};
+
 /** Every string facet: the SPA-derived rows plus the API-only ones. */
 export const FILTER_FACETS: FilterRow[] = [
   ...FACETS.map((f) => ({
     param: f.param,
     label: f.label,
-    values: VALUES_OVERRIDE[f.param] ?? valuesOf(f.options),
+    values: (VALUES_OVERRIDE[f.param] ?? valuesOf(f.options)) + (VALUES_NOTE[f.param] ?? ''),
   })),
   ...API_ONLY_FACETS,
 ];

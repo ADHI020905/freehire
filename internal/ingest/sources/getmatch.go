@@ -199,10 +199,13 @@ var getmatchSpecializationCategory = map[string]string{
 	"product_design":                      "design",
 	"product_management":                  "product",
 	"project_management":                  "project_management",
-	"engineering_management":              "management",
-	"sales":                               "sales",
-	"marketing":                           "marketing",
-	"support_engineer":                    "support",
+	// An engineering manager on this board leads a software team: the craft the title
+	// dictionary files "Engineering Manager" under. The people-management half is the
+	// role_type facet's, read from the title.
+	"engineering_management": "software_engineering",
+	"sales":                  "sales",
+	"marketing":              "marketing",
+	"support_engineer":       "support",
 }
 
 // getmatchCategory resolves an offer's specializations to a single category, mirroring

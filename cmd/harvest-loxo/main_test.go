@@ -47,7 +47,7 @@ func TestIsTechCategory(t *testing.T) {
 	if !isTechCategory("backend") {
 		t.Error("backend should be tech")
 	}
-	for _, nonTech := range []string{"marketing", "sales", "support", "management", ""} {
+	for _, nonTech := range []string{"marketing", "sales", "support", "public_safety", ""} {
 		if isTechCategory(nonTech) {
 			t.Errorf("%q should not count as tech", nonTech)
 		}

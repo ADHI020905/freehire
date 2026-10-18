@@ -64,10 +64,11 @@ func TestNonTechFromDescription(t *testing.T) {
 		{"customer support", "We are hiring a customer support representative.", "support"},
 		{"customer success", "This customer success manager owns renewals.", "support"},
 		{"help desk", "We are hiring a help desk technician.", "support"},
-		{"office manager", "We are hiring an office manager for our Berlin HQ.", "management"},
-		{"operations manager", "This is an operations manager position.", "management"},
-		{"general manager", "Seeking a general manager for the new market.", "management"},
-		{"hr manager", "Hiring an HR manager to build the people team.", "management"},
+		{"office manager", "We are hiring an office manager for our Berlin HQ.", "operations"},
+		{"operations manager", "This is an operations manager position.", "operations"},
+		{"hr manager", "Hiring an HR manager to build the people team.", "hr"},
+		// No function is named, and there is no management category to fall back to.
+		{"general manager", "Seeking a general manager for the new market.", ""},
 
 		// Trap negatives — incidental prose that must NOT set a category.
 		{"sales team incidental", "Collaborate with our sales team on integrations.", ""},

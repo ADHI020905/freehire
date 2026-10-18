@@ -80,18 +80,61 @@ func Categories(text string) []string {
 // matchAllOrdered returns the distinct canonical values of every alias (in priority
 // order) that occurs as a whole word in title. Several aliases can share a canonical
 // ("backend"/"back-end"), so results are deduplicated while preserving first-seen order.
+//
+// An occurrence lying wholly inside the span an EARLIER alias already matched does not
+// count. That is the table's precedence, applied per occurrence rather than per title:
+// "Front End Cashier" is the checkout lane, and its "front end" was read by the retail
+// alias declared above the frontend one, so it cannot be read again as a developer.
+// Without it every pin in the table would hold for Parse and leak through here — the
+// infosec "Information Security Officer" would come back carrying the guard category
+// of the "security officer" it contains. A shorter alias that also occurs OUTSIDE every
+// claimed span still counts: "Security Officer, Information Security" names both.
 func matchAllOrdered(title string, table []aliasEntry) []string {
 	var out []string
 	seen := map[string]bool{}
+	var claimed [][2]int
 	for _, e := range table {
-		if wordmatch.Contains(title, e.alias, wordmatch.UnicodeBoundary) {
-			if !seen[e.canonical] {
-				seen[e.canonical] = true
-				out = append(out, e.canonical)
+		hit := false
+		for _, span := range occurrences(title, e.alias) {
+			if !within(span, claimed) {
+				hit = true
 			}
+			claimed = append(claimed, span)
+		}
+		if hit && !seen[e.canonical] {
+			seen[e.canonical] = true
+			out = append(out, e.canonical)
 		}
 	}
 	return out
+}
+
+// occurrences returns the [start,end) spans of every whole-word occurrence of term in s.
+func occurrences(s, term string) [][2]int {
+	var out [][2]int
+	for from := 0; from < len(s); {
+		i := strings.Index(s[from:], term)
+		if i < 0 {
+			break
+		}
+		start := from + i
+		end := start + len(term)
+		if wordmatch.UnicodeBoundary(s, start, end) {
+			out = append(out, [2]int{start, end})
+		}
+		from = start + 1
+	}
+	return out
+}
+
+// within reports whether span lies wholly inside one of the claimed spans.
+func within(span [2]int, claimed [][2]int) bool {
+	for _, c := range claimed {
+		if c[0] <= span[0] && span[1] <= c[1] {
+			return true
+		}
+	}
+	return false
 }
 
 // CategoryAliases maps each category canonical to the title aliases that resolve

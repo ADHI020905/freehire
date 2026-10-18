@@ -287,12 +287,19 @@ func mergeSkills(held, additions, excluded []string) ([]string, bool) {
 // enum the rest of the app validates against). It returns ErrEmptySpecializations if nothing
 // remains, ErrInvalidSpecialization for an unknown category, and ErrTooManySpecializations
 // past MaxSpecializations — mirroring normalizeSkills.
+//
+// The retired `management` category (vocab.RetiredCategoryManagement) is dropped like a
+// blank rather than refused: 829 stored profiles carried it when it was retired, and the
+// form sends the stored list back on every save, so refusing it would leave those users
+// unable to save anything until they found and removed a value the picker no longer
+// shows. A profile that carried nothing else fails as an empty one, which asks the user
+// to choose — the honest outcome, since there is no category to keep for them.
 func normalizeSpecializations(specializations []string) ([]string, error) {
 	out := make([]string, 0, len(specializations))
 	seen := make(map[string]struct{}, len(specializations))
 	for _, raw := range specializations {
 		spec := strings.TrimSpace(raw)
-		if spec == "" {
+		if spec == "" || spec == vocab.RetiredCategoryManagement {
 			continue
 		}
 		if _, dup := seen[spec]; dup {

@@ -118,12 +118,35 @@ func TestConfirmedNonTech_AnyCategoryVetoes(t *testing.T) {
 	// non-tech list now names a category of its own, so what reaches the refusal is a
 	// title an earlier categoryNone pin claims: the pin files it nowhere, and the term
 	// still says it is not technical.
-	for _, title := range []string{"Public Safety Officer / Social Worker"} {
+	for _, title := range []string{"Trust & Safety Specialist / Social Worker"} {
 		if Parse(title).Category != "" {
 			t.Fatalf("precondition: %q must resolve no category, got %q", title, Parse(title).Category)
 		}
 		if !ConfirmedNonTech(title, false) {
 			t.Errorf("ConfirmedNonTech(%q, false) = false, want true — an unfiled non-tech title is still refused", title)
+		}
+	}
+}
+
+// The role_type facet is a placement too, and vetoes the refusal the way a category
+// does: search keeps a people manager no category files (search.CategoryUnresolved), so
+// refusing one here would turn away a posting search would have shown. No live title
+// in the measured corpora reaches this branch today — the gates are kept equal so that
+// a future pin cannot make them disagree — so the titles are built the way the refused
+// fixtures are: a categoryNone pin first, a non-tech term after it, and a marker.
+func TestConfirmedNonTech_PeopleManagerVetoes(t *testing.T) {
+	for _, title := range []string{
+		"General Manager, Trust & Safety Specialist / Social Worker",
+		"Trust & Safety Director / Social Worker",
+	} {
+		if !IsNonTech(title) {
+			t.Fatalf("precondition: %q must match the non-tech dictionary", title)
+		}
+		if Parse(title).Category != "" {
+			t.Fatalf("precondition: %q must resolve no category, got %q", title, Parse(title).Category)
+		}
+		if ConfirmedNonTech(title, false) {
+			t.Errorf("ConfirmedNonTech(%q, false) = true, want false — role_type places it", title)
 		}
 	}
 }

@@ -12,8 +12,18 @@
 // a value as evidence of the opposite.
 //
 // The signal is orthogonal to the facets that already exist: of the 171,726
-// production titles carrying a marker, only 15,760 sit in category=management and
-// only 46,330 carry seniority lead-or-c_level, leaving 111,786 reachable by neither.
+// production titles carrying a marker, only 15,760 sat in the old category=management
+// and only 46,330 carry seniority lead-or-c_level, leaving 111,786 reachable by neither.
+//
+// It is also a PLACEMENT, not only a filter. The `management` category was retired
+// (2026-10): it filed every title whose only resolved word was "manager", which said
+// nothing about the work. A manager title now resolves the craft it names through
+// internal/dict/classify, and the generic people-managing titles that name no craft —
+// General Manager, Assistant Manager, Store/Branch/District/Plant Manager, the Russian
+// начальник/заведующий/директор — are reached by this facet alone. Search therefore keeps
+// a posting this package marks even when no category files it (search.CategoryUnresolved),
+// and the ingest filter does not refuse one (classify.ConfirmedNonTech). A
+// search for the retired `category=management` is answered with role_type=people_manager.
 package roletype
 
 import (
@@ -60,6 +70,76 @@ var craftManagers = []string{
 	"infrastructure manager",
 	"security manager",
 	"operations manager",
+	"team manager",
+	// The generic people-managing titles of the service economy: the store, the
+	// restaurant, the branch and the plant, and the chain's multi-unit layer above them.
+	// None names a product, a project or an account — the object of every one is a
+	// workplace and the people in it — and none names a craft, which is why the
+	// category facet cannot carry them: with `management` retired, this facet is the
+	// only one that reaches a General Manager, and search keeps a posting it reaches
+	// (search.CategoryUnresolved).
+	//
+	// The assistant and deputy forms are included: an Assistant Manager runs the shift
+	// the manager is not on, and is named for exactly that.
+	"general manager",
+	"assistant manager",
+	"deputy manager",
+	"store manager",
+	"shop manager",
+	"restaurant manager",
+	"kitchen manager",
+	"branch manager",
+	"district manager",
+	"area manager",
+	"regional manager",
+	"plant manager",
+	"site manager",
+	"shift manager",
+	"department manager",
+	"unit manager",
+	"duty manager",
+	"night manager",
+	"floor manager",
+	"center manager",
+	"centre manager",
+}
+
+// headWords are the Russian titles of an office that has reports — the head, the
+// chief, the director — matched as whole words the way managerMarkers are. Russian
+// inflects and wordmatch has no morphology, so the forms a title actually carries are
+// listed: the nominative of both genders, and the genitive a deputy title puts its
+// office in ("заместитель начальника", "заместитель директора").
+//
+// "Менеджер" is not here for the reason the English bare "manager" is not: it is the
+// word for a salesperson ("менеджер по продажам") at least as often as for a manager.
+var headWords = []string{
+	"руководитель", "руководителя",
+	"начальник", "начальника",
+	"заведующий", "заведующая", "заведующего",
+	"директор", "директора",
+}
+
+// headBlindPhrases contain a headWords word while naming no people-management role,
+// cut before matching exactly as blindPhrases are. The kindergarten's "музыкальный
+// руководитель" is its music teacher, a "руководитель кружка" leads a hobby club for
+// children (a culture house's "руководитель клубного формирования" the same), a
+// college's "руководитель физического воспитания" is its PE teacher, and a
+// "руководитель проекта" is the project manager — the object is a project, not people,
+// the same reason the English "project manager" earns nothing here.
+var headBlindPhrases = []string{
+	"музыкальный руководитель",
+	"руководитель кружка",
+	"руководитель клубного формирования",
+	"руководитель физического воспитания",
+	"руководитель проекта",
+	"руководитель проектов",
+	"ассистент руководителя",
+	"помощник руководителя",
+	"помощник директора",
+	"ассистент директора",
+	"секретарь руководителя",
+	"секретарь директора",
+	"советник директора",
 }
 
 // blindPhrases contain a managerMarkers word while naming no people-management role.
@@ -98,14 +178,14 @@ func Derive(title string) string {
 	for _, phrase := range blindPhrases {
 		s = cutWord(s, phrase)
 	}
-	for _, term := range managerMarkers {
-		if wordmatch.Contains(s, term, wordmatch.UnicodeBoundary) {
-			return "people_manager"
-		}
+	for _, phrase := range headBlindPhrases {
+		s = cutWord(s, phrase)
 	}
-	for _, term := range craftManagers {
-		if wordmatch.Contains(s, term, wordmatch.UnicodeBoundary) {
-			return "people_manager"
+	for _, list := range [][]string{managerMarkers, craftManagers, headWords} {
+		for _, term := range list {
+			if wordmatch.Contains(s, term, wordmatch.UnicodeBoundary) {
+				return "people_manager"
+			}
 		}
 	}
 	return ""

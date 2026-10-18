@@ -786,6 +786,12 @@ WITH oj AS MATERIALIZED (
       -- (internal/search/search/document.go) — a company whose only open jobs are
       -- confirmed-technical-but-uncategorized would otherwise show 0 open jobs here
       -- while those same jobs are live in search.
+      --
+      -- The one branch this cannot mirror is the role_type one: search also keeps an
+      -- uncategorised posting whose TITLE roletype marks a people manager ("General
+      -- Manager"), and that dictionary is Go, not SQL. Such a posting is therefore
+      -- searchable but not counted here. The residual is the price of not storing a
+      -- derived column for one count; it under-counts a company, never invents one.
       AND (category <> '' OR COALESCE(enrichment->>'category', '') NOT IN ('', 'other') OR is_tech IS TRUE)
 ),
 counts AS (

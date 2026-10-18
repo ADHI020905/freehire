@@ -240,7 +240,7 @@ export const FILTER_COLLECTIONS: FilterCollection[] = [
   // slug is a readable form of the value — usually its kebab case (data_engineering →
   // data-engineering), but chosen for readability where they differ (ml_ai →
   // machine-learning). Only technical categories are listed — non-tech ones
-  // (sales/management/support/marketing) are off-audience. Each was confirmed to have
+  // (sales/support/marketing) are off-audience. Each was confirmed to have
   // a healthy live count (≥ 300) before shipping.
   {
     slug: 'backend',

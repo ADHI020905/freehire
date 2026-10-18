@@ -218,6 +218,39 @@ func TestFilterFromValues_RoleTypeExclude(t *testing.T) {
 	}
 }
 
+// `management` is no longer a category. A saved search, alert or shared link written
+// before its retirement still carries it, so the filter answers it with the facet it was a
+// proxy for — per value, inside the category group, so an old "sales OR management" keeps
+// meaning "sales OR people managers" instead of narrowing to their intersection.
+func TestFilterFromValues_RetiredManagementCategory(t *testing.T) {
+	cases := []struct {
+		query string
+		want  [][]string
+	}{
+		{"category=management", [][]string{{`role_type = "people_manager"`}}},
+		{"category=sales&category=management", [][]string{{`enrichment.category = "sales"`, `role_type = "people_manager"`}}},
+		{"category=sales,management", [][]string{{`enrichment.category = "sales"`, `role_type = "people_manager"`}}},
+		{"category_exclude=management", [][]string{{`role_type != "people_manager"`}}},
+		{"category=management&category_mode=and&category=sales", [][]string{{`enrichment.category = "sales"`}, {`role_type = "people_manager"`}}},
+		// Every other category value is untouched, including the one that merely
+		// contains the word.
+		{"category=project_management", [][]string{{`enrichment.category = "project_management"`}}},
+	}
+	for _, c := range cases {
+		got := normalizeGroups(t, FilterFromValues(vals(c.query)))
+		if !reflect.DeepEqual(got, normalizeGroups(t, c.want)) {
+			t.Errorf("%s: got %v, want %v", c.query, got, c.want)
+		}
+	}
+	// Nothing was dropped, so the answer still narrows and there is nothing to report.
+	if !Narrows(vals("category=management")) {
+		t.Error("category=management must still narrow the catalogue")
+	}
+	if got := UnknownParams(vals("category=management"), nil); len(got) != 0 {
+		t.Errorf("UnknownParams = %v, want none", got)
+	}
+}
+
 func TestFilterFromValues_ExperienceYearsMaxNegative(t *testing.T) {
 	for _, raw := range []string{"-1", "-10"} {
 		got := normalizeGroups(t, FilterFromValues(vals("experience_years_max="+raw)))

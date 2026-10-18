@@ -103,6 +103,16 @@ func TestCategoryUnresolved(t *testing.T) {
 		{"dict empty, no enrichment, is_tech true → confirmed technical, stays searchable", db.Job{IsTech: pgtype.Bool{Valid: true, Bool: true}}, false},
 		{"dict empty, LLM also says other, is_tech true → still stays searchable", db.Job{Enrichment: []byte(`{"category":"other"}`), IsTech: pgtype.Bool{Valid: true, Bool: true}}, false},
 		{"dict resolved category wins even with is_tech false", db.Job{Category: "backend", IsTech: pgtype.Bool{Valid: true, Bool: false}}, false},
+		// The role_type facet is a placement of its own: a General Manager names no
+		// craft, but the facet reaches it, so it stays searchable.
+		{"no category, but the title names a people manager", db.Job{Title: "General Manager", IsTech: pgtype.Bool{Valid: true, Bool: false}}, false},
+		{"no category, Russian head of department", db.Job{Title: "Начальник отдела кадров"}, false},
+		// A manager title with no marker and no craft is reached by no facet, but it is
+		// kept for keyword search (classify.NamesManager).
+		{"no category, manager title with no people marker", db.Job{Title: "Case Manager", IsTech: pgtype.Bool{Valid: true, Bool: false}}, false},
+		{"no category, bare manager", db.Job{Title: "Manager"}, false},
+		{"no category, bare Russian manager", db.Job{Title: "Менеджер"}, false},
+		{"no category, the word inside another word is not a manager", db.Job{Title: "Managerial Accountant Trainee"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

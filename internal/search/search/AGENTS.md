@@ -26,7 +26,21 @@ reads a precomputed pgvector lookup instead (`internal/search/similarjobs`,
   every keyword and category-filtered search with undifferentiated noise. A job later
   categorized by a dictionary update or a fresh LLM pass is picked up by the next full
   `cmd/reindex` run, not incrementally — `SetJobEnrichment` does not enqueue
-  `search_outbox`, so there is no faster path today.
+  `search_outbox`, so there is no faster path today. Two placements other than a category
+  keep a job in: `is_tech` confidently true, and a title `internal/dict/roletype` marks
+  `people_manager` — the `role_type` facet reaches a General Manager no category files,
+  and that axis is what the retired `management` category was a proxy for. The gate reads
+  the same `roletype.Derive` `FromJob` writes onto the document, and
+  `classify.ConfirmedNonTech` applies the same veto at ingest, so a posting is kept iff
+  some facet reaches it. The company count in `RefreshCompanyFacets` mirrors every
+  branch but that one (the dictionary is Go), so it under-counts such postings.
+- **`category=management` is translated, not dropped.** The category is retired
+  (`vocab.RetiredCategoryManagement`), but saved searches, alerts and shared links carry
+  it, often ORed with other categories. `retiredCategory` (`query_filter.go`) answers the
+  value with `role_type = "people_manager"` inside the category group, so
+  `category=sales&category=management` still means "sales OR people managers", and
+  `category_exclude=management` excludes the people managers. Nothing widens, so
+  `meta.ignored_params` has nothing to report.
 - **A job with no posting body never enters the index.** `search.DescriptionMissing`
   (`document.go`) tests the VISIBLE text — `stripToPlainText` — not the raw column, because a
   source that publishes an empty rich-text field serves markup with no words in it

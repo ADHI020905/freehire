@@ -17,8 +17,8 @@ import (
 // science), so the refusal is reached through a title an earlier categoryNone pin claims
 // — the pin files it nowhere and the term still says it is not technical.
 const (
-	refusedTitle  = "Public Safety Officer / Social Worker"
-	refusedTitle2 = "Campus Safety Officer / Lab Technician"
+	refusedTitle  = "Trust & Safety Specialist / Social Worker"
+	refusedTitle2 = "Trust & Safety Specialist / Lab Technician"
 )
 
 // A crawled board pours a company's whole hiring into the catalogue, so the postings

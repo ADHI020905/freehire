@@ -140,8 +140,8 @@ The category facet SHALL be derived at ingest from three sources, most
 authoritative first: (1) a structured category supplied by the source adapter, (2)
 the title dictionary (`classify.Parse`), and (3) a conservative, intent-anchored
 phrase match in the job **description** that resolves ONLY confidently
-non-technical categories (`marketing`, `sales`, `support`, `management` — the
-members of `enrich.NonTechCategories`). Each lower source SHALL fill `category`
+non-technical categories (`marketing`, `sales`, `support`, `operations`, `hr` —
+members of `vocab.NonTechCategories`). Each lower source SHALL fill `category`
 only when the higher ones resolved nothing. The description detector SHALL match
 role-statement phrases anchored on whole-word boundaries (never bare words), SHALL
 NOT match tech-adjacent titles (e.g. `sales engineer`, `solutions engineer`, and
@@ -168,7 +168,7 @@ technical job keeps an empty category.
   but no anchored non-technical role statement
 - **THEN** the derived `category` is empty
 
-#### Scenario: A tech-adjacent manager is not mislabeled as management
+#### Scenario: A tech-adjacent manager is not mislabeled as a business function
 
 - **WHEN** a job's title resolves nothing and its description states "we are hiring an engineering manager"
 - **THEN** the derived `category` is empty (engineering/product/project/data manager forms are excluded from the non-tech detector)

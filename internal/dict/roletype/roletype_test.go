@@ -12,8 +12,7 @@ func TestDerive(t *testing.T) {
 		name, title, want string
 	}{
 		// Unambiguous markers. Each names a person who has reports, in any craft —
-		// which is why the facet is orthogonal to `category`: on production 91% of
-		// these titles sit in a category other than `management`.
+		// which is why the facet is orthogonal to `category`.
 		{"head of", "Head of Platform Engineering", "people_manager"},
 		{"director", "Director of Data Engineering", "people_manager"},
 		{"director bare", "Engineering Director", "people_manager"},
@@ -81,6 +80,52 @@ func TestDerive(t *testing.T) {
 		{"director beside a masked phrase", "Director of Engineering, Chief Architect Track", "people_manager"},
 		{"director of product management", "Director of Product Management", "people_manager"},
 		{"head of product", "Head of Product", "people_manager"},
+
+		// The generic people-managing titles of the service economy. With the
+		// management category retired this facet is the only one that reaches them,
+		// and search keeps a posting it reaches.
+		{"general manager", "General Manager", "people_manager"},
+		{"assistant general manager", "Assistant General Manager", "people_manager"},
+		{"assistant manager", "Assistant Manager - Part Time", "people_manager"},
+		{"store manager", "Store Manager", "people_manager"},
+		{"restaurant manager", "Restaurant Manager", "people_manager"},
+		{"branch manager", "Branch Manager", "people_manager"},
+		{"district manager", "District Manager", "people_manager"},
+		{"area manager", "Area Manager", "people_manager"},
+		{"plant manager", "Plant Manager", "people_manager"},
+		{"site manager", "Site Manager", "people_manager"},
+		{"shift manager", "Shift Manager (Auntie Anne's)", "people_manager"},
+		{"department manager", "Department Manager", "people_manager"},
+		{"team manager", "Contact Center Team Manager", "people_manager"},
+
+		// A manager title naming no person-shaped object stays unresolved — the bare
+		// word included, for the reason the IC block above gives.
+		{"case manager", "Case Manager", ""},
+		{"portfolio manager", "Portfolio Manager", ""},
+		{"category manager", "Category Manager", ""},
+		{"senior manager", "Senior Manager, Strategy", ""},
+
+		// Russian heads of an office: the nominative of both genders, and the genitive a
+		// deputy title puts its office in.
+		{"начальник", "Начальник отдела кадров", "people_manager"},
+		{"начальник смены", "Начальник смены", "people_manager"},
+		{"заведующий", "Заведующий складом", "people_manager"},
+		{"заведующая", "Заведующая детским садом", "people_manager"},
+		{"директор", "Директор школы", "people_manager"},
+		{"директор магазина", "Директор магазина", "people_manager"},
+		{"заместитель директора", "Заместитель директора по АХЧ", "people_manager"},
+		{"руководитель", "Руководитель отдела продаж", "people_manager"},
+		{"заместитель руководителя", "Заместитель руководителя службы", "people_manager"},
+
+		// …and the Russian titles that carry the word without the reports.
+		{"music teacher", "Музыкальный руководитель", ""},
+		{"hobby club leader", "Руководитель кружка", ""},
+		{"PE teacher", "Руководитель физического воспитания", ""},
+		{"project manager ru", "Руководитель проекта", ""},
+		{"assistant to the head", "Помощник руководителя", ""},
+		{"director's adviser", "Советник директора по воспитанию", ""},
+		{"bare менеджер", "Менеджер", ""},
+		{"sales менеджер", "Менеджер по продажам", ""},
 
 		// "Lead" is deliberately unresolved: production's `seniority=lead` holds
 		// 116,893 postings and only 3,303 carry any management marker, so the word

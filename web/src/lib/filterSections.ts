@@ -78,12 +78,12 @@ const CATEGORY_GROUP: Record<Category, CategoryGroup> = {
   administration: 'Consumer & Services',
   social_services: 'Consumer & Services',
   manufacturing: 'Consumer & Services',
+  public_safety: 'Consumer & Services',
   // The laboratory sits with the engineering disciplines, as industrial_engineering
   // does: a chemist or a lab technician looks there before the consumer trades.
   science: 'Engineering',
   product: 'Product & Management',
   project_management: 'Product & Management',
-  management: 'Product & Management',
   business_analysis: 'Product & Management',
   technical_writing: 'Product & Management',
   marketing: 'Go-to-market & Support',

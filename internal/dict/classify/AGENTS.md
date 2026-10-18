@@ -83,6 +83,65 @@ because the cashier was turned away. Before adding a broad technical alias, run 
 against the titles the filter used to refuse — the ingest log's `rejected N/M postings
 as non-technical, e.g. ...` lines carry two per board.
 
+## There is no management category
+
+`management` was retired. It held every title whose only resolved word was "manager" —
+about 6% of the open catalogue, a burger chain's Assistant Manager beside a Tax Manager
+and a Case Manager — and told a jobseeker nothing about the work. Two axes replace it:
+
+- **The craft**, in this table. A manager title resolves what it manages: Restaurant
+  Manager `hospitality`, Store Manager `retail`, Plant Manager `manufacturing`, Tax and
+  Relationship Manager `finance`, Construction/Site Manager `skilled_trades`, IT Manager
+  `devops`, Engineering Manager `software_engineering` (the discipline-named "Mechanical/
+  Project/Plant/... Engineering Manager" spellings are pinned to `industrial_engineering`
+  ahead of it). Those entries sit in the managers block at the END of the table, so a
+  title any earlier alias resolves keeps its category.
+- **Whether it manages people**, in `internal/dict/roletype` (the `role_type` facet).
+  General Manager, Assistant Manager, Store/Branch/District/Area/Plant/Shift Manager and
+  the Russian начальник/заведующий/директор name no craft, so no category is true for
+  them; roletype marks them `people_manager`, and search keeps a posting that facet
+  reaches (`search.CategoryUnresolved`). The ingest refusal is vetoed the same way
+  (`ConfirmedNonTech`), so the two gates agree.
+
+There is no bare "manager"/"менеджер" alias. A manager title naming neither a craft nor
+a people marker — Case Manager, Portfolio Manager, a bare "Senior Manager, X" — resolves
+nothing and is excluded from search; measured on a 2% sample of the open catalogue at
+retirement, that was about 2.9% of all postings (half of what `management` held). A
+stored `category=management` in a saved search or link is answered as
+`role_type=people_manager` by the search filter.
+
+## Public safety
+
+`public_safety` is SOC major group 33: police, sheriffs, corrections, firefighters,
+security guards, lifeguards, crossing guards, loss prevention. Non-technical. It is never
+information security, and three placements keep the two apart:
+
+- The guard spellings ("Security Guard", "Security Officer") sit in the security block,
+  behind the infosec officer spellings that contain them ("Information Security Officer",
+  "Information Systems Security Officer", "IT/Cyber/Data Security Officer"), declared as
+  whole phrases ending in "officer". The defence-industry "Program/Facility Security
+  Officer" names neither craft and carries `categoryNone`.
+- The emergency dispatchers and the firefighter sit before the logistics block (whose
+  bare "dispatcher" would take the first) and the healthcare "paramedic" (which would
+  take "Firefighter/Paramedic"). EMT and paramedic alone stay `healthcare`.
+- Police, sheriffs, corrections and loss prevention sit at the END of the table: those
+  words name the EMPLOYER as often as the job ("Food Service Worker - Sheriff's Office"
+  is a cook). The ВОХР "стрелок" is last of all, behind a `categoryNone` pin for the
+  military contract posting ("военнослужащий") that also names a rifleman.
+
+The protective-services pins the HSE block used to carry as `categoryNone` ("Public/
+Campus/School Safety Officer") now route here — an exclusion must route, not blank.
+
+## `Categories` reads each span once
+
+`Categories` returns every category the text mentions, so a pin that holds for `Parse`
+used to leak through it ("Front End Cashier" came back `[retail, frontend]`). An alias
+occurrence lying wholly inside a span an EARLIER alias already matched is now not
+counted (`matchAllOrdered`). That is what lets "Security Officer" resolve the guard
+category without tagging a CISO's CV with it: the whole phrase "information security
+officer" claims the span first. A shorter alias that also occurs outside every claimed
+span still counts.
+
 ## The one place category and `is_tech` disagree on purpose
 
 IT support (`service desk`, `help desk`, `helpdesk`, `it support`, `it supporter`,

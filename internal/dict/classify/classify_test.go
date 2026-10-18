@@ -191,7 +191,7 @@ func TestParseGradeBlindPhrases(t *testing.T) {
 		{"Middle Frontend Developer", "middle", "frontend"},
 		// "Lead Generation" names a marketing function, not the lead grade.
 		{"Lead Generation Specialist", "", ""},
-		{"Lead Generation Manager", "", "management"},
+		{"Lead Generation Manager", "", ""},
 		// Regression: an honest grade that merely shares the word is untouched.
 		{"Staff Software Engineer", "staff", "software_engineering"},
 		{"Senior Staff Engineer", "staff", ""},
@@ -603,7 +603,7 @@ func TestParse_ITAdjacentCoverage(t *testing.T) {
 		// precision — deliberately left unresolved, existing behavior unchanged
 		{"Editor", ""},                             // spans every industry, not IT-anchored
 		{"Proofreader", ""},                        // ditto
-		{"Controller", ""},                         // ambiguous with game/hardware controller
+		{"Controller", "finance"},                  // the financial controller; the stock, document and air-traffic ones are pinned
 		{"AR Specialist", ""},                      // AR also means Augmented Reality
 		{"AP Specialist", ""},                      // too thin a signal on its own
 		{"CRO Specialist", ""},                     // bare CRO also Chief Revenue Officer
@@ -1321,15 +1321,15 @@ func TestParse_OccupationalSafety(t *testing.T) {
 		{"Project HSE Manager", "occupational_safety", "12"},
 
 		// …and a manager title naming no recognised function still falls through.
-		{"Business Manager", "management", "the fall-through is unchanged"},
+		{"Business Manager", "", "no function named, and no management category to fall through to"},
 
 		// The words this block must NOT claim. Each was measured before exclusion.
 		{"Software Engineer (she/her)", "software_engineering", "SHE is a pronoun in live titles; no bare alias"},
 		{"Risk Analyst", "", "`risk` matched 41,468 live postings, mostly finance"},
-		{"Credit Risk Manager", "management", "finance risk is a different profession sharing a word"},
+		{"Credit Risk Manager", "finance", "finance risk is a different profession sharing a word"},
 		{"Patient Safety Attendant", "healthcare", "23; bare `safety` names other crafts"},
-		{"Public Safety Officer", "", "113; protective services, not HSE"},
-		{"Campus Safety Officer", "", "38; protective services, not HSE"},
+		{"Public Safety Officer", "public_safety", "113; protective services, not HSE"},
+		{"Campus Safety Officer", "public_safety", "38; protective services, not HSE"},
 		{"Food Safety Manager", "industrial_engineering", "616 live; plant quality, where `quality engineer` already sits"},
 		{"Product Safety Engineer", "industrial_engineering", "163; regulatory product compliance, and the category it already had"},
 		{"Fire Safety Manager", "occupational_safety", "164; fire IS part of the HSE remit on an industrial site"},
@@ -1339,8 +1339,8 @@ func TestParse_OccupationalSafety(t *testing.T) {
 		// category that is true rather than blanked — blanking is what makes a facet
 		// unreachable, which is the harm this change exists to undo.
 		{"Trust and Safety Specialist", "", "14 live; platform integrity, the likeliest collision on an IT board"},
-		{"Trust & Safety Manager", "management", "restored: a blanket sentinel had taken this away from the answer it already had"},
-		{"Trust & Safety Director", "management", ""},
+		{"Trust & Safety Manager", "", "it resolved management until that category was retired; no category is true for it"},
+		{"Trust & Safety Director", "", "role_type reaches it"},
 		{"Trust & Safety Lead", "", ""},
 		{"Trust and Safety Engineer", "", ""},
 
@@ -1354,19 +1354,19 @@ func TestParse_OccupationalSafety(t *testing.T) {
 		{"Drug Safety Specialist", "healthcare", "pharmacovigilance"},
 		{"AI Safety Engineer", "ml_ai", "alignment research, not a safety department"},
 		{"Life Safety Technician", "skilled_trades", "fire alarm and sprinkler trades"},
-		{"School Safety Officer", "", "protective services; this catalogue has no category for them"},
-		{"Pool Safety Officer", "", ""},
+		{"School Safety Officer", "public_safety", "protective services"},
+		{"Pool Safety Officer", "public_safety", ""},
 		// The same professions in the role nouns a first pass missed — 27 live postings
 		// that were filing under HSE because only the `officer` spelling was excluded.
-		{"Public Safety Manager", "", "5 live"},
-		{"Public Safety Specialist", "", "4"},
-		{"Public Safety Director", "", "3"},
-		{"Campus Safety Specialist", "", "5"},
-		{"Campus Safety Coordinator", "", "1"},
+		{"Public Safety Manager", "public_safety", "5 live"},
+		{"Public Safety Specialist", "public_safety", "4"},
+		{"Public Safety Director", "public_safety", "3"},
+		{"Campus Safety Specialist", "public_safety", "5"},
+		{"Campus Safety Coordinator", "public_safety", "1"},
 
 		// …and the titles the exclusions must NOT blank. A blanket qualifier entry took
 		// each of these away from a category it already resolved.
-		{"Public Safety Dispatcher", "logistics", "the exclusion is narrowed to the role noun, so this keeps its own answer"},
+		{"Public Safety Dispatcher", "public_safety", "the emergency dispatcher, claimed ahead of the bare logistics dispatcher"},
 		{"Patient Safety Registered Nurse", "healthcare", ""},
 
 		// The qualified SHE spellings DO resolve — the exclusion is of the bare word,
@@ -1577,25 +1577,23 @@ func TestParse_MobileIsAPlatformNotAnErrand(t *testing.T) {
 // under `Parse` can still tag a title with a second, wrong category here — which is
 // exactly what a "security officer" entry did to a CISO.
 //
-// What this protects is the CISO, and it still does. The bare "security" alias that used
-// to satisfy it has been replaced by the qualified forms: "Chief Information Security
-// Officer" keeps the security category through "information security", while a plain
-// "Security Officer" — 1 102 open postings, and a mall guard in nearly all of them —
-// now claims NEITHER category. That is the never-guess contract, not a regression:
-// an unqualified security officer is genuinely ambiguous, so it resolves to nothing and
-// its is_tech falls to unknown instead of being asserted either way.
+// What this protects is the CISO, and it still does, now that a plain "Security
+// Officer" — 1 102 open postings, and a mall guard in nearly all of them — resolves the
+// guard category. The infosec officer spellings are declared as whole phrases ahead of
+// it, and an occurrence lying inside a span an earlier alias already matched is not
+// counted, so "Chief Information Security Officer" does not come back tagged as a guard.
 func TestCategories_ServiceOverlaps(t *testing.T) {
 	for _, tc := range []struct {
 		title    string
 		mustNot  string
 		mustHave string
 	}{
-		{"Chief Information Security Officer", "personal_services", "security"},
-		{"Information Security Officer", "personal_services", "security"},
-		{"IT Security Officer", "personal_services", "security"},
-		// Claims nothing at all: not the guard category (which would mis-tag the three
-		// above on this very path) and not the technical one either.
-		{"Security Officer", "personal_services", ""},
+		{"Chief Information Security Officer", "public_safety", "security"},
+		{"Information Security Officer", "public_safety", "security"},
+		{"IT Security Officer", "public_safety", "security"},
+		{"Information Systems Security Officer", "public_safety", "security"},
+		// The guard, and nothing technical.
+		{"Security Officer", "security", "public_safety"},
 	} {
 		got := Categories(tc.title)
 		if slices.Contains(got, tc.mustNot) {
@@ -1603,9 +1601,6 @@ func TestCategories_ServiceOverlaps(t *testing.T) {
 		}
 		if tc.mustHave != "" && !slices.Contains(got, tc.mustHave) {
 			t.Errorf("Categories(%q) = %v, must contain %q", tc.title, got, tc.mustHave)
-		}
-		if tc.mustHave == "" && slices.Contains(got, "security") {
-			t.Errorf("Categories(%q) = %v, must not claim the security facet", tc.title, got)
 		}
 	}
 }
@@ -1671,15 +1666,15 @@ func TestParse_ServiceSectors(t *testing.T) {
 		{"Master Stylist", "personal_services", ""},
 		{"Barber", "personal_services", ""},
 		{"Esthetician", "personal_services", ""},
-		{"Lifeguard", "personal_services", ""},
-		{"Security Guard", "personal_services", "was resolving to the infosec facet"},
-		{"Security Officer", "", "an unqualified one is a guard far more often than a CISO — 1 102 live postings say so; the qualified forms carry the discipline"},
+		{"Lifeguard", "public_safety", "SOC 33-9092, a protective service"},
+		{"Security Guard", "public_safety", "was resolving to the infosec facet"},
+		{"Security Officer", "public_safety", "an unqualified one is a guard far more often than a CISO — 1 102 live postings say so; the qualified forms carry the discipline"},
 		{"Security Specialist", "", "ambiguous the same way, and 602 live postings of it"},
 		{"Chief Information Security Officer", "security", ""},
 		{"Janitor", "personal_services", ""},
 		{"Housekeeper", "personal_services", ""},
 		{"Парикмахер", "personal_services", ""},
-		{"Охранник", "personal_services", ""},
+		{"Охранник", "public_safety", ""},
 		{"Уборщик", "personal_services", ""},
 
 		// The plural gap. wordmatch has no morphology, so a singular alias cannot
@@ -1724,7 +1719,7 @@ func TestParse_ServiceSectors(t *testing.T) {
 		{"Forward-Deployed Engineer", "solutions_engineering", "the role fired; the category did not"},
 		// Unchanged neighbours.
 		{"Delivery Manager", "project_management", ""},
-		{"Engagement Manager", "management", ""},
+		{"Engagement Manager", "", "no function named; there is no management category"},
 		{"Implementation Consultant", "customer_success", ""},
 		{"Solutions Architect", "architecture", ""},
 
@@ -1815,8 +1810,8 @@ func TestParse_AdminVAAndImmigration(t *testing.T) {
 
 		// The bare-"assistant" exclusion: grade words and non-administrative trades
 		// must stay unresolved, exactly as they are today.
-		{"Assistant Controller", "", "grade word, not a category"},
-		{"Assistant Superintendent", "", "grade word, not a category"},
+		{"Assistant Controller", "finance", "grade word, not administration: the controller files it"},
+		{"Assistant Superintendent", "skilled_trades", "grade word, not administration: the superintendent files it"},
 		{"Assistant Director", "", "grade word, not a category"},
 		{"Maintenance Assistant", "", "a trade, not admin work"},
 		{"Clinic Assistant", "", "a trade, not admin work"},
@@ -1942,17 +1937,22 @@ func TestParse_SecurityIsQualifiedOrNothing(t *testing.T) {
 		{"Security Operations Analyst", "security", ""},
 		{"Cyber Security Engineer", "security", "already qualified before this change"},
 
-		// Unqualified: claims nothing rather than guessing. Counts are open postings.
-		{"Security Officer", "", "1 102 of them, and a guard in nearly all"},
-		{"Unarmed Security Officer", "", ""},
-		{"Mall Security Officer", "", ""},
-		{"Retail Security Officer", "", ""},
+		// The unqualified officer is the guard: 175 of 192 sampled titles name no
+		// information-security word. Counts are open postings.
+		{"Security Officer", "public_safety", "1 102 of them, and a guard in nearly all"},
+		{"Unarmed Security Officer", "public_safety", ""},
+		{"Mall Security Officer", "public_safety", ""},
+		{"Retail Security Officer", "public_safety", ""},
+		{"Information Systems Security Officer (ISSO)", "security", "pinned ahead of the guard"},
+		{"Data Security Officer", "security", ""},
+		{"Security Officer, Information Security", "security", "the discipline named after the noun still wins"},
+		{"Facility Security Officer", "", "defence-industry clearance administration, neither craft"},
 		{"Security Specialist", "", "602, and genuinely either"},
 		{"Security Supervisor", "", "149"},
 		{"Security", "", "91, bare"},
 
-		// Still the guard category, through its own entry rather than the fall-through.
-		{"Security Guard", "personal_services", "was resolving to the infosec facet once"},
+		// The guard category, through its own entry rather than the fall-through.
+		{"Security Guard", "public_safety", "was resolving to the infosec facet once"},
 	} {
 		if got := Parse(tc.title).Category; got != tc.want {
 			t.Errorf("Parse(%q).Category = %q, want %q %s", tc.title, got, tc.want, tc.why)
@@ -2034,8 +2034,8 @@ func TestParse_SocialServicesScienceManufacturing(t *testing.T) {
 		{"Machine Learning Scientist", "ml_ai", ""},
 		{"QA Lab Technician", "qa", "the qa alias above keeps winning"},
 		{"QA Inspector", "qa", "the qa alias above keeps winning"},
-		{"Nurse Case Manager", "management", "bare case manager is not social work"},
-		{"Family Support Worker", "support", "already resolved; keeps its category"},
+		{"Nurse Case Manager", "healthcare", "the nurse names the craft; a bare case manager is not social work"},
+		{"Family Support Worker", "social_services", "a care worker, not a help desk: moved from support deliberately"},
 		{"Сборщик заказов", "logistics", "a warehouse picker, declared above"},
 		{"Production Engineer", "industrial_engineering", ""},
 		{"Software Engineer, Manufacturing Systems", "software_engineering", ""},
@@ -2048,6 +2048,237 @@ func TestParse_SocialServicesScienceManufacturing(t *testing.T) {
 	for _, tc := range cases {
 		if got := Parse(tc.title).Category; got != tc.wantCategory {
 			t.Errorf("Parse(%q).Category = %q, want %q %s", tc.title, got, tc.wantCategory, tc.why)
+		}
+	}
+}
+
+// The second pass over the uncategorised tail and the retirement of `management`. Each
+// group is a decision; the negative half of each is what the decision must not take.
+func TestParse_CategoryPassTwo(t *testing.T) {
+	cases := []struct {
+		title, want, why string
+	}{
+		// German retail. An apprenticeship resolves through the role it names.
+		{"Verkäufer (m/w/d)", "retail", ""},
+		{"Verkäuferin Backwaren", "retail", ""},
+		{"Verkäufer/in Obst & Gemüse", "retail", "the slash is a word boundary"},
+		{"Fachverkäufer Bäckerei (m/w/d)", "retail", ""},
+		{"Kaufmann im Einzelhandel (m/w/d)", "retail", ""},
+		{"Ausbildung Kaufmann im Einzelhandel 2027 (m/w/d)", "retail", "classified by the role it trains for"},
+		{"Ausbildung zum Verkäufer, Fachrichtung Lebensmittel", "retail", ""},
+		{"Kassierer (m/w/d)", "retail", ""},
+		{"Filialleiter (m/w/d)", "retail", "the store of a chain"},
+		{"Abiturientenprogramm Handelsfachwirt 2027 (m/w/d)", "retail", ""},
+		{"Mitarbeiter Verkauf (m/w/d)", "retail", ""},
+		{"Ausbildung (m/w/d)", "", "a placeholder, never an alias"},
+		{"Initiativbewerbung", "", "names no role"},
+		// The Russian trudvsem tail.
+		{"Экономист", "finance", ""},
+		{"Ведущий экономист", "finance", ""},
+		{"Швея", "manufacturing", ""},
+		{"Швея-мотористка", "manufacturing", "the hyphen is a word boundary"},
+		{"Горничная", "hospitality", ""},
+		{"Мойщик посуды", "hospitality", ""},
+		{"Буфетчик", "hospitality", ""},
+		{"Кастелянша", "hospitality", ""},
+		{"Гардеробщик", "hospitality", ""},
+		{"Диспетчер", "logistics", "as the English dispatcher"},
+		{"Диспетчер автомобильного транспорта", "logistics", ""},
+		{"Старший диспетчер ЕДДС", "public_safety", "the emergency dispatcher"},
+		{"Диспетчер пожарной связи", "public_safety", ""},
+		{"Диспетчер факультета", "administration", "a university's scheduling clerk"},
+		{"Секретарь учебной части (диспетчер)", "administration", "the secretary keeps its precedence"},
+		{"Инженер оперативно-диспетчерской службы", "industrial_engineering", "the adjective is not the noun"},
+		{"Оператор котельной", "skilled_trades", ""},
+		{"Оператор газовой котельной", "skilled_trades", ""},
+		{"Монтер пути", "skilled_trades", ""},
+		{"Монтёр пути", "skilled_trades", ""},
+		{"Дорожный рабочий", "skilled_trades", ""},
+		{"Рабочий зеленого хозяйства", "personal_services", "filed with the groundskeeper"},
+		{"Фармацевт", "healthcare", ""},
+		{"Рентгенолаборант", "healthcare", "not the science лаборант"},
+		{"Лаборант", "science", "the laboratory assistant stays science"},
+		{"Инструктор по лечебной физкультуре", "healthcare", ""},
+		{"Медицинский статистик", "healthcare", ""},
+		{"Тьютор", "education", ""},
+		{"Музыкальный руководитель", "education", ""},
+		{"Мастер производственного обучения", "education", ""},
+		{"Библиотекарь", "education", "SOC 25-4022"},
+		{"Librarian I/II", "education", ""},
+		{"Агроном", "science", "SOC 19-1013, as the English agronomist"},
+		{"Зоотехник", "science", ""},
+		{"Животновод", "", "a farmworker: SOC 45 has no category here"},
+		{"Специалист по кадрам", "hr", ""},
+		{"Психолог", "social_services", "ISCO-08 2634, beside social work"},
+		{"Психолог в социальной сфере", "social_services", ""},
+		{"Медицинский психолог", "healthcare", "the clinical psychologist"},
+		{"Педагог-психолог", "education", "the school psychologist keeps education"},
+		{"Заведующий хозяйством", "administration", ""},
+		{"Культорганизатор", "personal_services", "SOC 39-9032 recreation worker"},
+		// English.
+		{"Buyer II", "operations", "procurement"},
+		{"Media Buyer", "marketing", "declared far above the bare buyer"},
+		{"Controller", "finance", ""},
+		{"Assistant Controller", "finance", ""},
+		{"Document Controller", "administration", ""},
+		{"Air Traffic Controller", "logistics", ""},
+		{"Stock Controller", "logistics", ""},
+		{"Quality Controller", "manufacturing", ""},
+		{"PLC Controller", "industrial_engineering", ""},
+		{"Flight Controller", "", "aerospace operations or drone firmware: neither is finance"},
+		{"Financial Controller", "finance", "unchanged"},
+		{"Psychiatrist", "healthcare", ""},
+		{"Laundry Attendant", "hospitality", ""},
+		{"Office Coordinator", "administration", ""},
+		{"Porter", "hospitality", ""},
+		{"Restaurant Porter - Unit 1654", "hospitality", ""},
+		{"Day Porter", "personal_services", "building cleaning"},
+		{"Service Porter", "logistics", "the dealership porter moves cars"},
+		{"Estimator", "industrial_engineering", "the quantity surveyor's US twin"},
+		{"Electrical Estimator", "industrial_engineering", ""},
+		{"Collision Estimator", "skilled_trades", "prices a car repair"},
+		{"Superintendent", "skilled_trades", "construction"},
+		{"Construction Superintendent", "skilled_trades", ""},
+		{"Superintendent of Schools", "education", ""},
+		{"Assistant Superintendent of Curriculum and Instruction", "education", "the school district's"},
+		{"Marine Superintendent - Tanker", "logistics", ""},
+		// Disability and residential care is social service, not a help desk.
+		{"Direct Support Professional", "social_services", "was support"},
+		{"Direct Support Professional (DSP)", "social_services", ""},
+		{"Support Worker - Nights", "social_services", ""},
+		{"Personal Support Worker", "social_services", ""},
+		{"IT Support Worker", "support", "the desk keeps it"},
+		{"Customer Support Worker", "support", ""},
+		{"Administrative Support Worker", "administration", ""},
+		{"Customer Support Specialist", "support", "unchanged"},
+		{"Amazon DSP Delivery Driver", "logistics", "DSP is never an alias"},
+		{"DSP Engineer", "", "digital signal processing, not disability care"},
+		// Public safety (SOC 33).
+		{"Police Officer", "public_safety", ""},
+		{"Deputy Sheriff", "public_safety", ""},
+		{"Correctional Officer", "public_safety", ""},
+		{"Corrections Officer I", "public_safety", ""},
+		{"Detention Officer", "public_safety", ""},
+		{"Firefighter", "public_safety", ""},
+		{"Firefighter/Paramedic", "public_safety", "a firefighter who also holds the paramedic licence"},
+		{"Paramedic", "healthcare", "EMS stays healthcare"},
+		{"EMT", "", "no alias: EMT stays where it was"},
+		{"Lifeguard", "public_safety", ""},
+		{"School Crossing Guard", "public_safety", ""},
+		{"Loss Prevention Agent", "public_safety", ""},
+		{"Asset Protection Detective", "public_safety", ""},
+		{"Data Loss Prevention Analyst", "security", "information security, pinned first"},
+		{"Emergency Dispatcher", "public_safety", ""},
+		{"Truck Dispatcher", "logistics", "every other dispatcher keeps its field"},
+		{"Food Service Worker - Sheriff's Office", "hospitality", "the sheriff is the employer"},
+		{"Sheriff's Office Nurse", "healthcare", "the sheriff is the employer"},
+		{"Police Software Engineer", "software_engineering", ""},
+		{"Army National Guard Soldier", "", "the military: no bare guard alias"},
+		{"Охранник", "public_safety", ""},
+		{"Сторож", "public_safety", "the watchman is a guard, SOC 33-9032"},
+		{"Вахтер", "personal_services", "the doorkeeper stays"},
+		{"Пожарный", "public_safety", ""},
+		{"Начальник пожарной части", "public_safety", ""},
+		{"Полицейский", "public_safety", ""},
+		{"Участковый уполномоченный полиции", "public_safety", ""},
+		{"Инспектор ДПС", "public_safety", ""},
+		{"Следователь", "public_safety", ""},
+		{"Стажер-исследователь", "", "contains no whole-word следователь"},
+		{"Стрелок ВОХР", "public_safety", ""},
+		{"Военнослужащий по контракту — пулемётчик, стрелок", "", "military contract service"},
+		{"Военнослужащий по контракту — повар", "hospitality", "the pin does not blank a craft named earlier"},
+		{"Sicherheitsmitarbeiter (m/w/d) im Objektschutz", "public_safety", ""},
+		{"Fachkraft für Schutz und Sicherheit", "public_safety", ""},
+		{"Polizeivollzugsbeamter", "public_safety", ""},
+		{"Feuerwehrmann", "public_safety", ""},
+		{"Vigilante", "public_safety", "Brazilian Portuguese security guard"},
+		{"Porteiro", "personal_services", "the doorman stays"},
+		// The retired management category: a manager title resolves its craft or nothing.
+		{"Restaurant Manager", "hospitality", ""},
+		{"Assistant Restaurant Manager", "hospitality", ""},
+		{"Kitchen Manager", "hospitality", ""},
+		{"Food and Beverage Manager", "hospitality", ""},
+		{"Store Manager", "retail", ""},
+		{"Assistant Store Manager", "retail", ""},
+		{"Retail Assistant Manager", "retail", ""},
+		{"Plant Manager", "manufacturing", ""},
+		{"Production Manager", "manufacturing", ""},
+		{"Senior Event Production Manager", "marketing", "a show, not a line"},
+		{"Quality Manager", "industrial_engineering", ""},
+		{"Construction Manager", "skilled_trades", ""},
+		{"Site Manager", "skilled_trades", ""},
+		{"Maintenance Manager", "skilled_trades", ""},
+		{"Supply Chain Manager", "logistics", ""},
+		{"Fleet Manager", "logistics", ""},
+		{"Warehouse Manager", "logistics", ""},
+		{"Tax Manager", "finance", ""},
+		{"Relationship Manager", "finance", "the bank's"},
+		{"Practice Manager", "healthcare", ""},
+		{"IT Manager", "devops", ""},
+		{"Engineering Manager", "software_engineering", ""},
+		{"Senior Engineering Manager, Platform", "software_engineering", ""},
+		{"Mechanical Engineering Manager", "industrial_engineering", "the discipline is named"},
+		{"Project Engineering Manager", "industrial_engineering", ""},
+		{"Sales Engineering Manager", "solutions_engineering", ""},
+		{"Data Engineering Manager", "data_engineering", "unchanged"},
+		{"Site Reliability Engineering Manager", "sre", "unchanged"},
+		{"Territory Manager", "sales", ""},
+		{"Product Manager", "product", "unchanged"},
+		{"Project Manager", "project_management", "unchanged"},
+		{"Sales Manager", "sales", "unchanged"},
+		{"Nurse Case Manager", "healthcare", "the nurse names it"},
+		{"Foster Care Case Manager", "social_services", "foster care names it"},
+		{"Case Manager", "", "a nurse as often as a social worker: no guess"},
+		{"General Manager", "", "no craft; role_type reaches it"},
+		{"Assistant Manager", "", "no craft; role_type reaches it"},
+		{"District Manager", "", "a chain's multi-unit operator, not a field-sales seat"},
+		{"Manager", "", "no fall-through any more"},
+		{"Менеджер", "", "no fall-through any more"},
+		{"Менеджер по продажам", "sales", "unchanged"},
+		{"Менеджер по продаже услуг", "sales", ""},
+		{"Менеджер по логистике", "logistics", ""},
+		{"Менеджер по закупкам", "operations", ""},
+		{"Менеджер проектов", "project_management", ""},
+		{"Hr-менеджер", "hr", ""},
+		{"PR-менеджер", "marketing", ""},
+	}
+	for _, c := range cases {
+		if got := Parse(c.title).Category; got != c.want {
+			t.Errorf("Parse(%q).Category = %q, want %q %s", c.title, got, c.want, c.why)
+		}
+	}
+}
+
+// No alias may resolve the retired category: it is absent from vocab.CategoryValues, and
+// TestCanonicalValuesAreInVocabulary would catch a stray entry — this states why.
+func TestNothingResolvesTheRetiredManagementCategory(t *testing.T) {
+	for _, e := range categoryTable {
+		if e.canonical == vocab.RetiredCategoryManagement {
+			t.Errorf("alias %q still resolves the retired %q category", e.alias, e.canonical)
+		}
+	}
+	if _, ok := CategoryAliases()[vocab.RetiredCategoryManagement]; ok {
+		t.Error("CategoryAliases still offers the retired category to the web role picker")
+	}
+}
+
+// An occurrence inside a span an earlier alias already matched is not read again, so a
+// pin holds on the multi-category path as it does for Parse.
+func TestCategories_ClaimedSpanIsNotReadAgain(t *testing.T) {
+	cases := []struct {
+		text string
+		want []string
+	}{
+		{"Front End Cashier", []string{"retail"}},
+		{"Chief Information Security Officer", []string{"security"}},
+		{"Software Design Engineer", nil},
+		// The shorter alias still counts where it occurs outside every claimed span.
+		{"Front End Cashier and Frontend Developer", []string{"retail", "frontend"}},
+		{"Security Officer, Information Security", []string{"security", "public_safety"}},
+	}
+	for _, c := range cases {
+		if got := Categories(c.text); !slices.Equal(got, c.want) {
+			t.Errorf("Categories(%q) = %v, want %v", c.text, got, c.want)
 		}
 	}
 }

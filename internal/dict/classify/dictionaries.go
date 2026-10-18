@@ -259,8 +259,8 @@ var categoryTable = []aliasEntry{
 	{"platform engineering", "devops"},
 	{"infrastructure engineer", "devops"},
 	// "it infrastructure" belongs to this category but is NOT listed here — it names
-	// an estate, not a role, so it resolves with the other domain nouns down beside
-	// the bare "manager"/"analyst" fall-throughs. Search for it there.
+	// an estate, not a role, so it resolves with the other domain nouns further down,
+	// below the technical role nouns. Search for it there.
 	{"cloud engineer", "devops"},
 	// The estate-facing analyst titles: 82 and 18 live postings.
 	{"infrastructure analyst", "devops"},
@@ -438,23 +438,15 @@ var categoryTable = []aliasEntry{
 	{"manuális tesztelő", "qa"},
 	{"automata tesztelő", "qa"},
 	{"tesztmenedzser", "qa"},
-	// Physical security is not information security, and the bare alias below cannot
-	// tell them apart: "Security Guard" and "Security Officer" have been resolving to
-	// the infosec facet, which is wrong in both directions — a guard is not findable
-	// where guards are looked for, and an infosec filter returns him.
-	// Physical security is not information security, and the bare alias below cannot
-	// tell them apart: "Security Guard" was resolving to the infosec facet, wrong in
-	// both directions — a guard is not findable where guards are looked for, and an
-	// infosec filter returned him.
-	//
-	// "Security Officer" is deliberately NOT here, though it is a common guard title.
-	// `Categories()` returns EVERY matching alias rather than the strongest, so an
-	// entry for it tagged "Chief Information Security Officer" with `personal_services`
-	// on the multi-category CV path no matter what order the table declares — ordering
-	// only decides `Parse`. The phrase is genuinely ambiguous, so it is dropped rather
-	// than guessed, which is the same call `design systems` and bare `engineer` got.
-	{"security guard", "personal_services"},
-	{"armed guard", "personal_services"},
+	// Physical security is not information security: a guard is the protective-service
+	// craft (SOC 33-9032), filed under `public_safety` with police and firefighters, and
+	// an infosec filter must not return him. "Security Officer" — the commonest guard
+	// title — is declared at the END of this block, behind the infosec officer spellings
+	// that contain it; see the note there.
+	{"security guard", "public_safety"},
+	{"security guards", "public_safety"},
+	{"armed guard", "public_safety"},
+	{"unarmed guard", "public_safety"},
 	// Bare "security" is NOT an entry, for the reason the Hungarian block below already
 	// gives about "biztonsági": the word alone is the guard at least as often as the
 	// discipline. Measured over the live catalogue, the single commonest title carrying
@@ -535,6 +527,34 @@ var categoryTable = []aliasEntry{
 	// DevSecOps stays security, not devops: the security responsibility (SAST/DAST,
 	// container/IaC scanning, policy-as-code) is why the title exists, not incidental.
 	{"devsecops", "security"},
+	// "Security Officer" is a guard about nine times in ten — measured on a 2% sample of
+	// the open catalogue, 175 of 192 titles carrying it named no information-security
+	// word ("Unarmed Security Officer", "Mall Security Officers", "Security Officer -
+	// Marriott ..."). The rest are infosec officers, and every spelling of those that
+	// CONTAINS the phrase is declared first, as a whole phrase ending in "officer".
+	//
+	// Whole phrases on purpose: `Categories()` returns every matching alias, and an
+	// occurrence of a shorter alias lying inside the span a longer, earlier alias already
+	// matched is not counted (see matchAllOrdered). "information security" alone would
+	// not cover the word "officer", so "Chief Information Security Officer" would come
+	// back tagged with the guard category on the multi-category CV path.
+	//
+	// The defence-industry "Program/Facility Security Officer" administers clearances and
+	// classified material: neither a guard nor an infosec engineer, so it names nothing.
+	{"information security officer", "security"},
+	{"information systems security officer", "security"},
+	{"information system security officer", "security"},
+	{"it security officer", "security"},
+	{"ict security officer", "security"},
+	{"cyber security officer", "security"},
+	{"data security officer", "security"},
+	{"network security officer", "security"},
+	{"cloud security officer", "security"},
+	{"application security officer", "security"},
+	{"program security officer", categoryNone},
+	{"facility security officer", categoryNone},
+	{"security officer", "public_safety"},
+	{"security officers", "public_safety"},
 	{"embedded", "embedded"},
 	{"firmware", "embedded"},
 	// Hungarian: "beágyazott" is embedded. It precedes the plain
@@ -760,8 +780,41 @@ var categoryTable = []aliasEntry{
 	// "infrastructure" gets no entry at all: it names civil, rail, energy and telecom
 	// work.
 	{"it infrastructure", "devops"},
-	{"engineering manager", "management"},
-	{"team manager", "management"},
+	// The engineering manager. On this board the unqualified title manages a SOFTWARE
+	// team far more often than anything else, so it resolves `software_engineering` — the
+	// craft the team practises, the same answer "Software Engineering Manager" gives —
+	// and the `role_type` facet (internal/dict/roletype) is what says it manages people.
+	// There is no management category: it was a seniority statement filed as a craft.
+	//
+	// The physical disciplines name their own craft between the two words, and the bare
+	// alias would otherwise read every one of them as software. Each spelling below is
+	// one the open catalogue carries; a discipline named elsewhere in the title
+	// ("Engineering Manager (Food Manufacturing)") is not reachable by a phrase and stays
+	// with the bare reading.
+	{"sales engineering manager", "solutions_engineering"},
+	{"solutions engineering manager", "solutions_engineering"},
+	{"security engineering manager", "security"},
+	{"mechanical engineering manager", "industrial_engineering"},
+	{"electrical engineering manager", "industrial_engineering"},
+	{"civil engineering manager", "industrial_engineering"},
+	{"structural engineering manager", "industrial_engineering"},
+	{"chemical engineering manager", "industrial_engineering"},
+	{"environmental engineering manager", "industrial_engineering"},
+	{"project engineering manager", "industrial_engineering"},
+	{"manufacturing engineering manager", "industrial_engineering"},
+	{"process engineering manager", "industrial_engineering"},
+	{"industrial engineering manager", "industrial_engineering"},
+	{"plant engineering manager", "industrial_engineering"},
+	{"facilities engineering manager", "industrial_engineering"},
+	{"facility engineering manager", "industrial_engineering"},
+	{"maintenance engineering manager", "industrial_engineering"},
+	{"reliability engineering manager", "industrial_engineering"},
+	{"supplier quality engineering manager", "industrial_engineering"},
+	{"application engineering manager", "industrial_engineering"},
+	{"applications engineering manager", "industrial_engineering"},
+	{"substation engineering manager", "industrial_engineering"},
+	{"hospital engineering manager", "industrial_engineering"},
+	{"engineering manager", "software_engineering"},
 	{"marketing", "marketing"},
 	{"smm", "marketing"},
 	{"маркетолог", "marketing"},
@@ -775,7 +828,7 @@ var categoryTable = []aliasEntry{
 	{"brand manager", "marketing"},
 	{"public relations", "marketing"},
 	// The disciplines the coarse block did not name. Most were not merely unresolved
-	// — the generic "manager" alias further down claimed them for `management`. Each
+	// — the generic "manager" alias that used to sit further down claimed them. Each
 	// is a phrase on purpose: the bare nouns ("growth", "content", "performance",
 	// "geo") name technical roles too, and a standalone alias would take "Growth
 	// Engineer" out of the tech categories and off the enrichment budget.
@@ -857,6 +910,24 @@ var categoryTable = []aliasEntry{
 	{"продажи", "sales"},
 	{"продаж", "sales"},
 	{"продажам", "sales"},
+	// Disability and residential care is social service, not a help desk. "Direct
+	// Support Professional" is the US title for the worker who supports a person with an
+	// intellectual or developmental disability at home or in a group home, and "Support
+	// Worker" (with "Personal/Family/Home/Bank Support Worker") is the UK and Canadian
+	// title for the same care work. The bare "support" below filed both as customer
+	// support. The IT and customer-service spellings of "support worker" are pinned
+	// first, so the desk keeps them.
+	//
+	// The abbreviation "DSP" is deliberately never an alias: in this catalogue it is as
+	// often Amazon's Delivery Service Partner ("Amazon DSP Delivery Driver"), a
+	// demand-side platform, a downstream-process operator or digital signal processing.
+	{"administrative support worker", "administration"},
+	{"it support worker", "support"},
+	{"customer support worker", "support"},
+	{"technical support worker", "support"},
+	{"direct support", "social_services"},
+	{"support worker", "social_services"},
+	{"support workers", "social_services"},
 	{"support", "support"},
 	{"customer service", "support"},
 	{"help desk", "support"},
@@ -897,10 +968,9 @@ var categoryTable = []aliasEntry{
 	{"менеджер по успеху клиентов", "customer_success"},
 	{"менеджер по работе с клиентами", "customer_success"},
 	{"специалист по адаптации клиентов", "customer_success"},
-	// IT-company back-office roles. All are multi-word/anchored and placed ABOVE the
-	// terminal "manager"→management and "analyst"→data_analytics fall-throughs so a
-	// functional title ("Financial Analyst", "Operations Manager") is not stolen by
-	// them. hr precedes operations so "People Operations Manager" → hr, not operations.
+	// IT-company back-office roles. All are multi-word/anchored, so a functional title
+	// ("Financial Analyst", "Operations Manager") names its function outright. hr
+	// precedes operations so "People Operations Manager" → hr, not operations.
 	{"recruiter", "recruiting"},
 	{"tech recruiter", "recruiting"},
 	{"technical recruiter", "recruiting"},
@@ -914,8 +984,7 @@ var categoryTable = []aliasEntry{
 	// Employer branding sells the company to candidates, not customers — the
 	// recruiting-side twin of the marketing "brand manager" alias above, which this
 	// phrase does not contain a substring of ("employer branding manager" has no
-	// "brand manager" inside it), so it needs its own entry rather than falling to
-	// the generic manager->management catch-all.
+	// "brand manager" inside it), so it needs its own entry.
 	{"employer branding", "recruiting"},
 	{"рекрутер", "recruiting"},
 	{"рекрутёр", "recruiting"},
@@ -981,9 +1050,8 @@ var categoryTable = []aliasEntry{
 	{"data privacy manager", "legal"},
 	{"contracts administrator", "legal"},
 	{"contract administrator", "legal"},
-	// Immigration practice: must precede the bare "manager" fall-through
-	// ("Immigration Case Manager") and the administration block ("Immigration
-	// Assistant") so neither steals this family. "immigration paralegal" is
+	// Immigration practice: must precede the administration block ("Immigration
+	// Assistant") and the case-manager spellings so neither steals this family. "immigration paralegal" is
 	// listed for completeness — the bare "paralegal" entry above already
 	// resolves it to `legal` — but every other entry here is load-bearing.
 	{"immigration paralegal", "legal"},
@@ -1010,8 +1078,8 @@ var categoryTable = []aliasEntry{
 	// The assistant family is `administration` (see that block below), but these
 	// spellings must resolve HERE, at the precedence they always had: "Executive
 	// Assistant to the General Manager" names a manager after the role, and the
-	// management aliases declared between this line and the administration block
-	// would take it.
+	// manager aliases declared between this line and the administration block would
+	// take it.
 	{"executive assistant", "administration"},
 	{"administrative assistant", "administration"},
 	{"personal assistant", "administration"},
@@ -1054,15 +1122,14 @@ var categoryTable = []aliasEntry{
 	{"технический евангелист", "developer_relations"},
 	// Community management is marketing's, but only once developer relations has had
 	// its say: a "Community Manager, Developer Relations" runs a developer community,
-	// not a brand's social presence. Sits below the DevRel block for that reason and
-	// above the bare "manager" so the unqualified title still resolves.
+	// not a brand's social presence. Sits below the DevRel block for that reason.
 	{"community manager", "marketing"},
 	{"комьюнити-менеджер", "marketing"},
-	// Health, safety and environment. The block sits here, above the bare "manager"
-	// fall-through, because that one line is what the profession was losing to: measured
-	// on prod 2026-09-24, 1,454 live postings carrying an HSE acronym resolved
-	// `management` on the strength of the word "Manager" alone, filing an EHS Manager
-	// beside a Sales Manager. Another 4,515 resolved nothing at all.
+	// Health, safety and environment. The block sat above the bare "manager"
+	// fall-through (since retired), because that one line is what the profession was
+	// losing to: measured on prod 2026-09-24, 1,454 live postings carrying an HSE acronym
+	// resolved `management` on the strength of the word "Manager" alone, filing an EHS
+	// Manager beside a Sales Manager. Another 4,515 resolved nothing at all.
 	//
 	// SOC codes EHS Managers separately from its 19-5011 specialists. This table
 	// deliberately does not: `seniority` is its own facet here, so splitting one
@@ -1091,33 +1158,33 @@ var categoryTable = []aliasEntry{
 	{"functional safety", "industrial_engineering"}, // ISO 26262, automotive and semiconductor
 	{"life safety", "skilled_trades"},               // fire alarm and sprinkler trades
 	{"ai safety", "ml_ai"},                          // alignment research, not a safety department
-	// Protective services. This catalogue has no category for them, so these keep the
-	// blind sentinel — and they are paired with the role noun rather than left bare,
-	// because the bare qualifier blanks titles that answer for themselves: "Public Safety
-	// Dispatcher" (66 live) resolves `logistics` on the strength of `dispatcher`, and
-	// "Public Safety Telecommunicator" and "Public Safety Communications" the same way.
+	// Protective services (SOC 33). They carried the blind sentinel until `public_safety`
+	// existed, and now route to it. They stay paired with the role noun rather than bare,
+	// because the bare qualifier would claim titles that answer for themselves: "Public
+	// Safety Dispatcher" is filed by the emergency-dispatch entries in the public_safety
+	// block, and "Public Safety Communications" the same way.
 	//
 	// The pairs are measured, not enumerated from imagination — every combination below
 	// exists in the live catalogue, and the ones that do not are deliberately absent. A
 	// first pass listed only the `officer` form, which left 27 postings of these same
 	// professions filed under HSE.
-	{"public safety officer", categoryNone},     // 383
-	{"campus safety officer", categoryNone},     // 83
-	{"school safety officer", categoryNone},     // 8
-	{"public safety manager", categoryNone},     // 5
-	{"public safety specialist", categoryNone},  // 4
-	{"public safety coordinator", categoryNone}, // 3
-	{"public safety director", categoryNone},    // 3
-	{"public safety technician", categoryNone},  // 1
-	{"public safety trainer", categoryNone},
-	{"public safety representative", categoryNone},
-	{"campus safety specialist", categoryNone}, // 5
-	{"campus safety supervisor", categoryNone},
-	{"campus safety coordinator", categoryNone},
-	{"campus safety manager", categoryNone},
-	{"campus safety representative", categoryNone},
-	{"campus safety intern", categoryNone},
-	{"pool safety officer", categoryNone},
+	{"public safety officer", "public_safety"},     // 383
+	{"campus safety officer", "public_safety"},     // 83
+	{"school safety officer", "public_safety"},     // 8
+	{"public safety manager", "public_safety"},     // 5
+	{"public safety specialist", "public_safety"},  // 4
+	{"public safety coordinator", "public_safety"}, // 3
+	{"public safety director", "public_safety"},    // 3
+	{"public safety technician", "public_safety"},  // 1
+	{"public safety trainer", "public_safety"},
+	{"public safety representative", "public_safety"},
+	{"campus safety specialist", "public_safety"}, // 5
+	{"campus safety supervisor", "public_safety"},
+	{"campus safety coordinator", "public_safety"},
+	{"campus safety manager", "public_safety"},
+	{"campus safety representative", "public_safety"},
+	{"campus safety intern", "public_safety"},
+	{"pool safety officer", "public_safety"},
 	// Trust & Safety is platform integrity at a consumer-tech employer — the most likely
 	// "safety" collision on an IT job board.
 	//
@@ -1132,13 +1199,13 @@ var categoryTable = []aliasEntry{
 	// What the phrase names is a DOMAIN, not a craft — the live titles span product
 	// managers, software engineers, analytics engineers, compliance, operations,
 	// associates and directors — which is exactly why no single category is true for it
-	// and why only the colliding pairs are listed. Manager and director resolve
-	// `management`, which is what they resolved before this change and is an honest
-	// statement about them; the rest name no category here.
-	{"trust and safety manager", "management"},
-	{"trust & safety manager", "management"}, // 2 + 2 across the two spellings
-	{"trust and safety director", "management"},
-	{"trust & safety director", "management"}, // 2
+	// and why only the colliding pairs are listed. None of them names a category here.
+	// Manager and director resolved `management` until that category was retired; a
+	// director still reaches search through the `role_type` facet (internal/dict/roletype).
+	{"trust and safety manager", categoryNone},
+	{"trust & safety manager", categoryNone}, // 2 + 2 across the two spellings
+	{"trust and safety director", categoryNone},
+	{"trust & safety director", categoryNone}, // 2
 	{"trust and safety specialist", categoryNone},
 	{"trust & safety specialist", categoryNone}, // 14, the most common of these
 	{"trust and safety lead", categoryNone},
@@ -1227,17 +1294,22 @@ var categoryTable = []aliasEntry{
 	// that happens to share a word, and which already resolves correctly elsewhere.
 	{"hse risk", "occupational_safety"},
 	{"safety risk", "occupational_safety"},
-	// Bare "manager" resolves last so a functional prefix wins ("Sales Manager"
-	// → sales, "Operations Manager" → operations, "Finance Manager" → finance); a
-	// manager title with no recognized function falls through to management.
-	{"manager", "management"},
-	{"менеджер", "management"},
-	// There is deliberately NO bare "analyst"/"аналитик" here, and the asymmetry with
-	// the "manager" pair above is the point. Both were written as the same idea — a
-	// title with no recognised function falls through — but "manager" falls through to
-	// `management`, which is non-technical, while "analyst" fell through to
-	// `data_analytics`, which is not: an unrecognised analyst was thereby DECLARED a
-	// technical data role.
+	// There is deliberately NO bare "manager"/"менеджер" and NO bare "analyst"/"аналитик"
+	// here. Both used to be fall-throughs for a title with no recognised function, and
+	// both filed it on the wrong axis.
+	//
+	// "manager" fell through to a `management` category, which held about 6% of the open
+	// catalogue and told a jobseeker nothing about the work: an Assistant Manager at a
+	// burger chain, a Case Manager, a Tax Manager and a Plant Manager in one facet. The
+	// category is retired. A manager title now resolves the CRAFT it names — the
+	// "restaurant/store/plant/tax/... manager" spellings are filed in the managers block
+	// at the end of this table — and whether it manages PEOPLE is the `role_type` facet's
+	// question (internal/dict/roletype), which reaches the generic General Manager and
+	// Assistant Manager titles across every craft. Search keeps a posting either facet
+	// reaches (search.CategoryUnresolved).
+	//
+	// "analyst" fell through to `data_analytics`, which is technical: an unrecognised
+	// analyst was thereby DECLARED a technical data role.
 	//
 	// Measured on the open catalogue on 2026-09-06, that facet held 102,222 postings and
 	// 77,086 of them (75%) carried no data, analytics or BI word at all. 13,748 were
@@ -1366,8 +1438,8 @@ var categoryTable = []aliasEntry{
 	// whole-word, so `software engineer` never occurs inside "Software Engineering
 	// Intern" and that title resolved to nothing while "Software Engineer Intern"
 	// resolved fine — 192 open postings apart on a gerund. It sits AFTER
-	// `engineering manager` far above, so "Software Engineering Manager" stays
-	// management, which is the craft that title actually names.
+	// `engineering manager` far above, which resolves "Software Engineering Manager"
+	// first — to this same category.
 	{"software engineering", "software_engineering"},
 	// The `developer` spelling of the two AI entries below, which had only `engineer`.
 	// "AI Developer" alone was 152 open postings resolving to nothing.
@@ -1738,6 +1810,45 @@ var categoryTable = []aliasEntry{
 	{"busser", "hospitality"},
 	{"kitchen assistant", "hospitality"},
 
+	// PUBLIC SAFETY — the protective services, SOC major group 33: police, sheriffs,
+	// corrections, firefighters, guards, lifeguards and crossing guards. Non-technical
+	// (vocab.NonTechCategories), and the home the guards had lacked: they sat in
+	// `personal_services` beside the barbers, and a "Security Guard" once resolved to
+	// the information-security facet.
+	//
+	// The family is declared in three places, each for a reason. The guard spellings
+	// sit in the security block, beside the information-security spellings they must not
+	// be confused with. The entries here must precede the logistics block, whose bare
+	// "dispatcher" would otherwise take the emergency dispatchers — SOC files those under
+	// 43-5031 with the office clerks, but this table files every other dispatcher by the
+	// field it dispatches for, and a 911 dispatcher dispatches police and fire — and the
+	// healthcare "paramedic", which would otherwise take "Firefighter/Paramedic": that is
+	// a firefighter who also holds the paramedic licence (SOC 33-2011). The lifeguard
+	// keeps the position its old personal_services entry had. Everything else — police,
+	// sheriffs, corrections, loss prevention — is declared at the END of the table,
+	// because those words name the EMPLOYER as often as the job: "Food Service Worker -
+	// Sheriff's Office" is a cook, and "Sheriff's Office Nurse" a nurse.
+	//
+	// Bare "guard" is not an alias at all — the National Guard and the Coast Guard are
+	// military, and SOC 55 has no category here.
+	{"public safety dispatcher", "public_safety"},
+	{"public safety telecommunicator", "public_safety"},
+	{"public safety communications", "public_safety"},
+	{"911 dispatcher", "public_safety"},
+	{"emergency dispatcher", "public_safety"},
+	{"police dispatcher", "public_safety"},
+	{"fire dispatcher", "public_safety"},
+	{"telecommunicator", "public_safety"},
+	{"firefighter", "public_safety"},
+	{"firefighters", "public_safety"},
+	{"fire fighter", "public_safety"},
+	// SOC 33-9092. A lifeguard watches a pool for the swimmer who gets into trouble — a
+	// protective service, not the personal one it was filed under.
+	{"lifeguard", "public_safety"},
+	{"lifeguards", "public_safety"},
+	{"life guard", "public_safety"},
+	{"crossing guard", "public_safety"},
+
 	// The service sectors: the last clusters in the catalogue that have a shape.
 	// LOGISTICS. "Store Driver" is declared in the retail block above — a shop's own
 	// driver stays with the shop — so the bare driver aliases here cannot take it.
@@ -1837,10 +1948,10 @@ var categoryTable = []aliasEntry{
 	{"barber", "personal_services"},
 	{"esthetician", "personal_services"},
 	{"aesthetician", "personal_services"},
-	{"lifeguard", "personal_services"},
-	// The guard entries live UP in the security block, where they have to sit above the
-	// bare "security" alias to take their own titles; declaring them again here would
-	// be dead for `Parse` and, worse, `Categories` would still see the duplicate.
+	// The lifeguard and the security guard are protective service (SOC 33-9092 and
+	// 33-9032) and resolve `public_safety`: the lifeguard in the public_safety block
+	// above, the guard up in the security block, where its entries sit beside the
+	// information-security spellings they must not be confused with.
 	{"janitor", "personal_services"},
 	{"custodian", "personal_services"},
 	{"housekeeper", "personal_services"},
@@ -2096,7 +2207,6 @@ var categoryTable = []aliasEntry{
 	{"faxineiro", "personal_services"},
 	{"zelador", "personal_services"},
 	{"porteiro", "personal_services"},
-	{"vigilante", "personal_services"},
 	{"jardineiro", "personal_services"},
 	{"babá", "personal_services"},
 
@@ -2257,7 +2367,6 @@ var categoryTable = []aliasEntry{
 	{"методист", "education"},
 
 	{"парикмахер", "personal_services"},
-	{"охранник", "personal_services"},
 	{"уборщик", "personal_services"},
 	{"уборщица", "personal_services"},
 	{"сиделка", "personal_services"},
@@ -2304,7 +2413,6 @@ var categoryTable = []aliasEntry{
 	{"дворник", "personal_services"},
 	{"вахтер", "personal_services"},
 	{"вахтёр", "personal_services"},
-	{"сторож", "personal_services"},
 	{"консьерж", "personal_services"},
 	{"няня", "personal_services"},
 	{"маникюрша", "personal_services"},
@@ -2375,8 +2483,8 @@ var categoryTable = []aliasEntry{
 	//
 	// Community and social service (SOC 21). Counsellors and therapists who treat
 	// mental health stay in `healthcare`, where they already resolve. A bare "case
-	// manager" is a nurse as often as a social worker and resolves `management` far
-	// above; only the qualified forms are here.
+	// manager" is a nurse as often as a social worker and resolves nothing; only the
+	// qualified forms are here.
 	{"social worker", "social_services"},
 	{"social workers", "social_services"},
 	{"social work", "social_services"},
@@ -2613,4 +2721,371 @@ var categoryTable = []aliasEntry{
 	{"ajudante de produção", "manufacturing"},
 	{"operador de máquina", "manufacturing"},
 	{"operador de máquinas", "manufacturing"},
+	// Russian production floor, the trudvsem tail: a seamstress (SOC 51-6031).
+	{"швея", "manufacturing"},
+	{"швеи", "manufacturing"},
+
+	// MANAGERS THAT NAME THEIR CRAFT, and the second pass over the uncategorised tail.
+	//
+	// There is no `management` category any more (see the note where the bare "manager"
+	// fall-through used to be). A manager title resolves the craft it manages — a
+	// Restaurant Manager is hospitality, a Plant Manager manufacturing, a Tax Manager
+	// finance — and the `role_type` facet answers whether it manages people. The generic
+	// titles that name no craft ("General Manager", "Assistant Manager", "District
+	// Manager") are deliberately NOT here: no category is true for them, and roletype
+	// marks them people managers, which is what keeps them searchable.
+	//
+	// Declared at the very end, like every block since the IT waves: a title any alias
+	// above resolves keeps its category. Every spelling was measured against a 2% sample
+	// of the open catalogue before it was written down.
+	//
+	// Hospitality.
+	{"restaurant manager", "hospitality"},
+	{"restaurant general manager", "hospitality"},
+	{"kitchen manager", "hospitality"},
+	{"food and beverage manager", "hospitality"},
+	{"food & beverage manager", "hospitality"},
+	{"f&b manager", "hospitality"},
+	{"catering manager", "hospitality"},
+	{"bar manager", "hospitality"},
+	{"hotel manager", "hospitality"},
+	{"laundry attendant", "hospitality"},
+	{"laundry aide", "hospitality"},
+	{"laundry worker", "hospitality"},
+	// The porter. Bare, it is the hotel, restaurant and kitchen porter, which is the
+	// volume; the surname and the beer do not occur as titles. The day porter cleans a
+	// building, and the dealership porter moves cars, so both are pinned first.
+	{"day porter", "personal_services"},
+	{"service porter", "logistics"},
+	{"lot porter", "logistics"},
+	{"dealership porter", "logistics"},
+	{"car porter", "logistics"},
+	{"porter", "hospitality"},
+	{"porters", "hospitality"},
+	{"горничная", "hospitality"},
+	{"горничной", "hospitality"},
+	{"мойщик посуды", "hospitality"},
+	{"мойщица посуды", "hospitality"},
+	{"буфетчик", "hospitality"},
+	{"буфетчица", "hospitality"},
+	{"кастелянша", "hospitality"},
+	{"гардеробщик", "hospitality"},
+	{"гардеробщица", "hospitality"},
+	// Retail. "Store Manager" is also a non-tech title term, so without this entry the
+	// ingest filter would refuse it once the bare "manager" stopped placing it.
+	{"store manager", "retail"},
+	{"shop manager", "retail"},
+	{"retail manager", "retail"},
+	{"retail assistant manager", "retail"},
+	// German retail. The gender forms are separate words; "/in", "*in" and "(m/w/d)"
+	// are word boundaries and need nothing. An apprenticeship names the role it trains
+	// for ("Ausbildung Kaufmann im Einzelhandel"), so it resolves through the role;
+	// "Ausbildung" itself is never an alias, nor "Initiativbewerbung", which names no
+	// role at all. A Filialleiter runs a store of a chain — at Aldi, Lidl and dm, the
+	// boards that carry the title — and is filed with the store, as "store manager" is.
+	{"verkäufer", "retail"},
+	{"verkäuferin", "retail"},
+	{"fachverkäufer", "retail"},
+	{"fachverkäuferin", "retail"},
+	{"kaufmann im einzelhandel", "retail"},
+	{"kauffrau im einzelhandel", "retail"},
+	{"kaufleute im einzelhandel", "retail"},
+	{"einzelhandelskaufmann", "retail"},
+	{"einzelhandelskauffrau", "retail"},
+	{"kassierer", "retail"},
+	{"kassiererin", "retail"},
+	{"filialleiter", "retail"},
+	{"filialleiterin", "retail"},
+	{"filialleitung", "retail"},
+	{"handelsfachwirt", "retail"},
+	{"handelsfachwirtin", "retail"},
+	{"mitarbeiter verkauf", "retail"},
+	{"mitarbeiterin verkauf", "retail"},
+	{"verkaufsmitarbeiter", "retail"},
+	{"verkaufsmitarbeiterin", "retail"},
+	// Manufacturing. A live event's production manager runs a show, not a line, and is
+	// filed with the events the marketing block already holds.
+	{"event production manager", "marketing"},
+	{"events production manager", "marketing"},
+	{"plant manager", "manufacturing"},
+	{"production manager", "manufacturing"},
+	{"manufacturing manager", "manufacturing"},
+	// Quality management runs the plant's quality system (ISO 9001), the function a
+	// "Quality Engineer" already sits in, so it is filed there rather than on the floor.
+	{"quality manager", "industrial_engineering"},
+	// The cost estimator is the US twin of the quantity surveyor, which this table files
+	// as industrial engineering. The collision and body-shop estimator prices a car
+	// repair and stays with the auto-body trade.
+	{"collision estimator", "skilled_trades"},
+	{"collision repair estimator", "skilled_trades"},
+	{"body shop estimator", "skilled_trades"},
+	{"estimator", "industrial_engineering"},
+	{"estimators", "industrial_engineering"},
+	// Construction. The construction and site manager and the superintendent run the
+	// trades on one site, so they are filed with the trades, as one construction market.
+	// A school district's superintendent is its chief executive and is education; a
+	// ship's marine superintendent is shipping.
+	{"construction manager", "skilled_trades"},
+	{"site manager", "skilled_trades"},
+	{"maintenance manager", "skilled_trades"},
+	{"superintendent of schools", "education"},
+	{"school superintendent", "education"},
+	{"assistant superintendent of", "education"},
+	{"assistant superintendent for", "education"},
+	{"marine superintendent", "logistics"},
+	{"superintendent", "skilled_trades"},
+	{"superintendents", "skilled_trades"},
+	{"котельной", "skilled_trades"}, // "оператор (газовой) котельной", the boiler room
+	{"монтер пути", "skilled_trades"},
+	{"монтёр пути", "skilled_trades"},
+	{"дорожный рабочий", "skilled_trades"},
+	// Logistics.
+	{"supply chain manager", "logistics"},
+	{"fleet manager", "logistics"},
+	{"logistics manager", "logistics"},
+	{"warehouse manager", "logistics"},
+	{"air traffic controller", "logistics"},
+	{"inventory controller", "logistics"},
+	{"stock controller", "logistics"},
+	{"materials controller", "logistics"},
+	{"логист", "logistics"},
+	{"логистике", "logistics"},
+	// "Диспетчер" files with the English "dispatcher": the transport and production
+	// dispatcher is the volume. The emergency dispatcher ("ЕДДС", the unified duty
+	// dispatch service, and "пожарной связи", the fire line) is public safety, and a
+	// university's scheduling clerk is administration; both are pinned first.
+	{"еддс", "public_safety"},
+	{"пожарной связи", "public_safety"},
+	{"диспетчер факультета", "administration"},
+	{"диспетчер", "logistics"},
+	// Finance. "Controller" bare is the financial controller in every language this
+	// catalogue carries ("Assistant Controller", "Plant Controller", "Controller
+	// (m/w/d)"); the controllers of documents, stock and air traffic are pinned above
+	// and below by what they control.
+	{"tax manager", "finance"},
+	{"tax senior manager", "finance"},
+	{"relationship manager", "finance"},
+	{"document controller", "administration"},
+	{"quality controller", "manufacturing"},
+	{"process controller", "manufacturing"},
+	{"operations controller", "operations"},
+	{"flight controller", categoryNone},
+	{"plc controller", "industrial_engineering"},
+	{"controller", "finance"},
+	{"controllers", "finance"},
+	{"экономист", "finance"},
+	// Healthcare. A practice manager runs a medical, dental or veterinary practice.
+	{"practice manager", "healthcare"},
+	{"medical case manager", "healthcare"},
+	{"psychiatrist", "healthcare"},
+	{"psychiatric", "healthcare"},
+	{"фармацевт", "healthcare"},
+	{"провизор", "healthcare"},
+	{"рентгенолаборант", "healthcare"},
+	{"лечебной физкультуре", "healthcare"},
+	{"медицинский статистик", "healthcare"},
+	// A clinical psychologist treats patients and is healthcare. The unqualified
+	// psychologist is filed with social work, as ISCO-08 does (2634 beside 2635 in
+	// "social and religious professionals"): in the Russian public sector the title is
+	// the social-services and education psychologist far more often than the clinic's.
+	{"медицинский психолог", "healthcare"},
+	{"клинический психолог", "healthcare"},
+	{"психолог", "social_services"},
+	// Education. SOC files the librarian with education (25-4022, Educational
+	// Instruction and Library Occupations).
+	{"тьютор", "education"},
+	{"музыкальный руководитель", "education"},
+	{"мастер производственного обучения", "education"},
+	{"библиотекарь", "education"},
+	{"librarian", "education"},
+	// Science: the agronomist is a soil and plant scientist (SOC 19-1013), as the English
+	// "agronomist" already is, and the zootechnician an animal scientist (19-1011). The
+	// livestock worker, "животновод", is a farmworker (SOC 45) and has no category here.
+	{"агроном", "science"},
+	{"зоотехник", "science"},
+	// HR, administration, operations.
+	{"специалист по кадрам", "hr"},
+	{"инспектор по кадрам", "hr"},
+	{"hr-менеджер", "hr"},
+	{"office coordinator", "administration"},
+	{"заведующий хозяйством", "administration"},
+	{"заведующая хозяйством", "administration"},
+	{"завхоз", "administration"},
+	{"buyer", "operations"},
+	{"buyers", "operations"},
+	{"закупкам", "operations"},
+	{"госзакупкам", "operations"},
+	{"менеджер по мто", "operations"},
+	// The rest of the Russian "менеджер ..." compounds the bare "менеджер" used to file.
+	{"менеджер проектов", "project_management"},
+	{"менеджер проекта", "project_management"},
+	{"pr-менеджер", "marketing"},
+	{"продаже", "sales"},
+	{"ключевыми клиентами", "sales"},
+	{"территориальный менеджер", "sales"},
+	// Sales: the territory manager is a field-sales seat ("Territory Business Manager"
+	// in pharma). The area and district manager is NOT — in this catalogue it is a
+	// retail or restaurant chain's multi-unit operator — so it has no category and
+	// reaches search through role_type.
+	{"territory manager", "sales"},
+	{"territory business manager", "sales"},
+	// IT: the manager of a company's IT estate, beside "it administrator".
+	{"it manager", "devops"},
+	// Personal services. A groundskeeper is personal and facility services here, so the
+	// Russian green-space worker is filed with it, and the culture organiser is a
+	// recreation worker (SOC 39-9032).
+	{"рабочий зеленого хозяйства", "personal_services"},
+	{"рабочий зелёного хозяйства", "personal_services"},
+	{"культорганизатор", "personal_services"},
+
+	// The functional managers: a manager title whose craft is a business function the
+	// table already files. Each was the residue of the retired fall-through in volume,
+	// and each names its function as surely as "Finance Manager" always did.
+	{"portfolio manager", "finance"},
+	{"risk manager", "finance"},
+	{"credit manager", "finance"},
+	{"it audit manager", "security"},
+	{"audit manager", "finance"},
+	{"internal audit", "finance"},
+	{"investor relations", "finance"},
+	{"underwriting", "finance"},
+	{"f&i manager", "finance"},
+	{"finance and insurance manager", "finance"},
+	{"finance & insurance manager", "finance"},
+	{"people & culture", "hr"},
+	{"people and culture", "hr"},
+	{"commercial manager", "sales"},
+	{"partnerships manager", "sales"},
+	{"partnership manager", "sales"},
+	{"partner manager", "sales"},
+	{"bid manager", "sales"},
+	{"proposal manager", "sales"},
+	{"partner success manager", "customer_success"},
+	{"success manager", "customer_success"},
+	{"implementation manager", "customer_success"},
+	{"growth manager", "marketing"},
+	{"affiliate manager", "marketing"},
+	{"communications manager", "marketing"},
+	{"category manager", "operations"},
+	{"sourcing manager", "operations"},
+	{"strategic sourcing", "operations"},
+	{"commodity manager", "operations"},
+	{"operation manager", "operations"},
+	{"facility manager", "operations"},
+	{"administrative manager", "administration"},
+	{"administration manager", "administration"},
+	{"training manager", "hr"},
+	{"compensation manager", "hr"},
+	{"employee relations", "hr"},
+	{"labor relations", "hr"},
+	{"labour relations", "hr"},
+	{"industrial relations", "hr"},
+	{"human resource", "hr"},
+	{"analytics manager", "data_analytics"},
+	{"release manager", "devops"},
+	{"bim manager", "engineering_design"},
+	{"continuous improvement", "industrial_engineering"},
+	{"commissioning manager", "industrial_engineering"},
+	{"cost manager", "industrial_engineering"},
+	{"environmental manager", "occupational_safety"},
+	{"eh&s", "occupational_safety"},
+	{"quality control manager", "manufacturing"},
+	{"project controls", "project_management"},
+	{"preconstruction", "skilled_trades"},
+	{"distribution manager", "logistics"},
+	{"inventory manager", "logistics"},
+	{"materials manager", "logistics"},
+	{"material manager", "logistics"},
+	{"care manager", "healthcare"},
+	{"clinical manager", "healthcare"},
+	{"clinic manager", "healthcare"},
+	{"pharmacy manager", "healthcare"},
+	{"laboratory manager", "science"},
+	{"lab manager", "science"},
+	{"deli manager", "retail"},
+	{"bakery manager", "retail"},
+	{"meat manager", "retail"},
+	{"produce manager", "retail"},
+	{"perishable manager", "retail"},
+	{"perishables manager", "retail"},
+	{"beverage manager", "hospitality"},
+	{"cafe manager", "hospitality"},
+	{"café manager", "hospitality"},
+	{"reservations manager", "hospitality"},
+	{"spa manager", "personal_services"},
+	{"fitness manager", "personal_services"},
+	// Film and television: the post-production manager is the media craft, not the plant.
+	{"post production", "creative"},
+	{"post-production", "creative"},
+	{"менеджер (в торговле)", "retail"},
+	{"менеджер в торговле", "retail"},
+	{"в коммерческой деятельности", "sales"},
+	{"категорийный менеджер", "operations"},
+
+	// PUBLIC SAFETY, the rest of the family (see its first block, above logistics). These
+	// words name the employer as often as the job, so they reach only a title that
+	// named no craft at all.
+	{"police", "public_safety"},
+	{"sheriff", "public_safety"},
+	{"correctional officer", "public_safety"},
+	{"corrections officer", "public_safety"},
+	{"correctional sergeant", "public_safety"},
+	{"correctional lieutenant", "public_safety"},
+	{"correctional captain", "public_safety"},
+	{"corrections sergeant", "public_safety"},
+	{"corrections lieutenant", "public_safety"},
+	{"corrections captain", "public_safety"},
+	{"corrections deputy", "public_safety"},
+	{"detention officer", "public_safety"},
+	{"detention deputy", "public_safety"},
+	{"jailer", "public_safety"},
+	{"bailiff", "public_safety"},
+	{"deputy marshal", "public_safety"},
+	{"fire marshal", "public_safety"},
+	{"patrol officer", "public_safety"},
+	// Retail loss prevention is store security (SOC 33-9021/33-9032). The data-loss
+	// prevention discipline is information security and is pinned first.
+	{"data loss prevention", "security"},
+	{"loss prevention", "public_safety"},
+	{"asset protection", "public_safety"},
+	{"охранник", "public_safety"},
+	{"охранница", "public_safety"},
+	{"сторож", "public_safety"},
+	{"вохр", "public_safety"},
+	{"полицейский", "public_safety"},
+	{"сотрудник полиции", "public_safety"},
+	{"участковый уполномоченный", "public_safety"},
+	{"инспектор дпс", "public_safety"},
+	{"следователь", "public_safety"},
+	{"дознаватель", "public_safety"},
+	{"пожарный", "public_safety"},
+	{"пожарной части", "public_safety"},
+	{"пожарной команды", "public_safety"},
+	{"спасатель", "public_safety"},
+	{"sicherheitsmitarbeiter", "public_safety"},
+	{"sicherheitsmitarbeiterin", "public_safety"},
+	{"sicherheitsdienst", "public_safety"},
+	{"schutz und sicherheit", "public_safety"},
+	{"objektschutz", "public_safety"},
+	{"werkschutz", "public_safety"},
+	{"polizist", "public_safety"},
+	{"polizistin", "public_safety"},
+	{"polizeibeamter", "public_safety"},
+	{"polizeibeamtin", "public_safety"},
+	{"polizeivollzugsbeamter", "public_safety"},
+	{"polizeivollzugsbeamtin", "public_safety"},
+	{"feuerwehrmann", "public_safety"},
+	{"feuerwehrfrau", "public_safety"},
+	{"berufsfeuerwehr", "public_safety"},
+	{"werkfeuerwehr", "public_safety"},
+	{"brandmeister", "public_safety"},
+	// Brazilian Portuguese: "vigilante" is the security guard; "porteiro", the doorman,
+	// stays with the personal services.
+	{"vigilante", "public_safety"},
+
+	// The ВОХР armed guard (see the public_safety block), declared last behind the pin
+	// for the military contract posting that also names a rifleman: SOC 55 has no
+	// category here, and the pin only reaches a title nothing above resolved.
+	{"военнослужащий", categoryNone},
+	{"стрелок", "public_safety"},
 }

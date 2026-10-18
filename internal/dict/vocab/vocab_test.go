@@ -86,7 +86,7 @@ func TestConsumerCategoriesAreNonTech(t *testing.T) {
 	for _, c := range []string{
 		"healthcare", "skilled_trades", "retail", "hospitality",
 		"logistics", "education", "personal_services", "administration",
-		"social_services", "science", "manufacturing",
+		"social_services", "science", "manufacturing", "public_safety",
 	} {
 		if !slices.Contains(CategoryValues, c) {
 			t.Errorf("CategoryValues must contain %q", c)
@@ -201,6 +201,18 @@ func TestSurveyVocabulariesAreCanonical(t *testing.T) {
 		}
 		if len(values) == 0 {
 			t.Errorf("%s is empty", name)
+		}
+	}
+}
+
+// The retired category must not come back by accident: a value in CategoryValues is
+// offered to the LLM, the web picker and the search-intent schema.
+func TestManagementIsRetired(t *testing.T) {
+	for name, set := range map[string][]string{
+		"CategoryValues": CategoryValues, "NonTechCategories": NonTechCategories, "TechCategories": TechCategories,
+	} {
+		if slices.Contains(set, RetiredCategoryManagement) {
+			t.Errorf("%s still holds the retired %q", name, RetiredCategoryManagement)
 		}
 	}
 }
