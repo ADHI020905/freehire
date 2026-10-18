@@ -591,6 +591,15 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["humanbit"] = NewHumanBit(NewLongTimeoutClient())
 	}
+	// Jobboardly: hosted niche job boards, board = tenant subdomain. A board's whole catalogue
+	// is one unpaginated /jobs.json rendered on request, and the largest board measured
+	// (remotejobs: 1,723 postings, 31 MB) took ~28s to its first byte — past the standard 15s
+	// client timeout, the HumanBit case again. See jobboardly.go.
+	if c == nil {
+		registry["jobboardly"] = NewJobboardly(nil)
+	} else {
+		registry["jobboardly"] = NewJobboardly(NewLongTimeoutClient())
+	}
 	// meta/uber/gusto are NOT served by the shared client: Meta's edge 400s the default Go
 	// TLS+HTTP/2 fingerprint and Uber's and Gusto's Cloudflare edges challenge it, so all three
 	// need the shared Chrome-fingerprint transport (fingerprintHTTP, also used by the

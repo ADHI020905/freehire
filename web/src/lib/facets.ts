@@ -390,6 +390,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   eploy: 'Eploy',
   hiringroom: 'HiringRoom',
   pythonorg: 'Python.org',
+  jobboardly: 'Job Boardly',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),
