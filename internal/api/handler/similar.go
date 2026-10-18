@@ -27,9 +27,9 @@ const (
 // view...]} — neighbours carry public_slug and never the internal id.
 //
 // similar_job_ids is nearest-first but was computed at backfill time: a listed
-// neighbour may have closed since, or (rarely) been hard-deleted by cmd/prune,
+// neighbour may have closed since, or (rarely) been hard-deleted,
 // leaving a dangling id the FK reference no longer covers because the id sits in
-// another job's array column, not in a row cmd/prune itself touches. Both cases
+// another job's array column, not in a row the delete itself touches. Both cases
 // are tolerated silently — the id is just dropped, not treated as an error — and
 // the nearest-first order is preserved across the drop by re-sorting the fetched
 // rows to the original id order rather than trusting GetJobsByIDs' own order,

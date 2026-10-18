@@ -142,7 +142,7 @@ func TestCommunityFeedResolvesSubjects(t *testing.T) {
 		}
 	})
 
-	// No FK binds a thread to its subject, and cmd/prune hard-deletes jobs. The thread
+	// No FK binds a thread to its subject, and jobs can be hard-deleted. The thread
 	// must survive in the feed with an unresolved name; an INNER JOIN would drop it.
 	t.Run("thread outlives a deleted subject", func(t *testing.T) {
 		if _, err := pool.Exec(ctx, `DELETE FROM jobs WHERE public_slug = 'senior-go-engineer-eng-1'`); err != nil {

@@ -181,7 +181,7 @@ func seedReply(t *testing.T, q *Queries, userID, jobID int64, extID string) int6
 	return id
 }
 
-// cmd/prune is the only hard-delete path for jobs, and application_events.job_id is
+// A job can be hard-deleted, and application_events.job_id is
 // ON DELETE SET NULL — so a removal must not change what the rollup says about the
 // employer. The denominator already survives: company_slug is denormalized onto every
 // event. The numerator is the half at risk, because the reply is matched back to its

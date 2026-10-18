@@ -64,8 +64,8 @@ var ErrInvalidRange = errors.New("invalid range")
 // precisely so a growing vocabulary is not a change to a table that must not change, and
 // a reader that enumerated today's kinds would put that cost back.
 //
-// The optional fields are zero when absent: an application whose posting cmd/prune has
-// removed has no JobSlug, an event the candidate recorded has no message, and a message
+// The optional fields are zero when absent: an application whose posting was
+// deleted has no JobSlug, an event the candidate recorded has no message, and a message
 // the candidate deleted lends neither EmailID nor EmailSubject while the event stands.
 type Event struct {
 	ID     int64

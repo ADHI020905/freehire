@@ -226,7 +226,7 @@ type Querier interface {
 	// user_jobs. See migrations/0064_applications.sql for why it is a table of its own.
 	// Point one batch of pre-existing ledger events at the application they belong to.
 	// Every event recorded before this change names a posting and no application, and left
-	// that way it stays correlated through job_id — the reference cmd/prune clears.
+	// that way it stays correlated through job_id — the reference deleting a posting clears.
 	//
 	// Matched on (user_id, job_id) because that is the only identity those rows have. It is
 	// exactly the correlation being retired, and it is sound here and nowhere else: this pass
@@ -266,7 +266,7 @@ type Querier interface {
 	//
 	// Closed rows are seeded too, deliberately. The passes only consider open rows, so nothing would
 	// ever seed a closed row's columns — and then the first statement to touch any marker column on it
-	// would fire the derivation and silently clear a duplicate_of that prune still walks.
+	// would fire the derivation and silently clear its duplicate_of.
 	//
 	// The "no owned column set yet" predicate is what makes re-runs free, and it is also the reconcile
 	// sweep: a row written between this chunk passing its range and the trigger existing still matches,
@@ -1062,21 +1062,6 @@ type Querier interface {
 	// (ties broken by value), serving the searchable option list for the subindustry facet.
 	// Counts are unconditional — they do not reflect other active list filters.
 	CompanySubindustries(ctx context.Context) ([]CompanySubindustriesRow, error)
-	// Whether each company has EVER shown technical evidence, over its entire history
-	// including closed and duplicate rows. "This company never posts anything technical"
-	// is the premise of the company-scoped pruning rules, and it has to rest on the
-	// maximum available evidence — restricting it to open jobs would let a company whose
-	// one engineering role closed last month read as having none.
-	//
-	// any_skills is the weaker second signal: the skill dictionary firing on a description
-	// means the posting had technical content even when neither the title nor the category
-	// resolved. A company with neither signal has shown nothing technical at all.
-	// Postings with no company are excluded: they would otherwise pool into one
-	// pseudo-company per source whose combined evidence then decides every one of them.
-	//
-	// This is an uncapped full-table GROUP BY over the whole jobs table, returning a row
-	// per company. It is computed once per prune run, not per batch.
-	CompanyTechEvidence(ctx context.Context) ([]CompanyTechEvidenceRow, error)
 	// Drop the entries for removals that landed. Deleting a document that was never indexed is
 	// a no-op in Meilisearch, so "landed" includes the common case where the job had no document
 	// to begin with — there is nothing to distinguish and nothing to retry.
@@ -1135,8 +1120,7 @@ type Querier interface {
 	CountCatalogueScale(ctx context.Context) (CountCatalogueScaleRow, error)
 	// What CloseChronicBoardJobs would close, for the safety-net worker's dry-run report — same
 	// predicate (including the board_health re-validation, so a dry run cannot report a count for
-	// a board that has already recovered), no write, mirroring CountExpiredTracerClicks alongside
-	// DeleteExpiredTracerClicks.
+	// a board that has already recovered), no write.
 	CountChronicBoardJobs(ctx context.Context, arg CountChronicBoardJobsParams) (int64, error)
 	// What CloseChronicProviderJobs would close, for the safety-net worker's dry-run report. Same
 	// board_health re-validation as its close counterpart.
@@ -1174,9 +1158,6 @@ type Querier interface {
 	// What CloseEmptyFeedProviderJobs would close, for the safety-net worker's dry-run report.
 	// Same board_health re-validation as its close counterpart.
 	CountEmptyFeedProviderJobs(ctx context.Context, arg CountEmptyFeedProviderJobsParams) (int64, error)
-	// What the retention sweep would remove. cmd/prune reports before it deletes, and a dry run that
-	// cannot say a number is not a report.
-	CountExpiredTracerClicks(ctx context.Context, maxAge pgtype.Interval) (int64, error)
 	// How many claims this account has filed since a cutoff, for the daily cap. Counts
 	// retracted rows too: filing and withdrawing in a loop is exactly the pattern the cap
 	// exists to bound, so forgiving it would leave the cap trivially bypassable.
@@ -1213,8 +1194,8 @@ type Querier interface {
 	// subject so it stays cheap (not the cross-subject count the design rules out).
 	CountOpenThreadsBySubject(ctx context.Context, arg CountOpenThreadsBySubjectParams) (int64, error)
 	// How many of the caller's applications have no posting left — see
-	// ListOrphanedApplications. CountUserJobs is driven entirely FROM user_jobs, which
-	// cmd/prune cascades away for a pruned posting, so it never counts these; this is added
+	// ListOrphanedApplications. CountUserJobs is driven entirely FROM user_jobs, whose
+	// rows cascade away with a deleted posting, so it never counts these; this is added
 	// to its "all"/"applied"/"board" totals by the caller.
 	CountOrphanedApplications(ctx context.Context, userID int64) (int64, error)
 	// How many new reviews (new company, or a new category on an already-reviewed
@@ -1278,7 +1259,7 @@ type Querier interface {
 	CreateAssistantSession(ctx context.Context, arg CreateAssistantSessionParams) (CreateAssistantSessionRow, error)
 	// Insert a new CV for a user. data is the sanitized structured document (JSON). This is the
 	// user's own CV, not a copy made for a vacancy, so is_tailored is stated false rather than left to
-	// be inferred from a NULL job_id — an absence cmd/prune also produces. Users may own several of
+	// be inferred from a NULL job_id — an absence deleting the vacancy also produces. Users may own several of
 	// these. Returns the metadata the list and detail responses need.
 	CreateCV(ctx context.Context, arg CreateCVParams) (CreateCVRow, error)
 	CreateExperienceEmployment(ctx context.Context, arg CreateExperienceEmploymentParams) (CreateExperienceEmploymentRow, error)
@@ -1358,7 +1339,7 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	// Insert a CV bound to a vacancy (job_id set) — the per-vacancy tailored copy. data is the
 	// sanitized document copied from the base CV. is_tailored is stated, not inferred: if this vacancy
-	// is ever pruned the row loses its job_id, and the flag is what keeps it a tailored copy instead of
+	// is ever deleted the row loses its job_id, and the flag is what keeps it a tailored copy instead of
 	// joining the pool the base is chosen from. Returns the metadata the detail response needs.
 	CreateTailoredCV(ctx context.Context, arg CreateTailoredCVParams) (CreateTailoredCVRow, error)
 	// Register a new account. email is stored as given (the handler lowercases it);
@@ -1503,8 +1484,8 @@ type Querier interface {
 	// Housekeeping: drop dead-lettered entries older than the cutoff.
 	//
 	// Note what this does NOT reap: entries whose job row is gone. For search_outbox that is
-	// garbage, since a vanished job cannot be indexed. Here it is the whole point — cmd/prune
-	// hard-deletes jobs, and their documents still have to leave the index.
+	// garbage, since a vanished job cannot be indexed. Here it is the whole point — a
+	// hard-deleted job's document still has to leave the index.
 	//
 	// **It has no Go caller, and that is the decision, not an oversight.** No outbox in this
 	// repository reaps its dead letters — there is no DeleteDead… for search_outbox,
@@ -1516,13 +1497,14 @@ type Querier interface {
 	//
 	// What it would ALSO not fix: every enqueue is `ON CONFLICT (job_id) DO NOTHING` against
 	// a UNIQUE key, so while a dead-lettered entry sits here that posting cannot be re-queued
-	// for removal — not by a later close, and not by cmd/prune's hard delete. Deleting the
+	// for removal — not by a later close, and not by a hard delete. Deleting the
 	// entry would re-open that door only for a posting something closes AGAIN, which a
 	// closed posting is not. The bounded harm is the reason this is left as it stands: a
 	// full `make reindex` streams only OPEN jobs into the fresh index, so the stale document
 	// leaves on the next scheduled rebuild regardless. Re-arming the row (an `ON CONFLICT …
 	// DO UPDATE` that clears failed_at where it is set) is the fix if the gauge ever shows
-	// this happening; it is ten identical CTEs across jobs.sql and pruning.sql, and worth
+	// this happening; it is the identical CTE in the closing queries in jobs.sql (all but
+	// CloseMisattributedSourceJobs, which queues nothing on purpose), and worth
 	// doing on evidence rather than on the strength of the reading above.
 	DeleteDeadSearchDeleteOutbox(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error)
 	// Void a debit taken as a RESERVATION for work that then produced nothing.
@@ -1554,9 +1536,8 @@ type Querier interface {
 	// Remove an owned employment; its atoms go with it (ON DELETE CASCADE) because they are
 	// evidence OF that role. Returns 0 affected rows for a foreign or missing id.
 	DeleteExperienceEmployment(ctx context.Context, arg DeleteExperienceEmploymentParams) (int64, error)
-	// The 180-day retention sweep, run by cmd/prune — the repository's single hard-delete path. The
-	// tokens themselves are kept: an old PDF must keep redirecting even once the clicks behind it have
-	// aged out.
+	// The 180-day retention sweep, run daily by cmd/sweep-tracer-clicks. The tokens themselves are
+	// kept: an old PDF must keep redirecting even once the clicks behind it have aged out.
 	DeleteExpiredTracerClicks(ctx context.Context, maxAge pgtype.Interval) (int64, error)
 	DeleteGmailConnection(ctx context.Context, userID int64) error
 	// Reap live entries ClaimEnrichmentBatch can never take: their job has closed, become a
@@ -1646,7 +1627,7 @@ type Querier interface {
 	// upsert); the closed-job path issues ONE call for its whole batch alone, actually
 	// mirroring ClearSemanticEmbeddedBatch's own batched round-trip shape, not just its
 	// clear semantics. ON DELETE CASCADE from jobs already covers a hard delete
-	// (cmd/prune) — this query is for the two soft paths cascade doesn't reach.
+	// — this query is for the two soft paths cascade doesn't reach.
 	DeleteJobSemanticChunks(ctx context.Context, jobIds []int64) error
 	DeleteMailbox(ctx context.Context, userID int64) error
 	// The mentor_id guard scopes the delete to the owner's own schedule.
@@ -2255,8 +2236,8 @@ type Querier interface {
 	// The user's base CV — their non-tailored résumé. Used as the seed source when tailoring;
 	// returns no row when the user has only tailored CVs or none at all (the caller then seeds a base
 	// from the extracted résumé), INCLUDING when their only vacancy-less CV is a tailored copy whose
-	// vacancy was pruned. Excluding on is_tailored rather than requiring `job_id IS NULL` is the whole
-	// point: the absence of a vacancy link is something cmd/prune creates, so it cannot mean "not
+	// vacancy was deleted. Excluding on is_tailored rather than requiring `job_id IS NULL` is the whole
+	// point: the absence of a vacancy link is something deleting a vacancy creates, so it cannot mean "not
 	// tailored".
 	//
 	// "The base" stays a derived notion — the most recently edited non-tailored CV. Users may own
@@ -2428,7 +2409,7 @@ type Querier interface {
 	// The remaining five mirror event-total semantics from their own tables:
 	// cvs_uploaded is the count of users holding a stored résumé (one per user, so also a
 	// people count); cvs_tailored counts CVs created as a per-vacancy copy, read off the
-	// is_tailored flag rather than job_id — cmd/prune nulls the link (0058); match_analyses
+	// is_tailored flag rather than job_id — deleting a vacancy nulls the link (0058); match_analyses
 	// is every Analyze-match run, and since user_job_analysis is keyed (user_id, job_id)
 	// that is a count of distinct candidate×vacancy matches, not of recomputes;
 	// inboxes_connected adds the live Gmail grants to the claimed hosted mailboxes (both are
@@ -3055,8 +3036,7 @@ type Querier interface {
 	// arrays FLATTENED across the whole batch (one element per chunk, not per job — a job
 	// contributing 3 chunks repeats its id 3 times at the matching offsets) — unnested
 	// separately and rejoined WITH ORDINALITY because sqlc cannot infer the types of a
-	// multi-argument unnest over query parameters (same pattern as pruning.sql's bulk job
-	// delete/archive). embeddings travels as vector literal TEXT (e.g. "[0.1,0.2,...]"),
+	// multi-argument unnest over query parameters. embeddings travels as vector literal TEXT (e.g. "[0.1,0.2,...]"),
 	// not a native vector(768)[] array: pgx's driver.Valuer/sql.Scanner fallback for
 	// pgvector.Vector (this repo registers no custom OID codec for it) only covers a
 	// single scalar column value, not an array of them, so each element casts to
@@ -3327,7 +3307,7 @@ type Querier interface {
 	// see they made.
 	//
 	// The employer is taken from the event's own denormalized slug, never through the posting.
-	// cmd/prune clears job_id, and an event that had to join jobs for its company would drop
+	// Deleting a posting clears job_id, and an event that had to join jobs for its company would drop
 	// out of the range retroactively — the instability the ledger exists to remove. The
 	// posting is joined only for the slug the SPA links with, and legitimately comes back
 	// absent.
@@ -4128,10 +4108,6 @@ type Querier interface {
 	// The tier check mirrors plan.TierOf's own rule directly rather than calling it: free
 	// is "neither until reaches past now", and a NULL until reads the same as a past one.
 	ListLimitHitUsersMissingNudgeEmail(ctx context.Context, arg ListLimitHitUsersMissingNudgeEmailParams) ([]ListLimitHitUsersMissingNudgeEmailRow, error)
-	// Every board a crawl still visits, across all providers — the identity cmd/prune needs
-	// to decide whether a posting is re-crawlable. Only (provider, board, region), not the
-	// whole row: the guard asks a set-membership question and nothing else.
-	ListLiveBoards(ctx context.Context) ([]ListLiveBoardsRow, error)
 	// Id-only projection of ListLiveJobsByIDAfter, for the same corruption-degrade path
 	// ListJobIDsAfter serves. The predicate must match its wide sibling exactly: a
 	// degraded re-read that scanned a different window would skip rows silently.
@@ -4257,13 +4233,13 @@ type Querier interface {
 	ListOpenThreadsFirst(ctx context.Context, arg ListOpenThreadsFirstParams) ([]ListOpenThreadsFirstRow, error)
 	// The caller's applications whose posting the catalogue no longer holds.
 	//
-	// Deliberately joins nothing: cmd/prune cleared job_id, so there is no posting to reach
+	// Deliberately joins nothing: the posting's deletion cleared job_id, so there is no posting to reach
 	// and sqlc.embed over a LEFT JOIN would generate a non-pointer Job that fails at scan
 	// time on the NULL columns (measured). The employer and role title are on the record
 	// itself, which is the whole reason they were copied there.
 	//
 	// The board reads these alongside the posting-backed rows and merges the two; they are
-	// few by nature — one appears only when a posting a candidate applied to is pruned.
+	// few by nature — one appears only when a posting a candidate applied to is deleted.
 	//
 	// Takes OFFSET as well as LIMIT so a caller paging the merged board (ListInteractions)
 	// can advance past the first page of orphans instead of re-reading the same top-N rows
@@ -4361,8 +4337,8 @@ type Querier interface {
 	// can multiply a thread row.
 	//
 	// LEFT, like the persona join above and for the same reason: there is no FK from a
-	// thread to its subject (by design — see migration 0038), and cmd/prune hard-deletes
-	// jobs, so a thread can outlive its subject. An INNER JOIN would drop it from the feed
+	// thread to its subject (by design — see migration 0038), and a job can be
+	// hard-deleted, so a thread can outlive its subject. An INNER JOIN would drop it from the feed
 	// instead of showing it with an unresolved subject.
 	ListRecentOpenThreadsFirst(ctx context.Context, limit int32) ([]ListRecentOpenThreadsFirstRow, error)
 	// The "my offers" list: one member's offers with moderation status, newest first.
@@ -5146,28 +5122,6 @@ type Querier interface {
 	// is disk-bound, so a once-a-minute scan of that size is exactly the thing it forbids.
 	// The same measurement here reads 97k rows in 54ms.
 	ProviderIngestHealth(ctx context.Context) ([]ProviderIngestHealthRow, error)
-	// One keyset page of rows the prune rule evaluates, ordered by id.
-	//
-	// Closed rows are included deliberately. Once ingest rejects a board's non-technical
-	// postings, the 48-hour unseen sweep closes the ones already in the catalogue — so a
-	// scan restricted to open jobs would leave exactly the rows the campaign is about to
-	// stop replacing, permanently. Duplicates are included too: one may match a rule while
-	// its canonical does not, and nothing references a duplicate, so removing it alone is
-	// safe.
-	//
-	// external_id carries the board: the write path namespaces it as "<board>:<native id>",
-	// and the board is what the source files are keyed on. Matching on it is exact, where
-	// matching on company_slug is not — many adapters take the company name from the
-	// posting payload rather than the board entry, so the two spellings diverge.
-	// skills comes back whole rather than as a cardinality test: whether a posting is
-	// technical depends on WHICH skills it carries, and only skilltag knows that. The
-	// dictionary covers the recruiting, HR, finance, legal and operations craft a technical
-	// company hires for, so "has any skill" answers a different question than the caller
-	// is asking.
-	// closed_reason comes along because one rule acts on the CLOSURE rather than on the
-	// posting: a row the source filed under the wrong employer carries its own label, and
-	// the right employer was never stored, so nothing about the posting could reveal it.
-	PruneCandidates(ctx context.Context, arg PruneCandidatesParams) ([]PruneCandidatesRow, error)
 	// Removes a token the Expo Push API reported as permanently undeliverable
 	// (DeviceNotRegistered). No owner check: the token is dead regardless of
 	// who currently holds it. This is the notifier's internal cleanup path, not
@@ -5177,46 +5131,6 @@ type Querier interface {
 	// Drops snapshot rows older than the retention window (~26 weeks), keeping
 	// the table bounded.
 	PruneInsightsSkillHistory(ctx context.Context, cutoff pgtype.Date) (int64, error)
-	// Permanently remove a batch of jobs and record what was removed, in ONE statement.
-	// Splitting the two would let the archive drift from the deletion, and the archive is
-	// the only way to answer, after an irreversible removal, whether something was taken
-	// that should have been kept.
-	//
-	// The batch extends to each target's whole duplicate CHAIN, not just its immediate
-	// duplicates. jobs.duplicate_of is the one foreign key to jobs that restricts, and it
-	// chains: RecomputeRoleDuplicatesForCompany and the aggregator suppression both scope
-	// to open jobs, so a closed row's pointer is never repointed when its parent later
-	// becomes a duplicate itself — and the prune scan reaches closed rows by design. A
-	// one-level extension would leave the tail pointing at a deleted row and the whole
-	// batch would abort on the foreign key. UNION (not UNION ALL) terminates a cycle.
-	//
-	// Semantically the chain belongs together anyway: the duplicates of a cook posting are
-	// cook postings, and they inherit the rule that named their root.
-	//
-	// DISTINCT ON collapses a row reachable more than once, which would otherwise violate
-	// the archive's primary key and take the batch down. It orders direct matches first so
-	// a row named outright keeps its own rule rather than an arbitrary one — the archive's
-	// purpose is auditing a rule in isolation, which a nondeterministic rule defeats.
-	//
-	// A user's marks on the posting — the view, the bookmark, the dismissal, the vote — cascade
-	// away with it. That is an accepted cost of the campaign: what is lost is a bookmark.
-	//
-	// Their APPLICATION does not, and the distinction is deliberate. It lives in its own table
-	// (0064), holds a date, a stage, free-text notes and a mail history, and references the
-	// posting with ON DELETE SET NULL: the link clears, the record stands. An application is a
-	// record of something a person did, and no catalogue-hygiene campaign has the standing to
-	// delete it. The sentence this replaces weighed a bookmark and, through one shared cascade,
-	// silently applied the same verdict to applications.
-	//
-	// Returns the ids actually deleted, which the caller mirrors into the search index.
-	// The two parameter arrays are positionally paired. They are unnested separately and
-	// rejoined on ordinality because sqlc cannot infer the types of a multi-argument
-	// unnest over query parameters.
-	// A pruned job's document has to leave the facet index too, and this is the only place that
-	// knows it existed: after this statement the row is gone, so nothing downstream could work
-	// out that it was ever indexed. search_delete_outbox deliberately carries no foreign key to
-	// jobs, which is what lets this entry outlive the row it names — see migration 0113.
-	PruneJobs(ctx context.Context, arg PruneJobsParams) ([]int64, error)
 	// Drop the demand rows that have stopped being vocabulary: asked for only once, and
 	// not since the cut-off. Run at the end of a dictionary build.
 	//
@@ -5268,7 +5182,7 @@ type Querier interface {
 	// board still replied. A retracted event does not count — it belongs to another employer.
 	//
 	// The reply is paired to its application through application_id, never through job_id.
-	// job_id is ON DELETE SET NULL, so after cmd/prune both sides read NULL, the pair reduces
+	// job_id is ON DELETE SET NULL, so once a posting is deleted both sides read NULL, the pair reduces
 	// to NULL = NULL — never true — and an employer that answered is served as silent: the
 	// distortion this rollup was moved onto the ledger to remove, arriving by a different
 	// route. Pairing on (user_id, company_slug) instead would survive the deletion by
@@ -5493,7 +5407,7 @@ type Querier interface {
 	// `event_source` is derived from the message's store by the caller, keeping that
 	// vocabulary in Go where a pin test guards it.
 	// The application the reply belongs to is what the aggregates pair on, so it is resolved
-	// here rather than left to be inferred later from a job_id that cmd/prune clears. The
+	// here rather than left to be inferred later from a job_id that deleting the posting clears. The
 	// message's own application_id wins; falling back to the posting is sound only because
 	// this runs at write time, while the posting still exists.
 	// The employer comes from the application when the message names one, and from the
@@ -5965,8 +5879,8 @@ type Querier interface {
 	// or not the primary query reads its output, which welds the revocation to the reset so
 	// no call site can perform one without the other.
 	ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) (int32, error)
-	// Catalogue pruning: the queries that find, and eventually remove, jobs that do not
-	// belong on an IT job board. See the catalog-pruning capability spec.
+	// The residual-title report cmd/mine-titles prints: what the classification dictionaries
+	// still leave unplaced.
 	// The residual unclassified mass grouped into clusters an operator can act on: the
 	// word groups occurring most often in the titles of live jobs that carry no is_tech
 	// signal. Grouping is by word group, not by whole title, because boards append
@@ -6845,8 +6759,8 @@ type Querier interface {
 	TracerLinkByToken(ctx context.Context, token string) (TracerLinkByTokenRow, error)
 	// Set an application's stage and/or notes, naming the application itself.
 	//
-	// The slug-addressed TrackJob cannot serve an application whose posting cmd/prune
-	// removed: it upserts through `jobs`, and there is no row left to join. That is not a
+	// The slug-addressed TrackJob cannot serve an application whose posting was
+	// deleted: it upserts through `jobs`, and there is no row left to join. That is not a
 	// corner case on the board — the card is there, and dragging it is the ordinary act
 	// that had no working write path.
 	//
@@ -6909,13 +6823,13 @@ type Querier interface {
 	//
 	// Deletes the record, matching UntrackJob: this is the candidate saying it is not a
 	// thing they are pursuing, which is a claim about their own record and theirs alone to
-	// make. cmd/prune has no such standing, which is why it may not do this.
+	// make. A catalogue clean-up has no such standing, which is why it may not do this.
 	UntrackApplicationByID(ctx context.Context, arg UntrackApplicationByIDParams) (UntrackApplicationByIDRow, error)
 	// Remove a job from the board: drop every pipeline mark, keep viewed_at so the
 	// job remains in the user's view history.
 	// Taking a job off the board clears the process outright — this is the candidate
 	// saying it is not a thing they are pursuing, which is a claim about their own
-	// record and theirs alone to make. cmd/prune has no such standing, which is the
+	// record and theirs alone to make. A catalogue clean-up has no such standing, which is the
 	// whole distinction this change draws.
 	UntrackJob(ctx context.Context, arg UntrackJobParams) (UntrackJobRow, error)
 	// Persist the post-transaction balance: the current period and remaining points. Called at

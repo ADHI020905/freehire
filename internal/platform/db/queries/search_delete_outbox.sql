@@ -57,8 +57,8 @@ RETURNING failed_at;
 -- Housekeeping: drop dead-lettered entries older than the cutoff.
 --
 -- Note what this does NOT reap: entries whose job row is gone. For search_outbox that is
--- garbage, since a vanished job cannot be indexed. Here it is the whole point — cmd/prune
--- hard-deletes jobs, and their documents still have to leave the index.
+-- garbage, since a vanished job cannot be indexed. Here it is the whole point — a
+-- hard-deleted job's document still has to leave the index.
 --
 -- **It has no Go caller, and that is the decision, not an oversight.** No outbox in this
 -- repository reaps its dead letters — there is no DeleteDead… for search_outbox,
@@ -70,13 +70,14 @@ RETURNING failed_at;
 --
 -- What it would ALSO not fix: every enqueue is `ON CONFLICT (job_id) DO NOTHING` against
 -- a UNIQUE key, so while a dead-lettered entry sits here that posting cannot be re-queued
--- for removal — not by a later close, and not by cmd/prune's hard delete. Deleting the
+-- for removal — not by a later close, and not by a hard delete. Deleting the
 -- entry would re-open that door only for a posting something closes AGAIN, which a
 -- closed posting is not. The bounded harm is the reason this is left as it stands: a
 -- full `make reindex` streams only OPEN jobs into the fresh index, so the stale document
 -- leaves on the next scheduled rebuild regardless. Re-arming the row (an `ON CONFLICT …
 -- DO UPDATE` that clears failed_at where it is set) is the fix if the gauge ever shows
--- this happening; it is ten identical CTEs across jobs.sql and pruning.sql, and worth
+-- this happening; it is the identical CTE in the closing queries in jobs.sql (all but
+-- CloseMisattributedSourceJobs, which queues nothing on purpose), and worth
 -- doing on evidence rather than on the strength of the reading above.
 DELETE FROM search_delete_outbox
 WHERE failed_at IS NOT NULL

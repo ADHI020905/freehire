@@ -390,8 +390,8 @@ func TestBackfill_Concurrent(t *testing.T) {
 // working and a run that had wedged looked identical. The only way to tell them apart
 // was pg_stat_activity, and the only way to answer "how much longer" was to guess.
 //
-// cmd/prune's scan already learned this ("the first prod run was impossible to
-// distinguish from a hang"); this is the same fix on the other long worker.
+// The since-retired cmd/prune scan learned this first ("the first prod run was impossible
+// to distinguish from a hang"); this is the same fix here.
 func TestBackfill_ReportsProgressWhileItRuns(t *testing.T) {
 	jobs := make([]db.Job, 0, 25)
 	for i := 1; i <= 25; i++ {

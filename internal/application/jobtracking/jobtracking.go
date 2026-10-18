@@ -216,7 +216,7 @@ type Repository interface {
 
 	// The three below address an application by its own id rather than through a
 	// posting. They exist because the posting is the part that can disappear: once
-	// cmd/prune removes it the slug-addressed writes above have nothing to resolve,
+	// it is deleted the slug-addressed writes above have nothing to resolve,
 	// and the card on the board becomes unmovable. Each returns
 	// ErrApplicationNotFound when the id names nothing the caller holds.
 

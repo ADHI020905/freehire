@@ -521,7 +521,7 @@ func TestUpsertParams_CheapWriteMatchKeyCoversEveryColumnItWrites(t *testing.T) 
 // TestUpsertParams_IsTechHintMovesIsTechIndependentlyOfContentHash is the focused
 // counterpart TestUpsertParams_CheapWriteMatchKeyCoversEveryColumnItWrites's generic
 // per-field walk cannot exercise for IsTechHint: fullDraft's Category ("backend") and
-// Title ("Senior Go Developer") already saturate TechEvidence, so toggling IsTechHint
+// Title ("Senior Go Developer") already resolve as technical on their own, so toggling IsTechHint
 // there moves no column and the generic subtest returns before ever reaching
 // matchKeyHeld. This test uses a title and category that resolve neither tech nor
 // non-tech on their own (mirroring issue #2601's Profession postings), so IsTechHint is

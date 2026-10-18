@@ -12,7 +12,7 @@ import (
 // Store, minus Jobs and Reap.
 //
 // There is no Jobs: a removal identifies its document by primary key, and by the time an
-// entry is drained the job row is often gone (cmd/prune hard-deletes). That is the ordinary
+// entry is drained the job row may be gone (a hard delete). That is an expected
 // case here, not a corruption to route around.
 //
 // There is no Reap either. Store.Reap exists because the indexing claim skips entries whose

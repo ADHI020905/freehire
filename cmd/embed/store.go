@@ -113,7 +113,7 @@ func (s *dbStore) CompleteClosed(ctx context.Context, entries []embed.Claimed) e
 		// Delete each closed job's pgvector-backed chunk rows in the same transaction,
 		// as ONE batched call for the whole batch's job ids — mirrors the existing
 		// ClearSemanticEmbeddedBatch clear above, both the semantics AND the round-trip
-		// shape. ON DELETE CASCADE from jobs already covers a hard delete (cmd/prune);
+		// shape. ON DELETE CASCADE from jobs already covers a hard delete;
 		// this is for the soft close path cascade doesn't reach.
 		if err := qtx.DeleteJobSemanticChunks(ctx, jobIDs); err != nil {
 			return fmt.Errorf("delete chunks: %w", err)

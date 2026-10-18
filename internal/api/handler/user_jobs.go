@@ -62,8 +62,8 @@ func (h *trackingHandlers) register(api fiber.Router, mw middleware) {
 	api.Delete("/jobs/:slug/track", mw.key, h.Untrack)
 
 	// The same three writes, addressed by the row id the tracking listing served.
-	// The board holds row ids, not slugs, and an application whose posting cmd/prune
-	// removed has no slug to hold — so the routes above cannot move its card.
+	// The board holds row ids, not slugs, and an application whose posting was
+	// deleted has no slug to hold — so the routes above cannot move its card.
 	//
 	// Its own namespace rather than /me/tracking/:id: that path is already mounted
 	// (see the inbox handlers) addressed by a posting slug, and one segment meaning

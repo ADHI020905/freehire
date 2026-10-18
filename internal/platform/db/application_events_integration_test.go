@@ -149,7 +149,7 @@ func TestMarkJobApplied_DatedRecordingCarriesItsDateIntoTheLedger(t *testing.T) 
 		t.Errorf("event source = %q, want mail_hosted", source)
 	}
 	if slug != "acme" {
-		t.Errorf("event company_slug = %q, want the job's acme — the slug is denormalized so cmd/prune cannot orphan it", slug)
+		t.Errorf("event company_slug = %q, want the job's acme — the slug is denormalized so deleting the posting cannot orphan it", slug)
 	}
 }
 

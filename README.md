@@ -159,8 +159,8 @@ go run ./cmd/backfill-derive     # re-derive every deterministic column — face
                                  # slugs — in one keyset pass (follow with make reindex)
 ```
 
-Every worker needs `DATABASE_URL` and exits non-zero on failure. `prune` is the
-only hard-delete path in the system, and it is dry-run by default.
+Every worker needs `DATABASE_URL` and exits non-zero on failure. No worker
+hard-deletes jobs; the lifecycle only soft-closes them.
 
 ## Layout
 

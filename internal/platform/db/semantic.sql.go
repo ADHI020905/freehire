@@ -158,7 +158,7 @@ WHERE job_id = ANY($1::bigint[])
 // upsert); the closed-job path issues ONE call for its whole batch alone, actually
 // mirroring ClearSemanticEmbeddedBatch's own batched round-trip shape, not just its
 // clear semantics. ON DELETE CASCADE from jobs already covers a hard delete
-// (cmd/prune) — this query is for the two soft paths cascade doesn't reach.
+// — this query is for the two soft paths cascade doesn't reach.
 func (q *Queries) DeleteJobSemanticChunks(ctx context.Context, jobIds []int64) error {
 	_, err := q.db.Exec(ctx, deleteJobSemanticChunks, jobIds)
 	return err
@@ -361,8 +361,7 @@ type InsertJobSemanticChunksParams struct {
 // arrays FLATTENED across the whole batch (one element per chunk, not per job — a job
 // contributing 3 chunks repeats its id 3 times at the matching offsets) — unnested
 // separately and rejoined WITH ORDINALITY because sqlc cannot infer the types of a
-// multi-argument unnest over query parameters (same pattern as pruning.sql's bulk job
-// delete/archive). embeddings travels as vector literal TEXT (e.g. "[0.1,0.2,...]"),
+// multi-argument unnest over query parameters. embeddings travels as vector literal TEXT (e.g. "[0.1,0.2,...]"),
 // not a native vector(768)[] array: pgx's driver.Valuer/sql.Scanner fallback for
 // pgvector.Vector (this repo registers no custom OID codec for it) only covers a
 // single scalar column value, not an array of them, so each element casts to

@@ -272,7 +272,7 @@ type ListApplicationEventsInRangeRow struct {
 // see they made.
 //
 // The employer is taken from the event's own denormalized slug, never through the posting.
-// cmd/prune clears job_id, and an event that had to join jobs for its company would drop
+// Deleting a posting clears job_id, and an event that had to join jobs for its company would drop
 // out of the range retroactively — the instability the ledger exists to remove. The
 // posting is joined only for the slug the SPA links with, and legitimately comes back
 // absent.
@@ -369,7 +369,7 @@ type RecordEmailApplicationEventParams struct {
 // `event_source` is derived from the message's store by the caller, keeping that
 // vocabulary in Go where a pin test guards it.
 // The application the reply belongs to is what the aggregates pair on, so it is resolved
-// here rather than left to be inferred later from a job_id that cmd/prune clears. The
+// here rather than left to be inferred later from a job_id that deleting the posting clears. The
 // message's own application_id wins; falling back to the posting is sound only because
 // this runs at write time, while the posting still exists.
 // The employer comes from the application when the message names one, and from the
@@ -393,9 +393,9 @@ WHERE em.id            = $1
   AND ae.retracted_at IS NULL
   -- The PAIR, not either half. On the application alone this is blind to mail that
   -- names no application — re-linking it between two postings would move nothing. On
-  -- the posting alone, cmd/prune clears both sides and the row reads as "moved
+  -- the posting alone, deleting it clears both sides and the row reads as "moved
   -- elsewhere", retracting a fact nobody corrected. Row-wise IS DISTINCT FROM gets the
-  -- NULLs right in both directions: a pruned pair (app, NULL) equals itself, and
+  -- NULLs right in both directions: a deleted posting's pair (app, NULL) equals itself, and
   -- (NULL, jobA) differs from (NULL, jobB).
   AND (ae.application_id, ae.job_id) IS DISTINCT FROM (em.application_id, em.job_id)
 `

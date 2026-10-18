@@ -371,9 +371,9 @@ func (r *QueriesRepository) ListInteractions(
 	}
 
 	// Applications the catalogue no longer holds a posting for. They cannot come from
-	// the query above — it is driven by user_jobs rows, which cmd/prune cascades away —
+	// the query above — it is driven by user_jobs rows, which a deleted posting cascades away —
 	// so they are read separately and merged here. Only the board and applied views owe
-	// them: a pruned application was never a view or a bookmark.
+	// them: a posting-less application was never a view or a bookmark.
 	if filter == FilterBoard || filter == FilterApplied || filter == FilterAll {
 		orphanLimit := limit - int32(len(items))
 		if orphanLimit > 0 {
@@ -460,8 +460,8 @@ func orphanedTracked(orphans []db.ListOrphanedApplicationsRow) []TrackedJob {
 
 // CountInteractions returns the per-filter counts for the caller in one pass.
 //
-// CountUserJobs is driven entirely FROM user_jobs, which cmd/prune cascades away when it
-// prunes a posting — so it never counts an orphaned application (see
+// CountUserJobs is driven entirely FROM user_jobs, whose rows cascade away when a
+// posting is deleted — so it never counts an orphaned application (see
 // ListOrphanedApplications), even though ListInteractions merges those into the board,
 // applied, and all views. CountOrphanedApplications closes that gap: added into "all",
 // "applied", and "board" (the same three filters ListInteractions merges orphans into),

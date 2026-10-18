@@ -136,7 +136,7 @@ type BackfillDuplicateMarkerOwnerChunkParams struct {
 //
 // Closed rows are seeded too, deliberately. The passes only consider open rows, so nothing would
 // ever seed a closed row's columns — and then the first statement to touch any marker column on it
-// would fire the derivation and silently clear a duplicate_of that prune still walks.
+// would fire the derivation and silently clear its duplicate_of.
 //
 // The "no owned column set yet" predicate is what makes re-runs free, and it is also the reconcile
 // sweep: a row written between this chunk passing its range and the trigger existing still matches,
@@ -1256,8 +1256,7 @@ type CountChronicBoardJobsParams struct {
 
 // What CloseChronicBoardJobs would close, for the safety-net worker's dry-run report — same
 // predicate (including the board_health re-validation, so a dry run cannot report a count for
-// a board that has already recovered), no write, mirroring CountExpiredTracerClicks alongside
-// DeleteExpiredTracerClicks.
+// a board that has already recovered), no write.
 func (q *Queries) CountChronicBoardJobs(ctx context.Context, arg CountChronicBoardJobsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countChronicBoardJobs,
 		arg.Source,

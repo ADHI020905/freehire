@@ -37,10 +37,10 @@ func TestRunRejectsNonTechPostings(t *testing.T) {
 	}
 }
 
-// A liveness refresh is subject to the same filter as a write. Catalogue pruning depends on it:
+// A liveness refresh is subject to the same filter as a write:
 // once the dictionary recognises a board's non-technical postings, the stored ones must stop
 // being seen so the unseen sweep closes them. A hydrating adapter re-lists them every crawl, so
-// refreshing without the filter would keep exactly the rows the campaign is retiring alive
+// refreshing without the filter would keep exactly the rejected rows alive
 // forever — on one Workday board that is 25k of its 25.6k stored postings.
 func TestRunDoesNotRefreshARejectedPosting(t *testing.T) {
 	src := &fakeHydratingSource{provider: "workday", jobs: []sources.Job{
@@ -101,7 +101,7 @@ func TestRunRefreshesAFlaggedTitleThatTheRowProvesTechnical(t *testing.T) {
 // The ingest filter reads the non-tech TITLE dictionary, not the tri-state is_tech.
 // A business role at an IT company resolves is_tech=false through its category, and
 // whether it belongs in the catalogue depends on the company — a judgement the crawl
-// cannot make and the prune worker makes later. Rejecting it here would quietly
+// cannot make. Rejecting it here would quietly
 // delete every sales and recruiting job on the board.
 func TestRunKeepsBusinessRolesTheCompanyRuleOwns(t *testing.T) {
 	src := fakeSource{provider: "greenhouse", jobs: []sources.Job{

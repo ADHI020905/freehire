@@ -122,8 +122,8 @@ referrals, and an opening can be matched to someone able to make one.
 ### The application board
 
 Every job you view, save, apply to or track lands on a board with stages you
-move it through. An application is a durable record of its own: when a posting is
-hard-deleted, `cmd/prune` clears the reference and leaves the application
+move it through. An application is a durable record of its own: if a posting is
+ever hard-deleted, the reference clears and the application stays
 standing, so applying to a role that later vanishes still leaves you a history.
 (Plain views and saves are tied to the posting and go with it.)
 

@@ -327,10 +327,6 @@ func deriveRequiresClearance(desc string) *bool {
 // mobile mechanics and phlebotomists, occupational-safety inspectors, a policeman, a
 // school safety teacher, a QA lab technician. Nothing moves the other way: the positive
 // branch is strictly narrower than before, so this can only ever withdraw a true.
-//
-// TechEvidence itself is deliberately UNCHANGED. It is also the veto the ingest filter
-// and the prune rule read, where the cost of getting this wrong is a deleted posting
-// rather than a mislabelled facet — see its own comment.
 func deriveIsTech(category, title string, sourceHint bool) *bool {
 	if sourceHint || classify.IsTech(title) {
 		t := true
@@ -346,16 +342,6 @@ func deriveIsTech(category, title string, sourceHint bool) *bool {
 		return &f
 	}
 	return nil
-}
-
-// TechEvidence reports whether a job's category or title states a confidently technical
-// role. It is the positive half of the is_tech derivation, exposed because the ordering
-// it enforces — technical evidence before the non-tech dictionary — is load-bearing
-// outside this package too: the ingest filter and the prune rule both delete on the
-// non-tech dictionary, and that dictionary matches anywhere in a title, so without this
-// veto "Backend Engineer — Teller Systems" is removed on its accidental match.
-func TechEvidence(category, title string) bool {
-	return slices.Contains(vocab.TechCategories, category) || classify.IsTech(title)
 }
 
 // regionsForCountries derives the region codes for a set of already-resolved country

@@ -27,7 +27,7 @@ export const UNKNOWN_EMPLOYER = 'Unknown company';
  *
  *  A thread carries only its subject's slug and no FK to it, so the server resolves
  *  the names on read and sends them empty when the subject is gone (a thread outlives
- *  its subject — cmd/prune hard-deletes vacancies). Both cases land here:
+ *  its subject — a vacancy can be hard-deleted). Both cases land here:
  *
  *  - a vacancy thread reads "Vacancy · <company> · <posting title>";
  *  - a company thread reads "Company · <company>", since its subject IS the company;

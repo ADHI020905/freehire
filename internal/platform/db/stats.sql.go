@@ -116,7 +116,7 @@ type GetEngagementStatsRow struct {
 // The remaining five mirror event-total semantics from their own tables:
 // cvs_uploaded is the count of users holding a stored résumé (one per user, so also a
 // people count); cvs_tailored counts CVs created as a per-vacancy copy, read off the
-// is_tailored flag rather than job_id — cmd/prune nulls the link (0058); match_analyses
+// is_tailored flag rather than job_id — deleting a vacancy nulls the link (0058); match_analyses
 // is every Analyze-match run, and since user_job_analysis is keyed (user_id, job_id)
 // that is a count of distinct candidate×vacancy matches, not of recomputes;
 // inboxes_connected adds the live Gmail grants to the claimed hosted mailboxes (both are

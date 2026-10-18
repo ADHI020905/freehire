@@ -4,8 +4,8 @@
 // document from the facet index.
 //
 // The load-bearing property here is the one search_outbox does NOT have: an entry must
-// outlive the job row it names. cmd/prune hard-deletes jobs by id list with no closed_at
-// condition, so mirroring search_outbox's ON DELETE CASCADE would delete a pending removal
+// outlive the job row it names. A job row can be hard-deleted (the retired cmd/prune did so by id
+// list, with no closed_at condition), so mirroring search_outbox's ON DELETE CASCADE would delete a pending removal
 // exactly when the job disappeared — stranding that document in the index with nothing left
 // in the database that knows it should not be there. Verifiable only against real Postgres.
 // Run with: go test -tags=integration ./internal/platform/db/
@@ -483,46 +483,6 @@ func TestARolledBackCloseQueuesNothing(t *testing.T) {
 	}
 	if got := countDeletionQueue(t, pool); got != 0 {
 		t.Errorf("a rolled-back close left %d queued removals, want 0", got)
-	}
-}
-
-// cmd/prune is the only hard-delete path, and it deletes by id list with no closed_at
-// condition — so it can remove an OPEN, indexed job outright. That document has to leave the
-// index too, and the queue row has to survive the row it names disappearing.
-func TestPruneJobsQueuesTheRemovalAndOutlivesTheJob(t *testing.T) {
-	pool := startPostgres(t)
-	q := New(pool)
-	ctx := context.Background()
-	truncate(t, pool)
-
-	job, err := ingestUpsert(ctx, q, ingestParams("acme:pruned-open", "Engineer"))
-	if err != nil {
-		t.Fatalf("upsert: %v", err)
-	}
-
-	pruned, err := q.PruneJobs(ctx, PruneJobsParams{
-		Ids:   []int64{job.ID},
-		Rules: []string{"test"},
-	})
-	if err != nil {
-		t.Fatalf("prune: %v", err)
-	}
-	if len(pruned) != 1 {
-		t.Fatalf("pruned %d jobs, want 1", len(pruned))
-	}
-
-	var stillThere bool
-	if err := pool.QueryRow(ctx,
-		`SELECT EXISTS (SELECT 1 FROM jobs WHERE id = $1)`, job.ID).Scan(&stillThere); err != nil {
-		t.Fatalf("check the job row: %v", err)
-	}
-	if stillThere {
-		t.Fatal("prune left the job row behind, so this case proves nothing")
-	}
-
-	if got := countDeletionQueue(t, pool); got != 1 {
-		t.Errorf("prune queued %d removals for a hard-deleted job, want 1 — "+
-			"its document would otherwise stay in the index with nothing left to notice", got)
 	}
 }
 

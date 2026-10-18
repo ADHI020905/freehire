@@ -501,8 +501,8 @@ type ListRecentOpenThreadsFirstRow struct {
 // can multiply a thread row.
 //
 // LEFT, like the persona join above and for the same reason: there is no FK from a
-// thread to its subject (by design — see migration 0038), and cmd/prune hard-deletes
-// jobs, so a thread can outlive its subject. An INNER JOIN would drop it from the feed
+// thread to its subject (by design — see migration 0038), and a job can be
+// hard-deleted, so a thread can outlive its subject. An INNER JOIN would drop it from the feed
 // instead of showing it with an unresolved subject.
 func (q *Queries) ListRecentOpenThreadsFirst(ctx context.Context, limit int32) ([]ListRecentOpenThreadsFirstRow, error) {
 	rows, err := q.db.Query(ctx, listRecentOpenThreadsFirst, limit)

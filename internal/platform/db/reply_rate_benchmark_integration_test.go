@@ -190,7 +190,7 @@ func TestGetUserResponseRate_RetractedReplyDoesNotCount(t *testing.T) {
 	}
 }
 
-// cmd/prune is the only hard-delete path for jobs, and application_events.job_id is ON
+// A job can be hard-deleted, and application_events.job_id is ON
 // DELETE SET NULL — so a removal must not change what this query says about the caller.
 // The denominator survives on its own (observable's WHERE clause never joins jobs). The
 // numerator is the half at risk: the reply is matched back to its application through

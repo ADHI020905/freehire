@@ -12,26 +12,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countExpiredTracerClicks = `-- name: CountExpiredTracerClicks :one
-SELECT count(*) FROM cv_link_clicks WHERE clicked_at < now() - $1::interval
-`
-
-// What the retention sweep would remove. cmd/prune reports before it deletes, and a dry run that
-// cannot say a number is not a report.
-func (q *Queries) CountExpiredTracerClicks(ctx context.Context, maxAge pgtype.Interval) (int64, error) {
-	row := q.db.QueryRow(ctx, countExpiredTracerClicks, maxAge)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const deleteExpiredTracerClicks = `-- name: DeleteExpiredTracerClicks :execrows
 DELETE FROM cv_link_clicks WHERE clicked_at < now() - $1::interval
 `
 
-// The 180-day retention sweep, run by cmd/prune — the repository's single hard-delete path. The
-// tokens themselves are kept: an old PDF must keep redirecting even once the clicks behind it have
-// aged out.
+// The 180-day retention sweep, run daily by cmd/sweep-tracer-clicks. The tokens themselves are
+// kept: an old PDF must keep redirecting even once the clicks behind it have aged out.
 func (q *Queries) DeleteExpiredTracerClicks(ctx context.Context, maxAge pgtype.Interval) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteExpiredTracerClicks, maxAge)
 	if err != nil {

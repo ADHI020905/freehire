@@ -13,7 +13,7 @@
 
   // Compact display for the live figures (2,939,967 → "2.9M+"). The fallbacks are
   // rounded DOWN from the last measured totals: the catalogue does not only grow
-  // (a `cmd/prune` sweep shrinks it), so a fallback rounded up would eventually
+  // (postings close and are deduplicated away), so a fallback rounded up would eventually
   // overstate a count the API can no longer back.
   const nf = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
   const compact = (n: number | null, fallback: string) => (n == null ? fallback : `${nf.format(n)}+`);

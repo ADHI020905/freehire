@@ -1,7 +1,7 @@
 // Command merge-companies collapses the company slugs that are one employer written more
 // than one way, and records each retirement so the old URL keeps working.
 //
-// It reports by default and writes only under --apply, like cmd/prune: the election is
+// It reports by default and writes only under --apply: the election is
 // deterministic but the catalogue is not clean, so a wave is meant to be read before it runs.
 // --min-jobs bounds a wave to the groups big enough to matter, which is how the backlog is
 // taken in reviewed passes (1000, then 100, then 10, then 1) instead of one 333k-row leap.

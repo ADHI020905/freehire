@@ -7,8 +7,7 @@
 // through open aggregator postings by keyset, group them by company, ask each
 // company's board for its open titles once, decide, write, exit.
 //
-// DRY RUN BY DEFAULT — `--apply` is required to write anything, the same discipline
-// cmd/prune uses. A dry run prints the calibration report the rollout gate reads:
+// DRY RUN BY DEFAULT — `--apply` is required to write anything. A dry run prints the calibration report the rollout gate reads:
 // how many postings would be stamped, broken down by source and by company. That
 // gate exists because this signal's known failure mode is staffing and consulting
 // agencies, which advertise clients' roles that are legitimately absent from their

@@ -76,9 +76,8 @@ GROUP BY l.id, l.token, l.source_path, l.destination_url, l.created_at
 ORDER BY l.created_at, l.source_path;
 
 -- name: DeleteExpiredTracerClicks :execrows
--- The 180-day retention sweep, run by cmd/prune — the repository's single hard-delete path. The
--- tokens themselves are kept: an old PDF must keep redirecting even once the clicks behind it have
--- aged out.
+-- The 180-day retention sweep, run daily by cmd/sweep-tracer-clicks. The tokens themselves are
+-- kept: an old PDF must keep redirecting even once the clicks behind it have aged out.
 DELETE FROM cv_link_clicks WHERE clicked_at < now() - sqlc.arg(max_age)::interval;
 
 -- name: SetCVTracerLinks :execrows
@@ -90,8 +89,3 @@ DELETE FROM cv_link_clicks WHERE clicked_at < now() - sqlc.arg(max_age)::interva
 -- must not be something an undo of an unrelated edit can grant or revoke.
 UPDATE cvs SET tracer_links_enabled = $3, updated_at = now()
 WHERE id = $1 AND user_id = $2;
-
--- name: CountExpiredTracerClicks :one
--- What the retention sweep would remove. cmd/prune reports before it deletes, and a dry run that
--- cannot say a number is not a report.
-SELECT count(*) FROM cv_link_clicks WHERE clicked_at < now() - sqlc.arg(max_age)::interval;

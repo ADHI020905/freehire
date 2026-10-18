@@ -1,7 +1,7 @@
 //go:build integration
 
 // Integration tests for what makes a CV the BASE CV (see the explicit-base-cv change). The base
-// used to be inferred from `job_id IS NULL`, an absence that cmd/prune manufactures: deleting a
+// used to be inferred from `job_id IS NULL`, an absence a hard delete manufactures: deleting a
 // vacancy nulls its tailored copy's link and the orphan — freshly edited — outranked the real base.
 // "The base" is still derived (the newest non-tailored CV, of which a user may own several); what
 // changed is that a tailored copy stays tailored after its vacancy is gone.
@@ -64,7 +64,7 @@ func TestBaseCVSurvivesAPrunedVacancy(t *testing.T) {
 		t.Fatalf("touch tailored: %v", err)
 	}
 
-	// cmd/prune hard-deletes the vacancy; the FK nulls the tailored copy's link.
+	// Hard-delete the vacancy; the FK nulls the tailored copy's link.
 	if _, err := pool.Exec(ctx, `DELETE FROM jobs WHERE id = $1`, jobID); err != nil {
 		t.Fatalf("prune job: %v", err)
 	}

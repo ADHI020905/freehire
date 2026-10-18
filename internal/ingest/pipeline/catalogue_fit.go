@@ -28,9 +28,9 @@ import (
 // Below that veto the rule is the non-tech TITLE dictionary, deliberately not the
 // tri-state is_tech. A business role — sales, recruiting, finance — resolves
 // is_tech=false through its category, but whether it belongs in the catalogue depends
-// on whether the company is an IT company, which the crawl cannot know and the prune
-// worker decides later. Rejecting on is_tech==false would quietly drop every sales and
-// recruiting job at every employer on the board.
+// on whether the company is an IT company, which the crawl cannot know. Rejecting on
+// is_tech==false would quietly drop every sales and recruiting job at every employer
+// on the board.
 //
 // This is catalogue policy, not derivation, which is why it lives here rather than in
 // jobderive: the aggregate still constructs a non-technical posting without complaint,
@@ -104,7 +104,7 @@ func (r *rejections) reject(title string) {
 // log reports the board's rejections once, with the share and a sample of the titles.
 // A board rejecting nearly everything is the signature of a dictionary term that is
 // too broad, and since boards are crawled hourly that has to be visible within the
-// hour — long before the next pruning pass acts on the same dictionary.
+// hour.
 func (r *rejections) log(e sources.CompanyEntry) {
 	if r.rejected == 0 {
 		return

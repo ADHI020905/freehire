@@ -77,7 +77,7 @@ import (
 //     (9%) are among them. They are served as open and no field says otherwise, so nothing here
 //     can filter them — and nothing downstream closes them either: they are re-listed on every
 //     crawl, so the unseen sweep never fires, and cmd/liveness skips registered providers. Only
-//     the ghost signal marks them, and only cmd/prune removes them. Giving them a verdict would
+//     the ghost signal marks them. Giving them a verdict would
 //     mean a prober of this API's own (the detail resource answers success=false for a posting
 //     that is gone, which a plain GET of the SPA posting page cannot see) — a separate piece of
 //     work, noted here rather than guessed at.

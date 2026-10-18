@@ -16,8 +16,8 @@ export interface DiscussionSubjectState {
 
 /** Fetch the subject a discussion page hangs off, for the header that links back to it.
  *
- *  Never throws: a discussion outlives its subject — no FK binds them and `cmd/prune`
- *  hard-deletes vacancies — so a missing subject is a state the page must survive, and
+ *  Never throws: a discussion outlives its subject — no FK binds them and a vacancy
+ *  can be hard-deleted — so a missing subject is a state the page must survive, and
  *  the discussion is still worth reading without a header. But WHY it is missing is not
  *  one state: a pruned subject is a fact about the subject, an unreachable API is a fact
  *  about us, and printing the second as the first tells the reader the vacancy is gone

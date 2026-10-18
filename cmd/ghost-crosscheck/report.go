@@ -93,8 +93,7 @@ func (r *report) print() {
 	})
 
 	// The top of this list IS the gate. A batch dominated by one company, or by
-	// staffing agencies, is a broken signal rather than a discovery — the same read
-	// cmd/prune asks of its own dry run.
+	// staffing agencies, is a broken signal rather than a discovery.
 	log.Printf("  top companies by stamped postings (read this before opening the gate):")
 	for i, rw := range rows {
 		if i == 20 {

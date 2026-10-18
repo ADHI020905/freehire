@@ -1248,7 +1248,7 @@ type UntrackJobRow struct {
 // job remains in the user's view history.
 // Taking a job off the board clears the process outright — this is the candidate
 // saying it is not a thing they are pursuing, which is a claim about their own
-// record and theirs alone to make. cmd/prune has no such standing, which is the
+// record and theirs alone to make. A catalogue clean-up has no such standing, which is the
 // whole distinction this change draws.
 func (q *Queries) UntrackJob(ctx context.Context, arg UntrackJobParams) (UntrackJobRow, error) {
 	row := q.db.QueryRow(ctx, untrackJob, arg.UserID, arg.JobID)

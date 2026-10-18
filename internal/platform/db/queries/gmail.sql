@@ -169,7 +169,7 @@ SELECT emails.id, emails.source, emails.external_id, emails.from_addr, emails.fr
     emails.received_at, (emails.read_at IS NOT NULL)::boolean AS read,
     emails.job_id, emails.suggested_job_id, emails.status_signal, emails.link_source,
     -- The link is to the APPLICATION; the posting is how it is displayed while the
-    -- catalogue still holds one. cmd/prune clears la.job_id, so linked_slug goes NULL
+    -- catalogue still holds one. Deleting the posting clears la.job_id, so linked_slug goes NULL
     -- while the row stays linked — the employer is on the application for exactly that.
     lj.public_slug AS linked_slug,
     COALESCE(lj.company, la.company_slug, '')::text AS linked_company,
@@ -280,7 +280,7 @@ SELECT emails.id, emails.source, emails.external_id, emails.s3_key, emails.from_
     emails.body_text, emails.body_html, emails.received_at, (emails.read_at IS NOT NULL)::boolean AS read,
     emails.job_id, emails.suggested_job_id, emails.status_signal, emails.link_source,
     -- The link is to the APPLICATION; the posting is how it is displayed while the
-    -- catalogue still holds one. cmd/prune clears la.job_id, so linked_slug goes NULL
+    -- catalogue still holds one. Deleting the posting clears la.job_id, so linked_slug goes NULL
     -- while the row stays linked — the employer is on the application for exactly that.
     lj.public_slug AS linked_slug,
     COALESCE(lj.company, la.company_slug, '')::text AS linked_company,

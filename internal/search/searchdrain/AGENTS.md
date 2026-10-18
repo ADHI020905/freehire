@@ -53,7 +53,9 @@ were integration tests. Measured on prod 2026-08-18: **19,827 jobs close per day
 3-hour reindex cycle**, and every one of them stayed searchable until the next rebuild.
 
 - **The enqueue rides the closing statement**, as a CTE over the `UPDATE`'s `RETURNING`. Every
-  closing query and `PruneJobs` carry it. A sweep closes a whole provider's stale postings in
+  closing query carries it except `CloseMisattributedSourceJobs`, which deliberately queues
+  nothing: its 1.47M closures would sit in front of every other Meilisearch task, and the next
+  full rebuild drops them anyway (see `cmd/close-apploi-misattributed`). A sweep closes a whole provider's stale postings in
   one round trip, so a per-row enqueue would undo that; riding the statement also makes the
   enqueue atomic (a rolled-back close queues nothing) and exact (only rows that actually
   closed are queued).
@@ -69,12 +71,9 @@ were integration tests. Measured on prod 2026-08-18: **19,827 jobs close per day
   which is 45-day-old telegram postings and every URL-probed orphan staying searchable until
   the next full rebuild. `TestEveryClosingQueryQueuesTheRemoval` enumerates the family; adding
   a closing statement means adding a line there.
-- **`cmd/prune` enqueues too.** It is the only hard-delete path and deletes by id list with no
-  `closed_at` condition, so it can remove an OPEN, indexed job outright. After that statement
-  the row is gone and nothing downstream could work out it was ever indexed.
 - **NO foreign key to `jobs`, deliberately** — the one place this table must not mirror
   `search_outbox`, which carries `ON DELETE CASCADE`. With a cascading key the sequence "job
-  closes → removal queued → prune deletes the job before the drain runs" would delete the
+  closes → removal queued → the job row is deleted before the drain runs" would delete the
   queued removal too, stranding that document in the index permanently. The asymmetry is real:
   `search_outbox` NEEDS the row, because the drain reads it to build a document; a removal
   needs only the primary key, and the row being gone is the ordinary case.

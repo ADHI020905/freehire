@@ -137,9 +137,9 @@ Three things a new photo template must respect:
 ## What makes a CV tailored (`cvs.is_tailored`)
 
 A CV is a tailored copy because it was **created** as one, not because it still points at a vacancy.
-`cvs_job_id_fkey` is `ON DELETE SET NULL`, and `cmd/prune` deletes vacancies by design — the prune
-query states that nulling references is "an accepted cost of the campaign". Inferring tailored-ness
-from `job_id IS NOT NULL` therefore meant that pruning one junk vacancy turned its copy into a plain
+`cvs_job_id_fkey` is `ON DELETE SET NULL`, and the since-retired `cmd/prune` deleted vacancies by
+design, nulling those references. Inferring tailored-ness from `job_id IS NOT NULL` therefore meant
+that deleting one junk vacancy turned its copy into a plain
 CV, and since the base lookup takes the **newest** plain CV, the freshly-edited orphan beat the real
 one. It would then seed the next tailored copy and back the ATS delta's baseline.
 
@@ -190,7 +190,7 @@ row. Reloading an existing tailored-for-job stays idempotent and does not rewrit
 Does not write the profile.
 
 Backfill caveat: `0058` reads `job_id` to set the flag, so it is right about every row only because
-no prune had orphaned one yet. A row orphaned before that migration would stay marked non-tailored
+no deletion had orphaned one yet. A row orphaned before that migration would stay marked non-tailored
 and would need a heuristic repair.
 
 ## ATS delta (tailored vs base)

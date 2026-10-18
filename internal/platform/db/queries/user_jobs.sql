@@ -227,7 +227,7 @@ SELECT uj.user_id, uj.job_id, uj.viewed_at, c.applied_at, uj.saved_at,
 -- job remains in the user's view history.
 -- Taking a job off the board clears the process outright — this is the candidate
 -- saying it is not a thing they are pursuing, which is a claim about their own
--- record and theirs alone to make. cmd/prune has no such standing, which is the
+-- record and theirs alone to make. A catalogue clean-up has no such standing, which is the
 -- whole distinction this change draws.
 WITH dropped AS (
     DELETE FROM applications WHERE applications.user_id = sqlc.arg(user_id) AND applications.job_id = sqlc.arg(job_id)::bigint

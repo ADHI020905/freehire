@@ -188,7 +188,7 @@ func TestDerive_IsTech_NonTechTitleBeatsTechCategory(t *testing.T) {
 		{"mobile category, mechanic title", Input{Title: "Mobile Diesel Mechanic"}, boolp(false)},
 		{"project_management category, HVAC title", Input{Title: "HVAC Project Manager"}, boolp(false)},
 
-		// A technical TITLE still wins outright — the case TechEvidence exists to protect.
+		// A technical TITLE still wins outright, ahead of the non-tech dictionary.
 		{"tech title survives an accidental non-tech word", Input{Title: "Backend Engineer — Teller Systems"}, boolp(true)},
 		{"tech title survives a non-tech domain", Input{Title: "Data Engineer, Nurse Scheduling"}, boolp(true)},
 		{"tech title survives a non-tech product", Input{Title: "Full Stack Developer (Janitorial SaaS)"}, boolp(true)},

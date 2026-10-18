@@ -71,7 +71,7 @@ var privatePredicateExemptions = map[string]string{
 		"unclassified titles, read by a person and copied into the non-tech dictionary. The " +
 		"predicate is owed here and is a follow-up, not an exemption on the merits — a pasted " +
 		"JD's title fragments reaching that console is small but real. Recorded honestly rather " +
-		"than blessed: the earlier reason named cmd/prune, which does not call this at all.",
+		"than blessed: the earlier reason named the since-retired cmd/prune, which never called this.",
 
 	// --- Aggregates: a sample, never a posting. ---
 	// The other seven insights rollups count with `count(*) FILTER (WHERE closed_at IS

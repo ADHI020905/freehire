@@ -66,7 +66,7 @@ func TestSimilarJobsEndToEnd(t *testing.T) {
 	}
 	closedID := seedJob("gh:closed", "neighbour-closed-cccc9999", "Closed Neighbour", true)
 	privateID := seedPrivateJob("gh:private", "neighbour-private-dddd8888", "Private Neighbour")
-	const danglingID int64 = 987654321 // never inserted: simulates a hard-deleted (cmd/prune) stale entry.
+	const danglingID int64 = 987654321 // never inserted: simulates a hard-deleted stale entry.
 
 	// Interleave the closed, private and dangling ids among the open ones so a passing
 	// test proves order preservation AND graceful dropping at once, not just one or the

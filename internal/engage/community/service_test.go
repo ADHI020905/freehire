@@ -403,7 +403,7 @@ func TestListRecentThreadsSpansSubjectTypes(t *testing.T) {
 	}
 }
 
-// A subject can be hard-deleted (cmd/prune) while its threads survive, since no FK
+// A subject can be hard-deleted while its threads survive, since no FK
 // binds them. The thread must stay in the feed with an unresolved name — dropping it
 // would make discussion disappear because the posting it was about did.
 func TestListRecentThreadsKeepsThreadWithMissingSubject(t *testing.T) {

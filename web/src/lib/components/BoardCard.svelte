@@ -26,7 +26,7 @@
   // of it: they read the CV and still have not answered.
   const cvOpened = $derived(cvOpenedLabel(item));
 
-  // The posting is gone once cmd/prune removes it, and the card still has to render.
+  // The posting is gone once it is deleted, and the card still has to render.
   // The employer and role are carried by the application itself for exactly this.
   const company = $derived(item.job?.company || item.company_slug);
   const title = $derived(item.job?.title || item.role_title);

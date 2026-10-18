@@ -9,7 +9,7 @@ import (
 
 // applicationRef is one row of the tracking listing, addressed the way the listing
 // served it. The listing mints two forms (internal/application/jobtracking/repository.go): an
-// application whose posting cmd/prune removed is named by the application itself,
+// application whose posting was deleted is named by the application itself,
 // because it has no slug to borrow; every other row is named by its posting's public
 // slug. The write endpoints accept both, because the interface can only send back
 // what the listing gave it.

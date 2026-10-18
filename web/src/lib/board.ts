@@ -90,7 +90,7 @@ function normalize(s: string): string {
  *
  *  The listing mints two forms and neither is the bare application id: a row backed by a
  *  posting is named by that posting's public slug, and only an application whose posting
- *  cmd/prune removed is named `a<id>` (see ListInteractions in
+ *  was deleted is named `a<id>` (see ListInteractions in
  *  internal/jobtracking/repository.go and the applicationRef contract in internal/handler).
  *  `/my/tracking/[id]` opens its drawer by matching this id against the loaded rows, so a
  *  link built from the bare integer matches nothing and fails silently — the drawer simply

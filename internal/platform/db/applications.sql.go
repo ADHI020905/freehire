@@ -32,7 +32,7 @@ UPDATE application_events ae
 // user_jobs. See migrations/0064_applications.sql for why it is a table of its own.
 // Point one batch of pre-existing ledger events at the application they belong to.
 // Every event recorded before this change names a posting and no application, and left
-// that way it stays correlated through job_id — the reference cmd/prune clears.
+// that way it stays correlated through job_id — the reference deleting a posting clears.
 //
 // Matched on (user_id, job_id) because that is the only identity those rows have. It is
 // exactly the correlation being retired, and it is sound here and nowhere else: this pass
@@ -113,8 +113,8 @@ SELECT count(*) FROM applications WHERE user_id = $1 AND job_id IS NULL
 `
 
 // How many of the caller's applications have no posting left — see
-// ListOrphanedApplications. CountUserJobs is driven entirely FROM user_jobs, which
-// cmd/prune cascades away for a pruned posting, so it never counts these; this is added
+// ListOrphanedApplications. CountUserJobs is driven entirely FROM user_jobs, whose
+// rows cascade away with a deleted posting, so it never counts these; this is added
 // to its "all"/"applied"/"board" totals by the caller.
 func (q *Queries) CountOrphanedApplications(ctx context.Context, userID int64) (int64, error) {
 	row := q.db.QueryRow(ctx, countOrphanedApplications, userID)
@@ -166,13 +166,13 @@ type ListOrphanedApplicationsRow struct {
 
 // The caller's applications whose posting the catalogue no longer holds.
 //
-// Deliberately joins nothing: cmd/prune cleared job_id, so there is no posting to reach
+// Deliberately joins nothing: the posting's deletion cleared job_id, so there is no posting to reach
 // and sqlc.embed over a LEFT JOIN would generate a non-pointer Job that fails at scan
 // time on the NULL columns (measured). The employer and role title are on the record
 // itself, which is the whole reason they were copied there.
 //
 // The board reads these alongside the posting-backed rows and merges the two; they are
-// few by nature — one appears only when a posting a candidate applied to is pruned.
+// few by nature — one appears only when a posting a candidate applied to is deleted.
 //
 // Takes OFFSET as well as LIMIT so a caller paging the merged board (ListInteractions)
 // can advance past the first page of orphans instead of re-reading the same top-N rows
@@ -251,8 +251,8 @@ type TrackApplicationByIDRow struct {
 
 // Set an application's stage and/or notes, naming the application itself.
 //
-// The slug-addressed TrackJob cannot serve an application whose posting cmd/prune
-// removed: it upserts through `jobs`, and there is no row left to join. That is not a
+// The slug-addressed TrackJob cannot serve an application whose posting was
+// deleted: it upserts through `jobs`, and there is no row left to join. That is not a
 // corner case on the board — the card is there, and dragging it is the ordinary act
 // that had no working write path.
 //
@@ -301,7 +301,7 @@ type UntrackApplicationByIDRow struct {
 //
 // Deletes the record, matching UntrackJob: this is the candidate saying it is not a
 // thing they are pursuing, which is a claim about their own record and theirs alone to
-// make. cmd/prune has no such standing, which is why it may not do this.
+// make. A catalogue clean-up has no such standing, which is why it may not do this.
 func (q *Queries) UntrackApplicationByID(ctx context.Context, arg UntrackApplicationByIDParams) (UntrackApplicationByIDRow, error) {
 	row := q.db.QueryRow(ctx, untrackApplicationByID, arg.ID, arg.UserID)
 	var i UntrackApplicationByIDRow

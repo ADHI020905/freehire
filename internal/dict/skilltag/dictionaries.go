@@ -960,8 +960,8 @@ type phraseAlias struct {
 }
 
 // phraseAliases is every phrase the engine matches — the engineering vocabulary plus
-// the non-engineering professional one. The two are declared separately only so
-// HasEngineering can tell them apart; Parse treats them identically.
+// the non-engineering professional one. The two are declared separately for the reader
+// only; Parse treats them identically.
 var phraseAliases = slices.Concat(engineeringPhraseAliases, professionalPhraseAliases, occupationalSafetyPhraseAliases)
 
 // engineeringPhraseAliases covers terms the word pass cannot see because they contain
@@ -1204,8 +1204,7 @@ var engineeringPhraseAliases = []phraseAlias{
 	{"madcap flare", "madcap-flare"},
 	// design — the multi-word tools and the named practices. They sit with the
 	// engineering vocabulary (not the professional one) for the same reason technical
-	// writing does: design is craft a technical employer posts, and HasEngineering must
-	// not read a design-only board as "never posted anything technical".
+	// writing does: design is craft a technical employer posts.
 	// "adobe illustrator"/"adobe indesign" need no phrase: the word pass already sees
 	// the product name inside them. "xd" alone is far too short to be safe.
 	{"adobe xd", "adobe-xd"},
@@ -1286,8 +1285,7 @@ var engineeringPhraseAliases = []phraseAlias{
 	// now, and every canonical below is listed in nonCorroboratingPhrases.
 	//
 	// The privacy and trade-control regimes sit in the PROFESSIONAL list further down
-	// instead: a posting whose only match is HIPAA or GDPR is a compliance role, and
-	// HasEngineering must not read it as an engineering one.
+	// instead: a posting whose only match is HIPAA or GDPR is a compliance role.
 	{"nist", "nist"}, {"fedramp", "fedramp"}, {"cmmc", "cmmc"},
 	{"cissp", "cissp"}, {"cism", "cism"}, {"ccna", "ccna"},
 	// "PCI" alone is the bus, "SOC" a system-on-chip or a security operations centre,
@@ -1351,13 +1349,10 @@ var engineeringPhraseAliases = []phraseAlias{
 // vocabulary: the recruiting, HR, finance, legal, operations, sales, customer-success
 // and support craft a technical company hires for without hiring an engineer. Parse
 // matches these exactly like any other phrase — a skills facet describes every posting,
-// not only the technical ones — but they are declared apart so a caller can ask the
-// narrower question HasEngineering answers.
+// not only the technical ones.
 //
-// What is NOT here is the point: developer relations, technical writing, business
-// analysis and pre-sales stay in engineeringPhraseAliases. They are tech-industry
-// craft, posted by technical employers, and the conservative error for every caller of
-// HasEngineering is to keep a board rather than retire a live one.
+// Developer relations, technical writing, business analysis and pre-sales stay in
+// engineeringPhraseAliases: they are tech-industry craft, posted by technical employers.
 var professionalPhraseAliases = []phraseAlias{
 	// AI enablement — the adoption side of AI, and a skill rather than a role.
 	// These postings are Program Managers, Architects, Change Managers and even
@@ -1486,9 +1481,8 @@ var professionalPhraseAliases = []phraseAlias{
 	{"gtm container", "google-tag-manager"},
 
 	// LLM-mined batch 4 — the business-software half. These sit here rather than with
-	// the engineering vocabulary for the reason the list exists: a board that only ever
-	// posts recruiters, AEs and payroll admins names Workday and Gong all day, and
-	// HasEngineering must not read that as a technical board.
+	// the engineering vocabulary because they are business tools: a board that only ever
+	// posts recruiters, AEs and payroll admins names Workday and Gong all day.
 	//
 	// Each is phrase-routed because the vendor took an ordinary word: a "flexible
 	// workday", "I concur", a "gong", the god Apollo, the building "intercom", a
@@ -1505,9 +1499,8 @@ var professionalPhraseAliases = []phraseAlias{
 	{"zoominfo", "zoominfo"}, {"salesloft", "salesloft"},
 	{"veeva", "veeva"}, {"yardi", "yardi"},
 	// Privacy and trade-control regimes. They belong to this list rather than the
-	// engineering one for the reason the list exists: a posting whose only match is
-	// HIPAA is a healthcare compliance role, and HasEngineering reads an unrecognised
-	// vocabulary as engineering. All are non-corroborating — see below.
+	// engineering one: a posting whose only match is HIPAA is a healthcare compliance
+	// role. All are non-corroborating — see below.
 	{"hipaa", "hipaa"}, {"gdpr", "gdpr"}, {"ccpa", "ccpa"}, {"lgpd", "lgpd"},
 	{"itar", "itar"}, {"dfars", "dfars"},
 }
@@ -1515,9 +1508,8 @@ var professionalPhraseAliases = []phraseAlias{
 // occupationalSafetyPhraseAliases is its own slice rather than more lines in the list
 // above, for one reason: every canonical it emits must also be a nonCorroboratingPhrases
 // member, and that set now DERIVES from this slice instead of repeating its canonicals by
-// hand. The hand-typed copy was exactly the drift `nonEngineeringCanonicals` warns about
-// two definitions down — a thirty-sixth safety phrase added to a literal would silently
-// become a strong corroborator, which is the bug this vocabulary shipped with once.
+// hand. A hand-typed copy drifts: a thirty-sixth safety phrase added to a literal would
+// silently become a strong corroborator, which is the bug this vocabulary shipped with once.
 var occupationalSafetyPhraseAliases = []phraseAlias{
 	// Occupational safety — health, safety and environment. This vocabulary carries more
 	// weight than its size suggests: an HSE posting derives `is_tech = false` and the
@@ -1647,9 +1639,8 @@ var nonCorroboratingPhrases = func() map[string]bool {
 		"itar":      true,
 		"dfars":     true,
 	}
-	// Occupational safety, by construction rather than by hand — the same shape as
-	// nonEngineeringCanonicals below, and for a reason this map's own doctrine already
-	// states about naming a regime. "First aid", "corrective action" and "risk
+	// Occupational safety, by construction rather than by hand, and for a reason this
+	// map's own doctrine already states about naming a regime. "First aid", "corrective action" and "risk
 	// assessment" are in every childcare, warehouse, nursing, lifeguard and retail
 	// posting on the board, and in retail "corrective action" is HR disciplinary language
 	// rather than safety work at all. Naming a safety practice is evidence the posting is
@@ -1667,31 +1658,6 @@ var nonCorroboratingPhrases = func() map[string]bool {
 	// regulator's name is not English prose. Both stay corroborating.
 	for _, p := range occupationalSafetyPhraseAliases {
 		out[p.canonical] = true
-	}
-	return out
-}()
-
-// nonEngineeringBareCanonicals are non-engineering disciplines whose canonical also has a
-// BARE, single-word alias in wordAliases ("seo", "ecommerce") rather than only a multi-word
-// phrase. professionalPhraseAliases covers the multi-word marketing/business phrases
-// (technical-seo, link-building, content-marketing, …); these two canonicals fall through
-// that derivation entirely and, unlisted, would read as unrecognised — which HasEngineering
-// treats as engineering — for a discipline the dictionary in fact recognises.
-var nonEngineeringBareCanonicals = map[string]bool{
-	"seo":       true,
-	"ecommerce": true,
-}
-
-// nonEngineeringCanonicals is derived from professionalPhraseAliases plus
-// nonEngineeringBareCanonicals, never written by hand beyond those two sources: a term added
-// to either cannot drift out of sync with this set.
-var nonEngineeringCanonicals = func() map[string]bool {
-	out := make(map[string]bool, len(professionalPhraseAliases)+len(occupationalSafetyPhraseAliases)+len(nonEngineeringBareCanonicals))
-	for _, p := range slices.Concat(professionalPhraseAliases, occupationalSafetyPhraseAliases) {
-		out[p.canonical] = true
-	}
-	for c := range nonEngineeringBareCanonicals {
-		out[c] = true
 	}
 	return out
 }()

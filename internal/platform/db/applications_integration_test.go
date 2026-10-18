@@ -14,8 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// cmd/prune is the only hard-delete path for jobs, and it deletes on a schedule that has
-// nothing to do with any candidate. An application is a record of something a person did;
+// A job can be hard-deleted for reasons that have nothing to do with any candidate. An application is a record of something a person did;
 // only its link to the catalogue may be cleared.
 func TestApplication_OutlivesItsPosting(t *testing.T) {
 	pool := startPostgres(t)
@@ -331,7 +330,7 @@ func TestLinkedMailSurvivesAPrunedPosting(t *testing.T) {
 }
 
 // The write path the board needs once the posting is gone. TrackJob resolves the row
-// through `jobs`, so after cmd/prune there is nothing left for it to join and the card
+// through `jobs`, so once the posting is deleted there is nothing left for it to join and the card
 // cannot be moved at all — the defect these queries exist to fix.
 func TestTrackApplicationByID_MovesAPostingLessApplication(t *testing.T) {
 	pool := startPostgres(t)

@@ -1,7 +1,7 @@
 // Command mine-titles reports the word groups occurring most often in the titles of
-// jobs that still carry no is_tech signal. It is the read-only half of the
-// catalogue-pruning loop: it names the next cluster worth a dictionary term, and,
-// run again after a pruning pass, shows whether the unclassified group shrank.
+// jobs that still carry no is_tech signal. It names the next cluster worth a
+// dictionary term, and, run again after the dictionary grows, shows whether the
+// unclassified group shrank.
 //
 // It is a run-once-and-exit worker and writes nothing. Grouping is by word group
 // rather than by whole title because boards append location, schedule and
@@ -14,7 +14,7 @@
 // runs before the final top-N sort, so a small limit costs the same as a large one.
 // And expanding every title into overlapping groups multiplies the rows the
 // aggregate sees, so this is minutes, not seconds, and it spills to temp sort space
-// — fine for an operator tool run a few times per pruning iteration, and firmly off
+// — fine for an operator tool run a few times per dictionary iteration, and firmly off
 // any request path.
 //
 // The report is a shortlist for a human, not a verdict. The same measurement found

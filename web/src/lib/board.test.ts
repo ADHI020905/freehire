@@ -20,7 +20,7 @@ function listed(company: string, title: string): MyJob {
   } as MyJob;
 }
 
-// An application whose posting cmd/prune removed. There is no `job` to read, so the
+// An application whose posting was deleted. There is no `job` to read, so the
 // employer survives only as the slug the application copied.
 function pruned(companySlug: string, title: string): MyJob {
   return { company_slug: companySlug, role_title: title, job: null } as MyJob;

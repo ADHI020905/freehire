@@ -827,8 +827,7 @@ func TestParse_DesignAndCADVocab(t *testing.T) {
 		{"after effects", "Motion work in Adobe After Effects and Premiere Pro.", []string{"after-effects", "premiere-pro"}, nil},
 		// "after effects" unqualified is clinical prose, and healthcare is the largest
 		// non-technical mass this catalogue filters. A false STRONG token would also
-		// have lifted the gate off the weak words beside it — and HasEngineering would
-		// have read a nursing board as having posted engineering work.
+		// have lifted the gate off the weak words beside it.
 		{"after effects of anaesthesia",
 			"Registered Nurse. Monitor patients for the after effects of anaesthesia; sketch out care plans.",
 			nil, []string{"after-effects", "sketch"}},

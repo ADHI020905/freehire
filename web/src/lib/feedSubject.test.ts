@@ -64,8 +64,8 @@ describe('feedSubjectLine', () => {
   });
 
   it('falls back to the slug when the subject no longer resolves, and says so', () => {
-    // A thread outlives its subject: no FK binds them and cmd/prune hard-deletes
-    // vacancies, so the server returns the row with both names empty. `resolved:
+    // A thread outlives its subject: no FK binds them and a vacancy
+    // can be hard-deleted, so the server returns the row with both names empty. `resolved:
     // false` is what stops the slug being rendered as if it were a company's name.
     expect(feedSubjectLine(thread({ subject_title: '', subject_company: '' }))).toEqual({
       kind: 'Vacancy',

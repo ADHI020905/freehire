@@ -370,7 +370,7 @@
 
   // Meta pills (work arrangement, region, employment type, seniority) — only the
   // stated ones, reusing the list-card logic.
-  // The posting is gone once cmd/prune removes it. The employer and role are on the
+  // The posting is gone once it is deleted. The employer and role are on the
   // application itself; everything else the drawer shows came from the posting and is
   // simply absent — the honest rendering, since we no longer have it to show.
   const company = $derived(item.job?.company || item.company_slug);

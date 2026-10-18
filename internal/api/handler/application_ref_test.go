@@ -8,8 +8,8 @@ import (
 )
 
 func TestParseApplicationRefNamesAnApplication(t *testing.T) {
-	// The form ListInteractions mints for an application whose posting cmd/prune
-	// removed (internal/application/jobtracking/repository.go): "a" + applications.id.
+	// The form ListInteractions mints for an application whose posting was
+	// deleted (internal/application/jobtracking/repository.go): "a" + applications.id.
 	ref, err := parseApplicationRef("a4271")
 	if err != nil {
 		t.Fatalf("parseApplicationRef: %v", err)

@@ -273,7 +273,7 @@ func TestListMyJobsBoardFilter(t *testing.T) {
 }
 
 // The point of the whole change, asserted where the candidate actually meets it:
-// cmd/prune removes the posting, and the application is still on their board.
+// the posting is deleted, and the application is still on their board.
 func TestTrackedBoardKeepsAnApplicationWhosePostingWasPruned(t *testing.T) {
 	pool := startPostgres(t)
 	queries := db.New(pool)

@@ -753,7 +753,7 @@ SELECT company_slug,
 // board still replied. A retracted event does not count — it belongs to another employer.
 //
 // The reply is paired to its application through application_id, never through job_id.
-// job_id is ON DELETE SET NULL, so after cmd/prune both sides read NULL, the pair reduces
+// job_id is ON DELETE SET NULL, so once a posting is deleted both sides read NULL, the pair reduces
 // to NULL = NULL — never true — and an employer that answered is served as silent: the
 // distortion this rollup was moved onto the ledger to remove, arriving by a different
 // route. Pairing on (user_id, company_slug) instead would survive the deletion by

@@ -2,7 +2,7 @@
 
 // Integration tests for ListOrphanedApplications' OFFSET support and
 // CountOrphanedApplications — added because the board's paging previously re-read the
-// same top-N orphaned applications (those whose posting cmd/prune removed) on every
+// same top-N orphaned applications (those whose posting was deleted) on every
 // page, and CountUserJobs never counted them at all. Run with:
 // go test -tags=integration ./internal/platform/db/
 package db
@@ -16,7 +16,7 @@ import (
 )
 
 // seedOrphanedApplication inserts an application with no posting (job_id NULL) — the
-// shape cmd/prune leaves behind (see TestApplication_OutlivesItsPosting), reproduced
+// shape a deleted posting leaves behind (see TestApplication_OutlivesItsPosting), reproduced
 // directly here since only the orphaned shape itself matters for these tests.
 func seedOrphanedApplication(t *testing.T, pool *pgxpool.Pool, userID int64, company string, appliedAt time.Time) int64 {
 	t.Helper()
