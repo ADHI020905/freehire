@@ -136,6 +136,29 @@ const gtag: (...args: unknown[]) => void = function () {
   (window.dataLayer ??= []).push(arguments);
 };
 
+// Hosts that hand a visitor BACK to us mid-visit: the OAuth consent screens and the
+// hosted checkout. Arriving from one of them is the second half of a journey that
+// started elsewhere, so GA must not credit it as the traffic source — otherwise
+// every OAuth sign-in reads as a new session from accounts.google.com and the
+// visit's real source (ChatGPT, LinkedIn, …) is lost. This is GA's "unwanted
+// referrals" list, kept in code because the Admin API cannot set it.
+const HANDOFF_REFERRER_HOSTS = new Set([
+  'accounts.google.com',
+  'appleid.apple.com',
+  'checkout.stripe.com',
+]);
+
+/** Whether `referrer` is a handoff host GA should not report as a source. An empty
+ *  or unparseable referrer is not one. */
+export function isHandoffReferrer(referrer: string | undefined): boolean {
+  if (!referrer) return false;
+  try {
+    return HANDOFF_REFERRER_HOSTS.has(new URL(referrer).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Inject gtag.js and configure GA once. Skipped on localhost so dev traffic stays
  *  out of the property — matching the old app.html bootstrap. */
 function initGoogleAnalytics(): void {
@@ -148,7 +171,11 @@ function initGoogleAnalytics(): void {
   document.head.appendChild(script);
   window.gtag = gtag;
   gtag('js', new Date());
-  gtag('config', GA_MEASUREMENT_ID);
+  gtag(
+    'config',
+    GA_MEASUREMENT_ID,
+    isHandoffReferrer(document.referrer) ? { ignore_referrer: true } : {},
+  );
 }
 
 /** Routes whose DOM must never be recorded (résumé, tracking, inbox all live

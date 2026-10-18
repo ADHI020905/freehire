@@ -4,6 +4,7 @@ import {
   cvUploadReason,
   initTrackers,
   isFreshAccount,
+  isHandoffReferrer,
   isPrivateRoute,
   track,
   isFeatureEnabled,
@@ -156,5 +157,26 @@ describe('Google Analytics bootstrap', () => {
     for (const entry of queued) {
       expect(Object.prototype.toString.call(entry)).toBe('[object Arguments]');
     }
+  });
+});
+
+describe('isHandoffReferrer', () => {
+  it('recognizes the OAuth and checkout hosts that hand a visitor back', () => {
+    expect(isHandoffReferrer('https://accounts.google.com/')).toBe(true);
+    expect(isHandoffReferrer('https://appleid.apple.com/auth/authorize')).toBe(true);
+    expect(isHandoffReferrer('https://checkout.stripe.com/c/pay/cs_live_x')).toBe(true);
+  });
+
+  it('leaves real traffic sources alone', () => {
+    expect(isHandoffReferrer('https://chatgpt.com/')).toBe(false);
+    expect(isHandoffReferrer('https://www.google.com/')).toBe(false);
+    // Only an exact host matches, never a look-alike suffix.
+    expect(isHandoffReferrer('https://accounts.google.com.evil.example/')).toBe(false);
+  });
+
+  it('treats an empty or unparseable referrer as not a handoff', () => {
+    expect(isHandoffReferrer('')).toBe(false);
+    expect(isHandoffReferrer(undefined)).toBe(false);
+    expect(isHandoffReferrer('not a url')).toBe(false);
   });
 });
