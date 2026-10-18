@@ -33,6 +33,12 @@ on the job page. Providers: greenhouse, ashby, workable, lever, dover. Queue dra
   its attempts and dead-letters, and a queue steadily accumulating dead letters is
   indistinguishable from a broken one. Ashby reports an absent posting as 200 + null, which
   is converted to `ErrPostingGone` too (fetch.go:237-242).
+- **429 → defer, not fail.** A rate limit says nothing about the posting, so the capture
+  that drew it is put back with no attempt charged (`outbox.Deferred`), the rest of that
+  wave's captures from the same provider are deferred without a request, and every later
+  claim in the run skips the provider (`skip_sources` in `ClaimApplyFormBatch`). The next
+  run asks again — that is the backoff. Counted as a failure, Workable's throttling
+  dead-lettered ~7k good captures on 2026-10-18 in three hourly runs.
 - **Lever needs the posting's own URL.** A posting lives on exactly one of two regional
   hosts and the wrong one answers 404 — the same code as a deleted posting — so the region
   cannot be discovered by trying and is read from the stored URL (fetch.go:142-159;

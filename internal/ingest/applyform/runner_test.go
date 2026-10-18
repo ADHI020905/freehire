@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"testing"
 )
@@ -21,6 +22,8 @@ type fakeStore struct {
 	attempts  map[int64]int
 	discarded []int64
 	maxClaims int
+	// skips records the skip list each claim was given, in order.
+	skips [][]string
 }
 
 func newFakeStore(waves ...[]Claimed) *fakeStore {
@@ -33,18 +36,26 @@ func newFakeStore(waves ...[]Claimed) *fakeStore {
 }
 
 // Claim honours the batch size the way the real query's LIMIT does — a fake that ignored
-// it would let a bounded run overshoot its budget and still pass.
-func (s *fakeStore) Claim(_ context.Context, batch, _ int) ([]Claimed, error) {
+// it would let a bounded run overshoot its budget and still pass — and the skip list the
+// way its `<> ALL` does.
+func (s *fakeStore) Claim(_ context.Context, batch, _ int, skip []string) ([]Claimed, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.claimErr != nil {
 		return nil, s.claimErr
 	}
 	s.maxClaims++
+	s.skips = append(s.skips, skip)
 	if len(s.waves) == 0 {
 		return nil, nil
 	}
-	wave := s.waves[0]
+	wave := s.waves[0][:0:0]
+	for _, c := range s.waves[0] {
+		if !slices.Contains(skip, c.Provider) {
+			wave = append(wave, c)
+		}
+	}
+	s.waves[0] = wave
 	if batch > 0 && len(wave) > batch {
 		s.waves[0] = wave[batch:]
 		return wave[:batch], nil
@@ -439,5 +450,54 @@ func TestRunDiscardsAGonePosting(t *testing.T) {
 func TestRunOfGonePostingsIsNotDegraded(t *testing.T) {
 	if (RunStats{Captured: 100, Gone: 40}).Degraded() {
 		t.Error("a run that retired taken-down postings reads as degraded, want it healthy")
+	}
+}
+
+// A 429 is the platform asking us to stop, not a verdict on the posting. The capture that
+// drew it, and every later one from the same platform, is put back without an attempt
+// charged, the platform is skipped by every following claim, and the others carry on.
+func TestRunDefersAThrottledProviderWithoutChargingAttempts(t *testing.T) {
+	store := newFakeStore(
+		[]Claimed{
+			claim(1, 100, "workable", "acme:A1"),
+			claim(2, 200, "workable", "acme:A2"),
+		},
+		[]Claimed{
+			claim(3, 300, "workable", "acme:A3"),
+			claim(4, 400, "greenhouse", "stripe:G1"),
+		},
+	)
+	workable := &fakeFetcher{errs: map[string]error{
+		"A1": fmt.Errorf("fetch: %w", statusErr{code: 429}),
+		"A2": fmt.Errorf("fetch: %w", statusErr{code: 429}),
+	}}
+	greenhouse := &fakeFetcher{forms: map[string]Form{"G1": {Provider: "greenhouse"}}}
+	opts := testOptions()
+	opts.Concurrency = 1 // A1 must be seen before A2 is fetched
+
+	stats, err := Run(context.Background(), store, map[string]Fetcher{
+		"workable": workable, "greenhouse": greenhouse,
+	}, opts)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(store.failures) != 0 {
+		t.Errorf("throttled captures were charged attempts: %v", store.failures)
+	}
+	if workable.calls != 1 {
+		t.Errorf("workable fetched %d times, want 1 (stop at the first 429)", workable.calls)
+	}
+	if _, ok := store.saved[400]; !ok {
+		t.Error("greenhouse capture was not stored: one throttled platform must not stop the others")
+	}
+	if stats.Deferred != 2 || stats.Captured != 1 || stats.Failed != 0 || stats.DeadLettered != 0 {
+		t.Errorf("stats = %+v, want 2 deferred and 1 captured", stats)
+	}
+	if stats.Degraded() {
+		t.Error("a run that was only throttled is not degraded")
+	}
+	if len(store.skips) < 2 || !slices.Equal(store.skips[1], []string{"workable"}) {
+		t.Errorf("claims were given skips %v, want the second to skip workable", store.skips)
 	}
 }

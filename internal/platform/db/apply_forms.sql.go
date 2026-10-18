@@ -19,9 +19,10 @@ WITH claimable AS (
     WHERE o.failed_at IS NULL
       AND (o.claimed_at IS NULL
            OR o.claimed_at < now() - make_interval(secs => $1::int))
+      AND j.source <> ALL(COALESCE($2::text[], '{}'))
     ORDER BY COALESCE(j.posted_at, j.created_at) DESC, j.id DESC
     FOR UPDATE OF o SKIP LOCKED
-    LIMIT $2
+    LIMIT $3
 )
 UPDATE apply_form_outbox o
 SET claimed_at = now()
@@ -32,8 +33,9 @@ RETURNING o.id, o.job_id, j.source, j.external_id, j.url
 `
 
 type ClaimApplyFormBatchParams struct {
-	LeaseSeconds int32 `json:"lease_seconds"`
-	BatchSize    int32 `json:"batch_size"`
+	LeaseSeconds int32    `json:"lease_seconds"`
+	SkipSources  []string `json:"skip_sources"`
+	BatchSize    int32    `json:"batch_size"`
 }
 
 type ClaimApplyFormBatchRow struct {
@@ -61,10 +63,16 @@ type ClaimApplyFormBatchRow struct {
 // the url carries the regional host for a platform that has more than one. Lever serves
 // its European tenants from a separate host and answers 404 on the other — the same code
 // it uses for a posting that is gone, so the host cannot be discovered by trying.
+//
+// skip_sources names the platforms that answered 429 earlier in this run. Their entries
+// stay queued untouched for a later run; leaving them claimable here would hand every
+// following wave the same throttled platform's freshest postings and starve the rest.
+// COALESCE because `<> ALL(NULL)` matches no row at all, and a nil Go slice arrives as
+// NULL: without it, a caller that skips nothing would claim nothing.
 // Join jobs off the claimable CTE (not the UPDATE target o, which Postgres forbids in
 // FROM) so the platform identity comes back without a second query.
 func (q *Queries) ClaimApplyFormBatch(ctx context.Context, arg ClaimApplyFormBatchParams) ([]ClaimApplyFormBatchRow, error) {
-	rows, err := q.db.Query(ctx, claimApplyFormBatch, arg.LeaseSeconds, arg.BatchSize)
+	rows, err := q.db.Query(ctx, claimApplyFormBatch, arg.LeaseSeconds, arg.SkipSources, arg.BatchSize)
 	if err != nil {
 		return nil, err
 	}

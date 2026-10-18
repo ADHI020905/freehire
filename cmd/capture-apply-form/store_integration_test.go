@@ -47,7 +47,9 @@ func TestStoreClaimCarriesThePostingIdentity(t *testing.T) {
 	store := newDBStore(pool)
 	_, outboxID := queueOne(t, pool, "greenhouse", "stripe:800001")
 
-	claims, err := store.Claim(context.Background(), 50, 3600)
+	// nil on purpose: it reaches Postgres as NULL, which the claim must read as "skip
+	// nothing" — `<> ALL(NULL)` alone would claim nothing and find no capture here.
+	claims, err := store.Claim(context.Background(), 50, 3600, nil)
 	if err != nil {
 		t.Fatalf("Claim: %v", err)
 	}
@@ -142,7 +144,7 @@ func TestStoreDeadLetteredCaptureIsNoLongerClaimed(t *testing.T) {
 		t.Fatalf("Fail: %v", err)
 	}
 
-	claims, err := store.Claim(ctx, 100, 0)
+	claims, err := store.Claim(ctx, 100, 0, nil)
 	if err != nil {
 		t.Fatalf("Claim: %v", err)
 	}
@@ -150,5 +152,32 @@ func TestStoreDeadLetteredCaptureIsNoLongerClaimed(t *testing.T) {
 		if c.OutboxID == outboxID {
 			t.Error("a dead-lettered capture was claimed again")
 		}
+	}
+}
+
+// A provider named in skip is left queued; the others are claimed as usual.
+func TestStoreClaimSkipsThrottledProviders(t *testing.T) {
+	pool := testdb.Pool(t)
+	ctx := context.Background()
+	store := newDBStore(pool)
+	_, skipped := queueOne(t, pool, "workable", "acme:800005")
+	_, kept := queueOne(t, pool, "greenhouse", "stripe:800006")
+
+	claims, err := store.Claim(ctx, 100, 3600, []string{"workable"})
+	if err != nil {
+		t.Fatalf("Claim: %v", err)
+	}
+	var sawKept bool
+	for _, c := range claims {
+		if c.OutboxID == skipped {
+			t.Error("a capture from a skipped provider was claimed")
+		}
+		sawKept = sawKept || c.OutboxID == kept
+	}
+	if !sawKept {
+		t.Error("a capture from another provider was not claimed")
+	}
+	if n := countRows(t, pool, `SELECT count(*) FROM apply_form_outbox WHERE id = $1 AND claimed_at IS NULL`, skipped); n != 1 {
+		t.Error("the skipped capture's lease was touched")
 	}
 }

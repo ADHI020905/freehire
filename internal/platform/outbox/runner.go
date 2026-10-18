@@ -19,6 +19,13 @@ const (
 	Failed
 	DeadLettered
 	Discarded
+	// Deferred is an item put back untouched: claimed, but not attempted, so no attempt
+	// is counted against it; its lease expiring is what makes it claimable again. It
+	// still counts toward MaxPerRun, since claiming it was work. It is what a
+	// caller reports when the far side has asked it to slow down — a 429 is a statement
+	// about the moment, not about the item, and spending the item's attempts on it turns
+	// one throttled afternoon into a queue of dead letters.
+	Deferred
 )
 
 // Stats is what one Run did.
@@ -27,6 +34,7 @@ type Stats struct {
 	Failed       int
 	DeadLettered int
 	Discarded    int
+	Deferred     int
 }
 
 // Claimer leases up to batch live, unleased entries — the shape every package's
@@ -146,6 +154,7 @@ func RunBatch[C any](ctx context.Context, claimer Claimer[C], opt RunOptions, pr
 			stats.Failed += waveStats.Failed
 			stats.DeadLettered += waveStats.DeadLettered
 			stats.Discarded += waveStats.Discarded
+			stats.Deferred += waveStats.Deferred
 		}
 		if opt.OnWave != nil {
 			opt.OnWave(stats)
@@ -181,7 +190,7 @@ func nextBatchSize(opt RunOptions, stats Stats) (size int, budgetSpent bool) {
 	if opt.MaxPerRun <= 0 {
 		return opt.BatchSize, false
 	}
-	processed := stats.Succeeded + stats.Failed + stats.DeadLettered + stats.Discarded
+	processed := stats.Succeeded + stats.Failed + stats.DeadLettered + stats.Discarded + stats.Deferred
 	remaining := opt.MaxPerRun - processed
 	if remaining <= 0 {
 		return 0, true
@@ -199,5 +208,7 @@ func tally(stats *Stats, o Outcome) {
 		stats.DeadLettered++
 	case Discarded:
 		stats.Discarded++
+	case Deferred:
+		stats.Deferred++
 	}
 }

@@ -37,6 +37,15 @@ func asGone(err error) error {
 	return err
 }
 
+// isThrottled reports whether the platform answered 429. Unlike a 404 it says nothing
+// about the posting: the platform is asking us to stop for a while, so the runner stops
+// asking it for the rest of the run and puts the posting back without charging it an
+// attempt.
+func isThrottled(err error) bool {
+	var sc statusCoder
+	return errors.As(err, &sc) && sc.StatusCode() == http.StatusTooManyRequests
+}
+
 // Transport is the narrow HTTP role a fetcher needs: a JSON GET for Greenhouse's REST
 // endpoint and a JSON POST for Ashby's GraphQL one. It is declared here rather than
 // imported from internal/ingest/sources because the dependency runs the other way — sources

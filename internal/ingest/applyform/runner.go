@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
+	"sync"
 	"time"
 
 	"github.com/strelov1/freehire/internal/platform/outbox"
@@ -29,8 +31,9 @@ type Claimed struct {
 // queries and a pool; tests use a fake. The port hides the pool and the transaction
 // boundaries, not the queue's semantics.
 type Store interface {
-	// Claim leases up to batch live, unleased captures.
-	Claim(ctx context.Context, batch, leaseSeconds int) ([]Claimed, error)
+	// Claim leases up to batch live, unleased captures, none of them from a provider
+	// named in skip.
+	Claim(ctx context.Context, batch, leaseSeconds int, skip []string) ([]Claimed, error)
 	// Save stores the captured form and retires the queue entry, atomically — so a
 	// capture cannot be both stored and left queued, nor retired without being stored.
 	Save(ctx context.Context, outboxID, jobID int64, form Form) error
@@ -85,6 +88,10 @@ type RunStats struct {
 	// attrition — an employer took the posting down and our sweep has not caught up yet.
 	Gone         int
 	DeadLettered int
+	// Deferred counts captures put back untouched because their platform answered 429
+	// during this run. They are not failures: no attempt is charged, and the next run
+	// tries them again.
+	Deferred int
 }
 
 // Degraded reports whether a run deserves an alert, and it deliberately does NOT use the
@@ -113,8 +120,8 @@ func (s RunStats) Degraded() bool {
 // recorded against it, so one platform having a bad afternoon costs its own postings and
 // nothing else.
 func Run(ctx context.Context, s Store, fetchers map[string]Fetcher, opts RunOptions) (RunStats, error) {
-	rn := &run{store: s, fetchers: fetchers, opts: opts}
-	result, err := outbox.RunPool(ctx, &cancelAwareClaimer{store: s}, outbox.RunOptions{
+	rn := &run{store: s, fetchers: fetchers, opts: opts, throttled: &throttle{}}
+	result, err := outbox.RunPool(ctx, &cancelAwareClaimer{store: s, throttled: rn.throttled}, outbox.RunOptions{
 		BatchSize:    opts.BatchSize,
 		LeaseSeconds: opts.LeaseSeconds,
 		Concurrency:  opts.Concurrency,
@@ -125,6 +132,7 @@ func Run(ctx context.Context, s Store, fetchers map[string]Fetcher, opts RunOpti
 		Failed:       result.Failed,
 		Gone:         result.Discarded,
 		DeadLettered: result.DeadLettered,
+		Deferred:     result.Deferred,
 	}
 	if err != nil {
 		return stats, fmt.Errorf("claim apply-form captures: %w", err)
@@ -148,9 +156,13 @@ func Run(ctx context.Context, s Store, fetchers map[string]Fetcher, opts RunOpti
 // Guarding every call uniformly — including the first — would swap that visible
 // failure signal for a clean-looking empty-queue run, indistinguishable from a
 // healthy drain; found by code review, not by design.
+//
+// It also passes the providers throttled so far, so a wave never claims what this run has
+// already been told to leave alone.
 type cancelAwareClaimer struct {
-	store Store
-	calls int
+	store     Store
+	throttled *throttle
+	calls     int
 }
 
 func (c *cancelAwareClaimer) Claim(ctx context.Context, batch, leaseSeconds int) ([]Claimed, error) {
@@ -158,23 +170,71 @@ func (c *cancelAwareClaimer) Claim(ctx context.Context, batch, leaseSeconds int)
 		return nil, nil
 	}
 	c.calls++
-	return c.store.Claim(ctx, batch, leaseSeconds)
+	return c.store.Claim(ctx, batch, leaseSeconds, c.throttled.list())
 }
 
 // run carries one Run's dependencies and options so process uses the receiver instead
 // of threading them through every call.
 type run struct {
-	store    Store
-	fetchers map[string]Fetcher
-	opts     RunOptions
+	store     Store
+	fetchers  map[string]Fetcher
+	opts      RunOptions
+	throttled *throttle
+}
+
+// throttle is the set of providers that answered 429 during this run. It lives for one
+// run only: the next run, an hour later, asks again, which is the backoff.
+type throttle struct {
+	mu        sync.Mutex
+	providers []string
+}
+
+// add records provider and reports whether it was new, so the run says so once.
+func (t *throttle) add(provider string) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if slices.Contains(t.providers, provider) {
+		return false
+	}
+	t.providers = append(t.providers, provider)
+	return true
+}
+
+func (t *throttle) has(provider string) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return slices.Contains(t.providers, provider)
+}
+
+// list returns a copy, so a claim reading it never races a concurrent add.
+func (t *throttle) list() []string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return slices.Clone(t.providers)
 }
 
 // process fetches and stores one posting's form and reports what happened;
 // outbox.RunPool tallies the result.
 func (rn *run) process(ctx context.Context, c Claimed) outbox.Outcome {
+	// Claimed in the same wave as the posting that drew the 429, before the claim could
+	// know to skip it. Fetching it anyway is exactly the hammering the 429 asked us to stop.
+	if rn.throttled.has(c.Provider) {
+		return outbox.Deferred
+	}
 	err := captureOne(ctx, rn.store, rn.fetchers, rn.opts, c)
 	if err == nil {
 		return outbox.Succeeded
+	}
+
+	// The platform is rate-limiting us. That is about the moment, not about this posting,
+	// so no attempt is charged — three throttled runs used to dead-letter thousands of
+	// perfectly good captures. The lease is left in place, and the claim skips the
+	// provider for the rest of the run.
+	if isThrottled(err) {
+		if rn.throttled.add(c.Provider) {
+			log.Printf("apply-form: %s answered 429; leaving its captures for the next run", c.Provider)
+		}
+		return outbox.Deferred
 	}
 
 	// The platform does not have this posting and never will again. Retrying to reach

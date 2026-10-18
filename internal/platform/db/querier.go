@@ -416,6 +416,12 @@ type Querier interface {
 	// the url carries the regional host for a platform that has more than one. Lever serves
 	// its European tenants from a separate host and answers 404 on the other — the same code
 	// it uses for a posting that is gone, so the host cannot be discovered by trying.
+	//
+	// skip_sources names the platforms that answered 429 earlier in this run. Their entries
+	// stay queued untouched for a later run; leaving them claimable here would hand every
+	// following wave the same throttled platform's freshest postings and starve the rest.
+	// COALESCE because `<> ALL(NULL)` matches no row at all, and a nil Go slice arrives as
+	// NULL: without it, a caller that skips nothing would claim nothing.
 	// Join jobs off the claimable CTE (not the UPDATE target o, which Postgres forbids in
 	// FROM) so the platform identity comes back without a second query.
 	ClaimApplyFormBatch(ctx context.Context, arg ClaimApplyFormBatchParams) ([]ClaimApplyFormBatchRow, error)
