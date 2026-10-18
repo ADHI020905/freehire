@@ -1,0 +1,84 @@
+{
+ "response_code": 10100,
+ "message": "success",
+ "pagination": {
+  "page_no": "1",
+  "page_size": "3",
+  "pages": 2,
+  "total_items": 5,
+  "has_next": true,
+  "next_page": 2
+ },
+ "body": [
+  {
+   "id": 194415,
+   "title": "Project Manager",
+   "company_name": "IT Exchange",
+   "location_name": "Any",
+   "work_mode": [
+    "work_from_home"
+   ],
+   "job_types": [
+    "full_time"
+   ],
+   "min_year": 8,
+   "max_year": 12,
+   "redirect_url": "",
+   "created_on": "2026-10-12 17:03:06",
+   "modified_on": "2026-10-18 06:01:31",
+   "status": "active",
+   "requirements": "<p>We are looking for someone with a high aptitude and ability to learn new things, someone with strong analytical skills. If you think you are someone like that then please read on.Just like any startup it's hard to define a very clear role for individuals but we have made an attempt to do so. However, we are really looking for an all-rounder with Business Analysis and Project Management as key skills. Here are some of the key things the person will do:</p>",
+   "responsibilities": "<p><strong>Desired Skills and Experience:</strong></p>",
+   "skills": [
+    "it project management",
+    "business analysis"
+   ]
+  },
+  {
+   "id": 193866,
+   "title": "Engineer II- C++ Developer",
+   "company_name": "Aristocrat",
+   "location_name": "Noida",
+   "work_mode": [
+    ""
+   ],
+   "job_types": [
+    "full time"
+   ],
+   "min_year": 0,
+   "max_year": 2,
+   "redirect_url": "https://jsv3.recruitics.com/redirect?rx_cid=3680&rx_jobId=R0021739_1001_rxr-1&rx_url=https%3A%2F%2Faristocrat.wd3.myworkdayjobs.com%2FAristocratExternalCareersSite%2Fjob%2FGurugram%2FEngineer-II--C---Developer_R0021739%3Frx_ch%3Dconnector%26rx_id%3D536cbeee-b09d-11f1-96fa-1b1ee1c8908a%26rx_job%3DR0021739_1001_rxr-1%26rx_medium%3Dpost%26rx_paid%3D1%26rx_r%3Dnone%26rx_source%3Dherkey%26rx_ts%3D20260920T181202Z%26rx_vp%3Djobpost%26source%3DHerKey",
+   "created_on": "2026-09-21 01:30:33",
+   "modified_on": "2026-10-18 06:00:59",
+   "status": "active",
+   "requirements": null,
+   "responsibilities": null,
+   "skills": [
+    ""
+   ]
+  },
+  {
+   "id": 194409,
+   "title": "Field Officer",
+   "company_name": "Cadila Pharma",
+   "location_name": "Delhi",
+   "work_mode": [
+    ""
+   ],
+   "job_types": [
+    "full time"
+   ],
+   "min_year": 0,
+   "max_year": 2,
+   "redirect_url": "https://careers.cadilapharma.com/in/en/job/CPJCPHIN25429EXTERNALENIN/Field-Officer",
+   "created_on": "2026-10-12 10:10:40",
+   "modified_on": "2026-10-18 06:01:31",
+   "status": "active",
+   "requirements": null,
+   "responsibilities": null,
+   "skills": [
+    ""
+   ]
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+{
+ "response_code": 10970,
+ "message": "job found",
+ "seo": {
+  "url": "jobs/project-manager/194415"
+ },
+ "body": [
+  {
+   "id": 194415,
+   "title": "Project Manager",
+   "status": "active",
+   "description": "<p style=\"text-align: justify;\">ITeXchange (it.exchange) is a value-added marketplace, where sourcing of IT services is seamlessly integrated with the project delivery. It is a platform where emerging and midsized companies can source technology services while ensuring that the discovery-to-delivery lifecycle of IT projects is handled with expert care.The Founders of ITeXchange saw that despite an evolved IT industry, midsize companies struggle to find competent IT Service Providers. The idea of a marketplace was thus created as an ITeXchange that connects IT Buyers with IT Service Providers so the midsize business could leverage the benefits of IT outsourcing in the same way as Fortune 500 have been able to do in the last few decades.As an exciting and young startup, ITeXchange employees will get an opportunity to learn all aspects of business, work with veterans from the industry and g",
+   "responsibilities": "<p><strong>Desired Skills and Experience:</strong></p>",
+   "requirements": "<p>We are looking for someone with a high aptitude and ability to learn new things, someone with strong analytical skills. If you think you are someone like that then please read on.Just like any startup it's hard to define a very clear role for individuals but we have made an attempt to do so. However, we are really looking for an all-rounder with Business Analysis and Project Management as key skills. Here are some of the key things the person will do:</p>",
+   "redirect_url": "",
+   "published_on": "2026-10-14 10:46:56",
+   "created_on": "2026-10-12 17:03:06",
+   "expires_on": "2026-12-13 10:46:56",
+   "location_name": "Any",
+   "work_mode": "work_from_home",
+   "job_types": "full_time",
+   "is_external_job": false,
+   "company": {
+    "name": "IT Exchange"
+   }
+  }
+ ]
+}

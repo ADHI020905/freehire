@@ -600,6 +600,14 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["jobboardly"] = NewJobboardly(NewLongTimeoutClient())
 	}
+	// HerKey's posting resource answers in 4-15 s, close enough to the standard 15 s timeout
+	// that a share of every run would time out, so it rides the long-timeout transport, paced
+	// (see herkeyRequestInterval).
+	if c == nil {
+		registry["herkey"] = NewHerKey(nil)
+	} else {
+		registry["herkey"] = NewHerKey(pacedHerKeyGetter(NewLongTimeoutClient()))
+	}
 	// meta/uber/gusto are NOT served by the shared client: Meta's edge 400s the default Go
 	// TLS+HTTP/2 fingerprint and Uber's and Gusto's Cloudflare edges challenge it, so all three
 	// need the shared Chrome-fingerprint transport (fingerprintHTTP, also used by the

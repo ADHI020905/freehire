@@ -1,0 +1,28 @@
+{
+ "response_code": 10970,
+ "message": "job found",
+ "seo": {
+  "url": "jobs/engineer-ii-c-developer/193866"
+ },
+ "body": [
+  {
+   "id": 193866,
+   "title": "Engineer II- C++ Developer",
+   "status": "active",
+   "description": "At Aristocrat, we are committed to crafting outstanding gaming experiences that engage and entertain millions globally. As an Engineer II - C++ Developer, you will have a key role in our Studio. You will collaborate with a skilled team of Artists, Game Mathematicians, Game Developers, and Test Engineers. We focus on quality and individual ownership, appreciating engineers who take pride in developing flawless games that succeed in the global market. Join us in our ambitious mission where your efforts will significantly impact the delivery of world-class casino games!What You'll DoAnalyze game requirements alongside technical leads and game designers.Develop slot games for various cabinets and markets, ensuring compliance with complex game mathematics and arts integration.Engage in the full development process, including coding, code reviews, unit testing, and memory profiling.Aim for hig",
+   "responsibilities": null,
+   "requirements": null,
+   "redirect_url": "https://jsv3.recruitics.com/redirect?rx_cid=3680&rx_jobId=R0021739_1001_rxr-1&rx_url=https%3A%2F%2Faristocrat.wd3.myworkdayjobs.com%2FAristocratExternalCareersSite%2Fjob%2FGurugram%2FEngineer-II--C---Developer_R0021739%3Frx_ch%3Dconnector%26rx_id%3D536cbeee-b09d-11f1-96fa-1b1ee1c8908a%26rx_job%3DR0021739_1001_rxr-1%26rx_medium%3Dpost%26rx_paid%3D1%26rx_r%3Dnone%26rx_source%3Dherkey%26rx_ts%3D20260920T181202Z%26rx_vp%3Djobpost%26source%3DHerKey",
+   "published_on": "2026-09-21 01:30:33",
+   "created_on": "2026-09-21 01:30:33",
+   "expires_on": "2026-11-20 01:30:33",
+   "location_name": "Noida",
+   "work_mode": "",
+   "job_types": "full time",
+   "is_external_job": false,
+   "company": {
+    "name": "Aristocrat"
+   }
+  }
+ ]
+}

@@ -1,0 +1,25 @@
+{
+ "response_code": 10970,
+ "message": "job found",
+ "body": [
+  {
+   "id": 179885,
+   "title": "Software Engineer II",
+   "status": "inactive",
+   "description": "<html><body><div class=\"job__description body\"><div><p>Intuit Credit Karma is a mission-driven company, focused on championing financial progress for our more than 140 million members globally. While we're best known for pioneering free credit scores, our members turn to us for everything related to their financial goals, including identity monitoring, applying for credit cards, shopping for insurance and loans (car, home and personal) and savings accounts and checking accounts* – all for free. Credit Karma has grown significantly through the years: we now have more than 1,700 employees across our offices in Oakland, Charlotte, Culver City, San Diego, London, Bangalore, and New York City.</p><p>*Banking services provided by MVB Bank, Inc., Member FDIC</p>",
+   "responsibilities": null,
+   "requirements": null,
+   "redirect_url": "https://job-boards.greenhouse.io/creditkarma/jobs/7525853003",
+   "published_on": "2025-11-20 00:00:00",
+   "created_on": "2025-11-27 05:03:33",
+   "expires_on": "2026-01-26 10:33:33",
+   "location_name": "Bangalore",
+   "work_mode": "",
+   "job_types": "",
+   "is_external_job": true,
+   "company": {
+    "name": "Credit Karma, Inc"
+   }
+  }
+ ]
+}

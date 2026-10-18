@@ -1,0 +1,28 @@
+{
+ "response_code": 10970,
+ "message": "job found",
+ "seo": {
+  "url": "jobs/field-officer/194409"
+ },
+ "body": [
+  {
+   "id": 194409,
+   "title": "Field Officer",
+   "status": "active",
+   "description": "Role Objective / Major Purpose of the Job\nTo drive prescription generation and achieve assigned sales targets by effectively promoting the company’s products,\nstrengthening doctor and chemist relationships, and ensuring product availability across the territory.\n\nPrincipal Tasks & Responsibilities\n1. Sales & Target Achievement\n? Achieve and consistently surpass the assigned Sales Budget and YPM (Yearly Performance Milestone) for the territory.\n? Ensure effective product promotion to generate Rx demand and secondary sales.\n? Personally, book orders to maintain adequate stock levels and avoid stock-outs.\n 2. Doctor & Chemist Coverage\n? Maintain a Doctor Call Average of 10+1 per day.\n? Achieve Minimum 95% MCR (Monthly Call Report) coverage.\n? Ensure a minimum of 5 chemist calls per day.\n? Build strong professional relationships with key doctors, consultants, and retail chemists.",
+   "responsibilities": null,
+   "requirements": null,
+   "redirect_url": "https://careers.cadilapharma.com/in/en/job/CPJCPHIN25429EXTERNALENIN/Field-Officer",
+   "published_on": "2026-10-12 10:10:39",
+   "created_on": "2026-10-12 10:10:40",
+   "expires_on": "2026-12-11 10:10:40",
+   "location_name": "Delhi",
+   "work_mode": "",
+   "job_types": "full time",
+   "is_external_job": false,
+   "company": {
+    "name": "Cadila Pharma"
+   }
+  }
+ ]
+}

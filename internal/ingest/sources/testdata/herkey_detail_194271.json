@@ -1,0 +1,28 @@
+{
+ "response_code": 10970,
+ "message": "job found",
+ "seo": {
+  "url": "jobs/ftc-customer-service-representative-cs-technical-servicing/194271"
+ },
+ "body": [
+  {
+   "id": 194271,
+   "title": "FTC - Customer Service Representative CS - Technical Servicing",
+   "status": "active",
+   "description": "<p>As a Fixed term Contractor - Customer Service Representative (9 months contract), you will be a vital source of first-line support, helping clients manage their investments and save for their financial futures. The role will primarily involve responding to client queries received through incoming written correspondence.</p><p><strong>Key Responsibilities</strong></p><p><strong>In this role, you will:</strong></p>",
+   "responsibilities": "",
+   "requirements": "",
+   "redirect_url": "",
+   "published_on": "2026-10-09 13:04:59",
+   "created_on": "2026-10-09 13:04:50",
+   "expires_on": "2026-12-08 13:05:00",
+   "location_name": "Gurgaon",
+   "work_mode": "work_from_office",
+   "job_types": "full_time",
+   "is_external_job": false,
+   "company": {
+    "name": "Fidelity International"
+   }
+  }
+ ]
+}

@@ -1,0 +1,66 @@
+{
+ "response_code": 10100,
+ "message": "success",
+ "pagination": {
+  "page_no": "2",
+  "page_size": "3",
+  "pages": 2,
+  "total_items": 5,
+  "has_next": false,
+  "next_page": null
+ },
+ "body": [
+  {
+   "id": 194271,
+   "title": "FTC - Customer Service Representative CS - Technical Servicing",
+   "company_name": "Fidelity International",
+   "location_name": "Gurgaon",
+   "work_mode": [
+    "work_from_office"
+   ],
+   "job_types": [
+    "full_time"
+   ],
+   "min_year": 0,
+   "max_year": 2,
+   "redirect_url": "",
+   "created_on": "2026-10-09 13:04:50",
+   "modified_on": "2026-10-18 06:01:23",
+   "status": "active",
+   "requirements": "",
+   "responsibilities": "",
+   "skills": [
+    "customer service",
+    "communication skills",
+    "active listening",
+    "problem-solving",
+    "customer query handling",
+    "complaint resolution",
+    "client relationship management",
+    "time management",
+    "teamwork"
+   ]
+  },
+  {
+   "id": 179885,
+   "title": "Software Engineer II",
+   "company_name": "Credit Karma, Inc",
+   "location_name": "Bangalore",
+   "work_mode": null,
+   "job_types": [
+    ""
+   ],
+   "min_year": 0,
+   "max_year": 5,
+   "redirect_url": "https://job-boards.greenhouse.io/creditkarma/jobs/7525853003",
+   "created_on": "2025-11-27 05:03:33",
+   "modified_on": "2025-11-27 10:33:33",
+   "status": "active",
+   "requirements": null,
+   "responsibilities": null,
+   "skills": [
+    ""
+   ]
+  }
+ ]
+}
