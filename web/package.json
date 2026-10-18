@@ -70,7 +70,6 @@
     "satori-html": "^0.3.2",
     "simple-icons": "^16.30.0",
     "svelte-dnd-action": "^0.9.79",
-    "three": "^0.186.1",
-    "workbox-window": "^7.4.1"
+    "three": "^0.186.1"
   }
 }

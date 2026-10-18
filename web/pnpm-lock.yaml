@@ -67,9 +67,6 @@ importers:
       three:
         specifier: ^0.186.1
         version: 0.186.1
-      workbox-window:
-        specifier: ^7.4.1
-        version: 7.4.1
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -3759,12 +3756,6 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  workbox-core@7.4.1:
-    resolution: {integrity: sha512-DT+vu46eh/2vRsSHTY4Xmc32Z1rr9PRlQUXr1Dx30ZuXRWwOsvZgGgcwxcasubQLQmbTNYZjv44LkBAQ4tT5tQ==}
-
-  workbox-window@7.4.1:
-    resolution: {integrity: sha512-notZDH2u8VXaqyuD7xaqIfEFi6SRM4SUSd7ewe9PDsVqADuepxX2ZMY3uvuZGxzY5ZOsGC/vD3A/3smFtJt4/A==}
-
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -5715,7 +5706,8 @@ snapshots:
       fflate: 0.8.3
       meshoptimizer: 1.1.1
 
-  '@types/trusted-types@2.0.7': {}
+  '@types/trusted-types@2.0.7':
+    optional: true
 
   '@types/unist@2.0.11': {}
 
@@ -8012,13 +8004,6 @@ snapshots:
       stackback: 0.0.2
 
   word-wrap@1.2.5: {}
-
-  workbox-core@7.4.1: {}
-
-  workbox-window@7.4.1:
-    dependencies:
-      '@types/trusted-types': 2.0.7
-      workbox-core: 7.4.1
 
   xml-name-validator@5.0.0: {}
 
