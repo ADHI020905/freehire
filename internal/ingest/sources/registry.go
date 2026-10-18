@@ -620,11 +620,11 @@ func All(c HTTPClient) map[string]Source {
 	// TLS+HTTP/2 fingerprint and Uber's and Gusto's Cloudflare edges challenge it, so all three
 	// need the shared Chrome-fingerprint transport (fingerprintHTTP, also used by the
 	// bayt/gulftalent aggregators, by jobleads — whose search edge rejects the plain Go
-	// fingerprint the same way and serves a Chrome one 200, keyless — and by startupjobs'
-	// Cloudflare-challenged pages). Build it only when there
+	// fingerprint the same way and serves a Chrome one 200, keyless — and by startupjobs' and
+	// gradcracker's Cloudflare-challenged pages). Build it only when there
 	// is a real client to serve (the c == nil marker/listing path — e.g. FilterableProviders —
 	// must stay transport-free, so these register with a nil client there; Provider()/boardless()
-	// never touch it). If the deterministic transport build ever fails, all seven are left
+	// never touch it). If the deterministic transport build ever fails, all eight are left
 	// unregistered so config validation fails fast on their board entries, rather than
 	// registering a client guaranteed to be rejected by the edge.
 	if c == nil {
@@ -639,6 +639,7 @@ func All(c HTTPClient) map[string]Source {
 		registry["jobleads"] = NewJobleads(nil)
 		// startupjobs likewise: it is an aggregator, and the dedup pass must know it as one.
 		registry["startupjobs"] = NewStartupJobs(nil, nil, nil, 0)
+		registry["gradcracker"] = NewGradcracker(nil, 0)
 	} else if fp, err := newFingerprintHTTP(); err == nil {
 		registry["meta"] = NewMetaCareers(fp)
 		registry["bayt"] = NewBayt(fp)
@@ -653,6 +654,9 @@ func All(c HTTPClient) map[string]Source {
 		// IP), while its sitemap CDN and its public Algolia index have no Cloudflare in front
 		// and are read over the shared client.
 		registry["startupjobs"] = NewStartupJobs(pacedStartupJobsSite(fp), c, c, 0)
+		// Every gradcracker request, listing and posting page alike, shares one limiter: the
+		// edge counts requests per IP (see gradcrackerRequestInterval).
+		registry["gradcracker"] = NewGradcracker(pacedGradcracker(fp), 0)
 	}
 	return registry
 }

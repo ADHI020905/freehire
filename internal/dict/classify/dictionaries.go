@@ -1,5 +1,7 @@
 package classify
 
+import "regexp"
+
 // aliasEntry pairs a lowercase title alias with its enrich-vocabulary canonical.
 // The ordered table is the single source of truth: its order encodes precedence
 // (the most specific / highest-rank alias first, so a title carrying several terms
@@ -38,6 +40,27 @@ var gradeBlindPhrases = []string{
 	// ("Enterprise Account Executive (Middle-East & Africa)" read as middle).
 	"middle-east",
 	"lead-generation",
+}
+
+// earlyCareersDeskPatterns are the grade-blind phrases of the early-careers vocabulary,
+// stated as a SHAPE rather than a list: the staff who run graduate programmes and
+// placements — university offices, graduate recruiting, placement officers — carry
+// "graduate"/"placement" right next to the desk they name, and the catalogue (broader
+// than IT) holds real postings for all of them: "Assistant Director of Graduate
+// Admissions", "Graduate Recruiting Manager", "Graduate Medical Education Coordinator",
+// "Work Placement Officer", "Placement Year Manager". Masked, they state no grade,
+// exactly as the "graduate"/"placement" aliases would never have matched them.
+//
+// The first shape is the word FOLLOWED by the desk (optionally through "program(me)"):
+// "Graduate Program Manager", "Industrial Placement Coordinator". The second is a desk
+// in charge OF "graduate programs": "Director of Graduate Programs", "Manager,
+// Graduate Programs". A hire's own title never has that shape — "Graduate Project
+// Manager" puts its craft between the two, and "Software Engineering Graduate
+// Programme" names no desk — and a real grade elsewhere in the title survives the cut
+// ("Senior Graduate Recruiter" is senior).
+var earlyCareersDeskPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`\b(?:graduate|(?:(?:industrial|industry|work|summer|student|sandwich) )?placement(?: year| student)?)(?: program(?:me)?s?)? (?:co-?ordinator|manager|director|officer|advis[eo]r|administrator|recruiter|recruiting|recruitment|admissions|school|studies|office|medical education|student cent(?:er|re))\b`),
+	regexp.MustCompile(`\b(?:director|manager|co-?ordinator|officer|head|dean|advis[eo]r|administrator)(?: of| for|,)? graduate program(?:me)?s\b`),
 }
 
 // categoryNone is the sentinel canonical for a "blind" alias: a phrase that CONTAINS a
@@ -105,6 +128,36 @@ var seniorityTable = []aliasEntry{
 	{"стажёр", "intern"},
 	{"стажер", "intern"},
 	{"стажировка", "intern"},
+	// UK early-careers vocabulary (gradcracker, and the UK employers' own boards). A
+	// placement there is a student's paid year or summer inside the employer, which is
+	// what an internship is. Every alias is a PHRASE: a bare "placement" names the
+	// recruiter's job ("Placement Coordinator") and the marketing one ("Product
+	// Placement"), and a bare "undergraduate" names most of a university's admissions
+	// and faculty titles — measured on prod, the majority of the unresolved titles
+	// carrying it were "The Undergraduate School - Adjunct Faculty" and its siblings.
+	{"industrial placement", "intern"},
+	{"industry placement", "intern"},
+	{"placement year", "intern"},
+	{"year placement", "intern"},
+	{"year in industry", "intern"},
+	{"placement student", "intern"},
+	{"student placement", "intern"},
+	{"summer placement", "intern"},
+	{"undergraduate placement", "intern"},
+	{"work placement", "intern"},
+	// "12 Month Placement" / "12-month placement": the duration is what makes it a
+	// student's year out rather than a recruiter placing a candidate.
+	{"month placement", "intern"},
+	{"vacation scheme", "intern"},
+	{"summer analyst", "intern"},
+	// "Graduate" is the entry-level hire (a graduate scheme, "Graduate Software
+	// Engineer", a hospital's "New Graduate RN") — the same reading the description
+	// matcher gives "graduate position". It is LAST, below every intern alias, because
+	// it is the weakest evidence in the table: "Graduate Summer Internship" is an
+	// internship, and any explicit grade a title also states outranks it. The
+	// staff desks that merely contain the word are masked by
+	// earlyCareersDeskPatterns.
+	{"graduate", "junior"},
 }
 
 // categoryTable lists category aliases in precedence order — multi-word and more

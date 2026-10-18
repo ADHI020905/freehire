@@ -16,6 +16,10 @@ Ordering alone could not fix this: `staff` outranks `senior`, so "Senior Member 
 
 The list holds only phrases that shadow a `seniorityTable` alias; the category match reads the untouched title.
 
+## UK early-careers vocabulary
+
+"Graduate" is `junior` and the placement phrases ("Industrial Placement", "Year in Industry", "Summer Placement", "Vacation Scheme", ...) are `intern`. `graduate` is the LAST entry of the table — the weakest evidence it holds — so "Graduate Summer Internship" stays an internship and any explicit grade outranks it. Bare "placement" and bare "undergraduate" are deliberately absent: on prod the first names recruiters and the second mostly names university faculty and admissions titles. The staff desks that merely contain "graduate" or "placement" ("Graduate Admissions", "Graduate Recruiting Manager", "Director of Graduate Programs", "Work Placement Officer") are cut before the match by `earlyCareersDeskPatterns` — a shape (the word next to the desk it names), not a list of titles.
+
 ## The two design crafts
 
 `design` means product/visual/experience design. Engineering draughting —

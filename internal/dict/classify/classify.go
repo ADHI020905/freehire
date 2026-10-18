@@ -56,10 +56,14 @@ func matchCategory(lower string) string {
 // than removed, so the word boundaries of the surrounding terms survive and
 // "senior member of technical staff" still offers a matchable "senior". Plain
 // substring replacement suffices: every phrase is multi-word, so it cannot occur
-// inside a single token the way a bare alias could.
+// inside a single token the way a bare alias could. The early-careers desks
+// (earlyCareersDeskPatterns) are cut the same way, by shape rather than by phrase.
 func matchSeniority(lower string) string {
 	for _, phrase := range gradeBlindPhrases {
 		lower = strings.ReplaceAll(lower, phrase, " ")
+	}
+	for _, desk := range earlyCareersDeskPatterns {
+		lower = desk.ReplaceAllString(lower, " ")
 	}
 	return matchOrdered(lower, seniorityTable)
 }
