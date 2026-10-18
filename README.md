@@ -18,6 +18,7 @@
 ![Go version](https://img.shields.io/github/go-mod/go-version/strelov1/freehire)
 ![Last commit](https://img.shields.io/github/last-commit/strelov1/freehire)
 [![Stars](https://img.shields.io/github/stars/strelov1/freehire?style=social)](https://github.com/strelov1/freehire/stargazers)
+[![Contributors](https://img.shields.io/github/contributors-anon/strelov1/freehire)](https://github.com/strelov1/freehire/graphs/contributors)
 [![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/79cgB9RRfx)
 
 <br>
@@ -291,6 +292,20 @@ from building the wrong thing, but nothing stops you from just opening the PR.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks CI runs and
 [AGENTS.md](AGENTS.md) for the architecture and conventions.
+
+<a href="https://github.com/strelov1/freehire/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=strelov1/freehire" alt="Contributors" />
+</a>
+
+## Star History
+
+<a href="https://star-history.com/#strelov1/freehire&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=strelov1/freehire&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=strelov1/freehire&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=strelov1/freehire&type=Date" />
+  </picture>
+</a>
 
 ## Security
 
