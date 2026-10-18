@@ -428,6 +428,10 @@ func All(c HTTPClient) map[string]Source {
 		// ITviec: Vietnam's IT-only board. One server-rendered listing names the whole
 		// catalogue; posting pages carry a schema.org JobPosting. Paced, see itviecRequestInterval.
 		NewITviec(pacedHTMLGetter(c, itviecRequestInterval, itviecRequestBurst)),
+		// WORK180: board of women-endorsed employers, enumerated by regional site (board =
+		// au/uk/us) through each region's jobs sitemap; posting pages carry a schema.org
+		// JobPosting. Pages are paced to robots.txt's Crawl-delay, see work180RequestInterval.
+		NewWORK180(c, pacedHTMLGetter(c, work180RequestInterval, work180RequestBurst)),
 		// Python.org: the Python Software Foundation's own job board. One server-rendered listing
 		// names the whole catalogue; posting pages carry the body. See pythonorg.go.
 		NewPythonOrg(c),

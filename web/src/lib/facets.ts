@@ -391,6 +391,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   hiringroom: 'HiringRoom',
   pythonorg: 'Python.org',
   jobboardly: 'Job Boardly',
+  work180: 'WORK180',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),
