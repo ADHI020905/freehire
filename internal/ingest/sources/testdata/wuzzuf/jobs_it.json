@@ -1,0 +1,1941 @@
+{
+  "meta": {
+    "totalCount": 7
+  },
+  "data": [
+    {
+      "type": "job",
+      "id": "db64539c-1e1d-4c1d-9a37-60d455bbd6e5",
+      "attributes": {
+        "jobType": "job",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "ERPNext Developer",
+        "description": "<p>We are looking for a talented ERPNext Developer to join our growing technical team. The ideal candidate will be responsible for customizing, developing, and maintaining ERPNext modules to meet our business requirements. You will work closely with cross-functional teams to deliver high-quality, efficient, and scalable ERP solutions.</p><p><strong>Key Responsibilities:</strong></p><ul><li><p>Develop and customize ERPNext modules according to business needs.</p></li><li><p>Integrate ERPNext with other applications and third-party systems.</p></li><li><p>Maintain and optimize existing ERPNext implementations.</p></li><li><p>Troubleshoot and fix system issues and bugs.</p></li><li><p>Collaborate with internal teams to gather requirements and deliver enhancements.</p></li><li><p>Ensure proper documentation of customization and configurations.</p></li></ul><p></p>",
+        "requirements": "<ul><li><p>2-3 years of experience in ERPNext development and customization.</p></li><li><p>Proficiency in developing and customizing ERPNext modules.</p></li><li><p>Experience integrating ERPNext with third-party applications and systems.</p></li><li><p>Strong troubleshooting and debugging skills for ERPNext issues.</p></li><li><p>Ability to gather business requirements and deliver system enhancements.</p></li><li><p>Experience documenting customizations, configurations, and technical solutions.</p></li></ul><p></p>",
+        "salary": {
+          "min": null,
+          "max": null,
+          "currency": null,
+          "period": null,
+          "additionalDetails": null,
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "ERPNext Development",
+            "userContentTranslations": null,
+            "browsePage": "a/ERPNext-Development-Jobs-in-Egypt"
+          },
+          {
+            "name": "Frappe Framework",
+            "userContentTranslations": null,
+            "browsePage": "a/Frappe-Framework-Jobs-in-Egypt"
+          },
+          {
+            "name": "ERP",
+            "userContentTranslations": {
+              "name": {
+                "ar": "نظام تخطيط موارد المؤسسة",
+                "en": "ERP",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/ERP-Jobs-in-Egypt"
+          },
+          {
+            "name": "ERP System",
+            "userContentTranslations": {
+              "name": {
+                "ar": "نظام ERP",
+                "en": "ERP System",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/ERP-System-Jobs-in-Egypt"
+          },
+          {
+            "name": "ERP Software",
+            "userContentTranslations": {
+              "name": {
+                "ar": "برمجيات ERP",
+                "en": "ERP Software",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/ERP-Software-Jobs-in-Egypt"
+          },
+          {
+            "name": "Computer Science",
+            "userContentTranslations": {
+              "name": {
+                "ar": "علوم الحاسوب",
+                "en": "Computer Science",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Computer-Science-Jobs-in-Egypt"
+          },
+          {
+            "name": "CSS",
+            "userContentTranslations": {
+              "name": {
+                "ar": "سي إس إس",
+                "en": "CSS",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/CSS-Jobs-in-Egypt"
+          },
+          {
+            "name": "Python",
+            "userContentTranslations": {
+              "name": {
+                "ar": "بايثون",
+                "en": "Python",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Python-Jobs-in-Egypt"
+          }
+        ],
+        "careerLevel": {
+          "id": 6,
+          "name": "Experienced",
+          "hint": "Non-Manager",
+          "translations": {
+            "hint": {
+              "ar": "غير إداري",
+              "en": "Non-Manager"
+            },
+            "name": {
+              "ar": "ذو خبرة (غير مدير)",
+              "en": "Experienced (Non-Manager)"
+            },
+            "display_name": {
+              "ar": "ذو خبرة",
+              "en": "Experienced"
+            }
+          },
+          "browsePage": "a/Experienced-Jobs-in-Egypt"
+        },
+        "workplaceArrangement": {
+          "id": 1,
+          "displayedName": "On-site",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل من مقر الشركة",
+              "en": "on_site"
+            }
+          },
+          "browsePage": "a/On-Site-Jobs-in-Egypt"
+        },
+        "location": {
+          "country": {
+            "id": 56,
+            "name": "Egypt",
+            "translations": {
+              "name": {
+                "ar": "مصر",
+                "en": "Egypt"
+              }
+            },
+            "code": "EG",
+            "browsePage": "a/ERPNext-Developer-Jobs-in-Egypt"
+          },
+          "city": {
+            "id": 1545,
+            "name": "Cairo",
+            "translations": {
+              "name": {
+                "ar": "القاهرة",
+                "en": "Cairo"
+              }
+            },
+            "latitude": "30.05075900",
+            "longitude": "31.23383900",
+            "browsePage": "a/ERPNext-Developer-Jobs-in-Cairo"
+          },
+          "area": {
+            "id": 20,
+            "name": "Maadi",
+            "translations": {
+              "name": {
+                "ar": "المعادي",
+                "en": "Maadi"
+              }
+            },
+            "latitude": "29.95999400",
+            "longitude": "31.27235900",
+            "browsePage": "a/ERPNext-Developer-Jobs-in-Maadi"
+          }
+        },
+        "workExperienceYears": {
+          "min": 2,
+          "max": 3
+        },
+        "vacancies": 1,
+        "workRoles": [
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-Egypt"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 1,
+            "name": "full_time",
+            "translations": {
+              "displayed_name": {
+                "ar": "دوام كامل",
+                "en": "full_time"
+              }
+            },
+            "displayedName": "Full Time",
+            "browsePage": "a/Full-Time-Jobs-in-Egypt"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 14,
+            "name": "Bachelor's Degree",
+            "translations": {
+              "name": {
+                "ar": "درجة البكالوريوس",
+                "en": "Bachelor's Degree"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 0,
+        "logo": null,
+        "slug": "oxiq6qk0egqn-erpnext-developer-our-education-cairo-egypt",
+        "uri": "jobs/p/oxiq6qk0egqn-erpnext-developer-our-education-cairo-egypt",
+        "views": 0,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": false,
+        "hideGender": false,
+        "hideSalary": true,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "10/18/2026 13:26:53",
+        "expireAt": "12/17/2026 13:26:53"
+      },
+      "relationships": {
+        "company": {
+          "data": {
+            "type": "company",
+            "id": "51211"
+          }
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/db64539c-1e1d-4c1d-9a37-60d455bbd6e5"
+      }
+    },
+    {
+      "type": "job",
+      "id": "32742d1d-5290-4f46-95ef-81ad9764f97f",
+      "attributes": {
+        "jobType": "job",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "Technical Account Manager, AI Automation (US Client)",
+        "description": "<p>We’re hiring a Technical Account Manager to own the relationship with a US client and grow the account. You’ll combine account management, consultative selling, and hands-on AI automation built with Claude.</p><p>Your job is to understand how the client’s business runs, find where they’re losing leads, time, or revenue, fix it with automation, and turn those wins into new services and tools they buy from us.</p><p>What you’ll do:</p><ul><li><p>Act as the main point of contact for the client, running regular calls with US business owners and managers</p></li><li><p>Audit the client’s sales and operations workflows and identify improvement opportunities</p></li><li><p>Set up automations using Claude and Claude Code, such as 5 minute speed to lead response, lead follow up, and reporting</p></li><li><p>Spot and pitch cross sell and upsell opportunities for additional automation tools and services</p></li><li><p>Present results and recommendations clearly, showing the client the value they’re getting</p></li><li><p>Keep the client happy, retained, and growing</p></li></ul><p>What you’ll get:</p><ul><li><p>80,000 EGP net monthly salary</p></li><li><p>Fixed evening shift: 4 pm to midnight, Monday to Friday</p></li><li><p>Office-based, with remote work considered for exceptional candidates</p></li><li><p>A role at the intersection of AI, automation, and sales, working directly with the US market</p></li></ul><p></p>",
+        "requirements": "<p></p><ul><li><p>C1 or C2 level English, confident leading calls with native speakers</p></li><li><p>3+ years in account management, sales, or customer success, ideally with US or international clients</p></li><li><p>Proven track record of cross selling or upselling</p></li><li><p>Hands-on experience using Claude to build automations or applications (Claude Code experience strongly preferred)</p></li><li><p>Technical background: comfortable with workflows, integrations, CRMs, and learning new tools fast</p></li><li><p>Able to explain technical solutions in simple business terms</p></li><li><p>University graduate</p></li><li><p>Able to commit to the 4 pm to midnight shift, Monday to Friday</p></li></ul><p></p>",
+        "salary": {
+          "min": 70000,
+          "max": 80000,
+          "currency": {
+            "id": 43,
+            "name": "Egyptian Pound",
+            "translations": {
+              "name": {
+                "ar": "جنيه مصري",
+                "en": "Egyptian Pound"
+              }
+            },
+            "code": "EGP"
+          },
+          "period": {
+            "id": 4,
+            "name": "Per Month",
+            "translations": {
+              "period": {
+                "ar": "في الشهر",
+                "en": "Per Month"
+              }
+            }
+          },
+          "additionalDetails": null,
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "account management",
+            "userContentTranslations": {
+              "name": {
+                "ar": "إدارة الحسابات",
+                "en": "Account Management",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Account-Management-Jobs-in-Egypt"
+          },
+          {
+            "name": "Cross Selling",
+            "userContentTranslations": null,
+            "browsePage": "a/Cross-Selling-Jobs-in-Egypt"
+          },
+          {
+            "name": "Upselling",
+            "userContentTranslations": null,
+            "browsePage": "a/Upselling-Jobs-in-Egypt"
+          },
+          {
+            "name": "Claude",
+            "userContentTranslations": null,
+            "browsePage": "a/Claude-Jobs-in-Egypt"
+          },
+          {
+            "name": "Claude Code",
+            "userContentTranslations": null,
+            "browsePage": "a/Claude-Code-Jobs-in-Egypt"
+          },
+          {
+            "name": "AI Automation",
+            "userContentTranslations": null,
+            "browsePage": "a/AI-Automation-Jobs-in-Egypt"
+          },
+          {
+            "name": "Client Relationship Management",
+            "userContentTranslations": null,
+            "browsePage": "a/Client-Relationship-Management-Jobs-in-Egypt"
+          },
+          {
+            "name": "Consultative Selling",
+            "userContentTranslations": null,
+            "browsePage": "a/Consultative-Selling-Jobs-in-Egypt"
+          },
+          {
+            "name": "CRM",
+            "userContentTranslations": {
+              "name": {
+                "ar": "إدارة علاقات العملاء",
+                "en": "CRM",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/CRM-Jobs-in-Egypt"
+          },
+          {
+            "name": "Workflow Automation",
+            "userContentTranslations": null,
+            "browsePage": "a/Workflow-Automation-Jobs-in-Egypt"
+          },
+          {
+            "name": "US Market",
+            "userContentTranslations": null,
+            "browsePage": "a/US-Market-Jobs-in-Egypt"
+          },
+          {
+            "name": "sales",
+            "userContentTranslations": {
+              "name": {
+                "ar": "مبيعات",
+                "en": "Sales",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Sales-Jobs-in-Egypt"
+          },
+          {
+            "name": "Marketing",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تسويق",
+                "en": "Marketing",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Marketing-Jobs-in-Egypt"
+          },
+          {
+            "name": "Information Technology (IT)",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات",
+                "en": "Information Technology (IT)",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Information-Technology-IT-Jobs-in-Egypt"
+          },
+          {
+            "name": "Customer Service",
+            "userContentTranslations": {
+              "name": {
+                "ar": "خدمة العملاء",
+                "en": "Customer Service",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Customer-Service-Jobs-in-Egypt"
+          },
+          {
+            "name": "Automation",
+            "userContentTranslations": null,
+            "browsePage": "a/Automation-Jobs-in-Egypt"
+          },
+          {
+            "name": "AI",
+            "userContentTranslations": null,
+            "browsePage": "a/AI-Jobs-in-Egypt"
+          }
+        ],
+        "careerLevel": {
+          "id": 6,
+          "name": "Experienced",
+          "hint": "Non-Manager",
+          "translations": {
+            "hint": {
+              "ar": "غير إداري",
+              "en": "Non-Manager"
+            },
+            "name": {
+              "ar": "ذو خبرة (غير مدير)",
+              "en": "Experienced (Non-Manager)"
+            },
+            "display_name": {
+              "ar": "ذو خبرة",
+              "en": "Experienced"
+            }
+          },
+          "browsePage": "a/Experienced-Jobs-in-Egypt"
+        },
+        "workplaceArrangement": {
+          "id": 2,
+          "displayedName": "Remote",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل عن بُعد",
+              "en": "remote"
+            }
+          },
+          "browsePage": "a/Remote-Jobs-in-Egypt"
+        },
+        "location": {
+          "country": {
+            "id": 56,
+            "name": "Egypt",
+            "translations": {
+              "name": {
+                "ar": "مصر",
+                "en": "Egypt"
+              }
+            },
+            "code": "EG",
+            "browsePage": "a/Technical-Account-Manager-AI-Automation-US-Client-Jobs-in-Egypt"
+          },
+          "city": {
+            "id": 1545,
+            "name": "Cairo",
+            "translations": {
+              "name": {
+                "ar": "القاهرة",
+                "en": "Cairo"
+              }
+            },
+            "latitude": "30.05075900",
+            "longitude": "31.23383900",
+            "browsePage": "a/Technical-Account-Manager-AI-Automation-US-Client-Jobs-in-Cairo"
+          },
+          "area": {
+            "id": 38,
+            "name": "Nasr City",
+            "translations": {
+              "name": {
+                "ar": "مدينة نصر",
+                "en": "Nasr City"
+              }
+            },
+            "latitude": "30.05578000",
+            "longitude": "31.34616400",
+            "browsePage": "a/Technical-Account-Manager-AI-Automation-US-Client-Jobs-in-Nasr-City"
+          }
+        },
+        "workExperienceYears": {
+          "min": 3,
+          "max": 7
+        },
+        "vacancies": 2,
+        "workRoles": [
+          {
+            "id": 9,
+            "name": "Customer Service/Support",
+            "translations": {
+              "name": {
+                "ar": "خدمة العملاء/الدعم",
+                "en": "Customer Service/Support"
+              }
+            },
+            "browsePage": "a/Customer-Service-Jobs-in-Egypt"
+          },
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-Egypt"
+          },
+          {
+            "id": 27,
+            "name": "Sales/Retail",
+            "translations": {
+              "name": {
+                "ar": "المبيعات/التجزئة",
+                "en": "Sales/Retail"
+              }
+            },
+            "browsePage": "a/Sales-Jobs-in-Egypt"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 1,
+            "name": "full_time",
+            "translations": {
+              "displayed_name": {
+                "ar": "دوام كامل",
+                "en": "full_time"
+              }
+            },
+            "displayedName": "Full Time",
+            "browsePage": "a/Full-Time-Jobs-in-Egypt"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 10,
+            "name": "Not Specified",
+            "translations": {
+              "name": {
+                "ar": "غير محدد",
+                "en": "Not Specified"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 0,
+        "logo": null,
+        "slug": "le7xwmjmanzk-technical-account-manager-ai-automation-us-client-partners-outsourcing-cairo-egypt",
+        "uri": "jobs/p/le7xwmjmanzk-technical-account-manager-ai-automation-us-client-partners-outsourcing-cairo-egypt",
+        "views": 0,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": false,
+        "hideGender": false,
+        "hideSalary": false,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "10/17/2026 12:13:24",
+        "expireAt": "12/16/2026 12:13:24"
+      },
+      "relationships": {
+        "company": {
+          "data": {
+            "type": "company",
+            "id": "41648"
+          }
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/32742d1d-5290-4f46-95ef-81ad9764f97f"
+      }
+    },
+    {
+      "type": "job",
+      "id": "b103bf23-e666-423c-aec6-bca42dda6be4",
+      "attributes": {
+        "jobType": "job",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "DevOps / SRE Engineer",
+        "description": "<p>We are looking for a part-time DevOps/SRE engineer (around 20–25 hours/week, remote from Egypt) to own deployment pipelines, monitoring and operational readiness for a payments platform going live.</p><p><br></p><p><strong>Responsibilities:</strong></p><ul><li><p>Maintain and improve CI/CD pipelines, including security scanning and quality gates</p></li><li><p>Set up and tune monitoring, logging, dashboards and alerting</p></li><li><p>Own backups, restore tests, rollback procedures and staging environments</p></li><li><p>Write incident runbooks and respond to critical alerts</p></li><li><p>Harden infrastructure: access control, secrets management, patching</p></li></ul><p><br></p><p>About us: TensorRail is a B2B payments company building payment infrastructure for international online businesses, with its own gateway on local payment methods in India, MENA and Africa. Small, senior, remote-first team; reliability of money flows comes first.</p><p><br></p>",
+        "requirements": "<ul><li><p>5+ years in DevOps, SRE or platform engineering on production systems</p></li><li><p>Hands-on CI/CD, Linux, containers and PostgreSQL operations (backups, restores, upgrades)</p></li><li><p>Monitoring and alerting experience (e.g. Prometheus, Grafana, Loki or similar)</p></li><li><p>On-call or incident experience</p></li><li><p>Security-minded: least-privilege access, secrets handling, audit trails</p></li></ul><p><strong>Preferred:</strong></p><ul><li><p>Experience on financial, payments or high-availability systems</p></li><li><p>GitHub Actions, Docker Compose, Nginx/TLS</p></li><li><p>HashiCorp Vault or similar secrets management</p></li><li><p>Infrastructure as code (Terraform, Ansible)</p></li><li><p>Fluent English</p></li></ul><p><br></p>",
+        "salary": {
+          "min": null,
+          "max": null,
+          "currency": null,
+          "period": null,
+          "additionalDetails": null,
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "DevOps",
+            "userContentTranslations": null,
+            "browsePage": "a/DevOps-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Site Reliability Engineering",
+            "userContentTranslations": null,
+            "browsePage": "a/Site-Reliability-Engineering-Jobs-in-Cyprus"
+          },
+          {
+            "name": "CI/CD",
+            "userContentTranslations": null,
+            "browsePage": "a/CI-CD-Jobs-in-Cyprus"
+          },
+          {
+            "name": "GitHub Actions",
+            "userContentTranslations": null,
+            "browsePage": "a/GitHub-Actions-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Linux",
+            "userContentTranslations": {
+              "name": {
+                "ar": "لينكس",
+                "en": "Linux",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Linux-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Docker",
+            "userContentTranslations": null,
+            "browsePage": "a/Docker-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Docker Compose",
+            "userContentTranslations": null,
+            "browsePage": "a/Docker-Compose-Jobs-in-Cyprus"
+          },
+          {
+            "name": "PostgreSQL",
+            "userContentTranslations": null,
+            "browsePage": "a/PostgreSQL-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Redis",
+            "userContentTranslations": null,
+            "browsePage": "a/Redis-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Nginx",
+            "userContentTranslations": null,
+            "browsePage": "a/Nginx-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Prometheus",
+            "userContentTranslations": null,
+            "browsePage": "a/Prometheus-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Grafana",
+            "userContentTranslations": null,
+            "browsePage": "a/Grafana-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Monitoring",
+            "userContentTranslations": null,
+            "browsePage": "a/Monitoring-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Incident Management",
+            "userContentTranslations": null,
+            "browsePage": "a/Incident-Management-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Backup and Recovery",
+            "userContentTranslations": null,
+            "browsePage": "a/Backup-And-Recovery-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Infrastructure Security",
+            "userContentTranslations": null,
+            "browsePage": "a/Infrastructure-Security-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Ansible",
+            "userContentTranslations": null,
+            "browsePage": "a/Ansible-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Computer Science",
+            "userContentTranslations": {
+              "name": {
+                "ar": "علوم الحاسوب",
+                "en": "Computer Science",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Computer-Science-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Information Technology (IT)",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات",
+                "en": "Information Technology (IT)",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Information-Technology-IT-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Software Development",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تطوير البرمجيات",
+                "en": "Software Development",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Software-Development-Jobs-in-Cyprus"
+          },
+          {
+            "name": "Terraform",
+            "userContentTranslations": null,
+            "browsePage": "a/Terraform-Jobs-in-Cyprus"
+          },
+          {
+            "name": "English",
+            "userContentTranslations": null,
+            "browsePage": "a/English-Jobs-in-Cyprus"
+          }
+        ],
+        "careerLevel": {
+          "id": 6,
+          "name": "Experienced",
+          "hint": "Non-Manager",
+          "translations": {
+            "hint": {
+              "ar": "غير إداري",
+              "en": "Non-Manager"
+            },
+            "name": {
+              "ar": "ذو خبرة (غير مدير)",
+              "en": "Experienced (Non-Manager)"
+            },
+            "display_name": {
+              "ar": "ذو خبرة",
+              "en": "Experienced"
+            }
+          },
+          "browsePage": "a/Experienced-Jobs-in-Cyprus"
+        },
+        "workplaceArrangement": {
+          "id": 2,
+          "displayedName": "Remote",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل عن بُعد",
+              "en": "remote"
+            }
+          },
+          "browsePage": "a/Remote-Jobs-in-Cyprus"
+        },
+        "location": {
+          "country": {
+            "id": 49,
+            "name": "Cyprus",
+            "translations": {
+              "name": {
+                "ar": "قبرص",
+                "en": "Cyprus"
+              }
+            },
+            "code": "CY",
+            "browsePage": "a/DevOps-SRE-Engineer-Jobs-in-Cyprus"
+          },
+          "city": {
+            "id": 1483,
+            "name": "Limassol",
+            "translations": null,
+            "latitude": "34.68406000",
+            "longitude": "33.03794000",
+            "browsePage": "a/DevOps-SRE-Engineer-Jobs-in-Limassol"
+          },
+          "area": null
+        },
+        "workExperienceYears": {
+          "min": 5,
+          "max": null
+        },
+        "vacancies": 1,
+        "workRoles": [
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-Cyprus"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 2,
+            "name": "part_time",
+            "translations": {
+              "displayed_name": {
+                "ar": "دوام جزئي",
+                "en": "part_time"
+              }
+            },
+            "displayedName": "Part Time",
+            "browsePage": "a/Part-Time-Jobs-in-Cyprus"
+          },
+          {
+            "id": 4,
+            "name": "freelance_project",
+            "translations": {
+              "displayed_name": {
+                "ar": "مشروع مستقل",
+                "en": "freelance_project"
+              }
+            },
+            "displayedName": "Freelance / Project",
+            "browsePage": "a/Freelance-Project-Jobs-in-Cyprus"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 14,
+            "name": "Bachelor's Degree",
+            "translations": {
+              "name": {
+                "ar": "درجة البكالوريوس",
+                "en": "Bachelor's Degree"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 0,
+        "logo": null,
+        "slug": "oadnuxyutxqo-devops-sre-engineer-tensorrail-technologies-limassol-cyprus",
+        "uri": "jobs/p/oadnuxyutxqo-devops-sre-engineer-tensorrail-technologies-limassol-cyprus",
+        "views": 0,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": false,
+        "hideGender": false,
+        "hideSalary": true,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "10/16/2026 21:31:06",
+        "expireAt": "12/15/2026 21:31:06"
+      },
+      "relationships": {
+        "company": {
+          "data": {
+            "type": "company",
+            "id": "148973"
+          }
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/b103bf23-e666-423c-aec6-bca42dda6be4"
+      }
+    },
+    {
+      "type": "job",
+      "id": "79aa9412-8b27-4254-ad52-d7bbdae30b97",
+      "attributes": {
+        "jobType": "job",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "Software QA Engineer",
+        "description": "<p>•&nbsp; Develop and maintain test plans, test cases, and quality criteria based on business and technical requirements.</p><p>•&nbsp; Review requirements and technical documentation to identify quality risks and ensure requirements are testable.</p><p>•&nbsp; Design and execute manual tests across functional, regression, integration, system, API, usability, and end-to-end testing.</p><p>•&nbsp; Identify, document, prioritize, and track defects, support root cause analysis, and validate fixes.</p><p>•&nbsp; Perform API testing and validate integrations between internal and external systems.</p><p>•&nbsp; Prepare test reports, quality metrics, and input for release-readiness decisions.</p><p>•&nbsp; Support performance, compatibility, and production release validation when required.</p><p>•&nbsp; Contribute ideas to improve test coverage, testing efficiency, and QA processes.</p>",
+        "requirements": "<p>•&nbsp; Bachelor’s degree in Computer Science, Software Engineering, or a related field, or equivalent experience.</p><p>•&nbsp; 2+ years of professional experience as a QA engineer.</p><p>•&nbsp; Hands-on experience testing web applications, APIs, databases, and system integrations.</p><p>•&nbsp; Demonstrated experience in API testing (e.g., Postman) and SQL for data validation and database testing.</p><p>•&nbsp; Experience with Jira, Azure DevOps, or similar test and defect management tools.</p><p>•&nbsp; Practical experience working in an Agile/Scrum environment.</p><p>•&nbsp; Strong analytical, problem-solving, and documentation skills.</p><p>•&nbsp; Very good command of English (verbal and written) with strong interpersonal communication skills.</p><p></p><p><strong>Preferred Qualifications</strong></p><p></p><p>•&nbsp; Hands-on experience with automated testing tools or frameworks (e.g., Selenium, Cypress, Playwright, REST Assured).</p><p>•&nbsp; Experience testing software in regulated or healthcare environments.</p><p>•&nbsp; Experience with validation documentation and requirements traceability.</p><p>•&nbsp; Mobile application testing experience.</p><p>•&nbsp; Knowledge of non-functional testing, including performance testing (e.g., JMeter) and basic security testing.</p><p></p>",
+        "salary": {
+          "min": null,
+          "max": null,
+          "currency": null,
+          "period": null,
+          "additionalDetails": null,
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "Software Development",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تطوير البرمجيات",
+                "en": "Software Development",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Software-Development-Jobs-in-Egypt"
+          },
+          {
+            "name": "QA",
+            "userContentTranslations": {
+              "name": {
+                "ar": "ضمان الجودة",
+                "en": "QA",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/QA-Jobs-in-Egypt"
+          },
+          {
+            "name": "Software Testing",
+            "userContentTranslations": {
+              "name": {
+                "ar": "اختبار البرمجيات",
+                "en": "Software Testing",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Software-Testing-Jobs-in-Egypt"
+          },
+          {
+            "name": "Manual Testing",
+            "userContentTranslations": null,
+            "browsePage": "a/Manual-Testing-Jobs-in-Egypt"
+          },
+          {
+            "name": "API Testing",
+            "userContentTranslations": null,
+            "browsePage": "a/API-Testing-Jobs-in-Egypt"
+          },
+          {
+            "name": "SQL",
+            "userContentTranslations": {
+              "name": {
+                "ar": "إس كيو إل",
+                "en": "SQL",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/SQL-Jobs-in-Egypt"
+          },
+          {
+            "name": "Regression Testing",
+            "userContentTranslations": null,
+            "browsePage": "a/Regression-Testing-Jobs-in-Egypt"
+          },
+          {
+            "name": "Azure DevOps",
+            "userContentTranslations": null,
+            "browsePage": "a/Azure-DevOps-Jobs-in-Egypt"
+          }
+        ],
+        "careerLevel": {
+          "id": 6,
+          "name": "Experienced",
+          "hint": "Non-Manager",
+          "translations": {
+            "hint": {
+              "ar": "غير إداري",
+              "en": "Non-Manager"
+            },
+            "name": {
+              "ar": "ذو خبرة (غير مدير)",
+              "en": "Experienced (Non-Manager)"
+            },
+            "display_name": {
+              "ar": "ذو خبرة",
+              "en": "Experienced"
+            }
+          },
+          "browsePage": "a/Experienced-Jobs-in-Egypt"
+        },
+        "workplaceArrangement": {
+          "id": 2,
+          "displayedName": "Remote",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل عن بُعد",
+              "en": "remote"
+            }
+          },
+          "browsePage": "a/Remote-Jobs-in-Egypt"
+        },
+        "location": {
+          "country": {
+            "id": 56,
+            "name": "Egypt",
+            "translations": {
+              "name": {
+                "ar": "مصر",
+                "en": "Egypt"
+              }
+            },
+            "code": "EG",
+            "browsePage": "a/Software-QA-Engineer-Jobs-in-Egypt"
+          },
+          "city": {
+            "id": 1545,
+            "name": "Cairo",
+            "translations": {
+              "name": {
+                "ar": "القاهرة",
+                "en": "Cairo"
+              }
+            },
+            "latitude": "30.05075900",
+            "longitude": "31.23383900",
+            "browsePage": "a/Software-QA-Engineer-Jobs-in-Cairo"
+          },
+          "area": null
+        },
+        "workExperienceYears": {
+          "min": 3,
+          "max": 5
+        },
+        "vacancies": 1,
+        "workRoles": [
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-Egypt"
+          },
+          {
+            "id": 25,
+            "name": "Quality",
+            "translations": {
+              "name": {
+                "ar": "الجودة",
+                "en": "Quality"
+              }
+            },
+            "browsePage": "a/Quality-Jobs-in-Egypt"
+          },
+          {
+            "id": 36,
+            "name": "Engineering - Telecom/Technology",
+            "translations": {
+              "name": {
+                "ar": "الهندسة - الاتصالات/التكنولوجيا",
+                "en": "Engineering - Telecom/Technology"
+              }
+            },
+            "browsePage": "a/Engineering-Telecom-Technology-Jobs-in-Egypt"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 1,
+            "name": "full_time",
+            "translations": {
+              "displayed_name": {
+                "ar": "دوام كامل",
+                "en": "full_time"
+              }
+            },
+            "displayedName": "Full Time",
+            "browsePage": "a/Full-Time-Jobs-in-Egypt"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 14,
+            "name": "Bachelor's Degree",
+            "translations": {
+              "name": {
+                "ar": "درجة البكالوريوس",
+                "en": "Bachelor's Degree"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 5,
+        "logo": null,
+        "slug": "qgirmns03vbu-software-qa-engineer-cairo-egypt",
+        "uri": "jobs/p/qgirmns03vbu-software-qa-engineer-cairo-egypt",
+        "views": 0,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": true,
+        "hideGender": false,
+        "hideSalary": true,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "10/16/2026 19:07:37",
+        "expireAt": "12/15/2026 19:07:37"
+      },
+      "relationships": {
+        "company": {
+          "data": null
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/79aa9412-8b27-4254-ad52-d7bbdae30b97"
+      }
+    },
+    {
+      "type": "job",
+      "id": "9ce6dcd4-b6d0-45ab-93ce-0a6fdd69bcb4",
+      "attributes": {
+        "jobType": "internship",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "Global Internship Program (GIP) – Full-Stack Pathway",
+        "description": "<h3><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://challenge.hennge.com/?entry-code=GIP-WUZZUF\">Begin the Application:</a></h3><p><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://challenge.hennge.com/?entry-code=GIP-WUZZUF\">Click here to register for the coding challenge (no time limit).</a></p><p>--------</p><p><em>We're moving!</em></p><p><em>HENNGE is tentatively scheduled to relocate our Tokyo headquarters from Shibuya to Shinjuku in April 2027. All the batches opened for application will take place at our brand-new Shinjuku office.</em></p><p>--------</p><h3>About the Program</h3><p><strong>HENNGE’s Global Internship Program (GIP)</strong> is an on-site software engineering training program designed and run by HENNGE, a cloud security company based in Tokyo. The program is created for students and early-career engineers who want to strengthen their&nbsp;<strong>full-stack engineering skills</strong> in a global, English-speaking environment at our Tokyo headquarters.</p><p>&nbsp;</p><p>This&nbsp;<strong>Full-Stack Pathway</strong> focuses on hands-on application development training across&nbsp;<strong>back-end, front-end, and basic DevOps</strong>, using&nbsp;<strong>Python (non-ML stack), Go, or TypeScript</strong> on the back-end and&nbsp;<strong>TypeScript with modern front-end frameworks</strong> on the front-end. The program emphasizes fundamental engineering skills, problem-solving, explanation, and collaboration, rather than production work.</p><p>&nbsp;</p><h3>Internship Schedule</h3><ul><li><p>Batch 2 (2027): Jun 1 - Jul 16 (7 weeks)</p></li><li><p>Batch 3 (2027): Aug 2 - Sep 3 (5 weeks)</p></li><li><p>Batch 4 (2027): Oct 1 - Oct 29 (5 weeks)</p></li></ul><p></p><h3>What You’ll Learn &amp; Practice</h3><p>During the program, you will:</p><ul><li><p>Develop&nbsp;<strong>full-stack web applications</strong> as part of structured training projects</p></li><li><p>Build and connect&nbsp;<strong>back-end APIs and services</strong> with front-end applications</p></li><li><p>Practice key full-stack engineering concepts, including:</p><ul><li><p>Back-end logic and API design</p></li><li><p>Front-end state management and data flow</p></li><li><p>Authentication and security basics</p></li><li><p>Software testing (unit, integration, end-to-end)</p></li></ul></li><li><p>Learn, at a practical level, how&nbsp;<strong>front-end, back-end, and cloud infrastructure interact</strong></p></li><li><p>Work with&nbsp;<strong>Unix-like environments</strong> and basic DevOps tooling</p></li><li><p>Explain your technical decisions, trade-offs, and problem-solving approach during discussions and reviews</p></li><li><p>Receive feedback from mentors and iteratively improve your implementation.</p></li></ul><p>&nbsp;</p><h3>Program Structure</h3><ul><li><p>Monday to Friday, 10:00-19:00 JST</p></li><li><p><strong>Weeks 1-4:</strong> Full-Stack Application Development Project</p></li><li><p><strong>Week 5:</strong> DevOps &amp; Infrastructure Project</p></li><li><p><strong>Weeks 6-7 (conditional):</strong> Special Assignment - a unique project for each intern and specific to their batch.<br>&nbsp;</p></li></ul><h3>Benefits&nbsp;</h3><ul><li><p>Round-trip airfares from and back to your country of residence</p></li><li><p>Pre-arrival support and visa guidance</p></li><li><p>Medical insurance* and a phone with mobile data will be provided during your internship in Tokyo, Japan**</p></li><li><p>Up to 150,000 JPY of monthly subsidy to cover accommodation, meals, transportation, and networking activities</p></li><li><p>Subsidized company events on top of monthly subsidy (Monthly Technical Sessions, Board Game Night, Get-to-know-you Lunches, and many others!) to get to know teams across divisions</p></li><li><p>Access to online learning platform during the internship period</p></li></ul><p>&nbsp;</p><p><em>* Medical insurance will only be provided to interns who do not reside in Japan</em></p><p><em>** This internship is an unpaid training program with a subsidy provided to all interns</em></p><h3></h3><h3>Our Stance on AI and Software Engineering</h3><p>AI tools can be helpful, but the goal of HENNGE’s Global Internship Program (GIP) is to help you build strong software engineering fundamentals.</p><p>To support that learning, we ask you&nbsp;<strong>not to use AI tools to generate code</strong> for training assignments or solution implementations. The code you submit should be written by you and reflect your own understanding.</p><p>You may use a designated AI service to support your learning in non-code-generating ways, such as clarifying technical concepts, understanding documentation, or helping with non-essential tasks (for example, command-line options).&nbsp;</p><p>Throughout the program, you’ll be expected to take ownership of your code and clearly explain your thinking, trade-offs, and design decisions. In this learning environment, you are the engineer and the final gatekeeper of quality</p><p>&nbsp;</p><h3>Notice for Applicants</h3><ul><li><p>A limited number of internship slots are available. Applications will be reviewed as they are received, and positions will be filled on a first-come, first-served basis.&nbsp; We encourage you to apply early,&nbsp;<strong>as applications will close once all positions are filled</strong>.</p></li><li><p>The coding challenge has no time limit, and the screening process will not consider solving time. Please note that the application is completed after uploading application documents and filling in the batch preferences.</p></li><li><p>Please take another challenge if you are (also) interested in applying for HENNGE’s GIP Front-end Engineering Pathway. Please use different emails to sign up if you apply for both internships.</p></li></ul><p></p>",
+        "requirements": "<h3>Essential Qualifications</h3><ul><li><p>Third-year undergraduate or higher (including Master's and Doctoral students). Recent graduates are welcome to apply</p></li><li><p>Pursuing or holding a degree in Computer Science or a related field. If not, equivalent experience from a tech internship or bootcamp is expected</p></li><li><p>Fluency in English (Japanese not required)</p></li><li><p>Proficiency in Python, Go, or React/Vue in TypeScript</p></li><li><p>Knowledge of Linux / MacOS / Unix-like environments</p></li><li><p>Interested in open source or tech community activities</p></li><li><p>Interested in pursuing a career in Japan</p></li></ul><p>&nbsp;</p><p><strong>At least meet three of the following:</strong></p><ul><li><p>Experience in cloud computing platforms, especially AWS</p></li><li><p>Experience in full stack web application development</p></li><li><p>Knowledge of distributed systems</p></li><li><p>Knowledge of DevOps tools and practices (CI/CD, Infrastructure as Code)</p></li><li><p>Knowledge of Container technology (e.g. Docker)</p></li></ul><p>&nbsp;</p><p>More details about the technology stack for this internship program can be found on the HENNGE website.</p><p>&nbsp;</p><h3>Our Ideal Candidate</h3><p>Our ideal full stack engineering intern is a curious problem-solver who’s excited to build real-world applications and grow in a fast-paced tech environment. We’re especially interested in candidates who:</p><ul><li><p>Are proficient in Python, Go, and React/Vue in TypeScript</p></li><li><p>Are comfortable working in&nbsp;<strong>Unix-like environments</strong></p></li><li><p>Have a solid grasp of both front-end and back-end development</p></li><li><p>Have an interest in cloud computing and DevOps practices</p></li><li><p>Are passionate about learning, contributing to tech communities, and possibly pursuing a career in Japan</p></li></ul><p>Bring your curiosity, versatility, and drive—we’re excited to see what you can build with us.</p>",
+        "salary": {
+          "min": 150000,
+          "max": 150000,
+          "currency": {
+            "id": 68,
+            "name": "Japanese Yen",
+            "translations": {
+              "name": {
+                "ar": "ين ياباني",
+                "en": "Japanese Yen"
+              }
+            },
+            "code": "JPY"
+          },
+          "period": {
+            "id": 4,
+            "name": "Per Month",
+            "translations": {
+              "period": {
+                "ar": "في الشهر",
+                "en": "Per Month"
+              }
+            }
+          },
+          "additionalDetails": "Intern will receive the amount as their subsidy.",
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "Computer Science",
+            "userContentTranslations": {
+              "name": {
+                "ar": "علوم الحاسوب",
+                "en": "Computer Science",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Computer-Science-Jobs-in-Japan"
+          },
+          {
+            "name": "Engineering",
+            "userContentTranslations": {
+              "name": {
+                "ar": "هندسة",
+                "en": "Engineering",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Engineering-Jobs-in-Japan"
+          },
+          {
+            "name": "Information Technology (IT)",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات",
+                "en": "Information Technology (IT)",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Information-Technology-IT-Jobs-in-Japan"
+          },
+          {
+            "name": "Software Development",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تطوير البرمجيات",
+                "en": "Software Development",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Software-Development-Jobs-in-Japan"
+          },
+          {
+            "name": "Software Engineering",
+            "userContentTranslations": {
+              "name": {
+                "ar": "هندسة البرمجيات",
+                "en": "Software Engineering",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Software-Engineering-Jobs-in-Japan"
+          },
+          {
+            "name": "Front-End Development",
+            "userContentTranslations": null,
+            "browsePage": "a/Front-End-Development-Jobs-in-Japan"
+          },
+          {
+            "name": "Back-End Development",
+            "userContentTranslations": null,
+            "browsePage": "a/Back-End-Development-Jobs-in-Japan"
+          },
+          {
+            "name": "DevOps",
+            "userContentTranslations": null,
+            "browsePage": "a/DevOps-Jobs-in-Japan"
+          },
+          {
+            "name": "Application Development",
+            "userContentTranslations": null,
+            "browsePage": "a/Application-Development-Jobs-in-Japan"
+          },
+          {
+            "name": "Typescript",
+            "userContentTranslations": null,
+            "browsePage": "a/Typescript-Jobs-in-Japan"
+          },
+          {
+            "name": "Python",
+            "userContentTranslations": {
+              "name": {
+                "ar": "بايثون",
+                "en": "Python",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Python-Jobs-in-Japan"
+          },
+          {
+            "name": "Golang",
+            "userContentTranslations": null,
+            "browsePage": "a/Golang-Jobs-in-Japan"
+          }
+        ],
+        "careerLevel": {
+          "id": 2,
+          "name": "Student",
+          "hint": "Undergrad / Postgrad",
+          "translations": {
+            "hint": {
+              "ar": "طالب جامعي / دراسات عُليا",
+              "en": "Undergrad / Postgrad"
+            },
+            "name": {
+              "ar": "طالب",
+              "en": "Student"
+            },
+            "display_name": {
+              "ar": "طالب",
+              "en": "Student"
+            }
+          },
+          "browsePage": "a/Student-Jobs-in-Japan"
+        },
+        "workplaceArrangement": {
+          "id": 1,
+          "displayedName": "On-site",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل من مقر الشركة",
+              "en": "on_site"
+            }
+          },
+          "browsePage": "a/On-Site-Jobs-in-Japan"
+        },
+        "location": {
+          "country": {
+            "id": 93,
+            "name": "Japan",
+            "translations": {
+              "name": {
+                "ar": "اليابان",
+                "en": "Japan"
+              }
+            },
+            "code": "JP",
+            "browsePage": "a/Global-Internship-Program-GIP-Full-Stack-Pathway-Jobs-in-Japan"
+          },
+          "city": {
+            "id": 3187,
+            "name": "Tokyo",
+            "translations": null,
+            "latitude": "35.68950000",
+            "longitude": "139.69171000",
+            "browsePage": "a/Global-Internship-Program-GIP-Full-Stack-Pathway-Jobs-in-Tokyo"
+          },
+          "area": null
+        },
+        "workExperienceYears": {
+          "min": null,
+          "max": 1
+        },
+        "vacancies": 17,
+        "workRoles": [
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-Japan"
+          },
+          {
+            "id": 36,
+            "name": "Engineering - Telecom/Technology",
+            "translations": {
+              "name": {
+                "ar": "الهندسة - الاتصالات/التكنولوجيا",
+                "en": "Engineering - Telecom/Technology"
+              }
+            },
+            "browsePage": "a/Engineering-Telecom-Technology-Jobs-in-Japan"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 5,
+            "name": "internship",
+            "translations": {
+              "displayed_name": {
+                "ar": "تدريب عملي",
+                "en": "internship"
+              }
+            },
+            "displayedName": "Internship",
+            "browsePage": "a/Internship-Jobs-in-Japan"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 14,
+            "name": "Bachelor's Degree",
+            "translations": {
+              "name": {
+                "ar": "درجة البكالوريوس",
+                "en": "Bachelor's Degree"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 6,
+        "logo": null,
+        "slug": "tv75uk9ifozp-global-internship-program-gip-full-stack-pathway-hennge-tokyo-japan",
+        "uri": "internship/tv75uk9ifozp-global-internship-program-gip-full-stack-pathway-hennge-tokyo-japan",
+        "views": 490,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": false,
+        "hideGender": false,
+        "hideSalary": false,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "10/09/2026 12:48:39",
+        "expireAt": "12/08/2026 12:48:39"
+      },
+      "relationships": {
+        "company": {
+          "data": {
+            "type": "company",
+            "id": "143139"
+          }
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/9ce6dcd4-b6d0-45ab-93ce-0a6fdd69bcb4"
+      }
+    },
+    {
+      "type": "job",
+      "id": "6fb744bf-8150-4211-b6b0-47df693bc4f3",
+      "attributes": {
+        "jobType": "job",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "Junior IT Specialist",
+        "description": "<p>Job Title: Junior IT Support Specialist – Retail Operations</p><p></p><p>Key Responsibilities:</p><p>Retail &amp; Branch Technical Support:</p><p>Provide end-user support for branch staff, store managers, and HQ employees via helpdesk, remote tools, or site visits.</p><p>Troubleshoot and resolve Point of Sale (POS) hardware and software issues (Touchscreens, Receipt Printers, Barcode Scanners, Cash Drawers).</p><p>Ensure store network reliability (Routers, Switches, Wi-Fi, 4G Backups) to avoid any checkout downtime.</p><p>Hardware &amp; Software Maintenance:</p><p>Install, configure, and maintain laptops, desktops, POS terminals, and label printers.</p><p>Assist in deploying and updating Retail ERP / POS software applications.</p><p>Track and maintain IT asset inventory across all retail branches (hardware, licenses, peripherals).</p><p>User Management &amp; Basic Security:</p><p>Set up user credentials and access rights for store employees (Active Directory, Office 365, or Google Workspace).</p><p>Apply data backups, antivirus software updates, and ensure compliance with company IT security policies.</p><p></p><p>Requirements &amp; Qualifications:</p><p>Education: Bachelor’s degree in Computer Science, Information Technology, Computer Engineering, or a related field.</p><p>Experience: 1–2 years of experience in IT support, preferably within the Retail, F&amp;B, or FMCG sectors.</p><p>Technical Skills:</p><p>Familiarity with POS systems and retail hardware peripherals (scanners, thermal printers, scale systems).</p><p>Good knowledge of Windows Operating Systems and networking basics (TCP/IP, Routers, Switches, VPNs).</p><p>Basic experience with Active Directory or Office 365 / Google Workspace administration.</p><p>Hands-on hardware troubleshooting skills.</p><p></p><p>Soft Skills:</p><p>Strong problem-solving abilities and high responsiveness during operational hours.</p><p>Flexibility to manage store support queries during peak retail hours/weekends if needed.</p><p>Excellent communication skills and patience when assisting non-technical store employees.</p>",
+        "requirements": "<p>Requirements &amp; Qualifications:</p><p>Education: Bachelor’s degree in Computer Science, Information Technology, Computer Engineering, or a related field.</p><p>Experience: 1–2 years of experience in IT support, preferably within the Retail, F&amp;B, or FMCG sectors.</p><p>Technical Skills:</p><p>Familiarity with POS systems and retail hardware peripherals (scanners, thermal printers, scale systems).</p><p>Good knowledge of Windows Operating Systems and networking basics (TCP/IP, Routers, Switches, VPNs).</p><p>Basic experience with Active Directory or Office 365 / Google Workspace administration.</p><p>Hands-on hardware troubleshooting skills.</p><p></p>",
+        "salary": {
+          "min": null,
+          "max": null,
+          "currency": null,
+          "period": null,
+          "additionalDetails": null,
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "Computer Engineering",
+            "userContentTranslations": {
+              "name": {
+                "ar": "هندسة الحاسوب",
+                "en": "Computer Engineering",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Computer-Engineering-Jobs-in-Egypt"
+          },
+          {
+            "name": "Information Technology (IT)",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات",
+                "en": "Information Technology (IT)",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Information-Technology-IT-Jobs-in-Egypt"
+          }
+        ],
+        "careerLevel": {
+          "id": 5,
+          "name": "Entry Level",
+          "hint": "Junior Level / Fresh Grad",
+          "translations": {
+            "hint": {
+              "ar": "مبتدئ / خريج جديد",
+              "en": "Junior Level / Fresh Grad"
+            },
+            "name": {
+              "ar": "مستوى مبتدئ",
+              "en": "Entry Level"
+            },
+            "display_name": {
+              "ar": "مستوى مبتدئ",
+              "en": "Entry Level"
+            }
+          },
+          "browsePage": "a/Entry-Level-Jobs-in-Egypt"
+        },
+        "workplaceArrangement": {
+          "id": 1,
+          "displayedName": "On-site",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل من مقر الشركة",
+              "en": "on_site"
+            }
+          },
+          "browsePage": "a/On-Site-Jobs-in-Egypt"
+        },
+        "location": {
+          "country": {
+            "id": 56,
+            "name": "Egypt",
+            "translations": {
+              "name": {
+                "ar": "مصر",
+                "en": "Egypt"
+              }
+            },
+            "code": "EG",
+            "browsePage": "a/Junior-IT-Specialist-Jobs-in-Egypt"
+          },
+          "city": {
+            "id": 1545,
+            "name": "Cairo",
+            "translations": {
+              "name": {
+                "ar": "القاهرة",
+                "en": "Cairo"
+              }
+            },
+            "latitude": "30.05075900",
+            "longitude": "31.23383900",
+            "browsePage": "a/Junior-IT-Specialist-Jobs-in-Cairo"
+          },
+          "area": {
+            "id": 17,
+            "name": "New Cairo",
+            "translations": {
+              "name": {
+                "ar": "القاهرة الجديدة",
+                "en": "New Cairo"
+              }
+            },
+            "latitude": "30.03330500",
+            "longitude": "31.46239500",
+            "browsePage": "a/Junior-IT-Specialist-Jobs-in-New-Cairo"
+          }
+        },
+        "workExperienceYears": {
+          "min": 1,
+          "max": 2
+        },
+        "vacancies": 1,
+        "workRoles": [
+          {
+            "id": 15,
+            "name": "Installation/Maintenance/Repair",
+            "translations": {
+              "name": {
+                "ar": "التركيب/الصيانة/الإصلاح",
+                "en": "Installation/Maintenance/Repair"
+              }
+            },
+            "browsePage": "a/Installation-Maintenance-Jobs-in-Egypt"
+          },
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-Egypt"
+          },
+          {
+            "id": 36,
+            "name": "Engineering - Telecom/Technology",
+            "translations": {
+              "name": {
+                "ar": "الهندسة - الاتصالات/التكنولوجيا",
+                "en": "Engineering - Telecom/Technology"
+              }
+            },
+            "browsePage": "a/Engineering-Telecom-Technology-Jobs-in-Egypt"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 1,
+            "name": "full_time",
+            "translations": {
+              "displayed_name": {
+                "ar": "دوام كامل",
+                "en": "full_time"
+              }
+            },
+            "displayedName": "Full Time",
+            "browsePage": "a/Full-Time-Jobs-in-Egypt"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 10,
+            "name": "Not Specified",
+            "translations": {
+              "name": {
+                "ar": "غير محدد",
+                "en": "Not Specified"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 0,
+        "logo": null,
+        "slug": "os0mgfptpml4-junior-it-specialist-bowline-egypt-cairo-egypt",
+        "uri": "jobs/p/os0mgfptpml4-junior-it-specialist-bowline-egypt-cairo-egypt",
+        "views": 0,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": false,
+        "hideGender": false,
+        "hideSalary": true,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "10/18/2026 12:40:29",
+        "expireAt": "12/17/2026 12:40:29"
+      },
+      "relationships": {
+        "company": {
+          "data": {
+            "type": "company",
+            "id": "89044"
+          }
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/6fb744bf-8150-4211-b6b0-47df693bc4f3"
+      }
+    },
+    {
+      "type": "job",
+      "id": "c4c57a94-bb76-4f20-9e43-b2d28a7c4cad",
+      "attributes": {
+        "jobType": "job",
+        "isNearMe": false,
+        "applicationType": "internal",
+        "status": "active",
+        "title": "Full-Stack Engineer (Django & Next.js)",
+        "description": "<p>Kidzapp is the leading platform for family experiences in the UAE and the Gulf. Parents discover, book and pay for kids' activities, classes, camps, attractions and days out, and venues and tour operators sell through us. The product includes a consumer app and website, a merchant portal for venues, an aﬃliate portal, subscriptions and loyalty, and a large operational admin used daily by our team. The platform has been in production for years and handles real payments, multi-currency pricing, three languages (English, Arabic, Russian), geospatial search and live inventory from partner APIs.<br><br>We are a small, senior team based in the UAE, and we build with AI: coding agents such as Claude Code are our daily tools, and AI features (a RAG chatbot on AWS Bedrock, AI translation and content pipelines) are already live in the product.</p><p>The role</p><p>You will own the Kidzapp backend (Python/Django REST APIs, admin, integrations, infrastructure) and the customer-facing website (Next.js) end to end. This is a full-time, fully remote position for an engineer based in Egypt, paid in USD, working directly with the founders.</p><p>What you will do</p><p>Own features end to end: scope with the founders, build across Django and Next.js, test, deploy to staging and production, and monitor afterwards.</p><p>Extend the versioned Django REST Framework APIs used by our iOS, Android and web clients, and the Django admin our operations team relies on.</p><p>Work on booking and payments across Adyen, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://Checkout.com\">Checkout.com</a>, Tap, Fatoora and Paymob, including refunds, webhooks, saved cards and subscriptions.</p><p>Integrate and maintain inventory partners (Rayna Tours, PrioHub and new providers) with clean handling of availability, price drift and retries.</p><p>Build SEO-critical pages, the booking funnel and account ﬂows in Next.js with English and Arabic (RTL) support and strong Core Web Vitals.</p><p>Work on our Flutter mobile apps (iOS and Android) when needed: features, ﬁxes and API integration. Flutter is not required for this role, but we want the option, and if you have it you will use it.</p><p>Extend our RAG chatbot (Claude on AWS Bedrock plus vector search) into a booking assistant, and build new agents for merchant onboarding, content QA and internal operations.</p><p>Maintain OpenSearch indexing and search relevance.</p><p>Deploy through GitHub Actions and AWS CodeBuild to ECS, read New Relic and CloudWatch, and ﬁx slow queries and hot paths.</p><p>Use Claude Code or similar agents as your primary way of writing code, keep the repo agent-ready (<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://CLAUDE.md\">CLAUDE.md</a>, skills, hooks, MCP servers), and raise the bar for the team.</p><p>Our stack</p><p>Python, Django, Django REST Framework, Celery, Redis, PostgreSQL with PostGIS, OpenSearch, Next.js with React and TypeScript, Flutter mobile apps (iOS and Android), AWS (ECS, RDS, ElastiCache, Lambda, S3, CloudFront, Bedrock), Docker, GitHub Actions, New Relic, pytest and factory_boy. AI: Claude on AWS Bedrock, Titan embeddings, OpenAI GPT-4o for translation, Claude Code for engineering.</p>",
+        "requirements": "<p><strong>Must have</strong></p><ul><li><p>4+ years building production web software, including 2+ years with Python and Django (Django REST Framework) on a codebase others depend on. Solid React and Next.js: server-side rendering and static generation, routing, data fetching, SEO, internationalisation including RTL, and TypeScript as a default.</p></li><li><p>Strong PostgreSQL: data modelling, reading query plans, indexing safely, migrations on live data. Experience with money-moving systems (payments, bookings, subscriptions): idempotency, webhooks, retries, reconciliation and refunds.</p></li><li><p>Background jobs (Celery or equivalent), Redis caching, and versioned REST APIs consumed by mobile clients.</p></li><li><p>Comfortable with AWS and Docker: you can deploy a container, read logs and APM traces, and debug production.</p></li><li><p>Testing as a habit: you write tests for your own code and use factories, not ﬁxtures.</p></li><li><p>Ownership: you can turn a short product request into a shipped, monitored feature with minimal handholding.</p></li><li><p>Fluent written English. Most coordination is asynchronous and in writing.</p></li><li><p>Based in Egypt, available full time on UAE working days, with reliable internet and a quiet place to work.</p></li></ul><p></p><p><strong>AI ﬂuency</strong></p><ul><li><p>You use an agentic coding tool (Claude Code, Codex CLI, Cursor Agent or similar) as your primary way of writing code and can show how you plan, delegate and verify.</p></li><li><p>You know how to make agents eﬀective on a large existing codebase: <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://CLAUDE.md\">CLAUDE.md</a> or <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"http://AGENTS.md\">AGENTS.md</a>, project skills, hooks, MCP servers, subagents.</p></li><li><p>You review AI-generated code critically and know its failure modes: invented APIs, scope creep, weak tests, dangerous commands.</p></li><li><p>You have shipped at least one LLM-powered feature to real users and can explain what worked, what did not, and how you measured it.</p></li><li><p>You understand the Claude API and AWS Bedrock: tool use, structured outputs, streaming, prompt caching, MCP; plus embeddings, vector search and RAG trade-oﬀs.</p></li><li><p>You can design agents with clear boundaries, human-in-the-loop checkpoints where money or customer data is involved, and evals that catch regressions.</p></li><li><p></p></li></ul><p><strong>Nice to have</strong></p><ul><li><p>PostGIS, and search relevance tuning in OpenSearch or Elasticsearch.</p></li><li><p>Marketplace, travel, ticketing or events domain experience, or the Gulf payments landscape (Apple Pay, Tabby, Tamara).</p></li><li><p>Flutter. Our iOS and Android apps are built with Flutter. If you can work on them (features, ﬁxes, releases) alongside the backend and website, that is a strong plus, and you will get the chance to.</p></li><li><p>Terraform or AWS CDK, Lambda, AWS cost optimisation.</p></li><li><p>Authoring MCP servers, the Claude Agent SDK, or evaluation harnesses for LLM features.</p></li><li><p>Public work we can look at: open source, a blog, or a project shipped with an AI agent where the commit history is visible.</p></li></ul><p></p>",
+        "salary": {
+          "min": null,
+          "max": null,
+          "currency": null,
+          "period": null,
+          "additionalDetails": null,
+          "isPaid": true
+        },
+        "keywords": [
+          {
+            "name": "Python",
+            "userContentTranslations": {
+              "name": {
+                "ar": "بايثون",
+                "en": "Python",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Python-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Django",
+            "userContentTranslations": null,
+            "browsePage": "a/Django-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "NextJs",
+            "userContentTranslations": null,
+            "browsePage": "a/NextJs-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "React",
+            "userContentTranslations": {
+              "name": {
+                "ar": "رياكت",
+                "en": "React",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/React-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Typescript",
+            "userContentTranslations": null,
+            "browsePage": "a/Typescript-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "PostgreSQL",
+            "userContentTranslations": null,
+            "browsePage": "a/PostgreSQL-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "AWS",
+            "userContentTranslations": {
+              "name": {
+                "ar": "خدمات أمازون ويب",
+                "en": "AWS",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/AWS-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Full Stack Development",
+            "userContentTranslations": null,
+            "browsePage": "a/Full-Stack-Development-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "REST APIs",
+            "userContentTranslations": null,
+            "browsePage": "a/REST-APIs-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Celery",
+            "userContentTranslations": null,
+            "browsePage": "a/Celery-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Docker",
+            "userContentTranslations": null,
+            "browsePage": "a/Docker-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Payment Solutions",
+            "userContentTranslations": null,
+            "browsePage": "a/Payment-Solutions-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "LLM",
+            "userContentTranslations": null,
+            "browsePage": "a/LLM-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Elasticsearch",
+            "userContentTranslations": null,
+            "browsePage": "a/Elasticsearch-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "AI Agents",
+            "userContentTranslations": null,
+            "browsePage": "a/AI-Agents-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Claude Code",
+            "userContentTranslations": null,
+            "browsePage": "a/Claude-Code-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Computer Science",
+            "userContentTranslations": {
+              "name": {
+                "ar": "علوم الحاسوب",
+                "en": "Computer Science",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Computer-Science-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "Software Development",
+            "userContentTranslations": {
+              "name": {
+                "ar": "تطوير البرمجيات",
+                "en": "Software Development",
+                "confidence": 1,
+                "lang_detected": "en"
+              }
+            },
+            "browsePage": "a/Software-Development-Jobs-in-United-Arab-Emirates"
+          },
+          {
+            "name": "AWS Bedrock",
+            "userContentTranslations": null,
+            "browsePage": "a/AWS-Bedrock-Jobs-in-United-Arab-Emirates"
+          }
+        ],
+        "careerLevel": {
+          "id": 6,
+          "name": "Experienced",
+          "hint": "Non-Manager",
+          "translations": {
+            "hint": {
+              "ar": "غير إداري",
+              "en": "Non-Manager"
+            },
+            "name": {
+              "ar": "ذو خبرة (غير مدير)",
+              "en": "Experienced (Non-Manager)"
+            },
+            "display_name": {
+              "ar": "ذو خبرة",
+              "en": "Experienced"
+            }
+          },
+          "browsePage": "a/Experienced-Jobs-in-United-Arab-Emirates"
+        },
+        "workplaceArrangement": {
+          "id": 2,
+          "displayedName": "Remote",
+          "translations": {
+            "displayed_name": {
+              "ar": "عمل عن بُعد",
+              "en": "remote"
+            }
+          },
+          "browsePage": "a/Remote-Jobs-in-United-Arab-Emirates"
+        },
+        "location": {
+          "country": {
+            "id": 196,
+            "name": "United Arab Emirates",
+            "translations": {
+              "name": {
+                "ar": "الإمارات العربية المتحدة",
+                "en": "United Arab Emirates"
+              }
+            },
+            "code": "AE",
+            "browsePage": "a/Full-Stack-Engineer-Django-Next-Js-Jobs-in-United-Arab-Emirates"
+          },
+          "city": {
+            "id": 5433,
+            "name": "Dubai",
+            "translations": {
+              "name": {
+                "ar": "دبي",
+                "en": "Dubai"
+              }
+            },
+            "latitude": "25.06570000",
+            "longitude": "55.17128000",
+            "browsePage": "a/Full-Stack-Engineer-Django-Next-Js-Jobs-in-Dubai"
+          },
+          "area": null
+        },
+        "workExperienceYears": {
+          "min": 3,
+          "max": 7
+        },
+        "vacancies": 1,
+        "workRoles": [
+          {
+            "id": 16,
+            "name": "IT/Software Development",
+            "translations": {
+              "name": {
+                "ar": "تكنولوجيا المعلومات/تطوير البرمجيات",
+                "en": "IT/Software Development"
+              }
+            },
+            "browsePage": "a/IT-Software-Development-Jobs-in-United-Arab-Emirates"
+          }
+        ],
+        "workTypes": [
+          {
+            "id": 1,
+            "name": "full_time",
+            "translations": {
+              "displayed_name": {
+                "ar": "دوام كامل",
+                "en": "full_time"
+              }
+            },
+            "displayedName": "Full Time",
+            "browsePage": "a/Full-Time-Jobs-in-United-Arab-Emirates"
+          }
+        ],
+        "schools": [],
+        "candidatePreferences": {
+          "gender": null,
+          "educationLevel": {
+            "id": 10,
+            "name": "Not Specified",
+            "translations": {
+              "name": {
+                "ar": "غير محدد",
+                "en": "Not Specified"
+              }
+            }
+          },
+          "requiresBachelorDegree": false,
+          "requiresGoodProfileMeter": false,
+          "requiresAcademicExcellence": false
+        },
+        "hotScore": 2,
+        "logo": null,
+        "slug": "yvlbdib01vhh-full-stack-engineer-django-nextjs-next-byte-lab-dubai-united-arab-emirates",
+        "uri": "jobs/p/yvlbdib01vhh-full-stack-engineer-django-nextjs-next-byte-lab-dubai-united-arab-emirates",
+        "views": 717,
+        "redirectUrl": null,
+        "tempWorkingFromHome": false,
+        "hideCompany": false,
+        "hideGender": false,
+        "hideSalary": true,
+        "settings": {
+          "isAutoPosted": null,
+          "isHighlighted": null,
+          "isFeatured": null
+        },
+        "postedAt": "09/24/2026 15:48:13",
+        "expireAt": "11/23/2026 15:48:13"
+      },
+      "relationships": {
+        "company": {
+          "data": {
+            "type": "company",
+            "id": "118616"
+          }
+        }
+      },
+      "links": {
+        "self": "https://wuzzuf.net/api/job/c4c57a94-bb76-4f20-9e43-b2d28a7c4cad"
+      }
+    }
+  ]
+}

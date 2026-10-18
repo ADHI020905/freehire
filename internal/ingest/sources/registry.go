@@ -451,6 +451,10 @@ func All(c HTTPClient) map[string]Source {
 		// and always read through its "IT and Software" job function. One JSON search request
 		// per board carries every posting with its body. See kalibrr.go.
 		NewKalibrr(c),
+		// WUZZUF: Egypt's general multi-company board, enumerated by the platform's own job
+		// role (board) over the JSON:API at api.wuzzuf.net — wuzzuf.net itself is behind an
+		// interactive Cloudflare challenge. See wuzzuf.go.
+		NewWuzzuf(c),
 		// Feishu Jobs: ByteDance's Feishu Hire ATS, one tenant careers host per board
 		// (jobs.bytedance.com, <tenant>.jobs.feishu.cn), read through the tenant's R&D
 		// category. The edge admits only a macOS browser string. See feishujobs.go.
