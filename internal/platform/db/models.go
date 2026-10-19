@@ -307,6 +307,7 @@ type Company struct {
 	IndustriesDerived             []string           `json:"industries_derived"`
 	CompanyInfoWikipediaCheckedAt pgtype.Timestamptz `json:"company_info_wikipedia_checked_at"`
 	AiInterviewReports            int32              `json:"ai_interview_reports"`
+	CompanyDescriptionCheckedAt   pgtype.Timestamptz `json:"company_description_checked_at"`
 }
 
 // One user verified to represent one company: claim/verification state and the fixed company identity every vacancy that account publishes carries. Not derived from jobs, like company_slug_aliases — see the file header for why.

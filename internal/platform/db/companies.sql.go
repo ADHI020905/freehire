@@ -12,6 +12,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const companyDescriptionDue = `-- name: CompanyDescriptionDue :one
+SELECT NOT EXISTS (
+    SELECT 1 FROM companies
+    WHERE slug = $1
+      AND (
+          COALESCE(company_info->>'summary', '') <> ''
+          OR company_description_checked_at >= $2::timestamptz
+      )
+) AS due
+`
+
+type CompanyDescriptionDueParams struct {
+	Slug         string             `json:"slug"`
+	CheckedSince pgtype.Timestamptz `json:"checked_since"`
+}
+
+// Whether an ingest crawl should fetch this company's own description: it holds none yet
+// (company_info.summary absent or blank — the fill keeps a stored one, so re-asking could
+// not change it) AND no answered fetch has been recorded since checked_since. A slug with
+// no row at all is due.
+func (q *Queries) CompanyDescriptionDue(ctx context.Context, arg CompanyDescriptionDueParams) (bool, error) {
+	row := q.db.QueryRow(ctx, companyDescriptionDue, arg.Slug, arg.CheckedSince)
+	var due bool
+	err := row.Scan(&due)
+	return due, err
+}
+
 const companyExists = `-- name: CompanyExists :one
 SELECT EXISTS(SELECT 1 FROM companies WHERE slug = $1)
 `
@@ -189,14 +216,17 @@ func (q *Queries) EstimateHiringCompanies(ctx context.Context) (int64, error) {
 
 const fillCompanyDescriptionFromIngest = `-- name: FillCompanyDescriptionFromIngest :exec
 INSERT INTO companies (
-    slug, name, tagline, company_info, is_reference, company_info_at
+    slug, name, tagline, company_info, is_reference, company_info_at,
+    company_description_checked_at
 ) VALUES (
-    $1, $2, $3, $4, false, now()
+    $1, $2, $3, $4, false, now(),
+    now()
 )
 ON CONFLICT (slug) DO UPDATE SET
     tagline         = COALESCE(NULLIF(companies.tagline, ''), EXCLUDED.tagline),
     company_info    = EXCLUDED.company_info || companies.company_info,
     company_info_at = now(),
+    company_description_checked_at = now(),
     updated_at      = now()
 `
 
@@ -214,6 +244,7 @@ type FillCompanyDescriptionFromIngestParams struct {
 // this source has no industries/year_founded/etc. to assert. A slug with no existing
 // row is inserted with is_reference = false, since it is arriving with a real
 // crawled job, not as a reference-only row the way an unmatched YC entry is.
+// Also stamps company_description_checked_at: a write here IS an answered fetch.
 func (q *Queries) FillCompanyDescriptionFromIngest(ctx context.Context, arg FillCompanyDescriptionFromIngestParams) error {
 	_, err := q.db.Exec(ctx, fillCompanyDescriptionFromIngest,
 		arg.Slug,
@@ -249,7 +280,7 @@ func (q *Queries) FillCompanyInfoFromWikipedia(ctx context.Context, arg FillComp
 }
 
 const getCompany = `-- name: GetCompany :one
-SELECT slug, name, created_at, updated_at, collections, job_count, regions, countries, domains, company_types, company_sizes, industries, year_founded, employee_count, hq_country, organization_type, tagline, company_info, is_reference, company_info_at, remote_regions, yc_batch, yc_status, yc_stage, yc_flags, maturity, subindustry, upvote_count, downvote_count, feedback_count, feedback_rating_avg, industries_derived, company_info_wikipedia_checked_at, ai_interview_reports
+SELECT slug, name, created_at, updated_at, collections, job_count, regions, countries, domains, company_types, company_sizes, industries, year_founded, employee_count, hq_country, organization_type, tagline, company_info, is_reference, company_info_at, remote_regions, yc_batch, yc_status, yc_stage, yc_flags, maturity, subindustry, upvote_count, downvote_count, feedback_count, feedback_rating_avg, industries_derived, company_info_wikipedia_checked_at, ai_interview_reports, company_description_checked_at
 FROM companies
 WHERE slug = $1
 `
@@ -295,6 +326,7 @@ func (q *Queries) GetCompany(ctx context.Context, slug string) (Company, error) 
 		&i.IndustriesDerived,
 		&i.CompanyInfoWikipediaCheckedAt,
 		&i.AiInterviewReports,
+		&i.CompanyDescriptionCheckedAt,
 	)
 	return i, err
 }
@@ -453,7 +485,7 @@ func (q *Queries) ListCompanies(ctx context.Context, arg ListCompaniesParams) ([
 }
 
 const listCompaniesForReindex = `-- name: ListCompaniesForReindex :many
-SELECT slug, name, created_at, updated_at, collections, job_count, regions, countries, domains, company_types, company_sizes, industries, year_founded, employee_count, hq_country, organization_type, tagline, company_info, is_reference, company_info_at, remote_regions, yc_batch, yc_status, yc_stage, yc_flags, maturity, subindustry, upvote_count, downvote_count, feedback_count, feedback_rating_avg, industries_derived, company_info_wikipedia_checked_at, ai_interview_reports
+SELECT slug, name, created_at, updated_at, collections, job_count, regions, countries, domains, company_types, company_sizes, industries, year_founded, employee_count, hq_country, organization_type, tagline, company_info, is_reference, company_info_at, remote_regions, yc_batch, yc_status, yc_stage, yc_flags, maturity, subindustry, upvote_count, downvote_count, feedback_count, feedback_rating_avg, industries_derived, company_info_wikipedia_checked_at, ai_interview_reports, company_description_checked_at
 FROM companies
 WHERE slug > $1 AND job_count > 0
 ORDER BY slug
@@ -515,6 +547,7 @@ func (q *Queries) ListCompaniesForReindex(ctx context.Context, arg ListCompanies
 			&i.IndustriesDerived,
 			&i.CompanyInfoWikipediaCheckedAt,
 			&i.AiInterviewReports,
+			&i.CompanyDescriptionCheckedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -743,6 +776,29 @@ func (q *Queries) ListSlugLikeCompaniesForBackfill(ctx context.Context) ([]ListS
 		return nil, err
 	}
 	return items, nil
+}
+
+const markCompanyDescriptionChecked = `-- name: MarkCompanyDescriptionChecked :exec
+INSERT INTO companies (slug, name, is_reference, company_description_checked_at)
+VALUES ($1, $2, false, now())
+ON CONFLICT (slug) DO UPDATE SET
+    company_description_checked_at = now()
+`
+
+type MarkCompanyDescriptionCheckedParams struct {
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+}
+
+// Records an answered company-description fetch that found the field BLANK, so the next
+// crawl does not ask again until the refresh window passes (see
+// pipeline.CompanyDescriptionRefreshWindow). Touches nothing else — company_info_at means
+// "info was written", and nothing was. Inserts the row like FillCompanyDescriptionFromIngest
+// does when the slug is new, because a stamp with nowhere to live would be lost and the
+// board asked again on every run.
+func (q *Queries) MarkCompanyDescriptionChecked(ctx context.Context, arg MarkCompanyDescriptionCheckedParams) error {
+	_, err := q.db.Exec(ctx, markCompanyDescriptionChecked, arg.Slug, arg.Name)
+	return err
 }
 
 const markCompanyWikipediaChecked = `-- name: MarkCompanyWikipediaChecked :exec

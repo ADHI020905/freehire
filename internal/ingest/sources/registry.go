@@ -136,7 +136,9 @@ func All(c HTTPClient) map[string]Source {
 		NewGreenhouse(c),
 		NewLever(c),
 		NewAshby(c),
-		NewWorkable(c),
+		// Rate-paced (pacedWorkableGetter): all ~4k boards share one metered widget host, and
+		// unpaced the run 429s after ~1,500 boards. See pacer.go.
+		NewWorkable(pacedWorkableGetter(c)),
 		NewWorkableMarketplace(c),
 		NewRecruitee(c),
 		// Rate-paced (pacedSmartRecruitersGetter): all 5,204 boards share one metered API host,

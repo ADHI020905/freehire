@@ -99,9 +99,27 @@ type SeenLookup interface {
 // already normalized (normalize.CompanySlug), so the Store implementation matches the
 // same key every other company-info source writes under; name is the board's own
 // display name, needed only when the slug has no existing row yet to insert one.
+//
+// CompanyDescriptionDue is asked BEFORE the adapter is: a company is due when it holds no
+// description yet AND no fetch has been recorded for it since checkedSince. A company that
+// already holds one is never due — the fill keeps whatever is stored (existing keys win),
+// so re-asking could not change it. RecordCompanyDescription records an ANSWERED fetch,
+// blank included: it always stamps the attempt and fills the gap only when description is
+// non-empty, so a board whose employer never wrote an "about us" is asked once per window
+// rather than once per run.
 type CompanyDescriptionFiller interface {
-	FillCompanyDescription(ctx context.Context, slug, name, description string) error
+	CompanyDescriptionDue(ctx context.Context, slug string, checkedSince time.Time) (bool, error)
+	RecordCompanyDescription(ctx context.Context, slug, name, description string) error
 }
+
+// CompanyDescriptionRefreshWindow is how long an answered company-description fetch that
+// found nothing stays answered. Before the window existed the description was fetched on
+// every crawl of every board: measured on prod 2026-10-19 that was 3,963 workable boards ×
+// 8 runs a day, half of Workable's ~63k requests a day and half of its 18,520 refusals in
+// two days — for a field that, once filled, the fill can never change. A week bounds the
+// cost of a blank one to one request per board per week while still noticing an employer
+// who fills it in.
+const CompanyDescriptionRefreshWindow = 7 * 24 * time.Hour
 
 // HydrationRetryWindow is how long after a posting enters the catalogue its missing description
 // is still worth another detail request. Being stored is what makes a posting "seen", so without
@@ -574,12 +592,14 @@ func (r Runner) ingestBoard(ctx context.Context, e sources.CompanyEntry) Stats {
 	return r.ingestFetched(ctx, e, raw, seen)
 }
 
-// fillCompanyDescription calls a CompanyDescriber adapter once per board and, when it
-// yields a non-empty description, applies it via the Store's optional
-// CompanyDescriptionFiller capability. Neither a missing capability on either side nor
-// an error from the adapter propagates — a company-description fetch must never
-// affect the board's own job ingest, only ever add a tagline/company_info gap-fill on
-// top of it.
+// fillCompanyDescription calls a CompanyDescriber adapter at most once per board, and only
+// when the Store says the company is due (see CompanyDescriptionFiller), then records the
+// answer via the Store's optional CompanyDescriptionFiller capability. Neither a missing
+// capability on either side nor an error from the due-check or the adapter propagates — a
+// company-description fetch must never affect the board's own job ingest, only ever add a
+// company_info gap-fill on top of it. A failed due-check skips the fetch: the field is
+// optional, and a database hiccup must not become a request per board against a
+// rate-limited platform. A failed fetch records nothing, so it is retried next run.
 func (r Runner) fillCompanyDescription(ctx context.Context, e sources.CompanyEntry, src sources.Source) {
 	cd, ok := src.(sources.CompanyDescriber)
 	if !ok {
@@ -589,17 +609,25 @@ func (r Runner) fillCompanyDescription(ctx context.Context, e sources.CompanyEnt
 	if !ok {
 		return
 	}
+	// Through canonicalOf, like the posting upsert: a board whose company a merge retired must
+	// not write (or insert a 0-job row) under the retired slug, which would shadow the alias
+	// redirect and leave the canonical company without the description.
+	slug := canonicalOf(r.streamCompanyCanonical(ctx, e), normalize.CompanySlug(e.Company))
+	due, err := filler.CompanyDescriptionDue(ctx, slug, time.Now().Add(-CompanyDescriptionRefreshWindow))
+	if err != nil {
+		log.Printf("ingest: %s board %q (%s): company description due-check: %v", e.Provider, e.Board, e.Company, err)
+		return
+	}
+	if !due {
+		return
+	}
 	description, err := cd.CompanyDescription(ctx, e)
 	if err != nil {
 		log.Printf("ingest: %s board %q (%s): company description: %v", e.Provider, e.Board, e.Company, err)
 		return
 	}
-	if description == "" {
-		return
-	}
-	slug := normalize.CompanySlug(e.Company)
-	if err := filler.FillCompanyDescription(ctx, slug, e.Company, description); err != nil {
-		log.Printf("ingest: %s board %q (%s): fill company description: %v", e.Provider, e.Board, e.Company, err)
+	if err := filler.RecordCompanyDescription(ctx, slug, e.Company, description); err != nil {
+		log.Printf("ingest: %s board %q (%s): record company description: %v", e.Provider, e.Board, e.Company, err)
 	}
 }
 
@@ -794,7 +822,8 @@ func (r Runner) resolveCompanyAliases(ctx context.Context, e sources.CompanyEntr
 // streamCompanyCanonical is resolveCompanyAliases for a streaming board, which has no upfront
 // batch: it resolves one company as it is first seen and memoizes the answer. Like
 // streamAggregatorCoverage it is only ever called from ingestStream's emit callback, already
-// serialized under that path's own mutex, so the cache needs no lock.
+// serialized under that path's own mutex, so the cache needs no lock. fillCompanyDescription
+// also builds one for the single slug it resolves, on its own goroutine.
 func (r Runner) streamCompanyCanonical(ctx context.Context, e sources.CompanyEntry) companyCanonical {
 	if r.Aliases == nil {
 		return nil

@@ -1031,6 +1031,11 @@ type Querier interface {
 	// transactions, so it never holds a table-wide lock that would stall concurrent ingest
 	// crawls (a whole-table UPDATE did: it locked ~1.4M rows for minutes).
 	CompaniesWithRoleClusters(ctx context.Context) ([]string, error)
+	// Whether an ingest crawl should fetch this company's own description: it holds none yet
+	// (company_info.summary absent or blank — the fill keeps a stored one, so re-asking could
+	// not change it) AND no answered fetch has been recorded since checked_since. A slug with
+	// no row at all is due.
+	CompanyDescriptionDue(ctx context.Context, arg CompanyDescriptionDueParams) (bool, error)
 	// Whether a company row already exists for the slug. The backfill checks this
 	// before upserting to log matched-existing vs inserted-reference counts — the
 	// upsert itself is blind to which path (insert or update) it took.
@@ -2131,6 +2136,7 @@ type Querier interface {
 	// this source has no industries/year_founded/etc. to assert. A slug with no existing
 	// row is inserted with is_reference = false, since it is arriving with a real
 	// crawled job, not as a reference-only row the way an unmatched YC entry is.
+	// Also stamps company_description_checked_at: a write here IS an answered fetch.
 	FillCompanyDescriptionFromIngest(ctx context.Context, arg FillCompanyDescriptionFromIngestParams) error
 	// Applies a confident Wikipedia match: fills tagline only if blank, merges the
 	// company_info keys (existing keys win on collision, matching UpsertYCCompany's
@@ -4782,6 +4788,13 @@ type Querier interface {
 	// Stamp a revision as undone. Guarded on reverted_at IS NULL so undoing twice affects no row
 	// and the caller can tell the difference without a second read.
 	MarkCVRevisionReverted(ctx context.Context, arg MarkCVRevisionRevertedParams) (int64, error)
+	// Records an answered company-description fetch that found the field BLANK, so the next
+	// crawl does not ask again until the refresh window passes (see
+	// pipeline.CompanyDescriptionRefreshWindow). Touches nothing else — company_info_at means
+	// "info was written", and nothing was. Inserts the row like FillCompanyDescriptionFromIngest
+	// does when the slug is new, because a stamp with nowhere to live would be lost and the
+	// board asked again on every run.
+	MarkCompanyDescriptionChecked(ctx context.Context, arg MarkCompanyDescriptionCheckedParams) error
 	// Records that the backfill looked this company up and found no confident match,
 	// so it is never looked up again. Touches nothing else: an unmatched company's
 	// tagline/company_info stay exactly as another source may have left them.

@@ -459,13 +459,32 @@ func (s *dbStore) Touch(ctx context.Context, source, externalID string) error {
 	return nil
 }
 
-// FillCompanyDescription implements pipeline.CompanyDescriptionFiller: apply a
-// company-level description an adapter yielded (see sources.CompanyDescriber) to the
-// company's tagline/company_info gap. Stored under company_info.summary rather than
-// the short tagline field — this text is raw employer-authored prose, not the
-// terse, curated-style values tagline is reserved for (the YC directory's one_liner,
-// the Wikipedia backfill's Wikidata description).
-func (s *dbStore) FillCompanyDescription(ctx context.Context, slug, name, description string) error {
+// CompanyDescriptionDue implements pipeline.CompanyDescriptionFiller: whether the company
+// still lacks a description and has had no answered fetch since checkedSince.
+func (s *dbStore) CompanyDescriptionDue(ctx context.Context, slug string, checkedSince time.Time) (bool, error) {
+	due, err := s.q.CompanyDescriptionDue(ctx, db.CompanyDescriptionDueParams{
+		Slug:         slug,
+		CheckedSince: pgtype.Timestamptz{Time: checkedSince, Valid: true},
+	})
+	if err != nil {
+		return false, fmt.Errorf("company description due %s: %w", slug, err)
+	}
+	return due, nil
+}
+
+// RecordCompanyDescription implements pipeline.CompanyDescriptionFiller: record an
+// answered company-description fetch (see sources.CompanyDescriber). A blank answer only
+// stamps the attempt; a non-empty one also fills the company's company_info gap. Stored
+// under company_info.summary rather than the short tagline field — this text is raw
+// employer-authored prose, not the terse, curated-style values tagline is reserved for
+// (the YC directory's one_liner, the Wikipedia backfill's Wikidata description).
+func (s *dbStore) RecordCompanyDescription(ctx context.Context, slug, name, description string) error {
+	if description == "" {
+		if err := s.q.MarkCompanyDescriptionChecked(ctx, db.MarkCompanyDescriptionCheckedParams{Slug: slug, Name: name}); err != nil {
+			return fmt.Errorf("mark company description checked %s: %w", slug, err)
+		}
+		return nil
+	}
 	info, err := json.Marshal(map[string]string{"summary": description})
 	if err != nil {
 		return fmt.Errorf("fill company description %s: encode company_info: %w", slug, err)

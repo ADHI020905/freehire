@@ -7,6 +7,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/strelov1/freehire/internal/dict/normalize"
 	"github.com/strelov1/freehire/internal/ingest/sources"
@@ -27,15 +28,31 @@ type fakeStore struct {
 	seenByBrd map[string]map[string]bool // per-board sets, keyed by the requested board
 	seenAsked []string                   // every board the runner scoped a lookup to
 	seenErr   error                      // when set, ExistingExternalIDs fails
-	// filled records every FillCompanyDescription call, in order.
+	// filled records every RecordCompanyDescription call, in order.
 	filled []filledDescription
+	// descNotDue makes CompanyDescriptionDue answer false (the company already has a
+	// description, or was checked inside the refresh window); dueErr makes it fail.
+	// dueAsked records the checkedSince bound of every call.
+	descNotDue bool
+	dueErr     error
+	dueAsked   []time.Time
 }
 
 type filledDescription struct {
 	slug, name, description string
 }
 
-func (s *fakeStore) FillCompanyDescription(_ context.Context, slug, name, description string) error {
+func (s *fakeStore) CompanyDescriptionDue(_ context.Context, _ string, checkedSince time.Time) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.dueAsked = append(s.dueAsked, checkedSince)
+	if s.dueErr != nil {
+		return false, s.dueErr
+	}
+	return !s.descNotDue, nil
+}
+
+func (s *fakeStore) RecordCompanyDescription(_ context.Context, slug, name, description string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.err != nil {
@@ -292,7 +309,7 @@ func TestRunStreamsAllJobs(t *testing.T) {
 // TestRunFillsCompanyDescriptionOncePerBoard proves the runner calls a
 // CompanyDescriber adapter's CompanyDescription exactly once per board regardless of
 // how many postings it carries, and forwards a non-empty result to the Store's
-// FillCompanyDescription, keyed by the board's company slug.
+// RecordCompanyDescription, keyed by the board's company slug.
 func TestRunFillsCompanyDescriptionOncePerBoard(t *testing.T) {
 	src := &fakeDescriberSource{
 		fakeSource: fakeSource{provider: "greenhouse", jobs: []sources.Job{
@@ -317,7 +334,7 @@ func TestRunFillsCompanyDescriptionOncePerBoard(t *testing.T) {
 		t.Fatalf("CompanyDescription called %d times, want exactly 1 (once per board, not per posting)", src.descCalls)
 	}
 	if len(store.filled) != 1 {
-		t.Fatalf("FillCompanyDescription called %d times, want 1", len(store.filled))
+		t.Fatalf("RecordCompanyDescription called %d times, want 1", len(store.filled))
 	}
 	want := filledDescription{slug: normalize.CompanySlug("Coinbase"), name: "Coinbase", description: src.description}
 	if store.filled[0] != want {
@@ -325,9 +342,11 @@ func TestRunFillsCompanyDescriptionOncePerBoard(t *testing.T) {
 	}
 }
 
-// TestRunSkipsCompanyDescriptionWriteWhenEmpty proves an empty CompanyDescription
-// result (the employer left the field blank) makes no Store write at all.
-func TestRunSkipsCompanyDescriptionWriteWhenEmpty(t *testing.T) {
+// TestRunRecordsAnEmptyCompanyDescription proves an empty CompanyDescription result
+// (the employer left the field blank) is still RECORDED: the fetch answered, so the
+// Store must stamp the attempt — otherwise a board with a blank "about us" is asked
+// again on every run, which is exactly the request volume the refresh window removes.
+func TestRunRecordsAnEmptyCompanyDescription(t *testing.T) {
 	src := &fakeDescriberSource{
 		fakeSource: fakeSource{provider: "greenhouse", jobs: []sources.Job{
 			{ExternalID: "1", Title: "A", Company: "C", URL: "u"},
@@ -342,8 +361,116 @@ func TestRunSkipsCompanyDescriptionWriteWhenEmpty(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+	want := filledDescription{slug: normalize.CompanySlug("C"), name: "C", description: ""}
+	if len(store.filled) != 1 || store.filled[0] != want {
+		t.Errorf("recorded = %+v, want exactly %+v (an answered fetch is stamped even when blank)", store.filled, want)
+	}
+}
+
+// TestRunCompanyDescriptionUsesTheCanonicalSlug proves the due-check and the write both go
+// through canonicalOf, like the posting upsert. A board whose company a merge retired must
+// not insert a 0-job row under the retired slug — that row would shadow the alias redirect —
+// and the canonical company is the one that should get the description.
+func TestRunCompanyDescriptionUsesTheCanonicalSlug(t *testing.T) {
+	src := &fakeDescriberSource{
+		fakeSource:  fakeSource{provider: "workable", jobs: []sources.Job{{ExternalID: "1", Title: "A", Company: "Dollartree", URL: "u"}}},
+		description: "",
+	}
+	store := &fakeStore{}
+	aliases := &fakeAliases{canon: map[string]string{"dollartree": "dollar-tree"}}
+	r := Runner{Registry: registry(src), Store: store, Aliases: aliases}
+
+	if _, err := r.Run(context.Background(), []sources.CompanyEntry{
+		{Company: "Dollartree", Provider: "workable", Board: "dollartree"},
+	}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	want := filledDescription{slug: "dollar-tree", name: "Dollartree", description: ""}
+	if len(store.filled) != 1 || store.filled[0] != want {
+		t.Errorf("recorded = %+v, want exactly %+v (the canonical slug, not the retired one)", store.filled, want)
+	}
+}
+
+// TestRunSkipsCompanyDescriptionWhenNotDue proves the runner asks the Store first and
+// makes NO request when the company is not due — it already holds a description, or it
+// was checked inside the refresh window. Measured on prod 2026-10-19, fetching it on
+// every run was half of Workable's ~63k requests a day and half of its 18,520 refusals
+// in two days.
+func TestRunSkipsCompanyDescriptionWhenNotDue(t *testing.T) {
+	src := &fakeDescriberSource{
+		fakeSource: fakeSource{provider: "workable", jobs: []sources.Job{
+			{ExternalID: "1", Title: "A", Company: "C", URL: "u"},
+		}},
+		description: "About us",
+	}
+	store := &fakeStore{descNotDue: true}
+	r := Runner{Registry: registry(src), Store: store}
+
+	stats, err := r.Run(context.Background(), []sources.CompanyEntry{
+		{Company: "C", Provider: "workable", Board: "c"},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if stats.Total().Ingested != 1 {
+		t.Fatalf("Ingested = %d, want 1", stats.Total().Ingested)
+	}
+	if src.descCalls != 0 {
+		t.Errorf("CompanyDescription called %d times for a company that is not due, want 0", src.descCalls)
+	}
 	if len(store.filled) != 0 {
-		t.Errorf("FillCompanyDescription called with an empty description, want no call: %v", store.filled)
+		t.Errorf("recorded %v for a company that is not due, want nothing", store.filled)
+	}
+}
+
+// TestRunAsksDueWithTheRefreshWindow pins the bound the runner hands the Store: a
+// company checked more recently than CompanyDescriptionRefreshWindow ago is not due.
+func TestRunAsksDueWithTheRefreshWindow(t *testing.T) {
+	src := &fakeDescriberSource{fakeSource: fakeSource{provider: "workable"}}
+	store := &fakeStore{}
+	r := Runner{Registry: registry(src), Store: store}
+
+	before := time.Now()
+	if _, err := r.Run(context.Background(), []sources.CompanyEntry{
+		{Company: "C", Provider: "workable", Board: "c"},
+	}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	after := time.Now()
+	if len(store.dueAsked) != 1 {
+		t.Fatalf("CompanyDescriptionDue called %d times, want 1", len(store.dueAsked))
+	}
+	got := store.dueAsked[0]
+	lo, hi := before.Add(-CompanyDescriptionRefreshWindow), after.Add(-CompanyDescriptionRefreshWindow)
+	if got.Before(lo) || got.After(hi) {
+		t.Errorf("checkedSince = %v, want now - %v (between %v and %v)", got, CompanyDescriptionRefreshWindow, lo, hi)
+	}
+}
+
+// TestRunDueCheckErrorSkipsTheFetch proves a failed due-check costs no request and does
+// not fail the board: the description is optional, and a database hiccup must not turn
+// into a request per board against a rate-limited platform.
+func TestRunDueCheckErrorSkipsTheFetch(t *testing.T) {
+	src := &fakeDescriberSource{
+		fakeSource: fakeSource{provider: "workable", jobs: []sources.Job{
+			{ExternalID: "1", Title: "A", Company: "C", URL: "u"},
+		}},
+		description: "About us",
+	}
+	store := &fakeStore{dueErr: errors.New("connection reset")}
+	r := Runner{Registry: registry(src), Store: store}
+
+	stats, err := r.Run(context.Background(), []sources.CompanyEntry{
+		{Company: "C", Provider: "workable", Board: "c"},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if stats.Total().Ingested != 1 || stats.Total().Failed != 0 {
+		t.Fatalf("stats = %+v, want Ingested=1 Failed=0", stats.Total())
+	}
+	if src.descCalls != 0 {
+		t.Errorf("CompanyDescription called %d times after a failed due-check, want 0", src.descCalls)
 	}
 }
 
@@ -370,7 +497,7 @@ func TestRunCompanyDescriptionErrorDoesNotFailTheBoard(t *testing.T) {
 		t.Fatalf("stats = %+v, want Ingested=1 Failed=0 — a company-description error must not fail the board", stats.Total())
 	}
 	if len(store.filled) != 0 {
-		t.Errorf("FillCompanyDescription called despite a CompanyDescription error: %v", store.filled)
+		t.Errorf("RecordCompanyDescription called despite a CompanyDescription error: %v", store.filled)
 	}
 }
 
@@ -394,7 +521,7 @@ func TestRunSourceWithoutCompanyDescriberIsUnaffected(t *testing.T) {
 		t.Fatalf("Ingested = %d, want 1", stats.Total().Ingested)
 	}
 	if len(store.filled) != 0 {
-		t.Errorf("FillCompanyDescription called for a non-CompanyDescriber adapter: %v", store.filled)
+		t.Errorf("RecordCompanyDescription called for a non-CompanyDescriber adapter: %v", store.filled)
 	}
 }
 

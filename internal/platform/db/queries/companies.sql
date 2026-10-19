@@ -361,16 +361,46 @@ ON CONFLICT (slug) DO UPDATE SET
 -- this source has no industries/year_founded/etc. to assert. A slug with no existing
 -- row is inserted with is_reference = false, since it is arriving with a real
 -- crawled job, not as a reference-only row the way an unmatched YC entry is.
+-- Also stamps company_description_checked_at: a write here IS an answered fetch.
 INSERT INTO companies (
-    slug, name, tagline, company_info, is_reference, company_info_at
+    slug, name, tagline, company_info, is_reference, company_info_at,
+    company_description_checked_at
 ) VALUES (
-    sqlc.arg(slug), sqlc.arg(name), sqlc.arg(tagline), sqlc.arg(company_info), false, now()
+    sqlc.arg(slug), sqlc.arg(name), sqlc.arg(tagline), sqlc.arg(company_info), false, now(),
+    now()
 )
 ON CONFLICT (slug) DO UPDATE SET
     tagline         = COALESCE(NULLIF(companies.tagline, ''), EXCLUDED.tagline),
     company_info    = EXCLUDED.company_info || companies.company_info,
     company_info_at = now(),
+    company_description_checked_at = now(),
     updated_at      = now();
+
+-- name: MarkCompanyDescriptionChecked :exec
+-- Records an answered company-description fetch that found the field BLANK, so the next
+-- crawl does not ask again until the refresh window passes (see
+-- pipeline.CompanyDescriptionRefreshWindow). Touches nothing else — company_info_at means
+-- "info was written", and nothing was. Inserts the row like FillCompanyDescriptionFromIngest
+-- does when the slug is new, because a stamp with nowhere to live would be lost and the
+-- board asked again on every run.
+INSERT INTO companies (slug, name, is_reference, company_description_checked_at)
+VALUES (sqlc.arg(slug), sqlc.arg(name), false, now())
+ON CONFLICT (slug) DO UPDATE SET
+    company_description_checked_at = now();
+
+-- name: CompanyDescriptionDue :one
+-- Whether an ingest crawl should fetch this company's own description: it holds none yet
+-- (company_info.summary absent or blank — the fill keeps a stored one, so re-asking could
+-- not change it) AND no answered fetch has been recorded since checked_since. A slug with
+-- no row at all is due.
+SELECT NOT EXISTS (
+    SELECT 1 FROM companies
+    WHERE slug = sqlc.arg(slug)
+      AND (
+          COALESCE(company_info->>'summary', '') <> ''
+          OR company_description_checked_at >= sqlc.arg(checked_since)::timestamptz
+      )
+) AS due;
 
 -- name: ListCompaniesMissingWikipediaInfo :many
 -- Candidates for the Wikipedia company-info backfill: no tagline yet, and never

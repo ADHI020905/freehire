@@ -369,6 +369,35 @@ func pacedSmartRecruitersGetter(c JSONGetter) JSONGetter {
 	}
 }
 
+// Workable's widget API (apply.workable.com) meters the crawl as one caller, and every board
+// reaches it through that host. Measured on prod 2026-10-19: 3,963 active boards, a static
+// timer firing every 3h, two requests per board per run (the listing plus the account
+// description) — ~8k requests a run, ~63k a day — fired UNPACED by the runner's 8 board
+// workers. Workable began refusing ~30 minutes into each run, after ~1,500 boards: ~3,000
+// requests in ~1,800s, so the refusals start near ~1.7 req/s sustained. 18,520 refusals in
+// two days, half of them on the description call.
+//
+// The description call is now asked once per company, not once per run (see
+// pipeline.CompanyDescriptionRefreshWindow), so a run is ~one request per board. The scheduler
+// splits the provider into 2 shards on a 6h cadence, ~1,982 boards each: at 0.75 req/s a shard
+// is ~2,640s (44 min) of requests, spread evenly across the run instead of front-loaded. The
+// limiter is per PROCESS, so if both shards ever run at once the provider sees 1.5 req/s —
+// still under the ~1.7 req/s the refusals began at, which is why the pace is not higher.
+// Tune downward while boards still 429, upward only while none do.
+const (
+	workableRequestInterval = 1333 * time.Millisecond // ~0.75 req/s
+	workableRequestBurst    = 1
+)
+
+// pacedWorkableGetter wraps a getter with a fresh limiter shared across one registry build,
+// so every Workable board's listing AND description requests in a run draw from one bucket.
+func pacedWorkableGetter(c JSONGetter) JSONGetter {
+	return rateLimitedJSONGetter{
+		inner:   c,
+		limiter: rate.NewLimiter(rate.Every(workableRequestInterval), workableRequestBurst),
+	}
+}
+
 // doverRequestInterval/doverRequestBurst are NOT measured against a clean ceiling the way
 // smartRecruitersRequestInterval's comment documents — freehire crawled zero Dover boards
 // before this pacer existed. They are a conservative starting point, set after a live
