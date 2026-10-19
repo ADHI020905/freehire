@@ -2,9 +2,23 @@ package sources
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"os"
 	"strings"
 	"testing"
+	"time"
 )
+
+// gupyFixture reads a response captured verbatim from Gupy's live API (2026-10-19).
+func gupyFixture(t *testing.T, name string) string {
+	t.Helper()
+	b, err := os.ReadFile("testdata/gupy/" + name)
+	if err != nil {
+		t.Fatalf("read fixture %s: %v", name, err)
+	}
+	return string(b)
+}
 
 func TestGupyProvider(t *testing.T) {
 	if got := NewGupy(nil).Provider(); got != "gupy" {
@@ -12,122 +26,22 @@ func TestGupyProvider(t *testing.T) {
 	}
 }
 
-func TestGupyFetchMapsFieldsAndPaginates(t *testing.T) {
-	// Page 1 is full (gupyPageLimit items) so the walk continues; page 2 is short so it
-	// stops there. pagination.total is deliberately wrong (clamped to the limit) to prove
-	// the adapter ignores it and pages by short-page instead.
-	var page1 strings.Builder
-	page1.WriteString(`{"pagination":{"total":100,"limit":100,"offset":0},"data":[`)
-	for i := 0; i < gupyPageLimit; i++ {
-		if i > 0 {
-			page1.WriteString(",")
-		}
-		page1.WriteString(`{"id":`)
-		page1.WriteString(itoa(1000 + i))
-		page1.WriteString(`,"name":"Role","jobUrl":"https://creditas.gupy.io/job/`)
-		page1.WriteString(itoa(1000 + i))
-		page1.WriteString(`","workplaceType":"on-site"}`)
-	}
-	page1.WriteString(`]}`)
-
-	page2 := `{"pagination":{"total":100,"limit":100,"offset":100},"data":[
-		{"id":2001,"name":"  Backend Engineer  ","jobUrl":"https://creditas.gupy.io/job/2001",
-		 "description":"<p>Build things</p><script>evil()</script>","city":"São Paulo","state":"SP","country":"Brasil",
-		 "isRemoteWork":false,"workplaceType":"hybrid","publishedDate":"2026-06-11T11:34:10.829Z"},
-		{"id":2002,"name":"Remote SRE","jobUrl":"https://creditas.gupy.io/job/2002",
-		 "city":"","state":"","country":"Brasil","isRemoteWork":true,"workplaceType":"remote"},
-		{"id":2003,"name":"No URL Role","jobUrl":""}
-	]}`
-
-	fake := (&routedHTTP{}).
-		route("offset=0", page1.String()).
-		route("offset=100", page2)
-
-	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{
-		Company: "Creditas", Provider: "gupy", Board: "85606",
-	})
-	if err != nil {
-		t.Fatalf("Fetch: %v", err)
-	}
-
-	// 100 from page 1 + 2 from page 2 (the empty-jobUrl posting is dropped) = 102.
-	if len(jobs) != gupyPageLimit+2 {
-		t.Fatalf("len(jobs) = %d, want %d across two pages with one URL-less posting dropped", len(jobs), gupyPageLimit+2)
-	}
-
-	byID := map[string]Job{}
-	for _, j := range jobs {
-		byID[j.ExternalID] = j
-	}
-
-	be, ok := byID["2001"]
-	if !ok {
-		t.Fatal("posting 2001 missing")
-	}
-	if be.Title != "Backend Engineer" {
-		t.Errorf("Title = %q, want trimmed name", be.Title)
-	}
-	if be.URL != "https://creditas.gupy.io/job/2001" {
-		t.Errorf("URL = %q, want jobUrl", be.URL)
-	}
-	if be.Company != "Creditas" {
-		t.Errorf("Company = %q, want configured company", be.Company)
-	}
-	if be.Location != "São Paulo, SP, Brasil" {
-		t.Errorf("Location = %q, want city/state/country joined", be.Location)
-	}
-	if be.WorkMode != "hybrid" {
-		t.Errorf("WorkMode = %q, want hybrid from workplaceType", be.WorkMode)
-	}
-	if !strings.Contains(be.Description, "Build things") {
-		t.Errorf("Description missing body, got %q", be.Description)
-	}
-	if strings.Contains(be.Description, "evil") {
-		t.Errorf("Description must be sanitized, got %q", be.Description)
-	}
-	if be.PostedAt == nil || be.PostedAt.UTC().Year() != 2026 {
-		t.Errorf("PostedAt = %v, want parsed publishedDate (2026)", be.PostedAt)
-	}
-
-	sre, ok := byID["2002"]
-	if !ok {
-		t.Fatal("posting 2002 missing")
-	}
-	if !sre.Remote {
-		t.Error("Remote = false, want true from isRemoteWork")
-	}
-	if sre.WorkMode != "remote" {
-		t.Errorf("WorkMode = %q, want remote", sre.WorkMode)
-	}
-	if sre.Location != "Brasil" {
-		t.Errorf("Location = %q, want country only when city/state are blank", sre.Location)
-	}
-
-	if _, dropped := byID["2003"]; dropped {
-		t.Error("posting 2003 has no jobUrl and must be dropped")
+func TestGupyIsAFullBoardListing(t *testing.T) {
+	// The career page's listing is one unpaginated response carrying every published
+	// posting, so a crawl that returns is the whole board — what licenses the board-scoped
+	// sweep to close what disappeared while the old API was down.
+	if _, ok := NewGupy(nil).(fullBoardListing); !ok {
+		t.Error("gupy must implement fullBoardListing")
 	}
 }
 
-// itoa is provided by ozon_test.go in this package.
-
-func TestGupyFetchAssemblesRichDescription(t *testing.T) {
-	// The portal listing flattens a posting's sections into one tag-less blob; the richer
-	// public detail endpoint returns them as separate HTML fields. Fetch must pull the
-	// detail and assemble the sections into structured HTML, not serve the flat listing text.
+func TestGupyFetchListsTheCareerPage(t *testing.T) {
 	fake := (&routedHTTP{}).
-		route("offset=0", `{"data":[
-			{"id":500,"name":"Backend Engineer","jobUrl":"https://acme.gupy.io/job/500",
-			 "description":"Do stuff;Ship it;Be a Go expert","workplaceType":"remote"}
-		]}`).
-		route("job-publication/public/jobs/500", `{
-			"description":"<p>.</p>",
-			"responsibilities":"<p>O profissional:</p><ul><li>Ship it;</li></ul>",
-			"prerequisites":"<ul><li>Be a Go expert</li></ul>",
-			"relevantExperiences":"<p>Free lunch</p>"
-		}`)
+		route("job-publication/public/jobs?subdomain=caju", gupyFixture(t, "list_caju.json")).
+		route("job-publication/public/jobs/12691526", gupyFixture(t, "detail_12691526.json"))
 
 	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{
-		Company: "Acme", Provider: "gupy", Board: "42",
+		Company: "Caju", Provider: "gupy", Board: "caju",
 	})
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
@@ -135,35 +49,48 @@ func TestGupyFetchAssemblesRichDescription(t *testing.T) {
 	if len(jobs) != 1 {
 		t.Fatalf("len(jobs) = %d, want 1", len(jobs))
 	}
-	desc := jobs[0].Description
-
-	// Structure from the detail is preserved: list markup survives sanitization.
-	if !strings.Contains(desc, "<li>") || !strings.Contains(desc, "<ul>") {
-		t.Errorf("Description dropped list structure, got %q", desc)
+	j := jobs[0]
+	if j.ExternalID != "12691526" {
+		t.Errorf("ExternalID = %q, want the Gupy job id", j.ExternalID)
 	}
-	// Every section's body is present.
-	for _, want := range []string{"Ship it", "Go expert", "Free lunch"} {
-		if !strings.Contains(desc, want) {
-			t.Errorf("Description missing %q section body, got %q", want, desc)
+	if j.URL != "https://caju.gupy.io/jobs/12691526" {
+		t.Errorf("URL = %q, want the career page's own job URL", j.URL)
+	}
+	if j.Title != "Pessoa Desenvolvedora FrontEnd Sênior" {
+		t.Errorf("Title = %q", j.Title)
+	}
+	if j.Company != "Caju" {
+		t.Errorf("Company = %q, want the board's company", j.Company)
+	}
+	if j.Location != "Brasil" {
+		t.Errorf("Location = %q, want the country alone when city/state are blank", j.Location)
+	}
+	if !j.Remote || j.WorkMode != "remote" {
+		t.Errorf("Remote/WorkMode = %v/%q, want true/remote", j.Remote, j.WorkMode)
+	}
+	want := time.Date(2026, 10, 16, 17, 28, 19, 254000000, time.UTC)
+	if j.PostedAt == nil || !j.PostedAt.Equal(want) {
+		t.Errorf("PostedAt = %v, want the detail's publishedAt %v", j.PostedAt, want)
+	}
+	// Every section of the detail is assembled, in board order, with its markup.
+	desc := j.Description
+	for _, section := range []string{"Desenvolvimento de aplicações web", "Pessoa Engenheira Frontend Sênior", "engenheira de software sênior"} {
+		if !strings.Contains(desc, section) {
+			t.Errorf("Description missing %q", section)
 		}
 	}
-	// The empty "<p>.</p>" intro placeholder must not leak a stray leading dot.
-	if strings.HasPrefix(strings.TrimSpace(desc), ".") {
-		t.Errorf("Description leaked the placeholder intro, got %q", desc)
+	if !strings.Contains(desc, "<li>") {
+		t.Errorf("Description dropped list markup")
 	}
 }
 
-func TestGupyFetchFallsBackToFlatDescription(t *testing.T) {
-	// When the detail endpoint is unreachable (no route → GetJSON error), Fetch degrades to
-	// the listing's own description rather than dropping the body.
+func TestGupyFetchMapsAnOnSiteAddress(t *testing.T) {
 	fake := (&routedHTTP{}).
-		route("offset=0", `{"data":[
-			{"id":600,"name":"Role","jobUrl":"https://acme.gupy.io/job/600",
-			 "description":"<p>flat body</p>","workplaceType":"remote"}
-		]}`)
+		route("subdomain=origoenergiainterno", gupyFixture(t, "list_origoenergiainterno.json")).
+		route("job-publication/public/jobs/12679978", gupyFixture(t, "detail_12679978.json"))
 
 	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{
-		Company: "Acme", Provider: "gupy", Board: "42",
+		Company: "Órigo Energia", Provider: "gupy", Board: "origoenergiainterno",
 	})
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
@@ -171,32 +98,76 @@ func TestGupyFetchFallsBackToFlatDescription(t *testing.T) {
 	if len(jobs) != 1 {
 		t.Fatalf("len(jobs) = %d, want 1", len(jobs))
 	}
-	if !strings.Contains(jobs[0].Description, "flat body") {
-		t.Errorf("Description = %q, want fallback to flat listing body", jobs[0].Description)
+	j := jobs[0]
+	if j.Location != "São Paulo, SP, Brasil" {
+		t.Errorf("Location = %q, want city, state code, country", j.Location)
+	}
+	if j.Remote || j.WorkMode != "hybrid" {
+		t.Errorf("Remote/WorkMode = %v/%q, want false/hybrid", j.Remote, j.WorkMode)
+	}
+	if j.URL != "https://origoenergiainterno.gupy.io/jobs/12679978" {
+		t.Errorf("URL = %q", j.URL)
 	}
 }
 
-func TestGupyFetchStopsOnEmptyPage(t *testing.T) {
-	// A short first page ends the walk immediately — no offset=100 request is made.
-	fake := (&routedHTTP{}).
-		route("offset=0", `{"pagination":{"total":1,"limit":100,"offset":0},"data":[
-			{"id":1,"name":"Only Role","jobUrl":"https://x.gupy.io/job/1","workplaceType":"remote"}
-		]}`)
+func TestGupyFetchFailsWhenTheCareerPageIsGone(t *testing.T) {
+	// Gupy answers an unknown subdomain with 404 "Career Page not Found". That is a
+	// board-level failure, never an empty board: an empty board would license a sweep.
+	fake := (&routedHTTP{}).routeErr("subdomain=", &StatusError{Method: http.MethodGet, Code: http.StatusNotFound})
 
-	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{
-		Company: "X", Provider: "gupy", Board: "999",
-	})
+	if _, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{
+		Company: "Gone", Provider: "gupy", Board: "gone",
+	}); err == nil {
+		t.Fatal("Fetch succeeded on a missing career page, want an error")
+	}
+}
+
+func TestGupyFetchDropsAPostingTheDetailSaysIsGone(t *testing.T) {
+	// A 404 on the detail is Gupy's own answer that the posting no longer exists.
+	fake := (&routedHTTP{}).
+		routeErr("job-publication/public/jobs/12691526", &StatusError{Method: http.MethodGet, Code: http.StatusNotFound}).
+		route("subdomain=caju", gupyFixture(t, "list_caju.json"))
+
+	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{Company: "Caju", Provider: "gupy", Board: "caju"})
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
 	}
-	if len(jobs) != 1 {
-		t.Fatalf("len(jobs) = %d, want 1 from the single short page", len(jobs))
-	}
-	// One listing call (the short page stops the walk — no offset=100 request) plus one
-	// per-posting detail call for the single posting.
-	if fake.calls != 2 {
-		t.Errorf("made %d HTTP calls, want 2 (one listing that stops the walk + one detail)", fake.calls)
+	if len(jobs) != 0 {
+		t.Fatalf("len(jobs) = %d, want the gone posting dropped", len(jobs))
 	}
 }
 
-// itoa is provided by ozon_test.go in this package.
+func TestGupyFetchMarksAnUnreadableDetail(t *testing.T) {
+	// The detail is the posting's only body, so a detail this crawl could not read must not
+	// read as "gone" — it becomes an Unreadable marker the pipeline counts.
+	fake := (&routedHTTP{}).
+		routeErr("job-publication/public/jobs/12691526", errors.New("timeout")).
+		route("subdomain=caju", gupyFixture(t, "list_caju.json"))
+
+	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{Company: "Caju", Provider: "gupy", Board: "caju"})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(jobs) != 1 || !jobs[0].Unreadable {
+		t.Fatalf("jobs = %+v, want one Unreadable marker", jobs)
+	}
+	if jobs[0].ExternalID != "12691526" || jobs[0].URL != "https://caju.gupy.io/jobs/12691526" {
+		t.Errorf("marker identity = %q %q", jobs[0].ExternalID, jobs[0].URL)
+	}
+}
+
+func TestGupyFetchMarksADetailWithNoBody(t *testing.T) {
+	// A 200 whose sections are all placeholders carries no posting body; storing it
+	// body-less would never be repaired, so it is a marker too.
+	fake := (&routedHTTP{}).
+		route("subdomain=caju", gupyFixture(t, "list_caju.json")).
+		route("job-publication/public/jobs/12691526", `{"description":"<p>.</p>","responsibilities":"","prerequisites":"<p>&nbsp;</p>"}`)
+
+	jobs, err := NewGupy(fake).Fetch(context.Background(), CompanyEntry{Company: "Caju", Provider: "gupy", Board: "caju"})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(jobs) != 1 || !jobs[0].Unreadable {
+		t.Fatalf("jobs = %+v, want one Unreadable marker", jobs)
+	}
+}

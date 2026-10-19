@@ -4,84 +4,107 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
+	"net/url"
+	"regexp"
+	"strings"
 )
 
-// gupyFeedURL is Gupy's public portal jobs API (mirrors sources.gupyBaseURL, which is
-// unexported; this tool lives outside the sources package). Keyed by companyId it lists one
-// company's jobs; unkeyed it is a global feed across all employers (see discover).
-const gupyFeedURL = "https://employability-portal.gupy.io/api/v1/jobs"
+// A Gupy board is a career-page subdomain (<page>.gupy.io), the key sources.gupy lists by;
+// see that adapter for why it stopped being the numeric companyId.
+const (
+	// gupyListURL lists one career page's published postings (mirrors sources.gupyJobsURL,
+	// which is unexported; this tool lives outside the sources package).
+	gupyListURL = "https://private-api.gupy.io/job-publication/public/jobs"
+	// gupyCareerPageURL describes one career page, including the name it publishes under.
+	gupyCareerPageURL = "https://private-api.gupy.io/v2/public-career-page/"
+	// gupyFeedURL is the multi-employer job search behind portal.gupy.io — the only public
+	// list that spans career pages, and so the discovery source.
+	gupyFeedURL = "https://portal.gupy.io/api/job-search/jobs"
+)
 
 const (
-	// gupyPageSize is the discovery page size for the global feed.
+	// gupyPageSize is the discovery page size for the portal feed.
 	gupyPageSize = 100
-	// gupyMaxOffset bounds the discovery sweep so a feed that never empties cannot loop
-	// forever; it sits well above Gupy's live-job count, and the empty-page check ends the
-	// sweep sooner in practice.
-	gupyMaxOffset = 100000
+	// gupyMaxOffset is where the portal feed ends: measured 2026-10-19, offset 9900 still
+	// answers a full page and offset 10000 answers no data at all, so one sweep sees the
+	// newest 10,000 postings and the career pages they name — not every page Gupy hosts.
+	gupyMaxOffset = 10000
 )
 
-// gupyProber probes and discovers Gupy boards. A Gupy board is a numeric companyId; unlike
-// the ATS providers there is no public seed list of ids, so the prober also discovers its
-// own candidates from the global feed (see discover).
+// gupyProber probes and discovers Gupy career pages. There is no public seed list, so the
+// prober also discovers its own candidates from the portal feed (see discover).
 type gupyProber struct{}
 
-// gupyResponse is the portal feed envelope: a page of postings plus the pagination total.
-type gupyResponse struct {
-	Data []struct {
-		CompanyID      int64  `json:"companyId"`
-		CareerPageName string `json:"careerPageName"`
-	} `json:"data"`
-	Pagination struct {
-		Total int `json:"total"`
-	} `json:"pagination"`
-}
-
-// probe queries one company's feed for its open-job count and career-page name. A missing
-// company (getter error) or one with no open jobs yields ("", 0, nil) — a skip — and the
-// name falls back to the companyId when the feed reports none.
-func (gupyProber) probe(ctx context.Context, c httpClient, companyID string) (string, int, error) {
-	var resp gupyResponse
-	if err := c.GetJSON(ctx, fmt.Sprintf("%s?companyId=%s&limit=1", gupyFeedURL, companyID), &resp); err != nil {
+// probe counts one career page's published postings and reads the name it publishes under.
+// A missing page (Gupy answers 404 "Career Page not Found") or one with no postings yields
+// ("", 0, nil) — a skip — and the name falls back to the subdomain when the page states none.
+func (gupyProber) probe(ctx context.Context, c httpClient, page string) (string, int, error) {
+	var list struct {
+		Data []struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := c.GetJSON(ctx, gupyListURL+"?subdomain="+url.QueryEscape(page), &list); err != nil {
 		return "", 0, nil
 	}
-	// Liveness is "the feed returned a posting", like every other prober — not the
-	// pagination total, which the adapter documents as unreliable when limit==page size.
-	if len(resp.Data) == 0 {
+	if len(list.Data) == 0 {
 		return "", 0, nil
 	}
-	name := companyID
-	if resp.Data[0].CareerPageName != "" {
-		name = resp.Data[0].CareerPageName
+	name := page
+	var cp struct {
+		CareerPage struct {
+			Name            string `json:"name"`
+			PublicationName string `json:"publicationName"`
+		} `json:"careerPage"`
 	}
-	return name, resp.Pagination.Total, nil
+	if err := c.GetJSON(ctx, gupyCareerPageURL+url.PathEscape(page), &cp); err == nil {
+		for _, n := range []string{cp.CareerPage.PublicationName, cp.CareerPage.Name} {
+			if n = strings.TrimSpace(n); n != "" {
+				name = n
+				break
+			}
+		}
+	}
+	return name, len(list.Data), nil
 }
 
-// discover pages the global feed (across all companies, no job-category filter) collecting
-// each posting's distinct companyId in first-seen order, until a page returns no postings or
-// the offset reaches gupyMaxOffset. A page that fails to fetch ends the sweep with the ids
-// gathered so far, so one bad page truncates rather than aborts the harvest.
+// gupyJobHost captures the career-page subdomain of a portal job URL
+// (https://caju.gupy.io/job/<token>?jobBoardSource=gupy_portal).
+var gupyJobHost = regexp.MustCompile(`(?i)^https?://([a-z0-9_-]+)\.gupy\.io/`)
+
+// discover pages the portal feed collecting each posting's distinct career page in first-seen
+// order, until a page returns no postings or the offset reaches gupyMaxOffset. A page that
+// fails to fetch ends the sweep with the pages gathered so far, so one bad page truncates
+// rather than aborts the harvest.
 func (gupyProber) discover(ctx context.Context, c httpClient) ([]string, error) {
-	var ids []string
-	seen := make(map[int64]bool)
+	var pages []string
+	seen := make(map[string]bool)
 	for offset := 0; offset < gupyMaxOffset; offset += gupyPageSize {
-		var resp gupyResponse
-		url := fmt.Sprintf("%s?limit=%d&offset=%d", gupyFeedURL, gupyPageSize, offset)
-		if err := c.GetJSON(ctx, url, &resp); err != nil {
+		var resp struct {
+			Data []struct {
+				JobURL string `json:"jobUrl"`
+			} `json:"data"`
+		}
+		feed := fmt.Sprintf("%s?limit=%d&offset=%d", gupyFeedURL, gupyPageSize, offset)
+		if err := c.GetJSON(ctx, feed, &resp); err != nil {
 			// A page failing mid-sweep truncates rather than aborts; log so a short harvest
 			// is not mistaken for an exhausted feed.
-			log.Printf("gupy discover: offset %d: %v (returning %d ids so far)", offset, err, len(ids))
+			log.Printf("gupy discover: offset %d: %v (returning %d pages so far)", offset, err, len(pages))
 			break
 		}
 		if len(resp.Data) == 0 {
 			break
 		}
 		for _, j := range resp.Data {
-			if j.CompanyID != 0 && !seen[j.CompanyID] {
-				seen[j.CompanyID] = true
-				ids = append(ids, strconv.FormatInt(j.CompanyID, 10))
+			m := gupyJobHost.FindStringSubmatch(j.JobURL)
+			if m == nil {
+				continue
+			}
+			if page := strings.ToLower(m[1]); !seen[page] {
+				seen[page] = true
+				pages = append(pages, page)
 			}
 		}
 	}
-	return ids, nil
+	return pages, nil
 }

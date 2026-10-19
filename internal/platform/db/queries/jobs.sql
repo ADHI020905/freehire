@@ -2878,3 +2878,70 @@ FROM jobs
 WHERE countries && ARRAY['in', 'de', 'id']::text[]
   AND location ~* ',\s*(in|de|id)\s*(,|$|[0-9])'
 ORDER BY id;
+
+-- name: ListBoardJobURLs :many
+-- Every stored posting of ONE board (open or closed), with the URL it was crawled at — what
+-- cmd/rekey-gupy-boards reads to learn which career page each posting of a retired
+-- companyId-keyed board lives on. Rides jobs_source_extid_pattern_idx through the same
+-- escaped LIKE prefix as ExistingExternalIDsByBoard (externalid.BoardPattern).
+SELECT id, external_id, url
+FROM jobs
+WHERE source = sqlc.arg(source) AND external_id LIKE sqlc.arg(board_pattern)
+ORDER BY id;
+
+-- name: RekeyJobExternalIDs :execrows
+-- Move postings to a new board namespace in one statement: ids[i] gets external_ids[i]. The
+-- row keeps its id, so everything keyed by it (saves, tracking, enrichment, views) follows.
+-- IS DISTINCT FROM-guarded, so a re-run writes nothing. A target key another row of the
+-- source already holds fails the whole statement on (source, external_id) rather than
+-- silently skipping the row.
+-- The two parallel arrays are zipped WITH ORDINALITY because sqlc's analyzer does not resolve
+-- the two-array form of unnest (see companies.sql's domain_industry_map).
+WITH v AS (
+    SELECT i.id, e.external_id
+    FROM unnest(sqlc.arg(ids)::bigint[]) WITH ORDINALITY AS i(id, ord)
+    JOIN unnest(sqlc.arg(external_ids)::text[]) WITH ORDINALITY AS e(external_id, ord)
+      ON e.ord = i.ord
+)
+UPDATE jobs AS j
+SET external_id = v.external_id
+FROM v
+WHERE j.id = v.id
+  AND j.source = sqlc.arg(source)
+  AND j.external_id IS DISTINCT FROM v.external_id;
+
+-- name: ListJobNamespacesForSource :many
+-- Every board namespace (the part of external_id before ':') one source's stored postings
+-- carry, with the company most of them name. cmd/rekey-gupy-boards reads it AFTER moving
+-- postings to their new namespaces, so the boards it then adds are derived from the data
+-- itself rather than from a plan an interrupted run could lose.
+SELECT split_part(external_id, ':', 1)::text AS namespace,
+       (mode() WITHIN GROUP (ORDER BY company))::text AS company
+FROM jobs
+WHERE source = sqlc.arg(source)
+GROUP BY 1
+ORDER BY 1;
+
+-- name: CloseBoardJobsWithReason :one
+-- Close every open posting of ONE board on the source's own answer about the board, given by
+-- the caller as closed_reason — cmd/rekey-gupy-boards' close for a Gupy career page that
+-- answers an empty listing ('feed_empty': reachable, and the feed carried nothing) or 404
+-- "Career Page not Found" ('board_unreachable'). The ordinary paths cannot reach either: a
+-- zero-yield crawl licenses no sweep, the empty-feed pass refuses a board with no recorded
+-- yield, and the chronic pass waits 60 days. jobs_closed_reason_check bounds the values. The
+-- search_delete_outbox CTE rides the statement as in CloseEmptyFeedBoardJobs.
+WITH closed AS (
+    UPDATE jobs
+    SET closed_at     = now(),
+        closed_reason = sqlc.arg(closed_reason)::text,
+        updated_at    = now()
+    WHERE closed_at IS NULL
+      AND source = sqlc.arg(source)
+      AND external_id LIKE sqlc.arg(board_pattern)
+    RETURNING id
+), queued AS (
+    INSERT INTO search_delete_outbox (job_id)
+    SELECT id FROM closed
+    ON CONFLICT (job_id) DO NOTHING
+)
+SELECT count(*) FROM closed;

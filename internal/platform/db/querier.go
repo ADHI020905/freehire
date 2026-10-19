@@ -719,6 +719,14 @@ type Querier interface {
 	// that no longer exists). Candidate contacts are intentionally kept: they are
 	// owner-edited identity, not an extract artifact.
 	ClearUserResume(ctx context.Context, id int64) error
+	// Close every open posting of ONE board on the source's own answer about the board, given by
+	// the caller as closed_reason — cmd/rekey-gupy-boards' close for a Gupy career page that
+	// answers an empty listing ('feed_empty': reachable, and the feed carried nothing) or 404
+	// "Career Page not Found" ('board_unreachable'). The ordinary paths cannot reach either: a
+	// zero-yield crawl licenses no sweep, the empty-feed pass refuses a board with no recorded
+	// yield, and the chronic pass waits 60 days. jobs_closed_reason_check bounds the values. The
+	// search_delete_outbox CTE rides the statement as in CloseEmptyFeedBoardJobs.
+	CloseBoardJobsWithReason(ctx context.Context, arg CloseBoardJobsWithReasonParams) (int64, error)
 	// The chronic-board safety net (openspec change close-chronically-unreachable-boards, issue
 	// #2017), board-scoped: closes every open job of ONE board that board_health.ListChronicBoards
 	// has already proven unreachable for the closure window — no per-run cutoff, because the
@@ -3400,6 +3408,11 @@ type Querier interface {
 	// to a recency window on occurred_at for the same first-deploy reason as the
 	// other candidate scans.
 	ListAutoApplySubmittedCandidates(ctx context.Context, windowDays int32) ([]ListAutoApplySubmittedCandidatesRow, error)
+	// Every stored posting of ONE board (open or closed), with the URL it was crawled at — what
+	// cmd/rekey-gupy-boards reads to learn which career page each posting of a retired
+	// companyId-keyed board lives on. Rides jobs_source_extid_pattern_idx through the same
+	// escaped LIKE prefix as ExistingExternalIDsByBoard (externalid.BoardPattern).
+	ListBoardJobURLs(ctx context.Context, arg ListBoardJobURLsParams) ([]ListBoardJobURLsRow, error)
 	// One user's still-unclassified submissions, newest first — the other half of the "my
 	// contributions" list (boards holds the recognized half).
 	ListBoardSubmissionsBySubmitter(ctx context.Context, submittedBy int64) ([]BoardSubmission, error)
@@ -4009,6 +4022,11 @@ type Querier interface {
 	// nothing else. One round trip for the whole list; an unknown slug is simply absent, which the
 	// caller reports as not found.
 	ListJobLivenessBySlugs(ctx context.Context, slugs []string) ([]ListJobLivenessBySlugsRow, error)
+	// Every board namespace (the part of external_id before ':') one source's stored postings
+	// carry, with the company most of them name. cmd/rekey-gupy-boards reads it AFTER moving
+	// postings to their new namespaces, so the boards it then adds are derived from the data
+	// itself rather than from a plan an interrupted run could lose.
+	ListJobNamespacesForSource(ctx context.Context, source string) ([]ListJobNamespacesForSourceRow, error)
 	// One chunk of the skill-gap report: every (job id, raw skill phrase) pair LLM
 	// enrichment recorded, for jobs in an id range.
 	//
@@ -5831,6 +5849,14 @@ type Querier interface {
 	// carrying the OLD slug, so an updated row leaves the set. A re-run updates zero, and
 	// stopping mid-way costs nothing — the next run resumes with what is left.
 	RekeyCompanySlugChunk(ctx context.Context, arg RekeyCompanySlugChunkParams) (int64, error)
+	// Move postings to a new board namespace in one statement: ids[i] gets external_ids[i]. The
+	// row keeps its id, so everything keyed by it (saves, tracking, enrichment, views) follows.
+	// IS DISTINCT FROM-guarded, so a re-run writes nothing. A target key another row of the
+	// source already holds fails the whole statement on (source, external_id) rather than
+	// silently skipping the row.
+	// The two parallel arrays are zipped WITH ORDINALITY because sqlc's analyzer does not resolve
+	// the two-array form of unnest (see companies.sql's domain_industry_map).
+	RekeyJobExternalIDs(ctx context.Context, arg RekeyJobExternalIDsParams) (int64, error)
 	// Void a consumption taken as a RESERVATION for work that then produced nothing.
 	//
 	// It RESTAMPS the row rather than deleting it or adding a compensating entry, and the

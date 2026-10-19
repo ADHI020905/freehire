@@ -260,6 +260,44 @@ func (q *Queries) ClassifyDriftReportBounds(ctx context.Context) (ClassifyDriftR
 	return i, err
 }
 
+const closeBoardJobsWithReason = `-- name: CloseBoardJobsWithReason :one
+WITH closed AS (
+    UPDATE jobs
+    SET closed_at     = now(),
+        closed_reason = $1::text,
+        updated_at    = now()
+    WHERE closed_at IS NULL
+      AND source = $2
+      AND external_id LIKE $3
+    RETURNING id
+), queued AS (
+    INSERT INTO search_delete_outbox (job_id)
+    SELECT id FROM closed
+    ON CONFLICT (job_id) DO NOTHING
+)
+SELECT count(*) FROM closed
+`
+
+type CloseBoardJobsWithReasonParams struct {
+	ClosedReason string `json:"closed_reason"`
+	Source       string `json:"source"`
+	BoardPattern string `json:"board_pattern"`
+}
+
+// Close every open posting of ONE board on the source's own answer about the board, given by
+// the caller as closed_reason — cmd/rekey-gupy-boards' close for a Gupy career page that
+// answers an empty listing ('feed_empty': reachable, and the feed carried nothing) or 404
+// "Career Page not Found" ('board_unreachable'). The ordinary paths cannot reach either: a
+// zero-yield crawl licenses no sweep, the empty-feed pass refuses a board with no recorded
+// yield, and the chronic pass waits 60 days. jobs_closed_reason_check bounds the values. The
+// search_delete_outbox CTE rides the statement as in CloseEmptyFeedBoardJobs.
+func (q *Queries) CloseBoardJobsWithReason(ctx context.Context, arg CloseBoardJobsWithReasonParams) (int64, error) {
+	row := q.db.QueryRow(ctx, closeBoardJobsWithReason, arg.ClosedReason, arg.Source, arg.BoardPattern)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const closeChronicBoardJobs = `-- name: CloseChronicBoardJobs :one
 WITH closed AS (
     UPDATE jobs
@@ -2511,6 +2549,48 @@ func (q *Queries) LatestOpenJobAddedAt(ctx context.Context) (pgtype.Timestamptz,
 	return last_job_added_at, err
 }
 
+const listBoardJobURLs = `-- name: ListBoardJobURLs :many
+SELECT id, external_id, url
+FROM jobs
+WHERE source = $1 AND external_id LIKE $2
+ORDER BY id
+`
+
+type ListBoardJobURLsParams struct {
+	Source       string `json:"source"`
+	BoardPattern string `json:"board_pattern"`
+}
+
+type ListBoardJobURLsRow struct {
+	ID         int64  `json:"id"`
+	ExternalID string `json:"external_id"`
+	URL        string `json:"url"`
+}
+
+// Every stored posting of ONE board (open or closed), with the URL it was crawled at — what
+// cmd/rekey-gupy-boards reads to learn which career page each posting of a retired
+// companyId-keyed board lives on. Rides jobs_source_extid_pattern_idx through the same
+// escaped LIKE prefix as ExistingExternalIDsByBoard (externalid.BoardPattern).
+func (q *Queries) ListBoardJobURLs(ctx context.Context, arg ListBoardJobURLsParams) ([]ListBoardJobURLsRow, error) {
+	rows, err := q.db.Query(ctx, listBoardJobURLs, arg.Source, arg.BoardPattern)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListBoardJobURLsRow{}
+	for rows.Next() {
+		var i ListBoardJobURLsRow
+		if err := rows.Scan(&i.ID, &i.ExternalID, &i.URL); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listEmployerJobs = `-- name: ListEmployerJobs :many
 SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug, last_seen_at, closed_at, countries, regions, work_mode, liveness_strikes, skills, seniority, category, created_by, updated_by, posting_language, employment_type, education_level, experience_years_min, collections, content_hash, english_level, cities, view_count, applied_count, role_fingerprint, semantic_embedded_model, semantic_embedded_hash, duplicate_of, is_tech, semantic_embedding, salary_min_manual, salary_max_manual, salary_currency_manual, salary_period_manual, upvote_count, downvote_count, ats_absent_at, closed_reason, is_private, similar_job_ids, similar_computed_at, salary_min_source, salary_max_source, salary_currency_source, salary_period_source, company_slug_folded, duplicate_of_aggregator, duplicate_of_role, duplicate_of_fuzzy, requires_clearance, requirements_derived, hydrated_at, ai_interview_reports
 FROM jobs
@@ -2865,6 +2945,44 @@ func (q *Queries) ListJobLivenessBySlugs(ctx context.Context, slugs []string) ([
 			&i.ClosedAt,
 			&i.LastSeenAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listJobNamespacesForSource = `-- name: ListJobNamespacesForSource :many
+SELECT split_part(external_id, ':', 1)::text AS namespace,
+       (mode() WITHIN GROUP (ORDER BY company))::text AS company
+FROM jobs
+WHERE source = $1
+GROUP BY 1
+ORDER BY 1
+`
+
+type ListJobNamespacesForSourceRow struct {
+	Namespace string `json:"namespace"`
+	Company   string `json:"company"`
+}
+
+// Every board namespace (the part of external_id before ':') one source's stored postings
+// carry, with the company most of them name. cmd/rekey-gupy-boards reads it AFTER moving
+// postings to their new namespaces, so the boards it then adds are derived from the data
+// itself rather than from a plan an interrupted run could lose.
+func (q *Queries) ListJobNamespacesForSource(ctx context.Context, source string) ([]ListJobNamespacesForSourceRow, error) {
+	rows, err := q.db.Query(ctx, listJobNamespacesForSource, source)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListJobNamespacesForSourceRow{}
+	for rows.Next() {
+		var i ListJobNamespacesForSourceRow
+		if err := rows.Scan(&i.Namespace, &i.Company); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -4340,6 +4458,42 @@ func (q *Queries) RefreshUnchangedJob(ctx context.Context, arg RefreshUnchangedJ
 		&i.DuplicateOf,
 	)
 	return i, err
+}
+
+const rekeyJobExternalIDs = `-- name: RekeyJobExternalIDs :execrows
+WITH v AS (
+    SELECT i.id, e.external_id
+    FROM unnest($2::bigint[]) WITH ORDINALITY AS i(id, ord)
+    JOIN unnest($3::text[]) WITH ORDINALITY AS e(external_id, ord)
+      ON e.ord = i.ord
+)
+UPDATE jobs AS j
+SET external_id = v.external_id
+FROM v
+WHERE j.id = v.id
+  AND j.source = $1
+  AND j.external_id IS DISTINCT FROM v.external_id
+`
+
+type RekeyJobExternalIDsParams struct {
+	Source      string   `json:"source"`
+	Ids         []int64  `json:"ids"`
+	ExternalIds []string `json:"external_ids"`
+}
+
+// Move postings to a new board namespace in one statement: ids[i] gets external_ids[i]. The
+// row keeps its id, so everything keyed by it (saves, tracking, enrichment, views) follows.
+// IS DISTINCT FROM-guarded, so a re-run writes nothing. A target key another row of the
+// source already holds fails the whole statement on (source, external_id) rather than
+// silently skipping the row.
+// The two parallel arrays are zipped WITH ORDINALITY because sqlc's analyzer does not resolve
+// the two-array form of unnest (see companies.sql's domain_industry_map).
+func (q *Queries) RekeyJobExternalIDs(ctx context.Context, arg RekeyJobExternalIDsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, rekeyJobExternalIDs, arg.Source, arg.Ids, arg.ExternalIds)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const requirementsDerivedBackfillBounds = `-- name: RequirementsDerivedBackfillBounds :one

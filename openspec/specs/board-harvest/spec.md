@@ -134,33 +134,33 @@ support discovery SHALL continue to require a seed file.
 - **THEN** the candidate hosts come from a third-party index of publicly scanned
   hosts, and each is live-validated before it can be appended
 
-### Requirement: Gupy boards are discovered from the global jobs feed
+### Requirement: Gupy boards are discovered from the portal jobs feed
 
-The harvest tool SHALL support discovering Gupy boards from Gupy's global jobs
-feed. Discovery SHALL page the feed (across all companies, not filtered to any job
-category) collecting each posting's distinct numeric `companyId`, stopping when a
-page returns no postings or a bounded maximum is reached. Each discovered
-`companyId` SHALL be validated by querying the company's feed for its open-job
-count and its reported career-page name, kept only when it has at least one open
-job, with the name falling back to the `companyId` when the feed reports none.
+The harvest tool SHALL support discovering Gupy boards — career-page subdomains — from
+the multi-employer jobs feed behind portal.gupy.io. Discovery SHALL page the feed
+(across all companies, not filtered to any job category) collecting the distinct
+career-page subdomain each posting's URL names, stopping when a page returns no
+postings or the feed's own end (offset 10,000) is reached. Each discovered page SHALL
+be validated by listing its published postings, kept only when it has at least one,
+and named by the name the career page publishes under, falling back to the subdomain
+when none can be read.
 
-#### Scenario: Gupy discovery collects distinct companies from the feed
+#### Scenario: Gupy discovery collects distinct career pages from the feed
 
-- **WHEN** Gupy discovery pages the global jobs feed and the pages name several
-  companies, some more than once
-- **THEN** each distinct `companyId` is collected once as a candidate board
+- **WHEN** Gupy discovery pages the portal feed and the pages name several career
+  pages, some more than once
+- **THEN** each distinct subdomain is collected once as a candidate board
 
 #### Scenario: Gupy discovery stops at an empty page
 
 - **WHEN** a Gupy feed page returns no postings
-- **THEN** discovery stops paging and returns the companies collected so far
+- **THEN** discovery stops paging and returns the pages collected so far
 
-#### Scenario: A discovered Gupy company is validated and named
+#### Scenario: A discovered Gupy career page is validated and named
 
-- **WHEN** a discovered `companyId` is probed and its feed reports open jobs and a
-  career-page name
-- **THEN** the board is kept with that name; a company whose feed reports no name
-  falls back to the `companyId`, and one with no open jobs is skipped
+- **WHEN** a discovered subdomain is probed and its listing has postings
+- **THEN** the board is kept with the career page's published name; a page whose name
+  cannot be read falls back to the subdomain, and one with no postings is skipped
 
 ### Requirement: OpenCATS portals are discovered from a public scan index
 

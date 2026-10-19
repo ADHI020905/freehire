@@ -19,62 +19,66 @@ func TestGupyRegisteredAsDiscoverer(t *testing.T) {
 
 func TestGupyProbe(t *testing.T) {
 	g := gupyProber{}
+	// Shapes trimmed from live responses (2026-10-19).
 	getter := fakeGetter{
-		gupyFeedURL + "?companyId=316&limit=1":   `{"data":[{"careerPageName":"Vivo Digital","companyId":316}],"pagination":{"total":823}}`,
-		gupyFeedURL + "?companyId=89896&limit=1": `{"data":[{"careerPageName":"Starian","companyId":89896}],"pagination":{"total":3}}`,
-		// has jobs but the feed reports no name -> falls back to the companyId
-		gupyFeedURL + "?companyId=555&limit=1": `{"data":[{"careerPageName":"","companyId":555}],"pagination":{"total":4}}`,
-		// present company, zero open jobs -> skip
-		gupyFeedURL + "?companyId=999&limit=1": `{"data":[],"pagination":{"total":0}}`,
+		gupyListURL + "?subdomain=origoenergiainterno": `{"data":[{"id":12679978,"name":"Analista Sênior de Garantia da Receita","workplaceType":"hybrid"}]}`,
+		gupyCareerPageURL + "origoenergiainterno":      `{"careerPage":{"id":134980,"companyId":48481,"name":"Órigo Energia Recrutamento Interno","publicationName":"Órigo Energia - Recrutamento Interno","subdomain":"origoenergiainterno"}}`,
+		// postings but no career-page description reachable -> falls back to the subdomain
+		gupyListURL + "?subdomain=caju": `{"data":[{"id":12691526},{"id":12691527}]}`,
+		// a live page with nothing published -> skip
+		gupyListURL + "?subdomain=datalawyer": `{"data":[]}`,
 	}
 
 	cases := []struct {
-		id       string
+		page     string
 		wantName string
 		wantN    int
 	}{
-		{"316", "Vivo Digital", 823},
-		{"89896", "Starian", 3},
-		{"555", "555", 4},
-		{"999", "", 0},
-		{"missing", "", 0}, // unmapped URL -> getter error -> skip, never fatal
+		{"origoenergiainterno", "Órigo Energia - Recrutamento Interno", 1},
+		{"caju", "caju", 2},
+		{"datalawyer", "", 0},
+		{"missing", "", 0}, // Gupy's 404 "Career Page not Found" -> getter error -> skip, never fatal
 	}
 	for _, c := range cases {
-		name, n, err := g.probe(context.Background(), getter, c.id)
+		name, n, err := g.probe(context.Background(), getter, c.page)
 		if err != nil {
-			t.Errorf("probe(%s) err = %v, want nil", c.id, err)
+			t.Errorf("probe(%s) err = %v, want nil", c.page, err)
 		}
 		if name != c.wantName || n != c.wantN {
-			t.Errorf("probe(%s) = (%q, %d), want (%q, %d)", c.id, name, n, c.wantName, c.wantN)
+			t.Errorf("probe(%s) = (%q, %d), want (%q, %d)", c.page, name, n, c.wantName, c.wantN)
 		}
 	}
 }
 
-func gupyPage(t *testing.T, ids ...int64) string {
+func gupyPage(t *testing.T, pages ...string) string {
 	t.Helper()
 	body := `{"data":[`
-	for i, id := range ids {
+	for i, p := range pages {
 		if i > 0 {
 			body += ","
 		}
-		body += fmt.Sprintf(`{"companyId":%d,"careerPageName":"c%d"}`, id, id)
+		body += fmt.Sprintf(`{"id":%d,"jobUrl":"https://%s.gupy.io/job/eyJqb2JJZCI6MX0=?jobBoardSource=gupy_portal"}`, i, p)
 	}
-	return body + `],"pagination":{"total":9999}}`
+	return body + `],"pagination":{"total":100}}`
+}
+
+func gupyFeedPage(offset int) string {
+	return gupyFeedURL + fmt.Sprintf("?limit=%d&offset=%d", gupyPageSize, offset)
 }
 
 func TestGupyDiscoverPaginatesDedupsAndStops(t *testing.T) {
 	g := gupyProber{}
 	getter := fakeGetter{
-		gupyFeedURL + fmt.Sprintf("?limit=%d&offset=0", gupyPageSize):                  gupyPage(t, 1, 2, 1),                      // 1 repeats within the page
-		gupyFeedURL + fmt.Sprintf("?limit=%d&offset=%d", gupyPageSize, gupyPageSize):   gupyPage(t, 2, 3),                         // 2 repeats across pages
-		gupyFeedURL + fmt.Sprintf("?limit=%d&offset=%d", gupyPageSize, 2*gupyPageSize): `{"data":[],"pagination":{"total":9999}}`, // empty page -> stop
+		gupyFeedPage(0):                gupyPage(t, "caju", "Stefanini", "caju"), // caju repeats within the page; case folds
+		gupyFeedPage(gupyPageSize):     gupyPage(t, "stefanini", "origoenergia"), // stefanini repeats across pages
+		gupyFeedPage(2 * gupyPageSize): `{"data":[],"pagination":{"total":100}}`, // empty page -> stop
 	}
 
 	got, err := g.discover(context.Background(), getter)
 	if err != nil {
 		t.Fatalf("discover: %v", err)
 	}
-	want := []string{"1", "2", "3"} // distinct companyIds, first-seen order
+	want := []string{"caju", "stefanini", "origoenergia"} // distinct pages, first-seen order
 	if !slices.Equal(got, want) {
 		t.Errorf("discover() = %v, want %v (distinct, first-seen)", got, want)
 	}
@@ -85,15 +89,32 @@ func TestGupyDiscoverPaginatesDedupsAndStops(t *testing.T) {
 func TestGupyDiscoverTruncatesOnPageError(t *testing.T) {
 	g := gupyProber{}
 	getter := fakeGetter{
-		gupyFeedURL + fmt.Sprintf("?limit=%d&offset=0", gupyPageSize): gupyPage(t, 1, 2),
-		// offset=gupyPageSize is unmapped -> getter error -> stop with [1 2] collected
+		gupyFeedPage(0): gupyPage(t, "caju", "stefanini"),
+		// the next offset is unmapped -> getter error -> stop with what was collected
 	}
 
 	got, err := g.discover(context.Background(), getter)
 	if err != nil {
 		t.Fatalf("discover: %v", err)
 	}
-	if want := []string{"1", "2"}; !slices.Equal(got, want) {
+	if want := []string{"caju", "stefanini"}; !slices.Equal(got, want) {
 		t.Errorf("discover() = %v, want %v (truncated at the failed page)", got, want)
+	}
+}
+
+// The portal feed answers nothing past offset 10,000, so the sweep never asks for it.
+func TestGupyDiscoverStopsAtTheFeedsEnd(t *testing.T) {
+	g := gupyProber{}
+	getter := fakeGetter{}
+	for offset := 0; offset < gupyMaxOffset; offset += gupyPageSize {
+		getter[gupyFeedPage(offset)] = gupyPage(t, fmt.Sprintf("p%d", offset))
+	}
+
+	got, err := g.discover(context.Background(), getter)
+	if err != nil {
+		t.Fatalf("discover: %v", err)
+	}
+	if len(got) != gupyMaxOffset/gupyPageSize {
+		t.Errorf("discover() found %d pages, want %d", len(got), gupyMaxOffset/gupyPageSize)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"net/url"
 	"strconv"
 	"strings"
 	"unicode"
@@ -11,31 +12,22 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-// gupyBaseURL is the Gupy public portal jobs API. Gupy is the dominant Brazilian
-// ATS (Creditas, Afya, Cogna, Omie, …); a company's per-tenant career page lives at
-// <subdomain>.gupy.io, but the listing API is this one central host keyed by the
-// numeric companyId.
-const gupyBaseURL = "https://employability-portal.gupy.io/api/v1/jobs"
+// gupyJobsURL is Gupy's public job-publication API — the one every career page
+// (<subdomain>.gupy.io) renders from. Gupy is the dominant Brazilian ATS (Creditas, Afya,
+// Cogna, Omie, …). Queried with ?subdomain=<board> it lists that career page's published
+// postings; /<id> is one posting's sectioned detail.
+//
+// The board is the career-page SUBDOMAIN, not the numeric companyId it used to be: the
+// companyId-keyed listing (employability-portal.gupy.io/api/v1/jobs) began answering an nginx
+// 404 to every query on 2026-09-30, and nothing public lists by companyId any more (the
+// portal's own /api/job-search/jobs ignores a companyId parameter). One company may own
+// several career pages — an internal-mobility page, a confidential one — and each is its own
+// board. cmd/rekey-gupy-boards moved the catalog and the stored postings over.
+const gupyJobsURL = "https://private-api.gupy.io/job-publication/public/jobs"
 
-// gupyPageLimit is the listing page size. The API caps limit at 100 (limit=200 is a
-// 400), so this is also the maximum.
-const gupyPageLimit = 100
-
-// gupyMaxPages bounds the offset walk. The stop signal is a short/empty page, but a
-// misbehaving API that always returned a full page would otherwise loop forever, so
-// this caps the walk at 5000 postings — well above any single company's openings.
-const gupyMaxPages = 50
-
-// gupyDetailURL is Gupy's richer public job endpoint, keyed by the same numeric job id as
-// the listing. The portal listing (gupyBaseURL) flattens a posting's sections into one
-// tag-less description blob — headings glued to sentences, list items separated only by
-// ";" — so its description renders as an unstructured wall of text. This endpoint returns
-// the original per-section HTML instead; it is what the public career page itself consumes.
-const gupyDetailURL = "https://private-api.gupy.io/job-publication/public/jobs"
-
-// gupy adapts the Gupy portal API. Its list endpoint carries the description inline,
-// so — like Greenhouse — it needs no per-posting detail request. The board id is the
-// company's numeric Gupy companyId.
+// gupy adapts Gupy career pages. The listing carries title, address and workplace type but
+// no body, so each posting's description comes from its detail — the posting's only source,
+// re-read on every crawl.
 type gupy struct {
 	http JSONGetter
 }
@@ -45,101 +37,80 @@ func NewGupy(c JSONGetter) Source { return gupy{http: c} }
 
 func (gupy) Provider() string { return "gupy" }
 
-// gupyJob is one posting from the Gupy listing. The description is inline; jobUrl is an
-// absolute public URL; workplaceType is a structured "remote"/"hybrid"/"on-site" enum.
-type gupyJob struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	JobURL        string `json:"jobUrl"`
-	Description   string `json:"description"`
-	City          string `json:"city"`
-	State         string `json:"state"`
-	Country       string `json:"country"`
-	IsRemoteWork  bool   `json:"isRemoteWork"`
-	WorkplaceType string `json:"workplaceType"`
-	PublishedDate string `json:"publishedDate"`
+// fullBoardListing: the career-page listing is one unpaginated response carrying every
+// published posting (measured 2026-10-19: 3,486 distinct postings on restaurantemc in one
+// answer), and a failed listing fails the Fetch. See the fullBoardListing interface for the bar.
+func (gupy) fullBoardListing() {}
+
+// gupyPosting is one entry of a career page's listing.
+type gupyPosting struct {
+	ID                    int64  `json:"id"`
+	Name                  string `json:"name"`
+	AddressCity           string `json:"addressCity"`
+	AddressStateShortName string `json:"addressStateShortName"`
+	AddressCountry        string `json:"addressCountry"`
+	RemoteWorking         bool   `json:"remoteWorking"`
+	WorkplaceType         string `json:"workplaceType"`
 }
 
 func (g gupy) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
-	postings, err := g.list(ctx, e.Board)
-	if err != nil {
-		return nil, err
+	var resp struct {
+		Data []gupyPosting `json:"data"`
 	}
-
-	jobs := make([]Job, 0, len(postings))
-	for _, p := range postings {
-		if p.JobURL == "" { // url is the dedup key — a posting without one is unusable
-			continue
-		}
-		jobs = append(jobs, Job{
-			ExternalID:  strconv.FormatInt(p.ID, 10),
-			URL:         p.JobURL,
-			Title:       strings.TrimSpace(p.Name),
-			Company:     e.Company,
-			Location:    joinNonEmpty(p.City, p.State, p.Country),
-			Description: g.description(ctx, p.ID, p.Description),
-			Remote:      p.IsRemoteWork,
-			WorkMode:    workplaceTypeMode(p.WorkplaceType),
-			PostedAt:    parseRFC3339(p.PublishedDate),
-		})
+	listURL := gupyJobsURL + "?subdomain=" + url.QueryEscape(e.Board)
+	if err := g.http.GetJSON(ctx, listURL, &resp); err != nil {
+		return nil, fmt.Errorf("gupy: list career page %s: %w", e.Board, err)
 	}
-	return jobs, nil
-}
-
-// list pages through the company's postings. It stops on an empty or short page rather
-// than on pagination.total: when limit == page size, Gupy reports total = min(real, limit),
-// so a full first page would falsely look complete. A short page is the reliable last-page
-// signal (the same reasoning SmartRecruiters' listPostings relies on totalFound for, but
-// Gupy's total can't be trusted).
-func (g gupy) list(ctx context.Context, board string) ([]gupyJob, error) {
-	var postings []gupyJob
-	for offset, page := 0, 0; page < gupyMaxPages; page++ {
-		url := fmt.Sprintf("%s?companyId=%s&limit=%d&offset=%d", gupyBaseURL, board, gupyPageLimit, offset)
-		var resp struct {
-			Data []gupyJob `json:"data"`
-		}
-		if err := g.http.GetJSON(ctx, url, &resp); err != nil {
-			return nil, fmt.Errorf("gupy: list company %s: %w", board, err)
-		}
-		if len(resp.Data) == 0 {
-			break
-		}
-		postings = append(postings, resp.Data...)
-		if len(resp.Data) < gupyPageLimit {
-			break // short page = last page
-		}
-		offset += len(resp.Data)
-	}
-	return postings, nil
+	return fetchDetails(resp.Data, defaultDetailWorkers, func(p gupyPosting) (Job, bool) {
+		return g.detail(ctx, e, p)
+	}), nil
 }
 
 // gupyDetail is a posting's structured detail. Gupy splits a job into fixed sections;
-// concatenating them in board order reproduces the full description with its original
-// markup (paragraphs, lists, emphasis) that the flat listing description discards.
+// concatenating them in board order reproduces the full description with its markup.
 type gupyDetail struct {
 	Description         string `json:"description"`         // intro / "about the role"
 	Responsibilities    string `json:"responsibilities"`    // Responsabilidades e atribuições
 	Prerequisites       string `json:"prerequisites"`       // Requisitos e qualificações
 	RelevantExperiences string `json:"relevantExperiences"` // Informações adicionais / benefits
+	PublishedAt         string `json:"publishedAt"`
 }
 
-// description fetches the posting's structured detail and assembles its sections into one
-// sanitized HTML document. The flat listing description is the fallback when the detail
-// endpoint is unreachable or yields nothing usable, so a detail hiccup degrades to the old
-// behaviour rather than dropping the body.
-func (g gupy) description(ctx context.Context, id int64, flat string) string {
+// detail fetches one posting's detail and maps it, with the listing's fields, to a Job. A 404
+// is Gupy's own "Vaga inexistente" and drops the posting; any other failure, or a detail with
+// no body text, is an unreadableDetail marker — the detail is the only source of the body,
+// and a dropped posting is indistinguishable from one taken down.
+func (g gupy) detail(ctx context.Context, e CompanyEntry, p gupyPosting) (Job, bool) {
+	id := strconv.FormatInt(p.ID, 10)
+	jobURL := fmt.Sprintf("https://%s.gupy.io/jobs/%s", e.Board, id)
+
 	var d gupyDetail
-	if err := g.http.GetJSON(ctx, fmt.Sprintf("%s/%d", gupyDetailURL, id), &d); err == nil {
-		if assembled := gupySections(d); assembled != "" {
-			return sanitizeHTML(assembled)
+	if err := g.http.GetJSON(ctx, gupyJobsURL+"/"+id, &d); err != nil {
+		if detailUnreadable(err) {
+			return unreadableDetail(id, jobURL, e.Company), true
 		}
+		return Job{}, false
 	}
-	return sanitizeHTML(flat)
+	body := gupySections(d)
+	if body == "" {
+		return unreadableDetail(id, jobURL, e.Company), true
+	}
+	return Job{
+		ExternalID:  id,
+		URL:         jobURL,
+		Title:       strings.TrimSpace(p.Name),
+		Company:     e.Company,
+		Location:    joinNonEmpty(p.AddressCity, p.AddressStateShortName, p.AddressCountry),
+		Description: sanitizeHTML(body),
+		Remote:      p.RemoteWorking,
+		WorkMode:    workplaceTypeMode(p.WorkplaceType),
+		PostedAt:    parseRFC3339(d.PublishedAt),
+	}, true
 }
 
 // gupySections concatenates the detail's section fragments in display order, skipping any
 // that carry no real text (Gupy commonly emits a "<p>.</p>" placeholder intro). It returns
-// "" when every section is empty, signalling the caller to fall back to the flat listing.
+// "" when every section is empty.
 func gupySections(d gupyDetail) string {
 	var b strings.Builder
 	for _, section := range []string{d.Description, d.Responsibilities, d.Prerequisites, d.RelevantExperiences} {

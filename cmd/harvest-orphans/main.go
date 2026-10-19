@@ -5,7 +5,7 @@
 //
 // The seed carries no provider: cmd/harvest-boards de-duplicates against each provider's own
 // board file and probes what remains, so one seed is run against every provider whose board
-// id is a name. Providers keyed by a tenant token or a numeric id (workday, gupy, icims,
+// id is a name. Providers keyed by a tenant token or a numeric id (workday, icims,
 // oracle, taleo, cornerstone, pageup, neogov) cannot be seeded this way.
 //
 //	harvest-orphans [-aggregators a,b] [-out orphans.seed.json]   # needs DATABASE_URL
