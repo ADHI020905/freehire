@@ -4,7 +4,7 @@
 // skills, seniority, category, is_tech, requires_clearance, and the synthetic enrichment facets
 // posting_language, employment_type, education_level, english_level,
 // experience_years_min — all from jobderive.Derive), the repost-identity
-// role_fingerprint (internal/job/jobhash), and the public_slug/company_slug
+// role_fingerprint (internal/job/jobhash), and the company_slug
 // (internal/dict/normalize, via jobderive). It replaces the three former one-shots
 // backfill-derive (facets), backfill-role-fingerprint, and reslug with one scan.
 //
@@ -13,7 +13,10 @@
 // closed jobs that never re-crawl — keep the stale values until this worker rewrites
 // them. Because both the facets and the slugs come from jobderive.Derive and the
 // fingerprint is computed from the freshly derived company_slug, a re-derived row is
-// byte-for-byte what a fresh ingest of the same raw fields would produce. It pages the
+// byte-for-byte what a fresh ingest of the same raw fields would produce — except for
+// public_slug, which it never touches: that is a published URL, minted once at insert,
+// and re-deriving it from a title the source has since changed 404s every link to the
+// posting (freehire#3284 — one run moved 42k of them). It pages the
 // whole table and exits. Idempotent: every column is a pure function of the raw
 // fields, so a second run rewrites nothing.
 //
@@ -54,7 +57,7 @@
 // never in one — two doors disagreeing about whether stated geography survives is worse than
 // either answer.
 //
-// When a slug moves (a deliberate slug-builder change), the run re-keys the companies
+// When a company slug moves (a deliberate slug-builder change), the run re-keys the companies
 // catalogue afterwards (SyncCompaniesFromJobs + DeleteOrphanCompanies), exactly as the
 // former cmd/reslug did. Follow the run with a reindex (make reindex), whose
 // duplicate_of recompute then collapses any newly-clustered reposts and unions their
@@ -243,9 +246,9 @@ func runOutcome(pass backfillRun, orphaned int64, err error) (string, int) {
 	}
 }
 
-// deriveRow re-derives a job's facets, role_fingerprint, and slugs, and reports
+// deriveRow re-derives a job's facets, role_fingerprint, and company slug, and reports
 // whether the derived values differ from what is stored (changed → a write is needed)
-// and whether specifically a slug moved (slugMoved → the companies catalogue needs
+// and whether specifically the company slug moved (slugMoved → the companies catalogue needs
 // re-keying). The fingerprint is computed from the freshly derived company_slug, so
 // the result matches what cmd/ingest/store.go writes for the same raw fields. Pure —
 // safe to call concurrently.
@@ -291,7 +294,7 @@ func deriveRow(j db.Job, canon map[string]string) (params db.UpdateJobDerivedPar
 		d.EnglishLevel != j.EnglishLevel ||
 		experience != j.ExperienceYearsMin
 	fingerprintMoved := fingerprint != j.RoleFingerprint.String
-	slugMoved = d.PublicSlug != j.PublicSlug || d.CompanySlug != j.CompanySlug
+	slugMoved = d.CompanySlug != j.CompanySlug
 
 	return db.UpdateJobDerivedParams{
 		ID:                 j.ID,
@@ -310,7 +313,6 @@ func deriveRow(j db.Job, canon map[string]string) (params db.UpdateJobDerivedPar
 		EnglishLevel:       d.EnglishLevel,
 		ExperienceYearsMin: experience,
 		RoleFingerprint:    pgtype.Text{String: fingerprint, Valid: true},
-		PublicSlug:         d.PublicSlug,
 		CompanySlug:        d.CompanySlug,
 	}, facetsMoved || fingerprintMoved || slugMoved, slugMoved
 }

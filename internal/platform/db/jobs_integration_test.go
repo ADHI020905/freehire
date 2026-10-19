@@ -300,7 +300,7 @@ func TestUpdateJobDerivedBackfillsAllColumns(t *testing.T) {
 		t.Fatalf("precondition: want empty geography, got %v", job.Countries)
 	}
 
-	// Carry the row's existing slugs/fingerprint through so this facet-focused
+	// Carry the row's existing company slug/fingerprint through so this facet-focused
 	// assertion does not blank the columns UpdateJobDerived also owns.
 	if err := q.UpdateJobDerived(ctx, UpdateJobDerivedParams{
 		ID:              job.ID,
@@ -311,7 +311,6 @@ func TestUpdateJobDerivedBackfillsAllColumns(t *testing.T) {
 		Seniority:       "senior",
 		Category:        "backend",
 		RoleFingerprint: job.RoleFingerprint,
-		PublicSlug:      job.PublicSlug,
 		CompanySlug:     job.CompanySlug,
 	}); err != nil {
 		t.Fatalf("update derived: %v", err)

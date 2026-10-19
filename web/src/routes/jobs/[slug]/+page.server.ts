@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { ApiError } from '$lib/api';
 import { backerBadges } from '$lib/backers';
 import {
@@ -102,7 +102,7 @@ async function buildSeeAlso(job: Job, api: Api): Promise<SeeAlsoCard[]> {
 // Server-render the job detail: fetch by slug so the article content is in the
 // initial HTML. All fetches stay awaited (not streamed) so every section is in
 // the SSR HTML for internal-link crawlability.
-export const load: PageServerLoad = async ({ params, fetch }) => {
+export const load: PageServerLoad = async ({ params, fetch, url }) => {
   const api = serverApi(fetch);
 
   const jobPromise = api.getJob(params.slug).catch((e) => {
@@ -127,6 +127,13 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
     api.getApplyForm(params.slug).catch(() => null),
     seeAlsoPromise,
   ]);
+
+  // The API resolves a slug that no longer exists through its shortcode and answers with
+  // the posting under its CURRENT slug (freehire#3284). A permanent redirect hands search
+  // engines and shared links the address that will keep working.
+  if (job.public_slug !== params.slug) {
+    redirect(301, `/jobs/${encodeURIComponent(job.public_slug)}${url.search}`);
+  }
 
   return {
     job,

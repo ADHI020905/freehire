@@ -2,11 +2,14 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5"
 
+	"github.com/strelov1/freehire/internal/dict/normalize"
 	"github.com/strelov1/freehire/internal/identity/auth"
 	"github.com/strelov1/freehire/internal/ingest/catalogstats"
 	"github.com/strelov1/freehire/internal/ingest/moderation"
@@ -136,9 +139,11 @@ func (h *jobsHandlers) openJobTotal(ctx context.Context) int64 {
 	return catalogstats.Load(ctx, h.cache, h.estimator).OpenJobs
 }
 
-// GetJob returns a single job addressed by its public slug.
+// GetJob returns a single job addressed by its public slug. A slug that no longer
+// exists still answers with its posting when its shortcode names exactly one, so the
+// response's public_slug may differ from the one asked for — the page redirects on that.
 func (h *jobsHandlers) GetJob(c *fiber.Ctx) error {
-	job, err := h.queries.GetJobBySlug(c.Context(), c.Params("slug"))
+	job, err := h.jobBySlugOrCode(c.Context(), c.Params("slug"))
 	if err != nil {
 		// RenderError maps pgx.ErrNoRows to 404, anything else to 500.
 		return err
@@ -296,4 +301,28 @@ func (h *jobsHandlers) roleClusterCounts(c *fiber.Ctx, rows []db.Job) map[cluste
 		out[clusterKey{r.CompanySlug, r.RoleFingerprint.String}] = clusterCount{int(r.RepostCount), int(r.MassCount)}
 	}
 	return out
+}
+
+// jobBySlugOrCode loads a job by its public slug, falling back to the slug's shortcode
+// when no row carries the slug itself: the code depends on (source, external_id) alone,
+// so it still identifies a posting whose slug was re-minted from a changed title
+// (freehire#3284). An ambiguous code answers pgx.ErrNoRows — another employer's posting
+// is a worse answer than a 404.
+func (h *jobsHandlers) jobBySlugOrCode(ctx context.Context, slug string) (db.Job, error) {
+	job, err := h.queries.GetJobBySlug(ctx, slug)
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return job, err
+	}
+	code, ok := normalize.JobSlugCode(slug)
+	if !ok {
+		return job, err
+	}
+	jobs, err := h.queries.ListJobsBySlugCode(ctx, code)
+	if err != nil {
+		return db.Job{}, err
+	}
+	if len(jobs) != 1 {
+		return db.Job{}, pgx.ErrNoRows
+	}
+	return jobs[0], nil
 }

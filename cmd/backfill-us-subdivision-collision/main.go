@@ -172,7 +172,8 @@ func deriveRow(j db.Job, canon map[string]string) (params db.UpdateJobDerivedPar
 		d.EnglishLevel != j.EnglishLevel ||
 		experience != j.ExperienceYearsMin
 	fingerprintMoved := fingerprint != j.RoleFingerprint.String
-	slugMoved = d.PublicSlug != j.PublicSlug || d.CompanySlug != j.CompanySlug
+	// public_slug is not re-derived: it is a published URL (freehire#3284).
+	slugMoved = d.CompanySlug != j.CompanySlug
 
 	return db.UpdateJobDerivedParams{
 		ID:                 j.ID,
@@ -191,7 +192,6 @@ func deriveRow(j db.Job, canon map[string]string) (params db.UpdateJobDerivedPar
 		EnglishLevel:       d.EnglishLevel,
 		ExperienceYearsMin: experience,
 		RoleFingerprint:    pgtype.Text{String: fingerprint, Valid: true},
-		PublicSlug:         d.PublicSlug,
 		CompanySlug:        d.CompanySlug,
 	}, facetsMoved || fingerprintMoved || slugMoved, slugMoved
 }

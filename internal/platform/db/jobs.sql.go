@@ -3391,6 +3391,106 @@ func (q *Queries) ListJobsByIDAfter(ctx context.Context, arg ListJobsByIDAfterPa
 	return items, nil
 }
 
+const listJobsBySlugCode = `-- name: ListJobsBySlugCode :many
+SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug, last_seen_at, closed_at, countries, regions, work_mode, liveness_strikes, skills, seniority, category, created_by, updated_by, posting_language, employment_type, education_level, experience_years_min, collections, content_hash, english_level, cities, view_count, applied_count, role_fingerprint, semantic_embedded_model, semantic_embedded_hash, duplicate_of, is_tech, semantic_embedding, salary_min_manual, salary_max_manual, salary_currency_manual, salary_period_manual, upvote_count, downvote_count, ats_absent_at, closed_reason, is_private, similar_job_ids, similar_computed_at, salary_min_source, salary_max_source, salary_currency_source, salary_period_source, company_slug_folded, duplicate_of_aggregator, duplicate_of_role, duplicate_of_fuzzy, requires_clearance, requirements_derived, hydrated_at, ai_interview_reports
+FROM jobs
+WHERE right(public_slug, 8) = $1::text
+LIMIT 2
+`
+
+// The jobs whose slug ends with a shortcode — the last eight characters of a public_slug,
+// derived from (source, external_id) alone and so the one part of a job URL nothing can
+// move. Resolves a link to a slug that no longer exists (freehire#3284); backed by
+// jobs_public_slug_code_idx. LIMIT 2 is enough to tell one match from an ambiguous code,
+// which the caller refuses rather than guessing between postings.
+func (q *Queries) ListJobsBySlugCode(ctx context.Context, code string) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listJobsBySlugCode, code)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.Source,
+			&i.ExternalID,
+			&i.URL,
+			&i.Title,
+			&i.Company,
+			&i.Location,
+			&i.Remote,
+			&i.Description,
+			&i.PostedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompanySlug,
+			&i.Enrichment,
+			&i.EnrichedAt,
+			&i.EnrichmentVersion,
+			&i.PublicSlug,
+			&i.LastSeenAt,
+			&i.ClosedAt,
+			&i.Countries,
+			&i.Regions,
+			&i.WorkMode,
+			&i.LivenessStrikes,
+			&i.Skills,
+			&i.Seniority,
+			&i.Category,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.PostingLanguage,
+			&i.EmploymentType,
+			&i.EducationLevel,
+			&i.ExperienceYearsMin,
+			&i.Collections,
+			&i.ContentHash,
+			&i.EnglishLevel,
+			&i.Cities,
+			&i.ViewCount,
+			&i.AppliedCount,
+			&i.RoleFingerprint,
+			&i.SemanticEmbeddedModel,
+			&i.SemanticEmbeddedHash,
+			&i.DuplicateOf,
+			&i.IsTech,
+			&i.SemanticEmbedding,
+			&i.SalaryMinManual,
+			&i.SalaryMaxManual,
+			&i.SalaryCurrencyManual,
+			&i.SalaryPeriodManual,
+			&i.UpvoteCount,
+			&i.DownvoteCount,
+			&i.AtsAbsentAt,
+			&i.ClosedReason,
+			&i.IsPrivate,
+			&i.SimilarJobIds,
+			&i.SimilarComputedAt,
+			&i.SalaryMinSource,
+			&i.SalaryMaxSource,
+			&i.SalaryCurrencySource,
+			&i.SalaryPeriodSource,
+			&i.CompanySlugFolded,
+			&i.DuplicateOfAggregator,
+			&i.DuplicateOfRole,
+			&i.DuplicateOfFuzzy,
+			&i.RequiresClearance,
+			&i.RequirementsDerived,
+			&i.HydratedAt,
+			&i.AiInterviewReports,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listJobsBySourceAfter = `-- name: ListJobsBySourceAfter :many
 SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug, last_seen_at, closed_at, countries, regions, work_mode, liveness_strikes, skills, seniority, category, created_by, updated_by, posting_language, employment_type, education_level, experience_years_min, collections, content_hash, english_level, cities, view_count, applied_count, role_fingerprint, semantic_embedded_model, semantic_embedded_hash, duplicate_of, is_tech, semantic_embedding, salary_min_manual, salary_max_manual, salary_currency_manual, salary_period_manual, upvote_count, downvote_count, ats_absent_at, closed_reason, is_private, similar_job_ids, similar_computed_at, salary_min_source, salary_max_source, salary_currency_source, salary_period_source, company_slug_folded, duplicate_of_aggregator, duplicate_of_role, duplicate_of_fuzzy, requires_clearance, requirements_derived, hydrated_at, ai_interview_reports
 FROM jobs
@@ -5508,14 +5608,13 @@ SET countries = COALESCE($1::text[], '{}'),
     english_level        = $13,
     experience_years_min = $14,
     role_fingerprint = $15,
-    public_slug      = $16,
-    company_slug     = $17,
-    company_slug_folded = replace($17, '-', ''),
+    company_slug     = $16,
+    company_slug_folded = replace($16, '-', ''),
     updated_at = CASE
         WHEN role_fingerprint IS DISTINCT FROM $15 THEN now()
         ELSE updated_at
     END
-WHERE id = $18
+WHERE id = $17
 `
 
 type UpdateJobDerivedParams struct {
@@ -5534,7 +5633,6 @@ type UpdateJobDerivedParams struct {
 	EnglishLevel       string      `json:"english_level"`
 	ExperienceYearsMin pgtype.Int4 `json:"experience_years_min"`
 	RoleFingerprint    pgtype.Text `json:"role_fingerprint"`
-	PublicSlug         string      `json:"public_slug"`
 	CompanySlug        string      `json:"company_slug"`
 	ID                 int64       `json:"id"`
 }
@@ -5546,7 +5644,10 @@ type UpdateJobDerivedParams struct {
 // facets posting_language,
 // employment_type, education_level, english_level, experience_years_min, all from
 // jobderive.Derive), the repost-identity role_fingerprint (internal/job/jobhash), and the
-// public_slug/company_slug (internal/dict/normalize). One keyset scan propagates any
+// company_slug (internal/dict/normalize). public_slug is deliberately NOT here, for the
+// reason UpsertJob gives: it is a published URL, minted once, and a re-derive from a title
+// the source has since changed would turn every link to it into a 404 (freehire#3284).
+// One keyset scan propagates any
 // dictionary/algorithm change to old and closed rows that never re-crawl. Every column
 // is a pure function of the raw fields, so the write is idempotent. COALESCE maps a nil
 // array arg to '{}' for the NOT NULL array columns; work_mode is written as given by the
@@ -5555,7 +5656,7 @@ type UpdateJobDerivedParams struct {
 // updated_at is bumped ONLY when role_fingerprint actually moves (the SET clause reads
 // the pre-update row, so the guard compares the stored fingerprint to the new one): a
 // fingerprint change must reach `reindex --since`, which recomputes duplicate_of, while a
-// facet/slug-only rewrite deliberately leaves the timestamp untouched so a big backfill
+// facet/company-slug-only rewrite deliberately leaves the timestamp untouched so a big backfill
 // does not churn every row's updated_at.
 func (q *Queries) UpdateJobDerived(ctx context.Context, arg UpdateJobDerivedParams) error {
 	_, err := q.db.Exec(ctx, updateJobDerived,
@@ -5574,7 +5675,6 @@ func (q *Queries) UpdateJobDerived(ctx context.Context, arg UpdateJobDerivedPara
 		arg.EnglishLevel,
 		arg.ExperienceYearsMin,
 		arg.RoleFingerprint,
-		arg.PublicSlug,
 		arg.CompanySlug,
 		arg.ID,
 	)

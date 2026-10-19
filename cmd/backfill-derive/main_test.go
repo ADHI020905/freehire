@@ -128,7 +128,7 @@ func (f *fakeStore) UpdateJobDerived(_ context.Context, arg db.UpdateJobDerivedP
 // expectedDerived is the UpdateJobDerived the runner should write for a job: every
 // dictionary facet from jobderive.Derive (the six original plus the four synthetic
 // enrichment facets), the role_fingerprint computed from the freshly derived
-// company_slug, and the recomputed public_slug/company_slug.
+// company_slug, and the recomputed company_slug.
 // backfillAll and backfillProgress are the unbounded shorthands these tests read best
 // with: most of them assert on what a whole pass derived, and a scanWindow{} at every
 // call site would say nothing. They delegate straight to the entry points main uses, so
@@ -162,7 +162,6 @@ func expectedDerived(j db.Job) db.UpdateJobDerivedParams {
 		EnglishLevel:       d.EnglishLevel,
 		ExperienceYearsMin: pgconv.Int4(d.ExperienceYearsMin),
 		RoleFingerprint:    pgtype.Text{String: fingerprint, Valid: true},
-		PublicSlug:         d.PublicSlug,
 		CompanySlug:        d.CompanySlug,
 	}
 }
@@ -175,7 +174,7 @@ func seedDerived(j db.Job) db.Job {
 	j.Skills, j.Seniority, j.Category, j.IsTech = d.Skills, d.Seniority, d.Category, d.IsTech
 	j.PostingLanguage, j.EmploymentType = d.PostingLanguage, d.EmploymentType
 	j.EducationLevel, j.EnglishLevel, j.ExperienceYearsMin = d.EducationLevel, d.EnglishLevel, d.ExperienceYearsMin
-	j.RoleFingerprint, j.PublicSlug, j.CompanySlug = d.RoleFingerprint, d.PublicSlug, d.CompanySlug
+	j.RoleFingerprint, j.CompanySlug = d.RoleFingerprint, d.CompanySlug
 	return j
 }
 
@@ -215,9 +214,9 @@ func TestBackfill_RewritesAllDerivedInOnePass(t *testing.T) {
 		t.Errorf("synthetic facets not derived: lang=%q type=%q edu=%q exp=%v",
 			got.PostingLanguage, got.EmploymentType, got.EducationLevel, got.ExperienceYearsMin)
 	}
-	if got.RoleFingerprint.String == "" || got.PublicSlug == "" || got.CompanySlug == "" {
-		t.Errorf("fingerprint/slugs not derived: fp=%q public=%q company=%q",
-			got.RoleFingerprint.String, got.PublicSlug, got.CompanySlug)
+	if got.RoleFingerprint.String == "" || got.CompanySlug == "" {
+		t.Errorf("fingerprint/company slug not derived: fp=%q company=%q",
+			got.RoleFingerprint.String, got.CompanySlug)
 	}
 }
 
@@ -516,5 +515,28 @@ func TestBackfill_ShortDegradedPageDoesNotEndTheScan(t *testing.T) {
 	}
 	if !sawLast {
 		t.Errorf("row %d (page 2) was never scanned", n)
+	}
+}
+
+// A public_slug is a published URL: search engines, shared links and every client that
+// cached a card address the posting by it, and nothing redirects the old one. So the pass
+// must never move it, even when the title it was minted from has since changed — a
+// source that retitles a posting under the same external_id is routine (freehire#3284).
+func TestBackfill_NeverMovesPublicSlug(t *testing.T) {
+	job := seedDerived(db.Job{
+		ID: 7, Title: "Senior Go Developer", Company: "Acme",
+		Source: "manual", ExternalID: "x", Location: "Berlin, Germany",
+		Description: backfillJobDescription,
+	})
+	job.PublicSlug = "senior-solution-engineer-acme-abcd1234" // minted from an older title
+	store := &fakeStore{jobs: []db.Job{job}}
+
+	_, updated, slugsMoved, err := backfillAll(context.Background(), store, 1)
+	if err != nil {
+		t.Fatalf("backfillAll: %v", err)
+	}
+	if updated != 0 || slugsMoved != 0 || len(store.updates) != 0 {
+		t.Fatalf("updated=%d slugsMoved=%d writes=%d, want a stale public_slug left alone",
+			updated, slugsMoved, len(store.updates))
 	}
 }

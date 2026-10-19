@@ -4079,6 +4079,12 @@ type Querier interface {
 	// concurrent inserts/updates (which shift posted_at ordering) cannot make the
 	// scan skip or repeat rows the way OFFSET pagination would.
 	ListJobsByIDAfter(ctx context.Context, arg ListJobsByIDAfterParams) ([]Job, error)
+	// The jobs whose slug ends with a shortcode — the last eight characters of a public_slug,
+	// derived from (source, external_id) alone and so the one part of a job URL nothing can
+	// move. Resolves a link to a slug that no longer exists (freehire#3284); backed by
+	// jobs_public_slug_code_idx. LIMIT 2 is enough to tell one match from an ambiguous code,
+	// which the caller refuses rather than guessing between postings.
+	ListJobsBySlugCode(ctx context.Context, code string) ([]Job, error)
 	// Keyset scan over one provider's rows, for the per-source repair workers (e.g.
 	// cmd/backfill-echojobs, cmd/backfill-descriptions): pages by the immutable primary key
 	// (concurrent writes can't skip or repeat rows) filtered to a single source. Returns
@@ -6965,7 +6971,10 @@ type Querier interface {
 	// facets posting_language,
 	// employment_type, education_level, english_level, experience_years_min, all from
 	// jobderive.Derive), the repost-identity role_fingerprint (internal/job/jobhash), and the
-	// public_slug/company_slug (internal/dict/normalize). One keyset scan propagates any
+	// company_slug (internal/dict/normalize). public_slug is deliberately NOT here, for the
+	// reason UpsertJob gives: it is a published URL, minted once, and a re-derive from a title
+	// the source has since changed would turn every link to it into a 404 (freehire#3284).
+	// One keyset scan propagates any
 	// dictionary/algorithm change to old and closed rows that never re-crawl. Every column
 	// is a pure function of the raw fields, so the write is idempotent. COALESCE maps a nil
 	// array arg to '{}' for the NOT NULL array columns; work_mode is written as given by the
@@ -6974,7 +6983,7 @@ type Querier interface {
 	// updated_at is bumped ONLY when role_fingerprint actually moves (the SET clause reads
 	// the pre-update row, so the guard compares the stored fingerprint to the new one): a
 	// fingerprint change must reach `reindex --since`, which recomputes duplicate_of, while a
-	// facet/slug-only rewrite deliberately leaves the timestamp untouched so a big backfill
+	// facet/company-slug-only rewrite deliberately leaves the timestamp untouched so a big backfill
 	// does not churn every row's updated_at.
 	UpdateJobDerived(ctx context.Context, arg UpdateJobDerivedParams) error
 	// Targeted description rewrite shared by the per-source description-repair workers (e.g.

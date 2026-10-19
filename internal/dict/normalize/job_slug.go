@@ -38,3 +38,23 @@ func shortcode(source, externalID string) string {
 	sum := sha256.Sum256([]byte(source + "\x00" + externalID))
 	return strings.ToLower(base32.StdEncoding.EncodeToString(sum[:]))[:shortcodeLen]
 }
+
+// JobSlugCode returns the shortcode a job slug ends with — the part JobSlug derives
+// from (source, external_id) alone, so it survives any change to the title or company
+// the rest of the slug was built from. ok is false when slug does not end with a
+// well-formed code, so a caller never looks up a fragment of some other string.
+func JobSlugCode(slug string) (code string, ok bool) {
+	if len(slug) < shortcodeLen {
+		return "", false
+	}
+	head, code := slug[:len(slug)-shortcodeLen], slug[len(slug)-shortcodeLen:]
+	if head != "" && !strings.HasSuffix(head, "-") {
+		return "", false
+	}
+	for _, r := range code {
+		if (r < 'a' || r > 'z') && (r < '2' || r > '7') {
+			return "", false
+		}
+	}
+	return code, true
+}

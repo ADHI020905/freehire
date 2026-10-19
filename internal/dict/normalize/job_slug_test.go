@@ -63,3 +63,30 @@ func TestJobSlugSeparatorAvoidsCollision(t *testing.T) {
 		t.Error("(ab,c) and (a,bc) must not collide")
 	}
 }
+
+func TestJobSlugCode(t *testing.T) {
+	minted := JobSlug("Senior Go Developer", "Acme", "greenhouse", "123")
+	code, ok := JobSlugCode(minted)
+	if !ok || code != minted[len(minted)-shortcodeLen:] {
+		t.Fatalf("JobSlugCode(%q) = %q, %v; want the minted shortcode", minted, code, ok)
+	}
+	// The code survives a retitle: it is the one part of the URL that cannot move.
+	if other, _ := JobSlugCode(JobSlug("Staff Go Developer", "Acme Inc", "greenhouse", "123")); other != code {
+		t.Errorf("code moved with the title: %q vs %q", other, code)
+	}
+	for _, s := range []string{
+		"",
+		"senior-go-developer",          // no code segment
+		"senior-go-developer-acme-abc", // too short
+		"go-developer-acme-abcd1234",   // 1 is not base32
+		"go-developer-acme-ABCDEFGH",   // minted codes are lower case
+		"go-developer-acmexabcdefgh",   // no separator before the code
+	} {
+		if c, ok := JobSlugCode(s); ok {
+			t.Errorf("JobSlugCode(%q) = %q, true; want no code", s, c)
+		}
+	}
+	if c, ok := JobSlugCode("abcdefgh"); !ok || c != "abcdefgh" {
+		t.Errorf("bare code: got %q, %v", c, ok)
+	}
+}
