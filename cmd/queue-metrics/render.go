@@ -25,15 +25,20 @@ type queueMetrics struct {
 }
 
 // providerHealth is one ingest provider's state: when its most recent board crawl
-// succeeded, and how its boards currently split across the three health states.
+// succeeded, when its oldest live board entered the catalogue, and how its live boards
+// currently split across the four health states.
 //
-// lastSuccess is the zero time when no board of that provider has ever succeeded, which
-// render publishes as an absent sample rather than as a 1970 timestamp. The board counts
-// carry the signal that absence throws away — they exist for every provider, so a provider
-// that has never succeeded is still measurable as one with no healthy boards.
+// lastSuccess is the zero time when no live board of that provider has ever succeeded,
+// which render publishes as an absent sample rather than as a 1970 timestamp. firstListed
+// and the board counts carry the signal that absence throws away — they exist for every
+// provider with a live board, so a provider that has never succeeded is still measurable,
+// both as one with no healthy boards and as one that has been listed for so long without
+// producing anything.
 type providerHealth struct {
 	name        string
 	lastSuccess time.Time
+	firstListed time.Time
+	uncrawled   int64
 	cooled      int64
 	failing     int64
 	healthy     int64
@@ -66,12 +71,25 @@ type snapshot struct {
 	notifyPendingSubscriptions int64
 	notifyOldestAgeSeconds     float64
 
-	healthyBoards int64
-	failingBoards int64
-	cooledBoards  int64
-	newestJob     time.Time
-	providers     []providerHealth
-	ingest        []ingestVolume
+	newestJob time.Time
+	// providers is also the fleet: freehire_boards_total is their sum, so the two board
+	// families are one measurement published twice and cannot disagree.
+	providers []providerHealth
+	ingest    []ingestVolume
+}
+
+// fleet is the whole board fleet, summed from the per-provider rows rather than measured
+// by a second query, so summing freehire_provider_boards by state reproduces
+// freehire_boards_total by construction.
+func (s snapshot) fleet() providerHealth {
+	var f providerHealth
+	for _, p := range s.providers {
+		f.healthy += p.healthy
+		f.failing += p.failing
+		f.cooled += p.cooled
+		f.uncrawled += p.uncrawled
+	}
+	return f
 }
 
 // render turns a snapshot into the Prometheus text exposition format.
@@ -102,8 +120,10 @@ func render(s snapshot) string {
 		"Age of the oldest undelivered subscription match.")
 	fmt.Fprintf(&b, "freehire_notify_oldest_pending_age_seconds %.3f\n", s.notifyOldestAgeSeconds)
 
+	// An empty fleet still publishes four explicit zeros: an absent series is how the
+	// consuming rules recognize a dead exporter.
 	writeHeader(&b, "freehire_boards_total", "Ingest boards by health state.")
-	for _, st := range boardStates(s.healthyBoards, s.failingBoards, s.cooledBoards) {
+	for _, st := range s.fleet().boardStates() {
 		fmt.Fprintf(&b, "freehire_boards_total{state=%q} %d\n", st.name, st.count)
 	}
 
@@ -136,21 +156,47 @@ func render(s snapshot) string {
 		}
 	}
 
+	// When each provider's oldest live board entered the catalogue — the fallback the
+	// timestamp above needs for a provider that has never once succeeded, published for
+	// every provider so a rule can write `last_success or first_listed` and get an honest
+	// silence for all of them. See ProviderIngestHealth for why the OLDEST board: with the
+	// newest, adding a board to a failing provider would restart its clock.
+	//
+	// Without it, the never-succeeded case vanished from every age-based rule. On
+	// 2026-10-19 all 3,324 gupy boards were freshly re-keyed and uncrawled, and gupy had no
+	// timestamp to be late about — on the day its API had been dead for 19 days.
+	listed := make([]providerHealth, 0, len(s.providers))
+	for _, p := range s.providers {
+		if !p.firstListed.IsZero() {
+			listed = append(listed, p)
+		}
+	}
+	if len(listed) > 0 {
+		writeHeader(&b, "freehire_provider_first_listed_timestamp_seconds",
+			"Unix time an ingest provider's oldest live board entered the catalogue.")
+		for _, p := range listed {
+			fmt.Fprintf(&b, "freehire_provider_first_listed_timestamp_seconds{provider=%q} %d\n",
+				p.name, p.firstListed.Unix())
+		}
+	}
+
 	// Per-provider board states: the companion the timestamp above needs, because omitting
 	// the never-succeeded case is exactly what hid gulftalent. It sat at 19,828 postings
 	// unrefreshed since 2026-07-07 with its systemd timer disabled — no crawl, so no
 	// success, so no timestamp sample, so nothing for an alert to be late about. These
-	// counts exist for every provider board_health knows, so `healthy == 0` names it.
+	// counts exist for every provider with a live board in the catalogue, so `healthy == 0`
+	// names it — including one none of whose boards has been crawled yet, which is the
+	// `uncrawled` state.
 	//
 	// Published as raw counts under one state label rather than as a baked-in "is this
 	// provider down" boolean: the fleet runs a few percent failing boards as background, so
 	// what separates a broken provider from a normal one is the RATIO, and which ratio
-	// deserves a page belongs in the alert rule, not here. Same three mutually exclusive
-	// states as freehire_boards_total, so summing these by state reproduces it.
+	// deserves a page belongs in the alert rule, not here. Same four mutually exclusive
+	// states as freehire_boards_total, which is summed from these.
 	if len(s.providers) > 0 {
 		writeHeader(&b, "freehire_provider_boards", "Ingest boards by health state, per provider.")
 		for _, p := range s.providers {
-			for _, st := range boardStates(p.healthy, p.failing, p.cooled) {
+			for _, st := range p.boardStates() {
 				fmt.Fprintf(&b, "freehire_provider_boards{provider=%q,state=%q} %d\n",
 					p.name, st.name, st.count)
 			}
@@ -189,14 +235,14 @@ func render(s snapshot) string {
 	return b.String()
 }
 
-// boardState pairs one of the three mutually exclusive board health states with how many
+// boardState pairs one of the four mutually exclusive board health states with how many
 // boards are in it.
 type boardState struct {
 	name  string
 	count int64
 }
 
-// boardStates returns those three in the order both board families publish them.
+// boardStates returns those four in the order both board families publish them.
 //
 // Two families carry these labels — freehire_boards_total fleet-wide and
 // freehire_provider_boards per provider — and a dashboard that stacks one against the
@@ -204,14 +250,16 @@ type boardState struct {
 // they can drift apart without failing to compile, and the drift shows up as a graph that
 // quietly disagrees with itself, so the vocabulary lives here once.
 //
-// The precedence behind the counts (cooled over failing, so the three sum to the fleet
-// rather than double-counting) is BoardHealthMetrics' in queries/metrics.sql; this only
-// fixes how they are named and ordered.
-func boardStates(healthy, failing, cooled int64) [3]boardState {
-	return [3]boardState{
-		{"healthy", healthy},
-		{"failing", failing},
-		{"cooled", cooled},
+// The precedence behind the counts (uncrawled when no health row exists, then cooled over
+// failing, so the four sum to the provider's live boards rather than double-counting) is
+// ProviderIngestHealth's in queries/metrics.sql; this only fixes how they are named and
+// ordered. uncrawled comes last so the three older series keep their place on a graph.
+func (p providerHealth) boardStates() [4]boardState {
+	return [4]boardState{
+		{"healthy", p.healthy},
+		{"failing", p.failing},
+		{"cooled", p.cooled},
+		{"uncrawled", p.uncrawled},
 	}
 }
 

@@ -202,28 +202,6 @@ SELECT
     COALESCE(EXTRACT(EPOCH FROM now() - min(created_at)), 0)::float8 AS oldest_age_seconds
 FROM push_ticket_outbox;
 
--- name: BoardHealthMetrics :one
--- The ingest board fleet split into three mutually exclusive states, so the published
--- gauges sum to the fleet size and a stacked graph reads correctly.
---
--- Cooled takes precedence over failing. A board in cooldown always has failures behind it
--- (see internal/ingest/pipeline's CooldownFor), so counting it in both states would double-count
--- every cooled board and make the total exceed the fleet. Cooled is the more actionable
--- of the two: it means the board is currently NOT being crawled.
-SELECT
-    count(*) FILTER (
-        WHERE cooldown_until > now()
-    ) AS cooled,
-    count(*) FILTER (
-        WHERE (cooldown_until IS NULL OR cooldown_until <= now())
-          AND consecutive_failures > 0
-    ) AS failing,
-    count(*) FILTER (
-        WHERE (cooldown_until IS NULL OR cooldown_until <= now())
-          AND consecutive_failures = 0
-    ) AS healthy
-FROM board_health;
-
 -- name: NewestOpenJobCreatedAt :one
 -- When the catalogue last gained a posting, for the "ingest has stopped producing" signal.
 --
@@ -249,50 +227,90 @@ LIMIT 1;
 
 -- name: ProviderIngestHealth :many
 -- Per-provider ingest health: when the provider's most recent board crawl succeeded, and
--- how its boards split across the same three states BoardHealthMetrics publishes fleet-wide.
+-- how its boards split across four mutually exclusive states. It is also the ONLY source of
+-- the fleet-wide freehire_boards_total, which cmd/queue-metrics sums from these rows, so the
+-- per-provider and fleet-wide families cannot disagree about what a board is.
 --
--- The two halves answer different questions and neither substitutes for the other.
+-- The population is the CATALOGUE — every board in `boards` that ingest still crawls
+-- (status pending or active) — with board_health LEFT JOINed onto it. It used to be
+-- board_health alone, and that was wrong in both directions, each time silently:
 --
--- The timestamp says when data last ARRIVED. max() over a nullable column yields NULL for a
--- provider whose every board has never succeeded, and that NULL is rendered as an ABSENT
--- sample rather than a zero, because a Unix zero reads downstream as overdue since 1970.
--- So on the timestamp alone a provider is invisible in precisely the case where it is most
--- broken — gulftalent held 19,828 postings unrefreshed since 2026-07-07 with its systemd
--- timer disabled, and published no sample at all.
+--   * A board the catalogue has never crawled has no board_health row, so a provider whose
+--     boards are all new was not exported at all. Measured 2026-10-19: after a re-key, all
+--     3,324 gupy boards were `pending` and uncrawled, and gupy had NO series in either
+--     provider family — on the day its API had already been dead for 19 days with 73k open
+--     postings going stale. Vanishing is how an outage becomes invisible: no alert can be
+--     late about a series that is not there. 23,806 live boards across 26 providers had no
+--     health row that day (careerplug alone 8,071).
+--   * A RETIRED board keeps its board_health row unless the retiring path deletes it, so a
+--     retired provider went on being exported. All 5,833 apploi boards were retired on
+--     2026-09-15 (cmd/close-apploi-misattributed) and apploi still published 5,833 boards
+--     and a last success 40 days old, which a "large provider has gone quiet" rule would
+--     page on forever. 6,794 health rows matched no live board that day.
 --
--- The state counts say whether anything is TRYING. Every provider board_health knows has a
--- row, so these always have a value, and "no healthy boards" is a predicate that fires for
--- the never-succeeded case as well as the stopped-succeeding one. It is also selective:
--- measured on prod 2026-09-01 it named 20 providers out of ~180, while a fleet whose
--- background is ~5% failing boards leaves a mostly-healthy provider like personio out.
+-- The join key is board_health's own identity, (provider, lower(board), region) — see
+-- migration 0171 — which is also how the catalogue's boards_identity_key folds a live
+-- board, so a live board meets at most one health row.
 --
--- The three states are mutually exclusive and carry BoardHealthMetrics' precedence rule
--- (cooled over failing), so they sum to the provider's board count and the fleet-wide
--- family stays the sum of these.
+-- The four states:
+--   uncrawled — in the catalogue, no health row: no crawl of it has ever been recorded.
+--   cooled    — in cooldown, so NOT currently being crawled. Takes precedence over
+--               failing: a cooled board always has failures behind it (pipeline's
+--               CooldownFor), and counting it twice would make the states exceed the fleet.
+--   failing   — out of cooldown with consecutive failures.
+--   healthy   — out of cooldown, last crawl succeeded.
 --
--- Reads board_health rather than the jobs table on purpose. The catalogue-side form of
--- the same question — max(last_seen_at) grouped by source over open jobs — measured 41s
--- and 2.1M buffer reads on prod (2026-09-01), a parallel sequential scan of 8M rows. This
--- file's header commits every query in it to never being why ingest waits, and the host
--- is disk-bound, so a once-a-minute scan of that size is exactly the thing it forbids.
--- The same measurement here reads 97k rows in 54ms.
+-- last_success_at is max() over the provider's LIVE boards only, so a retired board's old
+-- success cannot make a provider look fresher than its current boards are. It is NULL for a
+-- provider no live board of which has ever succeeded, and the caller publishes that as an
+-- ABSENT sample, never a zero (a Unix zero reads as overdue since 1970).
+--
+-- first_listed_at is what an alert falls back to in exactly that case: the moment the
+-- provider's OLDEST live board entered the catalogue. "Listed since X and never once
+-- succeeded" is a lower bound on how long the provider has been producing nothing, so
+-- `time() - (last_success or first_listed)` is an honest silence for every provider. The
+-- OLDEST board, never the newest: with the newest, adding one board to a provider that is
+-- failing would restart its clock and hide the outage for another day. It is
+-- boards.created_at rather than board_health.first_seen_at because an uncrawled board has
+-- no health row to carry one. It is never NULL (created_at is NOT NULL and every row here
+-- has at least one live board). One limit, accepted: a re-key retires the old boards and
+-- the new ones start a fresh clock, so silence that began before the re-key is not
+-- counted — the re-key is a deliberate act by someone already looking at the provider.
+--
+-- Cost, measured on prod 2026-10-19 (213k live boards, 196k health rows): 228ms warm, a
+-- parallel hash join of the two tables, against 37ms for the board_health-only form it
+-- replaces. It also replaces BoardHealthMetrics, the fleet-wide twin it now feeds, so the
+-- net cost is one query of this size a minute. Neither table is jobs, whose 8M-row scan is
+-- what this file's header exists to forbid.
 SELECT
-    provider,
-    max(last_success_at)::timestamptz AS last_success_at,
+    b.provider,
+    max(h.last_success_at)::timestamptz AS last_success_at,
+    min(b.created_at)::timestamptz      AS first_listed_at,
     count(*) FILTER (
-        WHERE cooldown_until > now()
+        WHERE h.provider IS NULL
+    ) AS uncrawled,
+    count(*) FILTER (
+        WHERE h.provider IS NOT NULL
+          AND h.cooldown_until > now()
     ) AS cooled,
     count(*) FILTER (
-        WHERE (cooldown_until IS NULL OR cooldown_until <= now())
-          AND consecutive_failures > 0
+        WHERE h.provider IS NOT NULL
+          AND (h.cooldown_until IS NULL OR h.cooldown_until <= now())
+          AND h.consecutive_failures > 0
     ) AS failing,
     count(*) FILTER (
-        WHERE (cooldown_until IS NULL OR cooldown_until <= now())
-          AND consecutive_failures = 0
+        WHERE h.provider IS NOT NULL
+          AND (h.cooldown_until IS NULL OR h.cooldown_until <= now())
+          AND h.consecutive_failures = 0
     ) AS healthy
-FROM board_health
-GROUP BY provider
-ORDER BY provider;
+FROM boards b
+LEFT JOIN board_health h
+       ON h.provider = b.provider
+      AND lower(h.board) = lower(b.board)
+      AND h.region = b.region
+WHERE b.status IN ('pending', 'active')
+GROUP BY b.provider
+ORDER BY b.provider;
 
 -- name: NotifyBacklogMetrics :one
 -- The subscription-digest backlog: how many active subscriptions have something

@@ -57,8 +57,9 @@ func run() int {
 		return 1
 	}
 
-	log.Printf("queue-metrics: published %s boards=healthy:%d/failing:%d/cooled:%d",
-		strings.Join(depths(snap), " "), snap.healthyBoards, snap.failingBoards, snap.cooledBoards)
+	fleet := snap.fleet()
+	log.Printf("queue-metrics: published %s boards=healthy:%d/failing:%d/cooled:%d/uncrawled:%d",
+		strings.Join(depths(snap), " "), fleet.healthy, fleet.failing, fleet.cooled, fleet.uncrawled)
 	return 0
 }
 

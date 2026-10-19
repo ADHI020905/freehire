@@ -1,7 +1,7 @@
 //go:build integration
 
 // Integration tests for the cmd/queue-metrics aggregates: the live/dead split of an
-// outbox, the age of its oldest LIVE entry, the mutually exclusive board-fleet states,
+// outbox, the age of its oldest LIVE entry, the mutually exclusive per-provider board states,
 // and catalogue freshness. All four are SQL behaviors — FILTER clauses, a partial index's
 // ORDER BY ... LIMIT, and the empty-table cases — verifiable only against a real Postgres.
 // Run with: go test -tags=integration ./internal/platform/db/
@@ -150,28 +150,40 @@ func TestEnrichmentAndSemanticOutboxMetricsUseTheSameShape(t *testing.T) {
 	}
 }
 
-func TestBoardHealthMetricsStatesAreMutuallyExclusive(t *testing.T) {
+func TestProviderIngestHealthStatesAreMutuallyExclusive(t *testing.T) {
 	pool := startPostgres(t)
 	q := New(pool)
 	ctx := context.Background()
 
-	// Five boards spanning every combination that matters, including the one that
+	// Five live boards spanning every combination that matters, including the one that
 	// decides the precedence rule: failing AND cooled must be counted as cooled only.
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO boards (provider, board, company, status) VALUES
+		 ('greenhouse', 'healthy-board',      'A', 'active'),
+		 ('greenhouse', 'recovered-board',    'B', 'active'),
+		 ('greenhouse', 'failing-board',      'C', 'active'),
+		 ('greenhouse', 'failing-expired',    'D', 'active'),
+		 ('greenhouse', 'failing-and-cooled', 'E', 'active')`); err != nil {
+		t.Fatalf("seed boards: %v", err)
+	}
 	if _, err := pool.Exec(ctx,
 		`INSERT INTO board_health (provider, board, consecutive_failures, cooldown_until) VALUES
 		 ('greenhouse', 'healthy-board',      0, NULL),
 		 ('greenhouse', 'recovered-board',    0, now() - interval '1 hour'),
-		 ('ashby',      'failing-board',      2, NULL),
-		 ('ashby',      'failing-expired',    2, now() - interval '5 minutes'),
-		 ('lever',      'failing-and-cooled', 4, now() + interval '6 hours')`); err != nil {
+		 ('greenhouse', 'failing-board',      2, NULL),
+		 ('greenhouse', 'failing-expired',    2, now() - interval '5 minutes'),
+		 ('greenhouse', 'failing-and-cooled', 4, now() + interval '6 hours')`); err != nil {
 		t.Fatalf("seed board_health: %v", err)
 	}
 
-	got, err := q.BoardHealthMetrics(ctx)
+	rows, err := q.ProviderIngestHealth(ctx)
 	if err != nil {
-		t.Fatalf("BoardHealthMetrics: %v", err)
+		t.Fatalf("ProviderIngestHealth: %v", err)
 	}
-
+	if len(rows) != 1 {
+		t.Fatalf("rows = %d, want 1", len(rows))
+	}
+	got := rows[0]
 	if got.Cooled != 1 {
 		t.Errorf("cooled = %d, want 1 (only the board whose cooldown is still in the future)", got.Cooled)
 	}
@@ -181,8 +193,104 @@ func TestBoardHealthMetricsStatesAreMutuallyExclusive(t *testing.T) {
 	if got.Healthy != 2 {
 		t.Errorf("healthy = %d, want 2 (no failures, expired cooldown counts as healthy)", got.Healthy)
 	}
-	if total := got.Cooled + got.Failing + got.Healthy; total != 5 {
-		t.Errorf("states sum to %d, want 5 — they must partition the fleet exactly", total)
+	if got.Uncrawled != 0 {
+		t.Errorf("uncrawled = %d, want 0 (every board has a health row)", got.Uncrawled)
+	}
+	if total := got.Cooled + got.Failing + got.Healthy + got.Uncrawled; total != 5 {
+		t.Errorf("states sum to %d, want 5 — they must partition the provider's live boards exactly", total)
+	}
+}
+
+// The population is the catalogue, not board_health. Both directions of the old mismatch
+// are seeded here: a provider whose boards are all uncrawled (gupy after its 2026-10-19
+// re-key, which published no series at all) and a provider whose boards are all retired but
+// whose health rows survived (apploi, which went on publishing 5,833 boards and a 40-day-old
+// success after 2026-09-15).
+func TestProviderIngestHealthFollowsTheCatalogue(t *testing.T) {
+	pool := startPostgres(t)
+	q := New(pool)
+	ctx := context.Background()
+
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO boards (provider, board, company, status, created_at) VALUES
+		 -- gupy: re-keyed, nothing crawled yet. The OLDEST live board dates the provider.
+		 ('gupy',       'acme',      'Acme',  'pending', now() - interval '3 hours'),
+		 ('gupy',       'globex',    'Globex','pending', now() - interval '1 hour'),
+		 -- apploi: every board retired, health rows left behind.
+		 ('apploi',     '39092',     'X',     'retired', now() - interval '90 days'),
+		 -- greenhouse: one live board whose health row is spelled in another CASE, one
+		 -- retired board whose stale health row carries a NEWER success than the live
+		 -- one, and one live board never crawled.
+		 ('greenhouse', 'Stripe',    'Stripe','active',  now() - interval '30 days'),
+		 ('greenhouse', 'oldco',     'Old',   'retired', now() - interval '60 days'),
+		 ('greenhouse', 'newco',     'New',   'pending', now() - interval '1 day'),
+		 -- a rejected board is not in the catalogue either.
+		 ('rejectedonly','typo',     'T',     'rejected', now() - interval '2 days')`); err != nil {
+		t.Fatalf("seed boards: %v", err)
+	}
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO board_health (provider, board, consecutive_failures, last_success_at) VALUES
+		 ('apploi',     '39092',  0, now() - interval '40 days'),
+		 ('greenhouse', 'stripe', 0, now() - interval '2 hours'),
+		 ('greenhouse', 'oldco',  0, now() - interval '5 minutes')`); err != nil {
+		t.Fatalf("seed board_health: %v", err)
+	}
+
+	rows, err := q.ProviderIngestHealth(ctx)
+	if err != nil {
+		t.Fatalf("ProviderIngestHealth: %v", err)
+	}
+	byProvider := map[string]ProviderIngestHealthRow{}
+	for _, r := range rows {
+		byProvider[r.Provider] = r
+	}
+
+	if _, ok := byProvider["apploi"]; ok {
+		t.Error("apploi has no live board and must not be exported")
+	}
+	if _, ok := byProvider["rejectedonly"]; ok {
+		t.Error("a provider with only rejected boards must not be exported")
+	}
+
+	gupy, ok := byProvider["gupy"]
+	if !ok {
+		t.Fatal("gupy has two live boards and must be exported even though neither was ever crawled")
+	}
+	if gupy.Uncrawled != 2 || gupy.Healthy+gupy.Failing+gupy.Cooled != 0 {
+		t.Errorf("gupy = %d uncrawled, %d/%d/%d crawled, want 2 uncrawled and nothing else",
+			gupy.Uncrawled, gupy.Healthy, gupy.Failing, gupy.Cooled)
+	}
+	if gupy.LastSuccessAt.Valid {
+		t.Errorf("gupy last_success_at = %v, want NULL", gupy.LastSuccessAt.Time)
+	}
+	assertAgeAbout(t, pool, "gupy first_listed_at", gupy.FirstListedAt, 3*time.Hour)
+
+	gh := byProvider["greenhouse"]
+	if gh.Healthy != 1 || gh.Uncrawled != 1 {
+		t.Errorf("greenhouse = %d healthy, %d uncrawled, want 1/1 (the case-folded join must meet 'Stripe')",
+			gh.Healthy, gh.Uncrawled)
+	}
+	// The retired board's 5-minute-old success must not count: only live boards say how
+	// fresh the provider is.
+	assertAgeAbout(t, pool, "greenhouse last_success_at", gh.LastSuccessAt, 2*time.Hour)
+	assertAgeAbout(t, pool, "greenhouse first_listed_at", gh.FirstListedAt, 30*24*time.Hour)
+}
+
+// assertAgeAbout checks that ts lies within a minute of `age` before the DATABASE's now(),
+// for the clock reason queueSearchEntry documents.
+func assertAgeAbout(t *testing.T, pool *pgxpool.Pool, what string, ts pgtype.Timestamptz, age time.Duration) {
+	t.Helper()
+	if !ts.Valid {
+		t.Errorf("%s is NULL, want about %v ago", what, age)
+		return
+	}
+	var got float64
+	if err := pool.QueryRow(context.Background(),
+		`SELECT EXTRACT(EPOCH FROM now() - $1::timestamptz)::float8`, ts.Time).Scan(&got); err != nil {
+		t.Fatalf("%s: measure age: %v", what, err)
+	}
+	if d := got - age.Seconds(); d < -60 || d > 60 {
+		t.Errorf("%s is %.0fs old, want about %.0fs", what, got, age.Seconds())
 	}
 }
 

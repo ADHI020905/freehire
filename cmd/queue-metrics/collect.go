@@ -26,7 +26,6 @@ type metricsQueries interface {
 	AutoApplyQueueMetrics(context.Context) (db.AutoApplyQueueMetricsRow, error)
 	PushTicketOutboxMetrics(context.Context) (db.PushTicketOutboxMetricsRow, error)
 	AppleRevocationJobMetrics(context.Context) (db.AppleRevocationJobMetricsRow, error)
-	BoardHealthMetrics(context.Context) (db.BoardHealthMetricsRow, error)
 	NewestOpenJobCreatedAt(context.Context) (pgtype.Timestamptz, error)
 	ProviderIngestHealth(context.Context) ([]db.ProviderIngestHealthRow, error)
 	NotifyBacklogMetrics(context.Context) (db.NotifyBacklogMetricsRow, error)
@@ -78,11 +77,6 @@ func collect(ctx context.Context, q metricsQueries) (snapshot, error) {
 	if err != nil {
 		return snapshot{}, fmt.Errorf("apple revocation job metrics: %w", err)
 	}
-	boards, err := q.BoardHealthMetrics(ctx)
-	if err != nil {
-		return snapshot{}, fmt.Errorf("board health metrics: %w", err)
-	}
-
 	newestJob, err := newestJobTime(ctx, q)
 	if err != nil {
 		return snapshot{}, err
@@ -99,18 +93,23 @@ func collect(ctx context.Context, q metricsQueries) (snapshot, error) {
 	}
 	providers := make([]providerHealth, len(health))
 	for i, r := range health {
-		// An invalid Timestamptz is max() over a provider whose every board has never
+		// An invalid Timestamptz is max() over a provider whose every live board has never
 		// succeeded. It stays the zero time here and is dropped by render, because the
 		// alternative — a Unix zero — reads downstream as a provider overdue since 1970.
-		// The board counts below carry that provider instead: they are always present.
+		// firstListed and the board counts carry that provider instead: they are always
+		// present.
 		p := providerHealth{
-			name:    r.Provider,
-			cooled:  r.Cooled,
-			failing: r.Failing,
-			healthy: r.Healthy,
+			name:      r.Provider,
+			uncrawled: r.Uncrawled,
+			cooled:    r.Cooled,
+			failing:   r.Failing,
+			healthy:   r.Healthy,
 		}
 		if r.LastSuccessAt.Valid {
 			p.lastSuccess = r.LastSuccessAt.Time
+		}
+		if r.FirstListedAt.Valid {
+			p.firstListed = r.FirstListedAt.Time
 		}
 		providers[i] = p
 	}
@@ -160,9 +159,6 @@ func collect(ctx context.Context, q metricsQueries) (snapshot, error) {
 		},
 		notifyPendingSubscriptions: notifyBacklog.PendingSubscriptions,
 		notifyOldestAgeSeconds:     notifyBacklog.OldestAgeSeconds,
-		healthyBoards:              boards.Healthy,
-		failingBoards:              boards.Failing,
-		cooledBoards:               boards.Cooled,
 		newestJob:                  newestJob,
 		providers:                  providers,
 		ingest:                     ingest,

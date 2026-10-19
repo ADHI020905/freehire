@@ -28,7 +28,6 @@ type fakeQueries struct {
 	autoApply    db.AutoApplyQueueMetricsRow
 	pushTickets  db.PushTicketOutboxMetricsRow
 	apple        db.AppleRevocationJobMetricsRow
-	boards       db.BoardHealthMetricsRow
 	newest       pgtype.Timestamptz
 	health       []db.ProviderIngestHealthRow
 	ingest       []db.IngestDuplicationMetricsRow
@@ -82,10 +81,6 @@ func (f fakeQueries) AppleRevocationJobMetrics(context.Context) (db.AppleRevocat
 	return f.apple, nil
 }
 
-func (f fakeQueries) BoardHealthMetrics(context.Context) (db.BoardHealthMetricsRow, error) {
-	return f.boards, nil
-}
-
 func (f fakeQueries) NewestOpenJobCreatedAt(context.Context) (pgtype.Timestamptz, error) {
 	return f.newest, f.newestErr
 }
@@ -120,18 +115,30 @@ func populatedQueries() fakeQueries {
 		// No attempts and no failed_at column, so no dead-letter measurement exists.
 		pushTickets: db.PushTicketOutboxMetricsRow{Depth: 48, OldestAgeSeconds: 1200},
 		apple:       db.AppleRevocationJobMetricsRow{Depth: 4, DeadLetters: 9, OldestAgeSeconds: 900},
-		boards:      db.BoardHealthMetricsRow{Healthy: 74894, Failing: 7002, Cooled: 1882},
 		notify:      db.NotifyBacklogMetricsRow{PendingSubscriptions: 12, OldestAgeSeconds: 184.25},
 		newest:      pgtype.Timestamptz{Time: time.Unix(1786821346, 0), Valid: true},
 		health: []db.ProviderIngestHealthRow{
 			{
 				Provider:      "greenhouse",
 				LastSuccessAt: pgtype.Timestamptz{Time: time.Unix(1786821000, 0), Valid: true},
-				Healthy:       9312, Failing: 604, Cooled: 71,
+				FirstListedAt: pgtype.Timestamptz{Time: time.Unix(1780000000, 0), Valid: true},
+				Healthy:       9312, Failing: 604, Cooled: 71, Uncrawled: 15,
 			},
 			// The shape that started this: no success ever, so no timestamp — and one
 			// failing board, which is the only thing left that can name it.
-			{Provider: "gulftalent", LastSuccessAt: pgtype.Timestamptz{}, Failing: 1},
+			{
+				Provider:      "gulftalent",
+				LastSuccessAt: pgtype.Timestamptz{},
+				FirstListedAt: pgtype.Timestamptz{Time: time.Unix(1781000000, 0), Valid: true},
+				Failing:       1,
+			},
+			// The shape that vanished on 2026-10-19: a re-keyed provider none of whose
+			// boards has been crawled yet. Only the catalogue knows it exists.
+			{
+				Provider:      "gupy",
+				FirstListedAt: pgtype.Timestamptz{Time: time.Unix(1792436951, 0), Valid: true},
+				Uncrawled:     3324,
+			},
 		},
 	}
 }
@@ -145,8 +152,8 @@ func TestCollectKeepsNeverSucceededProviderDistinctFromZero(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collect: %v", err)
 	}
-	if len(snap.providers) != 2 {
-		t.Fatalf("providers = %d, want 2", len(snap.providers))
+	if len(snap.providers) != 3 {
+		t.Fatalf("providers = %d, want 3", len(snap.providers))
 	}
 	if got := snap.providers[0]; got.name != "greenhouse" || !got.lastSuccess.Equal(time.Unix(1786821000, 0)) {
 		t.Errorf("first provider = %+v, want greenhouse at 1786821000", got)
@@ -162,6 +169,26 @@ func TestCollectKeepsNeverSucceededProviderDistinctFromZero(t *testing.T) {
 	}
 	if got := snap.providers[0]; got.healthy != 9312 || got.failing != 604 || got.cooled != 71 {
 		t.Errorf("greenhouse boards = %d/%d/%d, want 9312/604/71", got.healthy, got.failing, got.cooled)
+	}
+}
+
+// A provider none of whose boards has ever been crawled must arrive with its uncrawled
+// count and its first-listed time, because those are the only two measurements it has —
+// dropping either is how gupy vanished from every provider family on 2026-10-19.
+func TestCollectCarriesAnUncrawledProvider(t *testing.T) {
+	snap, err := collect(context.Background(), populatedQueries())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	got := snap.providers[2]
+	if got.name != "gupy" || got.uncrawled != 3324 || !got.lastSuccess.IsZero() {
+		t.Errorf("third provider = %+v, want gupy with 3324 uncrawled boards and no success", got)
+	}
+	if !got.firstListed.Equal(time.Unix(1792436951, 0)) {
+		t.Errorf("gupy firstListed = %v, want %v", got.firstListed, time.Unix(1792436951, 0))
+	}
+	if g := snap.providers[0]; !g.firstListed.Equal(time.Unix(1780000000, 0)) || g.uncrawled != 15 {
+		t.Errorf("greenhouse = firstListed %v uncrawled %d, want 1780000000/15", g.firstListed, g.uncrawled)
 	}
 }
 
@@ -191,8 +218,9 @@ func TestCollectAssemblesEveryQueueInOrder(t *testing.T) {
 			t.Errorf("queue %d = %s, want %s", i, showQueue(got.queues[i]), showQueue(want[i]))
 		}
 	}
-	if got.healthyBoards != 74894 || got.failingBoards != 7002 || got.cooledBoards != 1882 {
-		t.Errorf("boards = %d/%d/%d, want 74894/7002/1882", got.healthyBoards, got.failingBoards, got.cooledBoards)
+	// The fleet is the providers' sum, not a second measurement that could disagree.
+	if f := got.fleet(); f.healthy != 9312 || f.failing != 605 || f.cooled != 71 || f.uncrawled != 3339 {
+		t.Errorf("fleet = %d/%d/%d/%d, want 9312/605/71/3339", f.healthy, f.failing, f.cooled, f.uncrawled)
 	}
 	if !got.newestJob.Equal(time.Unix(1786821346, 0)) {
 		t.Errorf("newestJob = %v, want %v", got.newestJob, time.Unix(1786821346, 0))

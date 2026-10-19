@@ -24,10 +24,19 @@ func fullSnapshot() snapshot {
 			{name: "auto_apply_queue", depth: 6, deadLetters: ptr(int64(1)), blocked: ptr(int64(22)), oldestAgeSeconds: 300},
 			{name: "push_ticket_outbox", depth: 48, oldestAgeSeconds: 1200},
 		},
-		healthyBoards:              74894,
-		failingBoards:              7002,
-		cooledBoards:               1882,
-		newestJob:                  time.Unix(1786821346, 0),
+		newestJob: time.Unix(1786821346, 0),
+		// The fleet-wide board family is summed from these two, so it is pinned below as
+		// their sum: 74894 healthy, 7002 failing, 1882 cooled, 3624 uncrawled.
+		providers: []providerHealth{
+			{
+				name: "greenhouse", lastSuccess: time.Unix(1786821000, 0), firstListed: time.Unix(1780000000, 0),
+				healthy: 74894, failing: 7000, cooled: 1880, uncrawled: 300,
+			},
+			// The shape that vanished on 2026-10-19: freshly re-keyed, never once
+			// succeeded, almost every board still uncrawled. No timestamp sample, but a
+			// first-listed one and a full set of board states.
+			{name: "gupy", firstListed: time.Unix(1792436951, 0), failing: 2, cooled: 2, uncrawled: 3324},
+		},
 		notifyPendingSubscriptions: 12,
 		notifyOldestAgeSeconds:     184.25,
 	}
@@ -71,9 +80,27 @@ freehire_notify_oldest_pending_age_seconds 184.250
 freehire_boards_total{state="healthy"} 74894
 freehire_boards_total{state="failing"} 7002
 freehire_boards_total{state="cooled"} 1882
+freehire_boards_total{state="uncrawled"} 3624
 # HELP freehire_catalogue_newest_job_timestamp_seconds Unix time the newest open job was created.
 # TYPE freehire_catalogue_newest_job_timestamp_seconds gauge
 freehire_catalogue_newest_job_timestamp_seconds 1786821346
+# HELP freehire_provider_last_success_timestamp_seconds Unix time an ingest provider's most recent board crawl succeeded.
+# TYPE freehire_provider_last_success_timestamp_seconds gauge
+freehire_provider_last_success_timestamp_seconds{provider="greenhouse"} 1786821000
+# HELP freehire_provider_first_listed_timestamp_seconds Unix time an ingest provider's oldest live board entered the catalogue.
+# TYPE freehire_provider_first_listed_timestamp_seconds gauge
+freehire_provider_first_listed_timestamp_seconds{provider="greenhouse"} 1780000000
+freehire_provider_first_listed_timestamp_seconds{provider="gupy"} 1792436951
+# HELP freehire_provider_boards Ingest boards by health state, per provider.
+# TYPE freehire_provider_boards gauge
+freehire_provider_boards{provider="greenhouse",state="healthy"} 74894
+freehire_provider_boards{provider="greenhouse",state="failing"} 7000
+freehire_provider_boards{provider="greenhouse",state="cooled"} 1880
+freehire_provider_boards{provider="greenhouse",state="uncrawled"} 300
+freehire_provider_boards{provider="gupy",state="healthy"} 0
+freehire_provider_boards{provider="gupy",state="failing"} 2
+freehire_provider_boards{provider="gupy",state="cooled"} 2
+freehire_provider_boards{provider="gupy",state="uncrawled"} 3324
 `
 
 func TestRenderMatchesThePublishedContract(t *testing.T) {
@@ -137,14 +164,17 @@ func TestRenderIsValidPrometheusTextFormat(t *testing.T) {
 	}
 
 	want := map[string]int{
-		"freehire_queue_depth":                            5,
-		"freehire_queue_dead_letters":                     4,
-		"freehire_queue_blocked":                          1,
-		"freehire_queue_oldest_age_seconds":               5,
-		"freehire_boards_total":                           3,
-		"freehire_catalogue_newest_job_timestamp_seconds": 1,
-		"freehire_notify_pending_subscriptions":           1,
-		"freehire_notify_oldest_pending_age_seconds":      1,
+		"freehire_queue_depth":                             5,
+		"freehire_queue_dead_letters":                      4,
+		"freehire_queue_blocked":                           1,
+		"freehire_queue_oldest_age_seconds":                5,
+		"freehire_boards_total":                            4,
+		"freehire_catalogue_newest_job_timestamp_seconds":  1,
+		"freehire_provider_last_success_timestamp_seconds": 1,
+		"freehire_provider_first_listed_timestamp_seconds": 2,
+		"freehire_provider_boards":                         8,
+		"freehire_notify_pending_subscriptions":            1,
+		"freehire_notify_oldest_pending_age_seconds":       1,
 	}
 	for name, wantSamples := range want {
 		family, ok := families[name]
@@ -266,7 +296,7 @@ func TestRenderProviderBoardsCoversNeverSucceeded(t *testing.T) {
 	}
 }
 
-// Every sample of a family must follow ONE HELP/TYPE pair, and this family emits three
+// Every sample of a family must follow ONE HELP/TYPE pair, and this family emits four
 // samples per provider — so a loop nested the other way round would interleave the states
 // across providers and still look right sample-by-sample while being an invalid exposition.
 func TestRenderProviderBoardsIsOneWellFormedFamily(t *testing.T) {
@@ -276,9 +306,8 @@ func TestRenderProviderBoardsIsOneWellFormedFamily(t *testing.T) {
 		{name: "gulftalent", failing: 1},
 	}
 
-	// Parsed rather than counted, and with providers present, because fullSnapshot() has
-	// none — so TestRenderIsValidPrometheusTextFormat never sees these two families at all
-	// and the parser has never validated them. This family emits three samples per
+	// Parsed rather than counted, with a provider shape fullSnapshot() does not carry (a
+	// never-succeeded provider with no uncrawled boards). This family emits four samples per
 	// provider, which is the shape a loop nested the other way round would interleave:
 	// still correct sample-by-sample, and an invalid exposition that the textfile
 	// collector answers by silently skipping the file.
@@ -291,8 +320,8 @@ func TestRenderProviderBoardsIsOneWellFormedFamily(t *testing.T) {
 	if !ok {
 		t.Fatal("parsed exposition is missing family freehire_provider_boards")
 	}
-	if got, want := len(family.GetMetric()), len(s.providers)*3; got != want {
-		t.Errorf("family has %d samples, want %d (three states per provider)", got, want)
+	if got, want := len(family.GetMetric()), len(s.providers)*4; got != want {
+		t.Errorf("family has %d samples, want %d (four states per provider)", got, want)
 	}
 	if family.GetType() != dto.MetricType_GAUGE {
 		t.Errorf("family parsed as %v, want GAUGE", family.GetType())
@@ -427,5 +456,73 @@ func TestRenderIngestFamiliesAreWellFormed(t *testing.T) {
 		if family.GetType() != dto.MetricType_GAUGE {
 			t.Errorf("%s parsed as %v, want GAUGE", name, family.GetType())
 		}
+	}
+}
+
+// A provider that has never succeeded has no timestamp, so first-listed is the only age it
+// has — and it must be published, or every age-based rule loses it exactly when it is most
+// broken. gupy, 2026-10-19: 3,324 freshly re-keyed boards, none crawled, no series at all.
+func TestRenderFirstListedCoversNeverSucceeded(t *testing.T) {
+	s := fullSnapshot()
+	s.providers = []providerHealth{
+		{name: "gupy", firstListed: time.Unix(1792436951, 0), uncrawled: 3324},
+	}
+	got := render(s)
+	if strings.Contains(got, "freehire_provider_last_success_timestamp_seconds") {
+		t.Errorf("a provider with no success must publish no timestamp\ngot:\n%s", got)
+	}
+	for _, want := range []string{
+		`freehire_provider_first_listed_timestamp_seconds{provider="gupy"} 1792436951`,
+		`freehire_provider_boards{provider="gupy",state="uncrawled"} 3324`,
+		`freehire_boards_total{state="uncrawled"} 3324`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("exposition missing %q\ngot:\n%s", want, got)
+		}
+	}
+}
+
+// The fleet-wide family is the per-provider one summed, so a dashboard stacking the two
+// cannot disagree with itself. Checked through the parser over the published text, which is
+// what a consumer actually adds up.
+func TestRenderFleetIsTheSumOfProviders(t *testing.T) {
+	parser := expfmt.NewTextParser(model.UTF8Validation)
+	families, err := parser.TextToMetricFamilies(strings.NewReader(render(fullSnapshot())))
+	if err != nil {
+		t.Fatalf("rendered exposition does not parse: %v", err)
+	}
+	perState := map[string]float64{}
+	for _, m := range families["freehire_provider_boards"].GetMetric() {
+		for _, l := range m.GetLabel() {
+			if l.GetName() == "state" {
+				perState[l.GetValue()] += m.GetGauge().GetValue()
+			}
+		}
+	}
+	fleet := families["freehire_boards_total"].GetMetric()
+	if len(fleet) != 4 {
+		t.Fatalf("freehire_boards_total has %d samples, want 4", len(fleet))
+	}
+	for _, m := range fleet {
+		state := m.GetLabel()[0].GetValue()
+		if got, want := m.GetGauge().GetValue(), perState[state]; got != want {
+			t.Errorf("freehire_boards_total{state=%q} = %v, providers sum to %v", state, got, want)
+		}
+	}
+}
+
+// No provider at all still publishes the fleet family as explicit zeros: the rules read an
+// absent series as a dead exporter, and an empty catalogue is not one.
+func TestRenderPublishesAnEmptyFleetAsZeroes(t *testing.T) {
+	s := fullSnapshot()
+	s.providers = nil
+	got := render(s)
+	for _, st := range []string{"healthy", "failing", "cooled", "uncrawled"} {
+		if want := `freehire_boards_total{state="` + st + `"} 0`; !strings.Contains(got, want) {
+			t.Errorf("exposition missing %q\ngot:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "freehire_provider_first_listed_timestamp_seconds") {
+		t.Errorf("first-listed family must be omitted with no providers\ngot:\n%s", got)
 	}
 }

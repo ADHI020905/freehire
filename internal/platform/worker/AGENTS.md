@@ -99,6 +99,21 @@ failure to notice: `notify` reported `delivered=1 failed=0` for weeks while 1.14
 sat undelivered (2026-09-04, see [docs/agents/notifications.md](../../../docs/agents/notifications.md)).
 An oldest-pending age climbing past a few passes is the signal; `failed` never moved.
 
+**Per provider, by the same worker** — `freehire_provider_boards` labelled by `provider` and
+`state` (`healthy`/`failing`/`cooled`/`uncrawled`), `freehire_provider_last_success_timestamp_seconds`
+and `freehire_provider_first_listed_timestamp_seconds`, both labelled by `provider`.
+`freehire_boards_total` is these board counts summed, so the two families cannot disagree.
+**The population is the catalogue** — every `pending`/`active` row in `boards`, with
+`board_health` joined onto it — never `board_health` alone: a board nobody has crawled yet
+has no health row, so a freshly re-keyed provider used to vanish from every provider family
+(gupy, 2026-10-19: 3,324 uncrawled boards, no series, on day 19 of its API being dead),
+while a retired provider's leftover health rows kept it exported (apploi, 5,833 retired
+boards). The last-success sample is ABSENT for a provider no live board of which has ever
+succeeded; first-listed is the fallback for that case — the oldest live board's
+`created_at`, never the newest, or adding a board would restart a failing provider's clock
+— so a rule writes `time() - (last_success or first_listed)` and gets an honest silence for
+every provider. See `ProviderIngestHealth` in `internal/platform/db/queries/metrics.sql`.
+
 **Per source, by the same worker** — `freehire_ingest_{rows_written,distinct_postings}`
 labelled by `provider`, over a ten-minute window. Every family above answers *is something
 failing*; this one answers *is what succeeded worth anything*, which is the question the
