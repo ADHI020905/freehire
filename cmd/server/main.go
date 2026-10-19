@@ -194,6 +194,16 @@ func main() {
 		startSuggestRefresh(ctx, suggestSvc)
 	}
 
+	// An agent's opt-in semantic search embeds its query against EMBED_URL. Unset, the
+	// embedder is nil and every such request is answered keyword-only and told so — which
+	// is also the rollback. A value that is set but unreadable fails the start: a mistyped
+	// threshold would otherwise look exactly like a tuned one.
+	semanticCfg, err := config.LoadSemanticSearch()
+	if err != nil {
+		log.Fatalf("semantic search: %v", err)
+	}
+	queryEmbedder := search.NewQueryEmbedder(semanticCfg.URL, semanticCfg.APIKey, semanticCfg.QueryTimeout)
+
 	// Résumé storage is optional: only when all four S3 settings are present does
 	// blobstore.New build a client (it returns nil otherwise). Nil disables storage —
 	// résumé upload still extracts skills in-request and the verdict falls back to a
@@ -344,6 +354,8 @@ func main() {
 		GmailConnector:              gmailConnector,
 		GmailCipher:                 gmailCipher,
 		OJCPSigner:                  ojcpSigner,
+		QueryEmbedder:               queryEmbedder,
+		SemanticScoreThreshold:      semanticCfg.ScoreThreshold,
 		MailboxDomain:               cfg.MailboxDomain,
 		Search:                      searchClient,
 		Suggest:                     suggestSvc,

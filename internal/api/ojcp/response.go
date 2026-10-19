@@ -23,7 +23,21 @@ type SearchJobsResponse struct {
 	// jobs within 20 miles and silently received the whole catalogue cannot tell the
 	// narrowing never happened, and neither can the person reading what it found.
 	IgnoredParams []string `json:"ignored_params,omitempty"`
+	// Semantic reports which search answered an agent that asked for semantic search
+	// (SearchInput.Semantic): SemanticApplied or SemanticUnavailable. Omitted when it did
+	// not ask. An EXTENSION for the same reason as IgnoredParams — an answer that degraded
+	// to keyword-only has to say so, or an agent reads keyword relevance as meaning.
+	Semantic string `json:"semantic,omitempty"`
 }
+
+// The two values of SearchJobsResponse.Semantic.
+const (
+	// SemanticApplied: the query was embedded and the hybrid search ran.
+	SemanticApplied = "applied"
+	// SemanticUnavailable: the embedding backend was absent, slow or failing, and the
+	// answer is the keyword search.
+	SemanticUnavailable = "unavailable"
+)
 
 // Finalize stamps the version and derives what can be derived. `jobs` is required by the
 // schema, so an empty page serialises as [] rather than null: a null there reads as "this

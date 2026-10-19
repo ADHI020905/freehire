@@ -313,7 +313,14 @@ func (im *Importer) index(ctx context.Context, saved db.UpsertJobRow) {
 	}); err == nil {
 		repost, mass = c.RepostCount, c.MassCount
 	}
-	doc, err := search.FromJob(saved.Job)
+	// A re-imported posting may already carry description vectors in the index. A document
+	// built without them would clear them, so a failed read skips this best-effort push.
+	desc, err := search.ChunkVectorsForJobs(ctx, im.q, []int64{saved.Job.ID})
+	if err != nil {
+		log.Printf("linkimport: chunk vectors for job %d: %v", saved.Job.ID, err)
+		return
+	}
+	doc, err := search.FromJob(saved.Job, desc[saved.Job.ID])
 	if err != nil {
 		log.Printf("linkimport: build index doc for job %d: %v", saved.Job.ID, err)
 		return

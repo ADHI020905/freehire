@@ -4395,6 +4395,12 @@ type Querier interface {
 	// One candidate's whole bank, newest first — what the management surface lists and what the
 	// profile assembler merges into the answer map.
 	ListScreeningAnswers(ctx context.Context, userID int64) ([]ScreeningAnswerBank, error)
+	// Every chunk vector of a BATCH of jobs, for the search-index writers that copy them into
+	// the jobs index's `desc` embedder (openspec/changes/agent-semantic-search, Decision 3).
+	// One call per writer batch, never one per document: a full rebuild walks the whole open
+	// catalogue, and ~862k of those jobs carry chunks. Ordered so a caller can group rows by
+	// job without sorting, and so a job's vectors keep their chunk order.
+	ListSemanticChunksForJobs(ctx context.Context, jobIds []int64) ([]JobSemanticChunk, error)
 	// Companies whose ingested name is still a squished slug (lowercase, no
 	// whitespace or uppercase) and that have at least one open job, with a
 	// representative open job's source and URL so the backfill worker can locate the

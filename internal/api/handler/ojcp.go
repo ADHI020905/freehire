@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"strconv"
 	"time"
 
@@ -46,6 +47,18 @@ type ojcpHandlers struct {
 	// signer signs the manifest and publishes the key that verifies it. Nil means this
 	// deployment has no signing key: the manifest goes out unsigned and no key set exists.
 	signer *ojcp.Signer
+	// embedder turns an agent's query into a vector for its opt-in semantic search. Nil
+	// means no embedding backend is configured, and every request that asks for semantic
+	// search is answered keyword-only and told so.
+	embedder queryEmbedder
+	// scoreThreshold is the ranking-score floor of a hybrid query (see
+	// search.SearchParams.ScoreThreshold).
+	scoreThreshold float64
+}
+
+// queryEmbedder is the query-side embedding call. *search.QueryEmbedder satisfies it.
+type queryEmbedder interface {
+	EmbedQuery(ctx context.Context, text string) ([]float32, error)
 }
 
 // newOJCPHandlers builds the OJCP surface.
@@ -165,7 +178,7 @@ func (h *ojcpHandlers) OJCPSearchJobs(c *fiber.Ctx) error {
 //
 // It runs the query the public search runs, built from the same values. OJCP has no sort
 // directive and no match vector, so neither is read — the index's own relevance ordering is
-// what an agent gets.
+// what an agent gets, unless it opts into semantic search (see hybridSearch).
 func (h *ojcpHandlers) SearchJobs(ctx context.Context, input ojcp.SearchInput) (ojcp.SearchJobsResponse, error) {
 	if h.search == nil {
 		return ojcp.SearchJobsResponse{}, fiber.NewError(fiber.StatusServiceUnavailable, "search is not available")
@@ -174,12 +187,33 @@ func (h *ojcpHandlers) SearchJobs(ctx context.Context, input ojcp.SearchInput) (
 	values, unsupported := input.QueryValues()
 	limit, offset := input.Page()
 
-	res, err := h.search.Search(ctx, search.SearchParams{
+	params := search.SearchParams{
 		Query:  values.Get("q"),
 		Filter: search.FilterFromValues(values),
 		Limit:  limit,
 		Offset: offset,
-	})
+	}
+	var (
+		res      search.SearchResult
+		err      error
+		semantic string
+	)
+	switch {
+	case !input.WantsSemantic():
+		res, err = h.search.Search(ctx, params)
+	case params.Query == "":
+		// Nothing to embed: a semantic search over no text is the plain filtered listing,
+		// so the flag was not honoured and says so like any dropped param.
+		unsupported = append(unsupported, "semantic")
+		res, err = h.search.Search(ctx, params)
+	default:
+		var applied bool
+		res, applied, err = h.hybridSearch(ctx, params)
+		semantic = ojcp.SemanticUnavailable
+		if applied {
+			semantic = ojcp.SemanticApplied
+		}
+	}
 	if err != nil {
 		return ojcp.SearchJobsResponse{}, err
 	}
@@ -195,7 +229,43 @@ func (h *ojcpHandlers) SearchJobs(ctx context.Context, input ojcp.SearchInput) (
 		Offset:        offset,
 		Jobs:          jobs,
 		IgnoredParams: unsupported,
+		Semantic:      semantic,
 	}.Finalize(), nil
+}
+
+// hybridSearch runs params as a hybrid (keyword + description vector) query and reports
+// whether the hybrid is what answered.
+//
+// Every way the hybrid can fail ends in the keyword search, never an error: the backend
+// absent, the embed failing or outlasting its timeout, or the engine refusing the hybrid
+// request — which is what a binary querying `desc` before the live index declares it
+// gets (see internal/search/search/AGENTS.md). Only a failure the keyword search would
+// share — the engine unreachable — reaches the caller.
+func (h *ojcpHandlers) hybridSearch(ctx context.Context, params search.SearchParams) (search.SearchResult, bool, error) {
+	if h.embedder == nil {
+		res, err := h.search.Search(ctx, params)
+		return res, false, err
+	}
+	vec, err := h.embedder.EmbedQuery(ctx, params.Query)
+	if err != nil {
+		if ctx.Err() != nil {
+			return search.SearchResult{}, false, ctx.Err()
+		}
+		log.Printf("ojcp: semantic search fell back to keyword: %v", err)
+		res, err := h.search.Search(ctx, params)
+		return res, false, err
+	}
+
+	hybrid := params
+	hybrid.SemanticVector = vec
+	hybrid.ScoreThreshold = h.scoreThreshold
+	res, err := h.search.Search(ctx, hybrid)
+	if errors.Is(err, search.ErrBadQuery) {
+		log.Printf("ojcp: hybrid query refused, fell back to keyword: %v", err)
+		res, err := h.search.Search(ctx, params)
+		return res, false, err
+	}
+	return res, err == nil, err
 }
 
 // OJCPJobDetail answers `get_job_detail` over REST.

@@ -103,6 +103,14 @@ and the manifest; the two transports that publish it live elsewhere:
   relays this sentence to a candidate and possibly to the employer. Criteria are rendered as
   sentences, never as their internal codes.
 
+- **`semantic` is an extension in both directions.** The input's `semantic: true` asks for
+  hybrid (keyword + description vector) ranking; the response's `semantic` says `applied` or
+  `unavailable`, and is omitted when the agent did not ask. It follows `ignored_params`: an
+  answer that degraded to keyword-only must say so, or an agent reads keyword relevance as a
+  match on meaning. A `semantic: true` with no query has nothing to embed and is reported in
+  `ignored_params`. The behaviour lives in `internal/api/handler/ojcp.go`
+  (`hybridSearch`); see `internal/search/search/AGENTS.md` for the index side.
+
 ## Known gaps in the standard
 
 The reason to hold a seat rather than ask for one:

@@ -415,6 +415,11 @@ type Config struct {
 	// OJCPSigner signs the OJCP manifest. Nil = the manifest is unsigned and no key set is
 	// published.
 	OJCPSigner *ojcp.Signer
+	// QueryEmbedder embeds an agent's query for its opt-in semantic search. Nil = no
+	// embedding backend: such requests are answered keyword-only and say so.
+	QueryEmbedder *search.QueryEmbedder
+	// SemanticScoreThreshold is the ranking-score floor of an agent's hybrid query.
+	SemanticScoreThreshold float64
 	// MailboxDomain enables the hosted-mailbox option: the receiving domain user
 	// addresses live on (<handle>@MailboxDomain). Empty = the feature is off.
 	MailboxDomain string
@@ -690,6 +695,12 @@ func Register(app *fiber.App, cfg Config) {
 	// same catalogue, or the two answers drift.
 	ojcpH := newOJCPHandlers(jobSearch, queries, cfg.FrontendOrigin, atsapply.SubmittableProviders())
 	ojcpH.signer = cfg.OJCPSigner
+	// Assigned only when set: a nil *search.QueryEmbedder in the interface field would be
+	// a non-nil interface, and the handler's "no backend" check would never fire.
+	if cfg.QueryEmbedder != nil {
+		ojcpH.embedder = cfg.QueryEmbedder
+	}
+	ojcpH.scoreThreshold = cfg.SemanticScoreThreshold
 	// The ChatGPT app's MCP surface. A SECOND MCP server beside the OJCP one, over the same
 	// search backend and the same store: that one renders a foreign schema for agents which
 	// branch on error codes, this one renders ours for a language model reading prose. They

@@ -97,6 +97,14 @@ func (ix searchIndexer) IndexBatch(ctx context.Context, jobs []db.Job) error {
 		}
 	}
 
+	// The description vectors carry the same hazard as the geography: a document built
+	// without them sends `desc: null`, which CLEARS the vectors already indexed. So a failed
+	// read skips the wave rather than pushing documents that would erase them.
+	desc, err := search.ChunkVectorsForJobs(ctx, ix.q, geoIDs)
+	if err != nil {
+		return fmt.Errorf("%w: %v", searchdrain.ErrSkipWave, err)
+	}
+
 	docs := make([]search.JobDocument, 0, len(jobs))
 	for _, job := range jobs {
 		// A job whose category neither the title dictionary nor the LLM ever resolved AND
@@ -110,7 +118,7 @@ func (ix searchIndexer) IndexBatch(ctx context.Context, jobs []db.Job) error {
 		if search.CategoryUnresolved(job) || search.DescriptionMissing(job) {
 			continue
 		}
-		doc, err := search.FromJob(job)
+		doc, err := search.FromJob(job, desc[job.ID])
 		if err != nil {
 			return fmt.Errorf("build document (job %d): %w", job.ID, err)
 		}

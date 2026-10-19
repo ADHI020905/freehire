@@ -3,7 +3,9 @@
 Meilisearch-backed keyword/faceted search over jobs and companies. The package doc in
 `client.go` explains the index topology; this file covers what the code can't tell you.
 This package also owns the TEI embedding calls (`embed.go`) that feed the pgvector-backed
-`job_semantic_chunks` table — see `internal/ai/embed/AGENTS.md`. There is no live semantic
+`job_semantic_chunks` table — see `internal/ai/embed/AGENTS.md` — and copies those vectors
+into the jobs index's `desc` embedder for an agent's opt-in semantic search (see
+"Description vectors and the agent's semantic search" below). There is no SEPARATE semantic
 search index anymore: the
 `jobs_semantic` Meilisearch index (and `reindex --semantic`/`--from-pg`/`--posted-within`,
 `SearchParams.SemanticRatio`, `Client.SimilarJobs`/`RecommendByVector`/`EmbedText`) were
@@ -236,6 +238,37 @@ federation pages, deduplicates and merges facets. Two traps:
 The merged sort is global only because the ranking rules put `sort` right after
 `words`. Each hit fully matches its own alternative, so the sort decides.
 Moving `sort` later breaks that, and `TestSearchOperatorsOnRealEngine` catches it.
+
+## Description vectors and the agent's semantic search
+
+The jobs index carries a SECOND `userProvided` embedder, `desc` (768 dims, `descDimensions`),
+holding each posting's `job_semantic_chunks` vectors — one per chunk, so a document is
+multi-vector and Meilisearch scores it by its nearest chunk. Only OJCP's `search_jobs` queries
+it, and only when the agent sends `semantic: true`
+(openspec/changes/agent-semantic-search).
+
+- **Every document writer must pass the chunks to `FromJob`.** `desc` follows the same two
+  states as `skills`: vectors, or an explicit `null` that CLEARS what the index holds — and
+  omitting the key rejects the document. So the chunks are a `FromJob` PARAMETER, read in one
+  query per batch through `ChunkVectorsForJobs`; a writer that could forget them would
+  silently erase vectors instead of failing. A failed chunk read SKIPS the push (the drain
+  returns `ErrSkipWave`, link import skips its best-effort push) for the same reason.
+- **What re-queues a job is a trigger, not a writer.** Migration 0182 puts a job on
+  `search_outbox` whenever its chunk set is inserted, because two processes write chunks and
+  the volunteer broker's is raw SQL in another repository.
+- **The query vector is embedded on the request path by `QueryEmbedder`**, which is not a
+  `Client` method on purpose: a `Client` falls back to `embedderURL` when nothing is
+  configured, while the request path must know it has no backend. One call, its own short
+  timeout, no retry. Any failure — including the engine refusing the hybrid with a 400, the
+  shape a binary querying `desc` before the live settings declare it gets — answers
+  keyword-only and reports `semantic: "unavailable"`.
+- **A hybrid query carries `ScoreThreshold`.** Vector search ranks every embedded document,
+  so without a floor the page fills with distant matches and the estimated total approaches
+  the embedded catalogue (`TestIntegration_HybridSearchFindsByMeaning` fails without it). The
+  value is `SEMANTIC_SCORE_THRESHOLD`, set from sampled agent queries, not a constant here.
+- **Rollout order is the skill embedder's**: deploy → settings → full rebuild → set
+  `EMBED_URL` on the API server → verify. Until `EMBED_URL` is set the flag answers
+  `unavailable`, which is also the rollback.
 
 ## Limitations
 

@@ -8,29 +8,33 @@ import (
 	"github.com/strelov1/freehire/internal/dict/skillvec"
 )
 
-// The facet index carries exactly one embedder, and it must stay model-free: the
-// vectors are arithmetic over a finite dictionary, so a rebuild still contacts no
-// embedding service. A model-backed embedder here would turn every rebuild into a
-// full-catalogue inference run.
-func TestFacetSettingsDeclaresOneModelFreeEmbedder(t *testing.T) {
+// Every embedder the facet index carries must stay model-free: the skill vectors are
+// arithmetic over a finite dictionary, and the description vectors are copied from
+// job_semantic_chunks, so a rebuild still contacts no embedding service. A model-backed
+// embedder here would turn every rebuild into a full-catalogue inference run.
+func TestFacetSettingsDeclaresOnlyModelFreeEmbedders(t *testing.T) {
 	s := facetSettings()
-	if len(s.Embedders) != 1 {
-		t.Fatalf("facetSettings() declares %d embedders, want exactly 1", len(s.Embedders))
+	wantDims := map[string]int64{SkillEmbedder: skillvec.Dimensions, DescEmbedder: descDimensions}
+	if len(s.Embedders) != len(wantDims) {
+		t.Fatalf("facetSettings() declares %d embedders (%v), want %d", len(s.Embedders), s.Embedders, len(wantDims))
 	}
-	e, ok := s.Embedders[SkillEmbedder]
-	if !ok {
-		t.Fatalf("facetSettings() declares no %q embedder; it has %v", SkillEmbedder, s.Embedders)
+	for name, dims := range wantDims {
+		e, ok := s.Embedders[name]
+		if !ok {
+			t.Errorf("facetSettings() declares no %q embedder; it has %v", name, s.Embedders)
+			continue
+		}
+		if e.Source != meilisearch.UserProvidedEmbedderSource {
+			t.Errorf("%s: embedder source = %q, want %q — no model may be called at index time",
+				name, e.Source, meilisearch.UserProvidedEmbedderSource)
+		}
+		if int64(e.Dimensions) != dims {
+			t.Errorf("%s: embedder dimensions = %d, want %d; a mismatch makes the index reject every document",
+				name, e.Dimensions, dims)
+		}
 	}
-	if e.Source != meilisearch.UserProvidedEmbedderSource {
-		t.Errorf("embedder source = %q, want %q — no model may be called at index time",
-			e.Source, meilisearch.UserProvidedEmbedderSource)
-	}
-	if e.Dimensions != skillvec.Dimensions {
-		t.Errorf("embedder dimensions = %d, want %d; a mismatch makes the index reject every document",
-			e.Dimensions, skillvec.Dimensions)
-	}
-	if e.BinaryQuantized {
-		t.Error("binary quantization must stay off: on vectors this sparse it measured recall@20 of 10% against 95% unquantized, and lost the rare-skill signal entirely")
+	if s.Embedders[SkillEmbedder].BinaryQuantized {
+		t.Error("binary quantization must stay off on skills: on vectors this sparse it measured recall@20 of 10% against 95% unquantized, and lost the rare-skill signal entirely")
 	}
 }
 

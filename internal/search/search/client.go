@@ -55,6 +55,10 @@ const (
 	// ops step 8.3), triggering the full-catalogue re-embed through the chunking
 	// pipeline — not bundled into the deploy that shipped the pipeline itself.
 	embedderModel = "intfloat/multilingual-e5-base-chunked-v1"
+	// descDimensions is embedderModel's output width — job_semantic_chunks.embedding is
+	// vector(768) for the same reason. Changing the model's width means a new column, a
+	// re-embed, a settings change and a full rebuild, in that order.
+	descDimensions = 768
 	// embedderURL is the default embedding backend: the host2 TEI's native /embed route
 	// (see embedChunk) — the co-located loopback TEI of the production topology. A worker
 	// can override it (WithEmbedURL, wired from EMBED_URL) to point at a faster backend
@@ -472,6 +476,17 @@ type SearchParams struct {
 	// over vector ranking in Meilisearch, so sending both silently discards the match
 	// order rather than erroring.
 	Vector []float32
+	// SemanticVector, when set, turns a text query into a HYBRID one: Meilisearch blends
+	// the keyword ranking of Query with the nearest description chunk under DescEmbedder,
+	// weighted by semanticRatio. It is the query's own embedding (QueryEmbedder), unlike
+	// Vector, which ranks by a candidate's skills and discards the text score. The two are
+	// mutually exclusive; Vector wins if both are set, since only the match sort sends it.
+	SemanticVector []float32
+	// ScoreThreshold drops hits whose ranking score falls below it. A hybrid query needs
+	// one: vector search ranks EVERY embedded document, so without a floor the page fills
+	// with postings whose only link to the query is a distant vector and the estimated
+	// total approaches the embedded catalogue. Zero sends none.
+	ScoreThreshold float64
 	// QFields restricts Query matching to these searchable attributes (see
 	// QFieldsFromValues). Nil means Meilisearch's default: all of them.
 	QFields []string
@@ -536,9 +551,19 @@ func buildSearchRequest(p SearchParams) *meilisearch.SearchRequest {
 		// SemanticRatio 1.0 asks for pure vector ranking. Anything less blends in the
 		// keyword score, which for the empty query this sort runs under is noise.
 		req.Hybrid = &meilisearch.SearchRequestHybrid{Embedder: SkillEmbedder, SemanticRatio: 1}
+	} else if len(p.SemanticVector) > 0 {
+		req.Vector = p.SemanticVector
+		req.Hybrid = &meilisearch.SearchRequestHybrid{Embedder: DescEmbedder, SemanticRatio: semanticRatio}
 	}
+	req.RankingScoreThreshold = p.ScoreThreshold
 	return req
 }
+
+// semanticRatio is how much of a hybrid query's ranking the description vectors decide
+// (0 = keyword only, 1 = vector only). An even blend keeps an exact title match on top
+// while letting a posting that says the same thing in other words reach the page.
+// Revisited against sampled agent queries in agent-semantic-search's rollout.
+const semanticRatio = 0.5
 
 // Search runs a query against the jobs (facet/keyword) index and decodes the hits.
 func (c *Client) Search(ctx context.Context, p SearchParams) (SearchResult, error) {
@@ -721,6 +746,17 @@ func facetSettings() *meilisearch.Settings {
 			SkillEmbedder: {
 				Source:     meilisearch.UserProvidedEmbedderSource,
 				Dimensions: skillvec.Dimensions,
+			},
+			// The description chunk vectors behind an agent's opt-in semantic search
+			// (openspec/changes/agent-semantic-search). Also `userProvided`: the vectors
+			// are computed outside the engine (cmd/embed, the volunteer broker) and copied
+			// from job_semantic_chunks by the indexers, and the query vector is embedded by
+			// EmbedQuery against the same model. The same two ordering hazards apply as to
+			// the skill embedder above — settings before the binary that queries it, and
+			// no vectors until a full rebuild.
+			DescEmbedder: {
+				Source:     meilisearch.UserProvidedEmbedderSource,
+				Dimensions: descDimensions,
 			},
 		},
 		// Typo tolerance is left at Meilisearch's defaults (on, with sensible min
