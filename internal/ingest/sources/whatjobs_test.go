@@ -366,6 +366,28 @@ func TestWhatJobsRefusesABlankKeyword(t *testing.T) {
 	}
 }
 
+// The whole-inventory board is the deliberate way to ask for everything an account carries: it
+// sends the empty keyword the feed answers with its full pool, and keeps every posting, since there
+// is no keyword for a posting to corroborate.
+func TestWhatJobsWholeInventoryBoardSendsNoKeywordAndKeepsEverything(t *testing.T) {
+	page := `{"data":[
+	  {"title":"Cajero","company":"Super","location":"San José","snippet":"<p>Atención al cliente.</p>","url":"https://whatjobs.com/pub_api__cpl__1__7094"},
+	  {"title":"Enfermera","company":"Clínica","location":"Heredia","snippet":"<p>Turnos.</p>","url":"https://whatjobs.com/pub_api__cpl__2__7094"}]}`
+	fake := (&recordingJSON{}).route("page=1", page)
+
+	jobs, err := NewWhatJobsMarket(fake, "7094", "cr").Fetch(context.Background(), CompanyEntry{Board: " * "})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	q := fake.query(t, 0)
+	if kw, ok := q["keyword"]; !ok || kw[0] != "" {
+		t.Errorf("keyword = %v, want the empty keyword sent explicitly", kw)
+	}
+	if len(jobs) != 2 {
+		t.Errorf("got %d jobs, want both postings kept", len(jobs))
+	}
+}
+
 // A keyword padded with whitespace is still a real keyword; only a blank one is refused.
 func TestWhatJobsTrimsThePaddedKeyword(t *testing.T) {
 	fake := (&recordingJSON{}).route("jobs.json", `{"data":[]}`)

@@ -58,6 +58,13 @@ const (
 	// outlasts that drift, at the cost of a withdrawn posting lingering that long — unavoidable,
 	// since nothing about these postings can be probed.
 	whatjobsSweepGrace = 14 * 24 * time.Hour
+	// whatjobsWholeInventory is the board that asks for an account's ENTIRE pool: the feed answers
+	// the empty keyword with every posting the account carries. It is a sentinel rather than an
+	// empty board because a blank board is how a typo looks, and a typo must not pour a whole pool
+	// into the catalogue — this one has to be written on purpose. It suits the thin accounts, whose
+	// pool fits inside whatjobsMaxPages and holds too little of any one role for keyword slices to
+	// find; a deep account (the US carries ~875k) would only have its first slice read.
+	whatjobsWholeInventory = "*"
 )
 
 // whatjobsMarket describes one WhatJobs publisher account. The vendor issues a separate
@@ -127,6 +134,19 @@ var whatjobsMarkets = []whatjobsMarket{
 	{"gr", "whatjobs-gr", "Greece"},
 	{"ke", "whatjobs-ke", "Kenya"},
 	{"py", "whatjobs-py", "Paraguay"},
+	{"cr", "whatjobs-cr", "Costa Rica"},
+	{"pr", "whatjobs-pr", "Puerto Rico"},
+	{"pa", "whatjobs-pa", "Panama"},
+	{"uy", "whatjobs-uy", "Uruguay"},
+	{"ma", "whatjobs-ma", "Morocco"},
+	{"tz", "whatjobs-tz", "Tanzania"},
+	{"gt", "whatjobs-gt", "Guatemala"},
+	{"dz", "whatjobs-dz", "Algeria"},
+	{"ng", "whatjobs-ng", "Nigeria"},
+	{"do", "whatjobs-do", "Dominican Republic"},
+	{"ec", "whatjobs-ec", "Ecuador"},
+	{"ug", "whatjobs-ug", "Uganda"},
+	{"ru", "whatjobs-ru", "Russia"},
 }
 
 // NewWhatJobs builds the WhatJobs adapter for the default (US) publisher account over the given
@@ -206,11 +226,14 @@ type whatjobsPosting struct {
 func (w whatjobs) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
 	// A blank keyword is refused rather than crawled. Config validation only rejects an EMPTY board,
 	// so an entry padded with whitespace reaches here — and the feed answers a blank keyword with its
-	// whole unfiltered inventory (tens of thousands of postings, most of them not even technical),
-	// which one stray board entry would pour into the catalogue.
+	// whole unfiltered inventory, which one stray board entry would pour into the catalogue. Asking
+	// for that inventory is whatjobsWholeInventory's job, which is written on purpose.
 	keyword := strings.TrimSpace(e.Board)
 	if keyword == "" {
 		return nil, fmt.Errorf("whatjobs: company %q has a blank keyword board", e.Company)
+	}
+	if keyword == whatjobsWholeInventory {
+		keyword = ""
 	}
 	terms := whatjobsCorroborationTerms(keyword)
 	var jobs []Job
