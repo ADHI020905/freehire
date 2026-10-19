@@ -265,7 +265,17 @@ func probeAll(ctx context.Context, client httpClient, p prober, candidates []str
 		go func(slug string) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			name, n, err := p.probe(ctx, client, slug)
+			want := expected[slug]
+			var (
+				name string
+				n    int
+				err  error
+			)
+			if sp, ok := p.(seededProber); ok {
+				name, n, err = sp.probeSeeded(ctx, client, slug, want.company)
+			} else {
+				name, n, err = p.probe(ctx, client, slug)
+			}
 			if err != nil {
 				log.Printf("harvest-boards: probe %s: %v", slug, err)
 				mu.Lock()
@@ -277,7 +287,6 @@ func probeAll(ctx context.Context, client httpClient, p prober, candidates []str
 				return
 			}
 			// The board is live. It still has to be the board we were looking for.
-			want := expected[slug]
 			if reason := mismatchReason(ctx, client, p, slug, name, want); reason != "" {
 				log.Printf("harvest-boards: %s: %s — skipped", slug, reason)
 				mu.Lock()

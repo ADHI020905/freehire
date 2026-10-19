@@ -38,6 +38,14 @@ type prober interface {
 	probe(ctx context.Context, c httpClient, slug string) (company string, openJobs int, err error)
 }
 
+// seededProber is the optional half of the prober contract for a prober that needs the
+// employer the seed names for a candidate in order to probe it at all — today only
+// adapterProber, whose adapters may refuse a company-less board entry. probeAll calls it in
+// place of probe, passing "" when the seed names no company.
+type seededProber interface {
+	probeSeeded(ctx context.Context, c httpClient, slug, company string) (string, int, error)
+}
+
 // idProber is the optional half of the prober contract: it reports the ids of a board's live
 // postings, in the platform's own id space, so a seed that knows one posting's id can identify
 // the board by evidence instead of by a name resemblance.

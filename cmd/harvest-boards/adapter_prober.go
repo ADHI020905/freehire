@@ -44,17 +44,34 @@ var adapterRegistry = sync.OnceValue(func() map[string]sources.Source {
 // (a session-bound careersection flow, or a home-page token exchange) to cheaply reimplement
 // as a one-shot probe — reusing the proven adapter is both correct and DRY. These adapters
 // expose no cheap employer name (the board id is an opaque tenant/host), so the empty name
-// falls back to the seed-supplied company. Best-effort: a fetch error counts the board as not
-// live rather than aborting the run.
+// falls back to the seed-supplied company.
+//
+// A fetch error is returned, so probeAll counts it as a probe failure: an adapter error is as
+// likely a dead platform or a broken adapter as a dead board, and reporting it as "0 postings"
+// is what hides the former behind a clean found=0.
 type adapterProber struct {
 	provider  string
 	newSource func() sources.Source
 }
 
-func (a adapterProber) probe(ctx context.Context, _ httpClient, board string) (string, int, error) {
-	jobs, err := a.newSource().Fetch(ctx, sources.CompanyEntry{Provider: a.provider, Board: board})
+func (a adapterProber) probe(ctx context.Context, c httpClient, board string) (string, int, error) {
+	return a.probeSeeded(ctx, c, board, "")
+}
+
+// probeSeeded runs the adapter with the company the seed names for the board. The entry must
+// carry SOME company: several adapters (hrmanager, tencent) take the posting's employer from
+// the catalogue row rather than the platform and drop every posting when it is empty, so a
+// company-less probe reads every live board as empty — measured on prod 2026-10-19, hrmanager
+// found 0 of 216 seeded boards that way. With no seed company the board id stands in: it is
+// only a label on postings this probe counts and discards, and it is the same fallback
+// chooseCompany puts on the harvested entry.
+func (a adapterProber) probeSeeded(ctx context.Context, _ httpClient, board, company string) (string, int, error) {
+	if company == "" {
+		company = board
+	}
+	jobs, err := a.newSource().Fetch(ctx, sources.CompanyEntry{Provider: a.provider, Board: board, Company: company})
 	if err != nil {
-		return "", 0, nil
+		return "", 0, err
 	}
 	return "", len(jobs), nil
 }

@@ -1,6 +1,13 @@
 package main
 
-import "testing"
+import (
+	"context"
+	"errors"
+	"sync"
+	"testing"
+
+	"github.com/strelov1/freehire/internal/ingest/sources"
+)
 
 // The Cornerstone and Taleo probes run the real (network + stateful) source adapters,
 // so their behavior is validated live by a harvest run, not a fake here; these guard
@@ -75,5 +82,69 @@ func TestProberForRefusesBoardlessProviders(t *testing.T) {
 func TestProberForRefusesUnknownProvider(t *testing.T) {
 	if _, ok := proberFor("nosuchplatform"); ok {
 		t.Error(`proberFor("nosuchplatform") found a prober`)
+	}
+}
+
+// companyGatedSource mimics the adapters that drop a posting when the board entry names no
+// company — hrmanager's job() and tencent's detail mapping both refuse on e.Company == "",
+// because the company label comes from the catalogue row rather than the platform. Handed a
+// company-less entry it returns nothing for a board that is live.
+type companyGatedSource struct {
+	live map[string]int
+	mu   sync.Mutex
+	seen []sources.CompanyEntry
+}
+
+func (*companyGatedSource) Provider() string { return "gated" }
+
+func (s *companyGatedSource) Fetch(_ context.Context, e sources.CompanyEntry) ([]sources.Job, error) {
+	s.mu.Lock()
+	s.seen = append(s.seen, e)
+	s.mu.Unlock()
+	if e.Company == "" {
+		return nil, nil
+	}
+	return make([]sources.Job, s.live[e.Board]), nil
+}
+
+func TestAdapterProbeFindsBoardsOfACompanyGatedAdapter(t *testing.T) {
+	src := &companyGatedSource{live: map[string]int{"energinet": 32, "aab": 6}}
+	p := adapterProber{provider: "gated", newSource: func() sources.Source { return src }}
+	// One candidate the seed names an employer for, one it does not.
+	expected := map[string]expectation{"energinet": {company: "Energinet"}}
+
+	kept, failures, _ := probeAll(context.Background(), nil, p, []string{"energinet", "aab"}, expected, defaultProbeWorkers)
+
+	if failures != 0 {
+		t.Errorf("failures = %d, want 0", failures)
+	}
+	if len(kept) != 2 {
+		t.Fatalf("kept = %+v, want both live boards — a company-gated adapter must not read as dead", kept)
+	}
+	for _, e := range src.seen {
+		if e.Company == "" {
+			t.Errorf("board %q probed with no company", e.Board)
+		}
+		if e.Board == "energinet" && e.Company != "Energinet" {
+			t.Errorf("energinet probed with company %q, want the seed's %q", e.Company, "Energinet")
+		}
+	}
+}
+
+type failingSource struct{}
+
+func (failingSource) Provider() string { return "failing" }
+
+func (failingSource) Fetch(context.Context, sources.CompanyEntry) ([]sources.Job, error) {
+	return nil, errors.New("platform down")
+}
+
+func TestAdapterProbeCountsAFetchErrorAsAFailure(t *testing.T) {
+	p := adapterProber{provider: "failing", newSource: func() sources.Source { return failingSource{} }}
+
+	kept, failures, _ := probeAll(context.Background(), nil, p, []string{"a", "b"}, nil, defaultProbeWorkers)
+
+	if len(kept) != 0 || failures != 2 {
+		t.Errorf("kept=%d failures=%d, want 0 and 2 — a dead platform must not read as empty boards", len(kept), failures)
 	}
 }
