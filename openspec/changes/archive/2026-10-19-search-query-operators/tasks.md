@@ -29,5 +29,5 @@ Step-by-step code for each task: `docs/superpowers/plans/2026-10-18-search-query
 ## 6. Ship
 
 - [x] 6.1 Full gate: gofmt, vet (plain and integration), unit tests, the search integration suite.
-- [ ] 6.2 PR → CI → merge → deploy, then the live check.
-- [ ] 6.3 PR to MadsLorentzen/ai-job-search saying that freehire honours the operators.
+- [x] 6.2 PR → CI → merge → deploy, then the live check.
+- [x] 6.3 Told MadsLorentzen/ai-job-search (comment on their #653, which writes the freehire query-syntax line).
