@@ -371,6 +371,10 @@ type Config struct {
 	// SearchIntentLLM backs the AI filter. Separate for latency, not capability — see
 	// config.SearchIntentModel.
 	SearchIntentLLM *llm.Client
+	// ResumeExtractLLM backs the structured parse of a stored CV — free for every
+	// account, so on its own cheap model (config.ResumeExtractModel). Nil falls back to
+	// LLM.
+	ResumeExtractLLM *llm.Client
 	// TypesafeAPIKey backs the Jev provider for the autofill agent's Choose call
 	// (autofillagent.JevPlanner). Empty disables it: Choose answers through LLM alone.
 	TypesafeAPIKey string
@@ -582,7 +586,7 @@ func Register(app *fiber.App, cfg Config) {
 	// its reasoning model is slow (tens of seconds per stage), so the default would time
 	// out mid-stage. Nil-safe (a nil client stays nil → Analyze is a no-op).
 	matchAnalyzer := matchanalysis.NewAnalyzer(cfg.LLM.WithTimeout(matchAnalysisLLMTimeout))
-	structuredExtractor := resumeextract.NewExtractor(cfg.LLM.WithTimeout(resumeExtractLLMTimeout), cfg.PIIDetector)
+	structuredExtractor := resumeextract.NewExtractor(cmp.Or(cfg.ResumeExtractLLM, cfg.LLM).WithTimeout(resumeExtractLLMTimeout), cfg.PIIDetector)
 	plans := plan.NewStore(queries, cfg.Pool, cfg.Plan)
 	// Imports fetch a user-supplied page, so they dial through ingestClient (built above,
 	// where the comment on it is). cfg.Search may be nil (no engine configured), which only
@@ -723,7 +727,7 @@ func Register(app *fiber.App, cfg Config) {
 	geoH := newGeoHandlers()
 	trackingH := newTrackingHandlers(queries, cfg.Pool, jobSearch)
 	timelineH := newTimelineHandlers(queries)
-	resumeH := newResumeHandlers(resumeStore, structuredExtractor, facets, profileSvc, atsAnalyzer, queries, entitlementOf(plans))
+	resumeH := newResumeHandlers(resumeStore, structuredExtractor, facets, profileSvc, atsAnalyzer, queries)
 	photoH := newPhotoHandlers(photoStore)
 	// Same reason as jobSearch above: a nil *speech.Client wrapped in the transcriber
 	// interface would be a non-nil interface, and the handler's "no gateway here"

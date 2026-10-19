@@ -114,6 +114,12 @@ func TestTheBindingFailsClosedWithoutThePaidMark(t *testing.T) {
 	if _, err := b.caller(paid, 7, llm.Feature(tagATSReview)); err != nil {
 		t.Errorf("caller on a paid context: %v", err)
 	}
+
+	// The one call every account gets (the CV parse) carries its own mark, and passes.
+	free := plan.WithFreeAI(unpaid)
+	if _, err := b.caller(free, 7, llm.Feature(tagCVExtract)); err != nil {
+		t.Errorf("caller on a free-AI context: %v", err)
+	}
 }
 
 // Every user-attributed model call in this package must go through the binding, because the

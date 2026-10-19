@@ -20,10 +20,8 @@
  *
  *  'idle' covers three situations the candidate cannot tell apart and does not need to: no
  *  CV, a parse that landed, and a parse still running after the wizard stopped waiting. Only
- *  'failed' is a thing we owe them an explanation for. 'requires_plan' is the server's
- *  `parse_status` for an extraction skipped because the account is free — the CV was read,
- *  the model was not called — and must never be told as a failure to read it. */
-export type CvParseState = 'idle' | 'waiting' | 'failed' | 'requires_plan';
+ *  'failed' is a thing we owe them an explanation for. */
+export type CvParseState = 'idle' | 'waiting' | 'failed';
 
 /** The waits, in order, between one read of `GET /me/resume` and the next. */
 const DELAYS_MS = [800, 1200, 2000, 3000, 5000, 8000, 8000, 8000, 8000, 8000, 8000, 8000];

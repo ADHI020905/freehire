@@ -147,6 +147,11 @@ type Settings struct {
 	// answers in ~2.3s against ~4s-and-spiking for the shared one, at the same
 	// accuracy. Empty falls back to LLMModel.
 	SearchIntentModel string
+	// ResumeExtractModel is the model a stored CV is parsed on. It is separate because
+	// the parse is the one model call every account gets, paid or not, so it runs on a
+	// cheap model rather than on whatever the paid features chose. Empty falls back to
+	// LLMModel.
+	ResumeExtractModel string
 	// AssistantMaxPrompt is the max rune length of one user message to the
 	// assistant. Default 8000; override with ASSISTANT_MAX_PROMPT. Values below 1
 	// fall back to the default so a typo cannot erase the ceiling.
@@ -439,6 +444,7 @@ func Load() Settings {
 
 		AssistantModel:     os.Getenv("ASSISTANT_MODEL"),
 		SearchIntentModel:  os.Getenv("SEARCH_INTENT_MODEL"),
+		ResumeExtractModel: os.Getenv("RESUME_EXTRACT_MODEL"),
 		AssistantMaxSteps:  envInt("ASSISTANT_MAX_STEPS", 0),
 		AssistantMaxPrompt: envInt("ASSISTANT_MAX_PROMPT", defaultAssistantMaxPrompt),
 

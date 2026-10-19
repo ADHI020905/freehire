@@ -15,15 +15,13 @@
   import { onDestroy } from 'svelte';
   import { Briefcase, FolderKanban, Plus, Sparkles } from '@lucide/svelte';
   import type { Component } from 'svelte';
-  import { api, isPlanRefusal } from '$lib/api';
-  import { currentUser } from '$lib/auth.svelte';
+  import { api } from '$lib/api';
   import { Button, ConfirmDialog, FormField, Input } from '$lib/ui';
   import CompanyPicker from '$lib/components/CompanyPicker.svelte';
   import ExperienceAssistantPanel from '$lib/components/ExperienceAssistantPanel.svelte';
   import ExperienceEmploymentCard from '$lib/components/ExperienceEmploymentCard.svelte';
   import ExperienceAchievementRow from '$lib/components/ExperienceAchievementRow.svelte';
   import States from '$lib/components/States.svelte';
-  import PlanLimitLink from '$lib/components/PlanLimitLink.svelte';
   import PeriodDateInput from '$lib/components/PeriodDateInput.svelte';
   import { profileKickoff } from '$lib/assistant/presets';
   import { findFirstUnconfirmed, isUnconfirmed, sortNeedsAttentionFirst } from '$lib/experienceBank';
@@ -132,7 +130,6 @@
    *  an empty-looking bank raises, surfaced here (and in Tailor's Experience tab, which
    *  mounts this same component) rather than only once, during onboarding. */
   let resumeParse = $state<CvParseState>('idle');
-  const isFree = $derived((currentUser()?.tier ?? 'free') === 'free');
   // Supersedes an in-flight wait the same way onboarding's own `waitToken` does: a newer
   // retry, or the component going away, must stop a stale poll from overwriting a fresher
   // state.
@@ -142,12 +139,9 @@
     resumeWaitToken++;
   });
 
-  /** The bank's reading of the server's `parse_status`. A skipped-for-plan extraction keeps
-   *  its own state: telling a free candidate we "couldn't read" their CV is false. */
+  /** The bank's reading of the server's `parse_status`. */
   function parseState(status: string | undefined): CvParseState {
-    if (status === 'failed') return 'failed';
-    if (status === 'requires_plan') return 'requires_plan';
-    return 'idle';
+    return status === 'failed' ? 'failed' : 'idle';
   }
 
   async function loadResumeStatus() {
@@ -173,9 +167,9 @@
     resumeParse = 'waiting';
     try {
       await api.retryResumeExtract();
-    } catch (e) {
+    } catch {
       if (token !== resumeWaitToken) return;
-      resumeParse = isPlanRefusal(e) ? 'requires_plan' : 'failed';
+      resumeParse = 'failed';
       return;
     }
     for (let attempt = 0; ; attempt++) {
@@ -202,8 +196,8 @@
       }
       if (token !== resumeWaitToken) return;
       if (status === 'pending') continue;
-      if (status === 'failed' || status === 'requires_plan') {
-        resumeParse = parseState(status);
+      if (status === 'failed') {
+        resumeParse = 'failed';
         return;
       }
       resumeParse = 'idle';
@@ -534,20 +528,6 @@
         <Button size="sm" variant="outline" onclick={() => void retryResumeExtraction()}>
           Try again
         </Button>
-      </div>
-    {:else if resumeParse === 'requires_plan'}
-      <!-- The CV is stored and read for deterministic matching; only the model that fills
-           this bank from it is paid. A subscriber who uploaded before upgrading gets the
-           same retry a failed parse offers, since the plan no longer stands in the way. -->
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/40 px-4 py-3 text-sm">
-        <p>Filling this from your CV is an AI feature, part of a paid plan.</p>
-        {#if isFree}
-          <PlanLimitLink />
-        {:else}
-          <Button size="sm" variant="outline" onclick={() => void retryResumeExtraction()}>
-            Read my CV
-          </Button>
-        {/if}
       </div>
     {:else if resumeParse === 'waiting'}
       <div class="mb-4 rounded-lg bg-muted/40 px-4 py-3 text-sm text-muted-foreground">

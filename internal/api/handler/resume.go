@@ -50,12 +50,9 @@ type resumeHandlers struct {
 	// on the status read. Nil when the queries are unavailable; both then no-op, exactly
 	// like the other best-effort derivations.
 	bank experienceBank
-	// plans answers whether an upload's background extraction may make a model call
-	// (paidExtraction). Nil means nobody can tell, and the extraction does not run.
-	plans paidEntitlement
 }
 
-func newResumeHandlers(resumeStore *resume.Store, structuredExtractor *resumeextract.Extractor, facets facetCounter, userProfile *userprofile.Service, atsAnalyzer *atscheck.Analyzer, queries *db.Queries, plans paidEntitlement) *resumeHandlers {
+func newResumeHandlers(resumeStore *resume.Store, structuredExtractor *resumeextract.Extractor, facets facetCounter, userProfile *userprofile.Service, atsAnalyzer *atscheck.Analyzer, queries *db.Queries) *resumeHandlers {
 	return &resumeHandlers{
 		resume:              resumeStore,
 		structuredExtractor: structuredExtractor,
@@ -64,7 +61,6 @@ func newResumeHandlers(resumeStore *resume.Store, structuredExtractor *resumeext
 		atsAnalyzer:         atsAnalyzer,
 		atsCache:            queries,
 		bank:                newExperienceBank(queries, userProfile),
-		plans:               plans,
 	}
 }
 
@@ -95,11 +91,10 @@ func (h *resumeHandlers) register(api fiber.Router, mw middleware) {
 	// also stores the résumé once (the single upload point); when not, it stays stateless
 	// (parsed and discarded, only canonical slugs returned).
 	//
-	// Open to free, like PUT /me/resume below, and deliberately NOT behind mw.paidAI: it is
-	// the upload the app actually uses, and storing a CV and the dictionary read are not
-	// model calls. The structured extraction it kicks off in the background is, and it asks
-	// for the paid entitlement itself (paidExtraction) — a free upload records the extract
-	// as failed with "paid plan required" rather than reaching the model.
+	// Open to free, like PUT /me/resume below, and deliberately NOT behind mw.paidAI. The
+	// structured extraction it kicks off in the background is a model call, and the one
+	// every account gets (plan.WithFreeAI): without it the experience bank stays empty, and
+	// somebody who uploads before paying finds every paid feature with nothing to read.
 	api.Post("/me/resume/extract", mw.cookie, h.ExtractResumeProfile)
 
 	// Résumé storage (cookie-only): store the résumé once so the verdict's coherence can
@@ -111,9 +106,8 @@ func (h *resumeHandlers) register(api fiber.Router, mw middleware) {
 	api.Put("/me/resume/contacts", mw.cookie, h.PutResumeContacts)
 	api.Post("/me/resume/contacts/replace-from-cv", mw.cookie, h.ReplaceResumeContactsFromCV)
 	api.Delete("/me/resume", mw.cookie, h.DeleteResume)
-	// The retry exists only to run the model again, so unlike the uploads it sits behind
-	// the paid gate.
-	api.Post("/me/resume/retry-extract", mw.cookie, mw.paidAI(unmeteredAI), h.RetryResumeExtract)
+	// The retry runs the same free extraction again, so it is open to free as well.
+	api.Post("/me/resume/retry-extract", mw.cookie, h.RetryResumeExtract)
 
 	// Stateless market-coverage: score a caller-supplied skill list (request body)
 	// against the facet-filtered market. Cookie or API key — the CLI drives it with
@@ -365,10 +359,7 @@ func (h *resumeHandlers) extractStructuredResume(userID int64, text string, uplo
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), resumeExtractLLMTimeout+30*time.Second)
 	defer cancel()
-	ctx, ok := h.paidExtraction(ctx, userID, *uploadedAt)
-	if !ok {
-		return
-	}
+	ctx = plan.WithFreeAI(ctx)
 	caller, err := h.llm.caller(ctx, userID, llm.Feature(tagCVExtract))
 	if err != nil {
 		log.Printf("resume structured: user %d: %v", userID, err)
@@ -390,53 +381,10 @@ func (h *resumeHandlers) extractStructuredResume(userID int64, text string, uplo
 	h.importExperience(ctx, userID, st, uploadedAt.UTC().Format(time.RFC3339))
 }
 
-// extractNeedsPaidPlan is the extract-failed detail a free upload records. The upload itself
-// succeeded and stays stored; only the model reading it is a paid feature. Recording it as a
-// failed extract — rather than leaving it pending forever — is what lets the profile offer
-// the retry, which runs the moment the account is on a paid plan.
-const extractNeedsPaidPlan = "paid plan required"
-
-// parseStatusRequiresPlan is the wire status of an extraction that never ran because the
-// account is not on a paid plan. It is NOT reported as `failed`: every surface renders a
-// failed parse as "couldn't read your CV", which said something false about the candidate's
-// file to every free account that uploaded one — the CV was read, only the model was not
-// called. Distinct from pending as well, because nothing is coming until the plan changes.
-const parseStatusRequiresPlan = "requires_plan"
-
 // wireParseStatus is the parse status a client sees, and whether a structure is still owed.
-// A failure is reported as pending-structure (the retry may fill it); a skipped-for-plan
-// extraction is not, since no retry will run on its own.
+// A failure is reported as pending-structure (the retry may fill it).
 func wireParseStatus(es resume.ExtractStatus) (status string, pending bool) {
-	if es.Status == resume.ExtractStatusFailed && es.Detail == extractNeedsPaidPlan {
-		return parseStatusRequiresPlan, false
-	}
 	return es.Status, es.Status == resume.ExtractStatusPending || es.Status == resume.ExtractStatusFailed
-}
-
-// paidExtraction decides whether an upload's structured extraction may run, and hands back
-// the context it must run on: one carrying the paid mark the binding checks.
-//
-// It asks here, inside the background run, rather than through the route's middleware,
-// because the upload routes stay open to free — storing a CV and the deterministic skill
-// read are not model calls. A free account, and a plan that could not be read, both stop the
-// run before the model and record why; neither is ever treated as paid.
-func (h *resumeHandlers) paidExtraction(ctx context.Context, userID int64, uploadedAt time.Time) (context.Context, bool) {
-	if h.plans == nil {
-		log.Printf("resume structured: user %d: skipped — no plan store to check the entitlement", userID)
-		_ = h.resume.MarkExtractFailed(ctx, userID, "plan unavailable", uploadedAt)
-		return ctx, false
-	}
-	_, err := h.plans.RequirePaid(ctx, userID)
-	switch {
-	case errors.Is(err, plan.ErrPaymentRequired):
-		_ = h.resume.MarkExtractFailed(ctx, userID, extractNeedsPaidPlan, uploadedAt)
-		return ctx, false
-	case err != nil:
-		log.Printf("resume structured: user %d: entitlement: %v", userID, err)
-		_ = h.resume.MarkExtractFailed(ctx, userID, "plan unavailable", uploadedAt)
-		return ctx, false
-	}
-	return plan.WithPaidAI(ctx), true
 }
 
 // GetResume reports whether the caller has a stored résumé (and when). Always 200:

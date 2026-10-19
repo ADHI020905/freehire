@@ -252,6 +252,15 @@ func main() {
 	}
 	defer intentFlush()
 
+	// Parsing a stored CV is the one model call every account gets, paid or not, so it
+	// runs on its own, cheap model rather than on the paid features' choice. Unset falls
+	// back to LLM_MODEL.
+	resumeExtractLLM, resumeExtractFlush, err := llm.NewClient(cfg.Settings(cmp.Or(cfg.ResumeExtractModel, cfg.Model)), "resume-extract")
+	if err != nil {
+		log.Fatalf("llm (resume extract): %v", err)
+	}
+	defer resumeExtractFlush()
+
 	// Dictation runs on the same gateway and the same key as the two clients above —
 	// an OpenAI-compatible endpoint serves /chat/completions and /audio/transcriptions
 	// alike — so there is nothing extra to configure and nothing extra to fail. Nil
@@ -366,6 +375,7 @@ func main() {
 		LLM:                         llmClient,
 		AssistantLLM:                assistantLLM,
 		SearchIntentLLM:             intentLLM,
+		ResumeExtractLLM:            resumeExtractLLM,
 		TypesafeAPIKey:              cfg.TypesafeAPIKey,
 		AssistantMaxSteps:           cfg.AssistantMaxSteps,
 		AssistantMaxPrompt:          cfg.AssistantMaxPrompt,

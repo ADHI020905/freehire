@@ -46,9 +46,10 @@ type llmBinding struct {
 var errUnpaidModelCall = errors.New("handler: model call without a verified paid entitlement")
 
 // requirePaidCall is the binding's own check, and the one model calls that never come
-// through the binding (dictation, the voice token) make for themselves.
+// through the binding (dictation, the voice token) make for themselves. A call the product
+// deliberately gives every account (plan.WithFreeAI) passes it too.
 func requirePaidCall(ctx context.Context) error {
-	if !plan.PaidAI(ctx) {
+	if !plan.PaidAI(ctx) && !plan.FreeAI(ctx) {
 		return errUnpaidModelCall
 	}
 	return nil

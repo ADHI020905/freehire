@@ -16,6 +16,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"flag"
 	"log"
@@ -73,7 +74,7 @@ func run() int {
 		return 1
 	}
 
-	llmClient, llmFlush, err := llm.NewClient(cfg.Settings(cfg.Model), "resume-structured")
+	llmClient, llmFlush, err := llm.NewClient(cfg.Settings(cmp.Or(cfg.ResumeExtractModel, cfg.Model)), "resume-structured")
 	if err != nil {
 		log.Printf("llm: %v", err)
 		return 1

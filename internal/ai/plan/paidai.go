@@ -53,3 +53,23 @@ func PaidAI(ctx context.Context) bool {
 	v, _ := ctx.Value(paidAIKey{}).(bool)
 	return v
 }
+
+// freeAIKey is the context key WithFreeAI sets, unexported for the same reason as paidAIKey.
+type freeAIKey struct{}
+
+// WithFreeAI marks ctx as carrying a model call the product gives every account, paid or not.
+//
+// It is the one named exception to RequirePaid, and it is a mark rather than a missing check
+// so the user-call binding still fails closed for everything else: a call reaches a model
+// client only through WithPaidAI or here. Today exactly one call takes it — parsing a stored
+// CV, without which the experience bank stays empty and every paid feature that reads it has
+// nothing to work with, including for somebody who uploaded before they paid.
+func WithFreeAI(ctx context.Context) context.Context {
+	return context.WithValue(ctx, freeAIKey{}, true)
+}
+
+// FreeAI reports whether ctx was marked by WithFreeAI.
+func FreeAI(ctx context.Context) bool {
+	v, _ := ctx.Value(freeAIKey{}).(bool)
+	return v
+}
