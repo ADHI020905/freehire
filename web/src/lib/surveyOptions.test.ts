@@ -6,6 +6,7 @@ import {
   JOB_CHALLENGE_OTHER,
   JOB_SEARCH_STAGE_OPTIONS,
   incomeScale,
+  rescaleIncome,
 } from './surveyOptions';
 
 // These values are validated server-side against internal/dict/vocab, and anything outside
@@ -70,5 +71,31 @@ describe('incomeScale', () => {
         expect(max % step).toBe(0);
       }
     }
+  });
+});
+
+describe('rescaleIncome', () => {
+  it('leaves an unanswered slider unanswered', () => {
+    expect(rescaleIncome(null, 'USD', 'month', 'USD', 'year')).toBeNull();
+    expect(rescaleIncome(0, 'USD', 'month', 'RUB', 'month')).toBe(0);
+  });
+
+  it('keeps the same position when the period changes', () => {
+    expect(rescaleIncome(15_000, 'USD', 'month', 'USD', 'year')).toBe(180_000);
+    expect(rescaleIncome(180_000, 'USD', 'year', 'USD', 'month')).toBe(15_000);
+  });
+
+  it('keeps the same position when the currency changes', () => {
+    expect(rescaleIncome(750_000, 'RUB', 'month', 'USD', 'month')).toBe(15_000);
+    expect(rescaleIncome(15_000, 'USD', 'month', 'RUB', 'month')).toBe(750_000);
+  });
+
+  it('keeps an open-ended answer open-ended on the other scale', () => {
+    expect(rescaleIncome(30_000, 'USD', 'month', 'USD', 'year')).toBe(360_000);
+    expect(rescaleIncome(1_500_000, 'RUB', 'month', 'USD', 'month')).toBe(30_000);
+  });
+
+  it('does not move a figure when the scale is unchanged', () => {
+    expect(rescaleIncome(15_000, 'USD', 'month', 'EUR', 'month')).toBe(15_000);
   });
 });

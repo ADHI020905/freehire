@@ -57,6 +57,7 @@ func TestWorkModeFromDescription(t *testing.T) {
 		{"work-from-home day perk", "Take your birthday off, wrap up two hours earlier on Fridays, " +
 			"and enjoy one work-from-home day each week—plus 20 extra remote days from anywhere in the world.", ""},
 		{"work from home weeks perk", "Two work from home weeks a year on top of your holiday.", ""},
+		{"em dash right after the counted days", "45 work-from-home days—giving you the flexibility to work your way.", ""},
 		{"allowance guard does not block a plain statement", "Enjoy 10 work-from-anywhere days. " +
 			"Otherwise this is a work from home position.", "remote"},
 		{"work from home day-to-day is not an allowance", "You will work from home day-to-day " +

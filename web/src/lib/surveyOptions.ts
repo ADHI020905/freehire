@@ -95,3 +95,20 @@ export function incomeScale(currency: string, period: string): IncomeScale {
   const scales = INCOME_SCALES[currency] ?? MAJOR_CURRENCY_SCALE;
   return period === 'year' ? scales.year : scales.month;
 }
+
+export function rescaleIncome(
+  amount: number | null,
+  fromCurrency: string,
+  fromPeriod: string,
+  toCurrency: string,
+  toPeriod: string,
+): number | null {
+  if (amount === null || amount <= 0) return amount;
+  const from = incomeScale(fromCurrency, fromPeriod);
+  const to = incomeScale(toCurrency, toPeriod);
+  if (from.max === to.max && from.step === to.step) return amount;
+  const fraction = Math.min(amount, from.max) / from.max;
+  const snapped = Math.round((fraction * to.max) / to.step) * to.step;
+  if (snapped <= 0) return to.step;
+  return Math.min(snapped, to.max);
+}

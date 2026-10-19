@@ -9,7 +9,7 @@
   //
   // Each slider yields one exact integer, not a range: the screening answer holds one
   // number, the jobs filter's salary floor takes one number, and an ATS form asks for one.
-  import { INCOME_CURRENCIES, INCOME_PERIODS, incomeScale } from '$lib/surveyOptions';
+  import { INCOME_CURRENCIES, INCOME_PERIODS, incomeScale, rescaleIncome } from '$lib/surveyOptions';
 
   interface Props {
     currentIncome: number | null;
@@ -35,6 +35,13 @@
 
   const scale = $derived(incomeScale(currency, period));
 
+  function retarget(nextCurrency: string, nextPeriod: string) {
+    const current = rescaleIncome(currentIncome, currency, period, nextCurrency, nextPeriod);
+    const desired = rescaleIncome(desiredSalary, currency, period, nextCurrency, nextPeriod);
+    if (current !== null && current !== currentIncome) onCurrentIncomeChange(current);
+    if (desired !== null && desired !== desiredSalary) onDesiredSalaryChange(desired);
+  }
+
   // An unanswered slider rests at the bottom without that resting position counting as an
   // answer. Zero is the same non-answer — the save drops it, as both endpoints reject it — so
   // it reads "Not saying" too, which also makes dragging back to the start the way to take an
@@ -57,7 +64,11 @@
   <select
     id="money-currency"
     value={currency}
-    onchange={(e) => onCurrencyChange(e.currentTarget.value)}
+    onchange={(e) => {
+      const next = e.currentTarget.value;
+      retarget(next, period);
+      onCurrencyChange(next);
+    }}
     class="rounded-lg border border-input bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
   >
     {#each INCOME_CURRENCIES as c (c.value)}
@@ -68,7 +79,11 @@
   <select
     id="money-period"
     value={period}
-    onchange={(e) => onPeriodChange(e.currentTarget.value)}
+    onchange={(e) => {
+      const next = e.currentTarget.value;
+      retarget(currency, next);
+      onPeriodChange(next);
+    }}
     class="rounded-lg border border-input bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
   >
     {#each INCOME_PERIODS as p (p.value)}

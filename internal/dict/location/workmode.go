@@ -4,6 +4,7 @@ import (
 	"html"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // descriptionWorkModePhrases maps a work mode to anchored phrases that signal it
@@ -131,7 +132,7 @@ func countsAllowance(rest string) bool {
 		if after == "" {
 			return true
 		}
-		r := rune(after[0])
+		r, _ := utf8.DecodeRuneInString(after)
 		return r != '-' && !unicode.IsLetter(r)
 	}
 	return false
