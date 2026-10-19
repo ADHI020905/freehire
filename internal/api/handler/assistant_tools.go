@@ -133,7 +133,7 @@ func (h *assistantHandlers) searchJobsTool() assistant.Tool {
 		Schema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"query":   map[string]any{"type": "string", "description": "Free-text query. Omit to browse the freshest postings under the filters."},
+				"query":   map[string]any{"type": "string", "description": "Free-text query. Omit to browse the freshest postings under the filters. Operators: double quotes require every quoted word in any order (not a phrase); -word excludes; uppercase OR between terms matches any alternative (at most 5); title: at the start of an alternative matches it in the title only, e.g. title:\"product owner\" OR title:produktchef."},
 				"filters": assistantFilterSchema("Facet filters; values must come from the facets tool."),
 				"limit":   map[string]any{"type": "integer", "description": fmt.Sprintf("How many vacancies to return (default %d, max %d).", assistantDefaultSearchLimit, assistantMaxSearchLimit)},
 				"offset":  map[string]any{"type": "integer", "description": "Skip this many results (paging)."},

@@ -1,0 +1,37 @@
+---
+title: 'Search now understands OR, title: and minus'
+date: 2026-10-19
+summary: 'Ask for several roles in one search, match a role in the job title only, and drop the postings you do not want, straight from the search box.'
+type: changelog
+tags:
+  - search
+  - api
+  - agents
+draft: false
+---
+
+The search box takes a few operators now. Typing plain words works the same as
+before; the operators only apply when you write them.
+
+| Type | What it does |
+|---|---|
+| `golang OR rust` | jobs matching either one. Uppercase `OR`, up to five alternatives |
+| `title:"product owner"` | the role has to be in the job title, not just mentioned somewhere in the description |
+| `-junior` | leaves out postings that match the word |
+| `"product owner"` | every quoted word has to appear, in any order |
+
+They combine. Someone looking for a product role in Danish and English might
+search
+[`title:"product owner" -junior OR title:produktchef`](/jobs?q=title%3A%22product+owner%22+-junior+OR+title%3Aproduktchef)
+and get one list. Each posting appears once, and the filters, sorting and counts
+all apply to the whole result.
+
+`title:` is the one that cuts the most noise. On the day it shipped, a plain
+`"product owner"` search returned 10,354 postings, many of which only mentioned
+a product owner somewhere in the description.
+[`title:"product owner"`](/jobs?q=title%3A%22product+owner%22) returned 6,028.
+
+The same syntax works everywhere freehire can be searched: the site, the
+[public API](/docs/api), the `freehire` command-line tool, the ChatGPT app and
+any AI agent connecting through MCP or OJCP. An agent looking for several job
+titles can now ask once with `OR` instead of making one call per title.

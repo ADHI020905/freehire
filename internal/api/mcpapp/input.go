@@ -26,7 +26,9 @@ const (
 
 // SearchInput is search_jobs' input.
 type SearchInput struct {
-	Query string `json:"query,omitempty" jsonschema:"free text, matched against title, company and description"`
+	// The operators are listed here because a model only writes what the schema tells it
+	// exists; the engine has understood them since freehire#3270.
+	Query string `json:"query,omitempty" jsonschema:"free text, matched against title, company, description and location. Operators: double quotes require every quoted word in any order (not a phrase); -word excludes; uppercase OR between terms matches any alternative (at most 5), e.g. golang OR rust; title: at the start of an alternative matches it in the title only, e.g. title:\"product owner\" OR title:produktchef"`
 
 	Countries []string `json:"countries,omitempty" jsonschema:"ISO 3166-1 alpha-2 codes, e.g. DE, BR"`
 	Cities    []string `json:"cities,omitempty"`

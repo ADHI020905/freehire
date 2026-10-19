@@ -278,3 +278,39 @@ func TestNoToolDescriptionDirectsTheModelToAnotherTool(t *testing.T) {
 		}
 	}
 }
+
+// The search engine understands OR, title:, quotes and -word in the query, but a model
+// only writes them if the tool schema it reads says so. Read the PUBLISHED schema, the
+// thing the model sees, not the struct tag.
+func TestSearchJobsQueryAdvertisesTheOperators(t *testing.T) {
+	session := connect(t, readerThatFinds(t))
+	listed, err := session.ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("tools/list: %v", err)
+	}
+	for _, tool := range listed.Tools {
+		if tool.Name != toolSearchJobs {
+			continue
+		}
+		raw, err := json.Marshal(tool.InputSchema)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var schema struct {
+			Properties map[string]struct {
+				Description string `json:"description"`
+			} `json:"properties"`
+		}
+		if err := json.Unmarshal(raw, &schema); err != nil {
+			t.Fatal(err)
+		}
+		desc := schema.Properties["query"].Description
+		for _, want := range []string{" OR ", "title:", "-word", "quote"} {
+			if !strings.Contains(desc, want) {
+				t.Errorf("query description %q does not mention %q", desc, want)
+			}
+		}
+		return
+	}
+	t.Fatalf("%s is not registered", toolSearchJobs)
+}
