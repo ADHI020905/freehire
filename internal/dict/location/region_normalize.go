@@ -30,11 +30,11 @@ var regionAliases = map[string][]string{
 
 // NormalizeRegions folds a structured region signal into vocab.RegionValues. A
 // canonical value is kept; a country (code, alpha-3 or name) or a country-prefixed
-// subdivision ("us-fl", "ru-mow") folds into its country's region; a macro-region
-// name or a regionAliases label resolves to the region(s) it names. Anything else —
-// a timezone band, an exclusion phrase, a placeholder — is dropped, the same
-// never-guess contract Parse keeps. The result is deduplicated and sorted; nil when
-// nothing resolves.
+// subdivision code of one to three letters or digits ("us-fl", "ru-mow") folds into
+// its country's region; a macro-region name or a regionAliases label resolves to the
+// region(s) it names. Anything else — a timezone band, an exclusion phrase, a
+// placeholder — is dropped, the same never-guess contract Parse keeps. The result is
+// deduplicated and sorted; nil when nothing resolves.
 func NormalizeRegions(in []string) []string {
 	set := make(map[string]struct{}, len(in))
 	for _, raw := range in {
@@ -63,11 +63,23 @@ func normalizeRegion(raw string) []string {
 	if r, ok := countryToRegion[NormalizeCountry(name)]; ok {
 		return []string{r}
 	}
-	// A subdivision code carries its country as a two-letter prefix.
-	if len(v) > 3 && (v[2] == '-' || v[2] == '_') {
-		if r, ok := countryToRegion[v[:2]]; ok {
+	if country, ok := subdivisionCountry(v); ok {
+		if r, ok := countryToRegion[country]; ok {
 			return []string{r}
 		}
 	}
 	return nil
+}
+
+func subdivisionCountry(v string) (string, bool) {
+	if len(v) < 4 || len(v) > 6 || (v[2] != '-' && v[2] != '_') {
+		return "", false
+	}
+	for i := 3; i < len(v); i++ {
+		c := v[i]
+		if (c < 'a' || c > 'z') && (c < '0' || c > '9') {
+			return "", false
+		}
+	}
+	return v[:2], true
 }
