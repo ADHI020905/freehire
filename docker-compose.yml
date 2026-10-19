@@ -85,7 +85,7 @@ services:
       - s3
     entrypoint: >
       /bin/sh -c "
-      until curl -sf -o /dev/null -X PUT http://s3:9090/hire-resumes; do sleep 1; done;
+      until curl -sf -o /dev/null http://s3:9090/hire-resumes || curl -sf -o /dev/null -X PUT http://s3:9090/hire-resumes; do sleep 1; done;
       exit 0;
       "
 
