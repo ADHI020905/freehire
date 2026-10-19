@@ -23,9 +23,14 @@ insert into `job_semantic_chunks` queues its open jobs on `search_outbox`, so th
 the jobs index's `desc` embedder on the next drain rather than the next rebuild
 (openspec/changes/agent-semantic-search). It is a trigger because this table has two writers:
 `cmd/embed` and the volunteer broker (`freehire-volunteer-embed`'s `promote`, raw SQL from
-another repository), which is the catalogue's bulk embedder — the server-side bulk run is kept
-off the TEI the API server embeds agents' queries against, since a query embed measured 0.09s
-on an idle TEI and 8–10s while a bulk drain shared it.
+another repository).
+
+**`cmd/embed` shares its TEI with the API server's query embeds** (agents' opt-in semantic
+search). Measured 2026-10-18: a query embed takes 0.09s on an idle TEI and 8–10s or times out
+while a bulk drain runs on it. The search survives that — it falls back to keyword search and
+reports `semantic: "unavailable"` — but a long catch-up run (the `freehire-embed-supervisor`
+backfill) is a window in which agents get keyword answers. A dedicated query TEI is the fix if
+that window starts to matter.
 
 `cmd/embed` no longer requires `MEILI_MASTER_KEY` at startup — it never touches Meilisearch. `search.NewClient` still takes `cfg.MeiliURL`/`cfg.MeiliKey` positionally (unused for I/O here) purely to keep one constructor shape across callers.
 

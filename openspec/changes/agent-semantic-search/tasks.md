@@ -32,9 +32,9 @@
 
 ## 6. Rollout (prod, in order)
 
-- [ ] 6.1 Deploy; confirm the trigger migration applied and the flag answers `unavailable`
-- [ ] 6.2 freehire-ops: stop `freehire-embed-supervisor`/`freehire-embed-bf` against `10.0.1.2:8081`; confirm the volunteer broker is draining `semantic_outbox`
-- [ ] 6.3 Stop `freehire-reindexw.timer`, patch live settings with `desc`, run a full rebuild; record rebuild time and index size; `search-settings-drift` reports 0
-- [ ] 6.4 Set `EMBED_URL`/`EMBED_API_KEY` for the API server, restart; re-measure query-embed latency now that bulk embedding is off the TEI
+- [x] 6.1 Deploy; confirm the trigger migration applied and the flag answers `unavailable` (2026-10-19: 0182 applied, trigger enabled, `semantic: true` → `unavailable`)
+- [x] 6.2 ~~Stop the server-side bulk embed~~ — dropped by the owner's decision (2026-10-19): `cmd/embed` keeps running on the shared TEI and the keyword fallback absorbs the contention. The `freehire-embed-supervisor` backfill drained and exited on its own at 05:54 UTC; the incremental `freehire-embed.timer` remains
+- [ ] 6.3 Full rebuild with `desc` (deferred by the owner, 2026-10-19). NOTE: the scheduled `freehire-reindexw` run now uses the new binary, so ANY scheduled rebuild adds the vectors — and with `EMBED_URL` already set, semantic search goes live the moment it swaps. Set `SEMANTIC_SCORE_THRESHOLD` (6.6) before that, or skip the scheduled run. Previous rebuild took 6h20m against a 12h unit timeout; record time and index size; `search-settings-drift` reports 0
+- [x] 6.4 `EMBED_URL`/`EMBED_API_KEY` reach the API server already — they sit in the shared `/opt/freehire/.env`. Verified 2026-10-19 by the server log: the query embedded, the hybrid was refused (`Cannot find embedder with name desc`) and fell back. Query embed 0.08s with no bulk run on the TEI
 - [ ] 6.5 Hand-check: same query with/without `semantic`, with filters, with TEI unreachable (expect `unavailable`)
 - [ ] 6.6 Pick `rankingScoreThreshold` and `semanticRatio` from sampled agent queries; then announce the field

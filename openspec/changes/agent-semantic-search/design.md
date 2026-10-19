@@ -95,11 +95,12 @@ agent queries before the flag is announced (task 6.6) — not guessed in code. `
 gains `SemanticVector` and `ScoreThreshold`; `buildSearchRequest` emits the `desc` hybrid
 beside the existing `skills` one, and the match sort's `Vector` wins if both are set.
 
-**7. Bulk embedding off the query TEI.** The server-side bulk worker
-(`freehire-embed-supervisor` → `freehire-embed-bf`) stops draining against `10.0.1.2:8081`.
-The volunteer broker drains `semantic_outbox`; it verifies against its own trusted TEI
-(`127.0.0.1:8094` on fsn), not the query one. `cmd/embed` stays in the repo and can be pointed
-at another endpoint for a catch-up. This is a `freehire-ops` change, not a code change.
+**7. Bulk embedding shares the query TEI (revised 2026-10-19).** The plan was to move bulk
+embedding off `10.0.1.2:8081` to the volunteer broker. The owner kept the server-side
+`cmd/embed` instead: the keyword fallback (Decision 5) already turns contention into
+`semantic: "unavailable"` rather than a slow search, and the large backfill
+(`freehire-embed-supervisor`) drains and exits on its own. A dedicated query TEI stays the
+lever if the `unavailable` rate says so.
 
 **8. Extension fields named plainly.** Input `semantic` (bool), response `semantic`
 (`"applied"` / `"unavailable"`, omitted when not requested), following the `ignored_params`

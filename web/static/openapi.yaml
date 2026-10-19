@@ -299,6 +299,11 @@ paths:
         A filter this provider cannot honour is named in `ignored_params` rather than
         silently dropped: an answer that widened because a parameter was not understood
         says so.
+
+        Send `semantic: true` to rank by meaning as well as keywords (a hybrid search
+        over posting descriptions). The response's `semantic` then says whether that ran
+        (`applied`) or fell back to keyword search (`unavailable`); a slow or absent
+        embedding backend never fails the request.
       x-openai-isConsequential: false
       requestBody:
         required: false
@@ -331,6 +336,12 @@ paths:
                   properties:
                     limit: { type: integer, maximum: 50, default: 10 }
                     offset: { type: integer, default: 0 }
+                semantic:
+                  type: boolean
+                  description: |
+                    Extension. `true` blends meaning-based ranking into the keyword
+                    search. Needs a non-empty `query`; without one it is reported in
+                    `ignored_params`.
       responses:
         "200":
           description: An OJCP search-jobs response.
@@ -354,6 +365,12 @@ paths:
                     type: array
                     description: Input fields this provider could not honour.
                     items: { type: string }
+                  semantic:
+                    type: string
+                    enum: [applied, unavailable]
+                    description: |
+                      Extension. Which search answered a request that sent
+                      `semantic: true`; omitted when it did not.
         default:
           $ref: "#/components/responses/Error"
   /ojcp/v1/jobs/{slug}:

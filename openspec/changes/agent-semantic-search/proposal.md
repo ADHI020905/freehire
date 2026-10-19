@@ -26,9 +26,10 @@ new embedding pipeline.
   computed after the posting was indexed reaches Meilisearch without waiting for a rebuild.
   Done by a database trigger, because two writers exist and one of them lives in another
   repository (`freehire-volunteer-embed`'s `promote`).
-- Bulk catalogue embedding moves to the volunteer broker. The server-side bulk worker stops
-  sharing the TEI the query path uses: measured 2026-10-18, a query embed takes 0.09s on an
-  idle TEI and 8–10s or times out while the bulk worker drains on it.
+- The query embed shares a TEI with bulk catalogue embedding: measured 2026-10-18, it takes
+  0.09s on an idle TEI and 8–10s or times out while a bulk drain runs. The planned move of
+  bulk embedding to the volunteer broker was dropped (2026-10-19, see design Decision 7); the
+  keyword fallback absorbs the contention.
 
 ## Capabilities
 
@@ -54,9 +55,8 @@ new embedding pipeline.
 - **Meilisearch:** settings change + full rebuild required before the flag can return
   `applied`; index grows by an estimated 15–20 GB (849 GB free on the Meili volume). Rebuild
   becomes slower (vector graph over ~2.1M more vectors).
-- **Ops (freehire-ops):** the server-side bulk embed (`freehire-embed-supervisor` /
-  `freehire-embed-bf`) is stopped or pointed away from the query TEI; the volunteer broker
-  becomes the catalogue's bulk embedder. The API server needs `EMBED_URL`/`EMBED_API_KEY`.
+- **Ops:** none beyond the rebuild. The API server reads `EMBED_URL`/`EMBED_API_KEY` from the
+  shared `.env`, where `cmd/embed` already found them.
 - **Not affected:** the public `/jobs/search`, the ChatGPT app (`internal/api/mcpapp`), the
   match sort's `skills` embedder, `/similar`.
 - **Prior art:** `openspec/changes/drop-hybrid-search-pgvector-similar` removed an earlier
