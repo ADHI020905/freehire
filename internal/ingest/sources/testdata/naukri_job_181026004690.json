@@ -1,0 +1,46 @@
+{
+ "jobDetails": {
+  "jobId": "181026004690",
+  "title": "Data Scientist",
+  "description": "<p> </p><p><strong>Job Summary</strong></p><p>We are seeking a Full Stack Data Scientist with strong software-engineering fundamentals and hands-on expertise in machine learning, Generative AI, Retrieval-Augmented Generation (RAG), Graph RAG and Agentic AI. The role owns the complete solution lifecycle, from problem framing and data ingestion through model and agent development, cloud deployment, observability and production support.</p><p>The successful candidate must demonstrate at least one enterprise Agentic AI solution delivered beyond proof of concept, with clear ownership of architecture, orchestration, retrieval, security, monitoring and measurable business outcomes.</p><br /><p><strong>Key Responsibilities</strong></p><p>Data Science & Machine Learning</p><ul><li>Define hypothesis-driven approaches for ambiguous business and technical problems.</li><li>Perform exploratory data analysis, feature engineering, model selection, validation and error analysis.</li><li>Build and evaluate supervised, unsupervised and generative AI solutions using appropriate business and technical measures.</li><li>Create reproducible experimentation, testing and model-evaluation practices.</li></ul><p>Generative AI, RAG & Graph RAG</p><ul><li>Design production-grade LLM applications using prompt engineering, embeddings, vector databases and retrieval pipelines.</li><li>Own document ingestion, parsing, chunking, metadata enrichment, indexing, retrieval, reranking and grounded response generation.</li><li>Design Graph RAG solutions combining knowledge graphs with semantic or vector retrieval where relationship-aware reasoning is required.</li><li>Define evaluation measures for retrieval quality, answer relevance, faithfulness, hallucination control, latency and cost.</li></ul><p>Agentic AI & Workflow Automation</p><ul><li>Design single-agent and multi-agent workflows supporting planning, reasoning, tool use and multi-step execution.</li><li>Implement context management, short-term and durable memory, function or tool calling, guardrails and human-in-the-loop controls.</li><li>Integrate agents with enterprise APIs, data platforms and business workflows.</li><li>Debug and optimize agent behavior, failure handling, retries, routing and task completion.</li></ul><p>Full Stack & Legacy Modernization</p><ul><li>Build Python services, REST APIs and microservices using sound object-oriented design and clean-code practices.</li><li>Integrate AI services with web applications and enterprise systems; frontend exposure to React or Angular is desirable.</li><li>Assess legacy code and data flows, identify modernization opportunities, and apply incremental refactoring and migration best practices.</li><li>Participate in architecture reviews, code reviews, testing and secure engineering practices.</li></ul><p>Cloud, Deployment & Engineering Excellence</p><ul><li>Design and operate AI services on AWS using suitable services such as S3, Lambda, ECS, EKS, Bedrock, SageMaker, IAM, VPC, RDS or DynamoDB.</li><li>Containerize workloads using Docker and deploy through repeatable CI/CD pipelines.</li><li>Apply MLOps practices covering experiment tracking, model and prompt versioning, testing, release controls and rollback.</li><li>Implement logging, metrics, tracing, alerting and dashboards for applications, retrieval pipelines, models and agents.</li><li>Use observability to investigate latency, retrieval quality, tool failures, token consumption, reliability and production incidents.</li><li>Make engineering trade-offs across scalability, security, performance, resilience, maintainability and cost.</li></ul><br />",
+  "companyDetail": {
+   "name": "HCLTech",
+   "websiteUrl": ""
+  },
+  "locations": [
+   {
+    "localities": [],
+    "label": "Bengaluru",
+    "url": "https://www.naukri.com/jobs-in-bangalore"
+   }
+  ],
+  "wfhType": "3",
+  "jobType": "fulltime",
+  "employmentType": "Full Time, Permanent",
+  "createdDate": "2026-10-18 23:33:21",
+  "staticUrl": "https://www.naukri.com/job-listings-data-scientist-hcltech-bengaluru-11-to-14-years-181026004690",
+  "minimumExperience": 11,
+  "maximumExperience": 14,
+  "salaryDetail": {
+   "minimumSalary": 0,
+   "maximumSalary": 0,
+   "currency": "INR",
+   "hideSalary": true,
+   "variablePercentage": 0.0,
+   "label": "Not Disclosed",
+   "salaryText": "Not Disclosed",
+   "minSalaryPerMonth": 0,
+   "maxSalaryPerMonth": 0,
+   "originalMaxSalary": 0,
+   "originalMinSalary": 0,
+   "salaryBreakup": "",
+   "ctcBreakup": ""
+  },
+  "functionalArea": "Engineering - Software & QA",
+  "roleCategory": "Software Development",
+  "industry": "IT Services & Consulting",
+  "jobRole": "Technical Architect",
+  "walkIn": false,
+  "consultant": false
+ }
+}

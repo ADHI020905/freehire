@@ -1,0 +1,45 @@
+{
+ "jobDetails": {
+  "jobId": "181026004273",
+  "title": "Senior AWS Connect Developer",
+  "description": "<p>Gainwell Technologies LLC</p><div> <div>  <div><strong>Summary</strong>  </div>  <div>   <p>We are seeking a highly experienced and results-driven Senior AWS Connect Developer with strong expertise in contact center technologies, customer service platforms, and Amazon Connect. This role requires a hands-on technical professional who can translate business requirements into scalable contact center solutions, integrate Amazon Connect with CRM and enterprise applications, and support production environments. The ideal candidate brings strong AWS knowledge, troubleshooting skills, stakeholder management, and experience collaborating with onshore and offshore teams, preferably within the healthcare domain. This role is strictly involved in the development of the product and does not involve access to Protected Health Information (PHI) & Personally Identifiable Information (PII) or any secured/confidential client data. The work is limited to application development and does not include handling or processing of sensitive health information.</p>  </div> </div> <div>  <div><strong>Your role in our mission</strong>  </div>  <div>   <p>As a AWS Connect Developer, you will play a critical role in designing, developing, integrating, and supporting customer contact solutions that improve operational efficiency and customer experience. You will:</p>   <ul>    <li>Design, develop, and enhance <strong>Amazon Connect solutions</strong> for voice and digital customer interactions</li>    <li>Configure and optimize <strong>call routing, IVR, queues, and contact flows</strong> based on business requirements</li>    <li>Enable <strong>omnichannel interactions</strong> across voice, chat, email, and SMS</li>    <li>Integrate Amazon Connect with <strong>CRM platforms and other enterprise applications</strong></li>    <li>Develop and support integrations using AWS services such as <strong>Lambda, S3, CloudWatch, and IAM</strong></li>    <li>Analyze business requirements and translate them into <strong>scalable technical solutions</strong></li>    <li>Troubleshoot and resolve <strong>production issues</strong> and identify sustainable improvements</li>    <li>Collaborate with stakeholders and <strong>onshore and offshore delivery teams</strong> to ensure successful implementation</li>    <li>Support technical documentation, testing, deployment, and release readiness</li>    <li>Provide technical guidance and communicate solution options, risks, and dependencies clearly</li>   </ul>  </div> </div> <div>  <div><strong>What we're looking for</strong>  </div>  <div>   <p>We are looking for a candidate who brings a strong combination of contact center expertise, AWS technical skills, problem-solving ability, and leadership:</p>   <p><strong>Experience:</strong></p>   <p>•  10+ years of experience in <strong>contact center technologies or customer service platforms</strong></p>   <p>•  2-3+ years of hands-on experience with <strong>Amazon Connect</strong></p>   <p><strong>Contact Center & Integration Expertise:</strong></p>   <p>•  Good understanding of <strong>call routing, IVR, queues, and omnichannel interactions</strong> across voice, chat, email, and SMS</p>   <p>•  Experience integrating Amazon Connect with <strong>CRM and other enterprise applications</strong></p>   <p>•  Ability to analyze business requirements and translate them into <strong>technical solutions</strong></p>   <p>•  Healthcare domain knowledge is preferred</p>   <p><strong>Technical & Cloud Skills:</strong></p>   <p>•  Knowledge of AWS services such as <strong>Lambda, S3, CloudWatch, and IAM</strong></p>   <p>•  Experience in <strong>troubleshooting and resolving production issues</strong></p>   <p><strong>Leadership & Soft Skills:</strong></p>   <p>•  Strong <strong>communication and stakeholder management skills</strong></p>   <p>•  Ability to work collaboratively with <strong>onshore and offshore teams</strong></p>   <p>•  Strong analytical thinking, problem-solving, and delivery ownership</p>   <p><strong>Certifications (Preferred):</strong></p>   <p>•  <strong>Amazon Connect and/or AWS Cloud certifications</strong> are preferred</p>  </div> </div> <div>  <div><strong>What you should expect in this role</strong>  </div>  <div>   <ul>    <li>Remote working environment</li>    <li>Shift time -2pm - 11PM IST</li>   </ul>  </div> </div></div><p> Senior AWS Connect Developer</p>",
+  "companyDetail": {
+   "name": "Gainwell Technologies"
+  },
+  "locations": [
+   {
+    "localities": [],
+    "label": "Bengaluru",
+    "url": "https://www.naukri.com/jobs-in-bangalore"
+   }
+  ],
+  "wfhType": "2",
+  "jobType": "fulltime",
+  "employmentType": "Full Time, Permanent",
+  "createdDate": "2026-10-18 20:30:02",
+  "staticUrl": "https://www.naukri.com/job-listings-senior-aws-connect-developer-gainwell-technologies-bengaluru-14-to-24-years-181026004273",
+  "minimumExperience": 14,
+  "maximumExperience": 24,
+  "salaryDetail": {
+   "minimumSalary": 0,
+   "maximumSalary": 0,
+   "currency": "INR",
+   "hideSalary": true,
+   "variablePercentage": 0.0,
+   "label": "Not Disclosed",
+   "salaryText": "Not Disclosed",
+   "minSalaryPerMonth": 0,
+   "maxSalaryPerMonth": 0,
+   "originalMaxSalary": 0,
+   "originalMinSalary": 0,
+   "salaryBreakup": "",
+   "ctcBreakup": ""
+  },
+  "functionalArea": "Engineering - Software & QA",
+  "roleCategory": "Software Development",
+  "industry": "IT Services & Consulting",
+  "jobRole": "Software Development - Other",
+  "walkIn": false,
+  "consultant": false
+ }
+}

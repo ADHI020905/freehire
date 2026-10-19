@@ -1,0 +1,343 @@
+{
+ "noOfJobs": 5,
+ "jobDetails": [
+  {
+   "title": "Salesforce commerce cloud Support Engineer",
+   "logoPath": "https://img.naukimg.com/logo_images/groups/v1/223346.gif",
+   "logoPathV3": "https://img.naukimg.com/logo_images/groups/v1/223346.gif",
+   "jobId": "181026004692",
+   "currency": "INR",
+   "footerPlaceholderLabel": "Just Now",
+   "footerPlaceholderColor": "green",
+   "companyName": "Tata Consultancy Services",
+   "isSaved": false,
+   "tagsAndSkills": "Salesforce,Cloud Support,Cloud,SAAS Sales,Salesforce Sales Cloud,Demandware,SFDC,Sales",
+   "placeholders": [
+    {
+     "type": "experience",
+     "label": "6-11 Yrs"
+    },
+    {
+     "type": "salary",
+     "label": "Not disclosed"
+    },
+    {
+     "type": "location",
+     "label": "Pune, Chennai, Bengaluru"
+    }
+   ],
+   "companyId": 892542,
+   "jdURL": "/job-listings-salesforce-commerce-cloud-support-engineer-tata-consultancy-services-pune-chennai-bengaluru-6-to-11-years-181026004692",
+   "staticUrl": "tata-consultancy-services-jobs-careers-13542",
+   "ambitionBoxData": {
+    "Url": "https://www.ambitionbox.com/reviews/tcs-reviews?utm_campaign=srp_ratings&utm_medium=desktop&utm_source=naukri",
+    "ReviewsCount": 124505,
+    "AggregateRating": "3.2",
+    "Title": "TCS Reviews by Employees"
+   },
+   "jobDescription": "Role - Salesforce commerce cloud (SFCC) Support Engineer. Desired Experience Range- 7-12 Years. <br><br> Job Summary- . We are looking for a Salesforce Commerce Cloud (SFCC) Support Engineer with strong hands-on experience in supporting and troubleshooting e-commerce applications<br><br>SFCC development / support experience <br><br> Good to Have",
+   "showMultipleApply": false,
+   "groupId": 223346,
+   "isTopGroup": 0,
+   "createdDate": 1792346647302,
+   "mode": "jp",
+   "board": "1",
+   "vacancy": 7,
+   "salaryDetail": {
+    "minimumSalary": 0,
+    "maximumSalary": 0,
+    "currency": "INR",
+    "hideSalary": true,
+    "variablePercentage": 0.0,
+    "minSalaryPerMonth": 0,
+    "maxSalaryPerMonth": 0,
+    "ctcBreakup": {}
+   },
+   "experienceText": "6-11 Yrs",
+   "minimumExperience": "6",
+   "maximumExperience": "11",
+   "applyByTime": "3:34 AM",
+   "companyApplyJob": false,
+   "walkinJob": false,
+   "segmentedTemplateId": "Template1",
+   "questionnaireIdPresent": true,
+   "brandedJD": {
+    "templateId": 2949
+   },
+   "roleCategoryGid": "1028",
+   "todaysJob": true,
+   "jobAgentEligle": true,
+   "segmentedQuestions": false,
+   "saved": false
+  },
+  {
+   "title": "Data Scientist",
+   "logoPath": "https://img.naukimg.com/logo_images/groups/v1/194354.gif",
+   "logoPathV3": "https://img.naukimg.com/logo_images/groups/v1/194354.gif",
+   "jobId": "181026004690",
+   "currency": "INR",
+   "footerPlaceholderLabel": "Just Now",
+   "footerPlaceholderColor": "green",
+   "companyName": "HCLTech",
+   "isSaved": false,
+   "tagsAndSkills": "Data,Artificial Intelligence",
+   "placeholders": [
+    {
+     "type": "experience",
+     "label": "11-14 Yrs"
+    },
+    {
+     "type": "salary",
+     "label": "Not disclosed"
+    },
+    {
+     "type": "location",
+     "label": "Hybrid - Bengaluru"
+    }
+   ],
+   "companyId": 4263814,
+   "jdURL": "/job-listings-data-scientist-hcltech-bengaluru-11-to-14-years-181026004690",
+   "staticUrl": "hcltech-jobs-careers-460",
+   "ambitionBoxData": {
+    "Url": "https://www.ambitionbox.com/reviews/hcl-technologies-reviews?utm_campaign=srp_ratings&utm_medium=desktop&utm_source=naukri",
+    "ReviewsCount": 50490,
+    "AggregateRating": "3.4",
+    "Title": "HCLTech Reviews by Employees"
+   },
+   "jobDescription": "The successful candidate must demonstrate at least one enterprise Agentic AI solution delivered beyond proof of concept,with clear ownership of architecture,orchestration,retrieval,security,monitoring and measurable business outcomes<br><br>Design Graph RAG solutions combining knowledge graphs with semantic or vector retrieval where relationship-aware reasoning is required",
+   "showMultipleApply": false,
+   "groupId": 194354,
+   "isTopGroup": 0,
+   "createdDate": 1792346601153,
+   "mode": "jp",
+   "board": "1",
+   "vacancy": 4,
+   "salaryDetail": {
+    "minimumSalary": 0,
+    "maximumSalary": 0,
+    "currency": "INR",
+    "hideSalary": true,
+    "variablePercentage": 0.0,
+    "minSalaryPerMonth": 0,
+    "maxSalaryPerMonth": 0,
+    "ctcBreakup": {}
+   },
+   "experienceText": "11-14 Yrs",
+   "minimumExperience": "11",
+   "maximumExperience": "14",
+   "applyByTime": "3:33 AM",
+   "companyApplyJob": false,
+   "walkinJob": false,
+   "segmentedTemplateId": "Template1",
+   "questionnaireIdPresent": true,
+   "brandedJD": {
+    "templateId": 3730
+   },
+   "roleCategoryGid": "1028",
+   "todaysJob": true,
+   "jobAgentEligle": true,
+   "segmentedQuestions": false,
+   "saved": false
+  },
+  {
+   "title": "Consumer Facing Mobile Apps Leads/Managers needed",
+   "logoPath": "https://img.naukimg.com/logo_images/groups/v1/345800.gif",
+   "logoPathV3": "https://img.naukimg.com/logo_images/groups/v1/345800.gif",
+   "jobId": "240826006851",
+   "currency": "INR",
+   "footerPlaceholderLabel": "Just Now",
+   "footerPlaceholderColor": "green",
+   "companyName": "Dev Solutions",
+   "isSaved": false,
+   "tagsAndSkills": "Mobile Applications,iOS,Android,Consumer Facing,React Native,Application,Consumer,React.js",
+   "placeholders": [
+    {
+     "type": "experience",
+     "label": "10-20 Yrs"
+    },
+    {
+     "type": "salary",
+     "label": "95 Lacs-2.5 Cr PA"
+    },
+    {
+     "type": "location",
+     "label": "Mumbai (All Areas)"
+    }
+   ],
+   "companyId": 916950,
+   "jdURL": "/job-listings-consumer-facing-mobile-apps-leads-managers-needed-dev-solutions-mumbai-all-areas-10-to-20-years-240826006851",
+   "staticUrl": "dev-solutions-jobs-careers-916950",
+   "jobDescription": "BE CS from IITs or Equivalent . 10-25 years hands on experience in Consumer facing Apps development. <br><br>Willing to work in hands on manner and show good team work",
+   "showMultipleApply": false,
+   "groupId": 345800,
+   "isTopGroup": 0,
+   "createdDate": 1792346167570,
+   "hiringFor": "Will tell later",
+   "consultant": true,
+   "hideClientName": false,
+   "clientCareersUrl": "will-tell-later-jobs-careers-916950",
+   "clientGroupId": 345800,
+   "mode": "jp",
+   "clientLogo": "https://img.naukimg.com/logo_images/groups/v1/345800.gif",
+   "board": "1",
+   "vacancy": 5,
+   "clientTitleString": "Will tell later",
+   "salaryDetail": {
+    "minimumSalary": 9500000,
+    "maximumSalary": 25000000,
+    "currency": "INR",
+    "hideSalary": false,
+    "variablePercentage": 0.0
+   },
+   "experienceText": "10-20 Yrs",
+   "minimumExperience": "10",
+   "maximumExperience": "20",
+   "applyByTime": "3:26 AM",
+   "companyApplyJob": false,
+   "walkinJob": false,
+   "segmentedTemplateId": "Template1",
+   "questionnaireIdPresent": true,
+   "roleCategoryGid": "1028",
+   "todaysJob": true,
+   "jobAgentEligle": true,
+   "segmentedQuestions": false,
+   "saved": false
+  },
+  {
+   "title": "Tcs is hiring For Swift, Objective C_Bangalore",
+   "logoPath": "https://img.naukimg.com/logo_images/groups/v1/223346.gif",
+   "logoPathV3": "https://img.naukimg.com/logo_images/groups/v1/223346.gif",
+   "jobId": "181026004646",
+   "currency": "INR",
+   "footerPlaceholderLabel": "Just Now",
+   "footerPlaceholderColor": "green",
+   "companyName": "Tata Consultancy Services",
+   "isSaved": false,
+   "tagsAndSkills": "Hiring,Objective C,Cocoa touch,TCAE,Swift,C,XCode,Cocoa",
+   "placeholders": [
+    {
+     "type": "experience",
+     "label": "7-12 Yrs"
+    },
+    {
+     "type": "salary",
+     "label": "Not disclosed"
+    },
+    {
+     "type": "location",
+     "label": "Bengaluru"
+    }
+   ],
+   "companyId": 892542,
+   "jdURL": "/job-listings-tcs-is-hiring-for-swift-objective-c-bangalore-tata-consultancy-services-bengaluru-7-to-12-years-181026004646",
+   "staticUrl": "tata-consultancy-services-jobs-careers-13542",
+   "ambitionBoxData": {
+    "Url": "https://www.ambitionbox.com/reviews/tcs-reviews?utm_campaign=srp_ratings&utm_medium=desktop&utm_source=naukri",
+    "ReviewsCount": 124505,
+    "AggregateRating": "3.2",
+    "Title": "TCS Reviews by Employees"
+   },
+   "jobDescription": "Design and build applications for iOS and OS X. Proficient in Swift,with a good knowledge of its ecosystems<br><br>Experience with Cocoa APIs on OS X<br><br>Good knowledge of performance limits and characteristics",
+   "showMultipleApply": false,
+   "groupId": 223346,
+   "isTopGroup": 0,
+   "createdDate": 1792344982787,
+   "mode": "jp",
+   "board": "1",
+   "salaryDetail": {
+    "minimumSalary": 0,
+    "maximumSalary": 0,
+    "currency": "INR",
+    "hideSalary": true,
+    "variablePercentage": 0.0,
+    "minSalaryPerMonth": 0,
+    "maxSalaryPerMonth": 0,
+    "ctcBreakup": {}
+   },
+   "experienceText": "7-12 Yrs",
+   "minimumExperience": "7",
+   "maximumExperience": "12",
+   "applyByTime": "3:06 AM",
+   "companyApplyJob": false,
+   "walkinJob": false,
+   "segmentedTemplateId": "Template1",
+   "questionnaireIdPresent": false,
+   "brandedJD": {
+    "templateId": 2949
+   },
+   "roleCategoryGid": "1028",
+   "todaysJob": true,
+   "jobAgentEligle": true,
+   "segmentedQuestions": false,
+   "saved": false
+  },
+  {
+   "title": "Senior AWS Connect Developer",
+   "logoPath": "https://img.naukimg.com/logo_images/groups/v1/5161434.gif",
+   "logoPathV3": "https://img.naukimg.com/logo_images/groups/v1/5161434.gif",
+   "jobId": "181026004273",
+   "currency": "INR",
+   "footerPlaceholderLabel": "Few Hours Ago",
+   "footerPlaceholderColor": "green",
+   "companyName": "Gainwell Technologies",
+   "isSaved": false,
+   "tagsAndSkills": "Connect,Routing,Continuous Integration,Iac,Terraform,Senior,Call Routing,Calling",
+   "placeholders": [
+    {
+     "type": "experience",
+     "label": "14-24 Yrs"
+    },
+    {
+     "type": "salary",
+     "label": "Not disclosed"
+    },
+    {
+     "type": "location",
+     "label": "Remote"
+    }
+   ],
+   "companyId": 6171418,
+   "jdURL": "/job-listings-senior-aws-connect-developer-gainwell-technologies-bengaluru-14-to-24-years-181026004273",
+   "staticUrl": "gainwell-technologies-jobs-careers-5735364",
+   "ambitionBoxData": {
+    "Url": "https://www.ambitionbox.com/reviews/gainwell-technologies-reviews?utm_campaign=srp_ratings&utm_medium=desktop&utm_source=naukri",
+    "ReviewsCount": 266,
+    "AggregateRating": "3.6",
+    "Title": "Gainwell Technologies Reviews by Employees"
+   },
+   "jobDescription": "Shift time -2pm - 11PM IST. Senior AWS Connect Developer<br><br>Amazon Connect and / or AWS Cloud certifications are preferred<br><br>The ideal candidate brings strong AWS knowledge,troubleshooting skills,stakeholder management,and experience collaborating with onshore and offshore teams,preferably within the healthcare domain<br><br> . What you should expect in this role . .",
+   "showMultipleApply": false,
+   "groupId": 5161434,
+   "isTopGroup": 0,
+   "createdDate": 1792335602357,
+   "mode": "jp",
+   "board": "1",
+   "salaryDetail": {
+    "minimumSalary": 0,
+    "maximumSalary": 0,
+    "currency": "INR",
+    "hideSalary": true,
+    "variablePercentage": 0.0,
+    "minSalaryPerMonth": 0,
+    "maxSalaryPerMonth": 0,
+    "ctcBreakup": {}
+   },
+   "experienceText": "14-24 Yrs",
+   "minimumExperience": "14",
+   "maximumExperience": "24",
+   "applyByTime": "12:30 AM",
+   "companyApplyJob": false,
+   "walkinJob": false,
+   "segmentedTemplateId": "Template1",
+   "questionnaireIdPresent": true,
+   "brandedJD": {
+    "templateId": 3548
+   },
+   "roleCategoryGid": "1028",
+   "todaysJob": true,
+   "jobAgentEligle": true,
+   "segmentedQuestions": false,
+   "saved": false
+  }
+ ]
+}

@@ -365,6 +365,21 @@ func newMacBrowserUAClient() *Client {
 	return c
 }
 
+// withUserAgent returns a copy of c that sends ua as its User-Agent, for a provider whose edge
+// admits one client string and which must ALSO egress through whatever transport the registry
+// wiring hands it (naukri, rebuilt over the proxied client by ApplyProxyEgress). The copy
+// shares c's transports; the shared client itself is untouched. A nil client — the taxonomy
+// path — stays nil.
+func withUserAgent(c HTTPClient, ua string) HTTPClient {
+	cl, ok := c.(*Client)
+	if !ok || cl == nil {
+		return c
+	}
+	cp := *cl
+	cp.userAgent = ua
+	return &cp
+}
+
 // crawlerUserAgent identifies as Googlebot, for the one provider whose edge does the OPPOSITE
 // of blocking bots: energyjobline.com's job-detail pages server-render their schema.org
 // JobPosting ld+json only for a recognised search-crawler User-Agent. Both the project's own

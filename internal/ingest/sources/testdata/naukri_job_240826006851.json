@@ -1,0 +1,39 @@
+{
+ "jobDetails": {
+  "jobId": "240826006851",
+  "title": "Consumer Facing Mobile Apps Leads/Managers needed",
+  "description": "<p> </p><p>Mobile Apps Engineering Lead / Architects / Manager</p><p>Our client is start up in Mumbai, which is funded by a European VC.</p><p>They are developing a consumer facing App, which could be marketed globally.</p><p>What you are :</p><p>BE CS from IITs or Equivalent </p><p>10-25 years hands on experience in Consumer facing Apps development</p><p>Worked in TV/Video/Ecommerce/Retail etc</p><p>Worked in FAMG Cos or top 20 ecommerce Companies in India</p><p>Willing to work in hands on manner and show good team work</p>",
+  "companyDetail": {
+   "name": "Dev Solutions"
+  },
+  "locations": [
+   {
+    "localities": [],
+    "label": "Mumbai (All Areas)",
+    "url": "https://www.naukri.com/jobs-in-mumbai-all-areas"
+   }
+  ],
+  "wfhType": "0",
+  "jobType": "fulltime",
+  "employmentType": "Full Time, Permanent",
+  "createdDate": "2026-10-18 23:26:07",
+  "staticUrl": "https://www.naukri.com/job-listings-consumer-facing-mobile-apps-leads-managers-needed-dev-solutions-mumbai-all-areas-10-to-20-years-240826006851",
+  "minimumExperience": 10,
+  "maximumExperience": 20,
+  "salaryDetail": {
+   "minimumSalary": 9500000,
+   "maximumSalary": 25000000,
+   "currency": "INR",
+   "hideSalary": false,
+   "variablePercentage": 0.0,
+   "label": "95 Lacs-2.5 Cr",
+   "salaryText": "95 Lacs-2.5 Cr P.A."
+  },
+  "functionalArea": "Engineering - Software & QA",
+  "roleCategory": "Software Development",
+  "industry": "Advertising & Marketing",
+  "jobRole": "Mobile / App Developer",
+  "walkIn": false,
+  "consultant": true
+ }
+}

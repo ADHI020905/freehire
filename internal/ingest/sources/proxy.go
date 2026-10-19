@@ -86,6 +86,13 @@ var proxiedProviders = map[string]func(HTTPClient) Source{
 	// browser User-Agent, so it is IP reputation, not a bot tell), while the residential
 	// proxy IP is served 200. NewEnlizt takes an HTMLGetter, which HTTPClient satisfies.
 	"enlizt": func(c HTTPClient) Source { return NewEnlizt(c) },
+	// naukri.com's Akamai edge tarpits both of our datacenter IPs (HTTP/1.1 hangs, HTTP/2
+	// resets with INTERNAL_ERROR — a headless Chrome included), while the residential proxy is
+	// served in ~1-2s (measured 2026-10-18 from prod and the crawl host). The app User-Agent
+	// the API requires is re-applied over the proxied client, and the pacer wraps it.
+	"naukri": func(c HTTPClient) Source {
+		return NewNaukri(pacedNaukriGetter(withUserAgent(c, naukriUserAgent)))
+	},
 }
 
 // refusalRetryProviders is the second, weaker opt-in: providers that crawl on the DIRECT IP

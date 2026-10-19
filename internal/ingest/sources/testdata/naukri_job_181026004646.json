@@ -1,0 +1,46 @@
+{
+ "jobDetails": {
+  "jobId": "181026004646",
+  "title": "Tcs is hiring For Swift, Objective C_Bangalore",
+  "description": "<p><strong>Role & responsibilities</strong> </p><br /><p> </p><ul><li> Advanced Swift concepts like GCDs , Closures, Higher order functions </li><li>Design and build applications for iOS and OS X </li><li> Proficient in Swift, with a good knowledge of its ecosystems </li><li>Ensure the performance, quality, and responsiveness of applications </li><li>Collaborate with a team to define, design, and ship new features </li><li>Identify and correct bottlenecks and fix bugs </li><li>Help maintain code quality, organization and automatization </li><li>Experience with Cocoa APIs on OS X </li><li>Good knowledge of performance limits and characteristics </li></ul>",
+  "companyDetail": {
+   "name": "Tata Consultancy Services",
+   "websiteUrl": ""
+  },
+  "locations": [
+   {
+    "localities": [],
+    "label": "Bengaluru",
+    "url": "https://www.naukri.com/jobs-in-bangalore"
+   }
+  ],
+  "wfhType": "0",
+  "jobType": "fulltime",
+  "employmentType": "Full Time, Permanent",
+  "createdDate": "2026-10-18 23:06:22",
+  "staticUrl": "https://www.naukri.com/job-listings-tcs-is-hiring-for-swift-objective-c-bangalore-tata-consultancy-services-bengaluru-7-to-12-years-181026004646",
+  "minimumExperience": 7,
+  "maximumExperience": 12,
+  "salaryDetail": {
+   "minimumSalary": 0,
+   "maximumSalary": 0,
+   "currency": "INR",
+   "hideSalary": true,
+   "variablePercentage": 0.0,
+   "label": "Not Disclosed",
+   "salaryText": "Not Disclosed",
+   "minSalaryPerMonth": 0,
+   "maxSalaryPerMonth": 0,
+   "originalMaxSalary": 0,
+   "originalMinSalary": 0,
+   "salaryBreakup": "",
+   "ctcBreakup": ""
+  },
+  "functionalArea": "Engineering - Software & QA",
+  "roleCategory": "Software Development",
+  "industry": "IT Services & Consulting",
+  "jobRole": "Mobile / App Developer",
+  "walkIn": false,
+  "consultant": false
+ }
+}

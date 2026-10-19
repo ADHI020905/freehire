@@ -616,6 +616,15 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["herkey"] = NewHerKey(pacedHerKeyGetter(NewLongTimeoutClient()))
 	}
+	// Naukri: India's largest job board, enumerated by functional area (board) through the
+	// search API its Android app calls, hydrating each new posting's body from the posting API.
+	// The edge serves only the app's User-Agent and tarpits datacenter IPs, so the crawl is
+	// really served once ApplyProxyEgress rebuilds it over the proxy (proxy.go). See naukri.go.
+	if c == nil {
+		registry["naukri"] = NewNaukri(nil)
+	} else {
+		registry["naukri"] = NewNaukri(pacedNaukriGetter(withUserAgent(c, naukriUserAgent)))
+	}
 	// meta/uber/gusto are NOT served by the shared client: Meta's edge 400s the default Go
 	// TLS+HTTP/2 fingerprint and Uber's and Gusto's Cloudflare edges challenge it, so all three
 	// need the shared Chrome-fingerprint transport (fingerprintHTTP, also used by the
