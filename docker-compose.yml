@@ -66,7 +66,10 @@ services:
   # — the smoke job never persists anything across a restart. Its documented
   # `initialBuckets` env var does NOT create the bucket in the current image (checked,
   # both spellings), so the bucket is created with a plain PUT, which is also why the
-  # init container no longer needs a vendor CLI.
+  # init container no longer needs a vendor CLI. The PUT is guarded by a HEAD: s3mock
+  # answers a second PUT for a bucket it already holds with 409, which `curl -f` reads
+  # as failure, so a bare PUT loops forever whenever s3-init re-runs against a still-
+  # running s3 (a second `docker compose up`) and the app never starts (freehire#3264).
   # Pinned, like every other image in this file. The change that introduced this service
   # exists BECAUSE an unpinned upstream moved out from under the smoke job, and shipping
   # it on `latest` repeated the shape it was fixing.
@@ -85,7 +88,7 @@ services:
       - s3
     entrypoint: >
       /bin/sh -c "
-      until curl -sf -o /dev/null http://s3:9090/hire-resumes || curl -sf -o /dev/null -X PUT http://s3:9090/hire-resumes; do sleep 1; done;
+      until curl -sfI -o /dev/null http://s3:9090/hire-resumes || curl -sf -o /dev/null -X PUT http://s3:9090/hire-resumes; do sleep 1; done;
       exit 0;
       "
 
