@@ -395,6 +395,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   emply: 'Emply',
   golangjobs: 'Golang Jobs',
   wuzzuf: 'WUZZUF',
+  hrmanager: 'HR-Manager',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),

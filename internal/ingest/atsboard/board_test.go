@@ -148,6 +148,14 @@ func TestRecognize(t *testing.T) {
 		// must have the shape of a client key — the same guard pageup's pathnumeric mode carries.
 		{"paycor malformed client id is not a board", "https://recruitingbypaycor.com/career/CareerHome.action?clientId=not-a-board", "", "", "", false},
 		{"paycor truncated client id is not a board", "https://recruitingbypaycor.com/career/JobIntroduction.action?clientId=4028f88b24c330a2&id=1", "", "", "", false},
+		// HR-Manager: the board is the customer alias, named only by the customer-level pages.
+		{"hrmanager listing", "https://candidate.hr-manager.net/vacancies/list.aspx?customer=energinet", "hrmanager", "energinet", "https://candidate.hr-manager.net/vacancies/list.aspx?customer=energinet", true},
+		{"hrmanager job agent folds case", "https://candidate.hr-manager.net/Agent/Subscription.aspx?customer=GFforsikring_tr", "hrmanager", "gfforsikring_tr", "https://candidate.hr-manager.net/vacancies/list.aspx?customer=gfforsikring_tr", true},
+		{"hrmanager posting names only the cid", "https://candidate.hr-manager.net/ApplicationInit.aspx?cid=316&ProjectId=188414&DepartmentId=21674&MediaId=5", "", "", "", false},
+		{"hrmanager numeric customer is not an alias", "https://candidate.hr-manager.net/vacancies/list.aspx?customer=316", "", "", "", false},
+		{"hrmanager job-portal API", "https://api.hr-manager.net/JobPortal.svc/kimdemo/PositionList/rss/?protype=RecruitmentProject&incads=true", "hrmanager", "kimdemo", "https://api.hr-manager.net/JobPortal.svc/kimdemo", true},
+		{"hrmanager job-portal API lower-case path", "https://api.hr-manager.net/jobportal.svc/energinet/positionlist/json/", "hrmanager", "energinet", "https://api.hr-manager.net/JobPortal.svc/energinet", true},
+		{"hrmanager API without a customer", "https://api.hr-manager.net/JobPortal.svc/", "", "", "", false},
 
 		// querypair — ADP Workforce Now: cid names the tenant, ccId the career centre inside it,
 		// and the adapter needs both, so the board is the pair. The canonical collapses to the

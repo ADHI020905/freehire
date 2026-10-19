@@ -178,6 +178,7 @@ var atsBoards = []struct{ host, source, mode string }{
 
 	// --- query: board = a named query parameter (see queryBoards) ---
 	{"recruitingbypaycor.com", "paycor", modeQuery},
+	{"candidate.hr-manager.net", "hrmanager", modeQuery},
 
 	// --- querypair: board = two named query parameters joined by ":" (see queryPairBoards) ---
 	{"workforcenow.adp.com", "adp", modeQueryPair},
@@ -350,6 +351,17 @@ var queryBoards = map[string]struct {
 		listingPath:  "/career/CareerHome.action",
 		boardPattern: regexp.MustCompile(`^[0-9a-f]{32}$`),
 	},
+	// HR-Manager addresses a customer by its ALIAS, and only the customer-level pages carry it:
+	// /vacancies/list.aspx?customer=<alias> (the listing) and the job-agent signup
+	// /Agent/Subscription.aspx?customer=<alias>. A posting (/ApplicationInit.aspx?cid=316&…)
+	// names only the numeric cid, which the job-portal API the adapter reads does not accept,
+	// so it carries no `customer` and is declined. An alias always contains a letter;
+	// `customer=316` answers the platform's "unknown department" page.
+	"candidate.hr-manager.net": {
+		param:        "customer",
+		listingPath:  "/vacancies/list.aspx",
+		boardPattern: regexp.MustCompile(`^[a-z0-9_-]*[a-z][a-z0-9_-]*$`),
+	},
 }
 
 // queryPairBoards holds, per matched host entry in modeQueryPair, the two query parameters that
@@ -407,6 +419,10 @@ var apiBoards = []struct{ host, source, prefix string }{
 	// prefix here and are declined — which is right, since skipping the segment would take the
 	// posting id for a board, the same trap workable's "/j/<id>" shortlink carries.
 	{"recruiting.paylocity.com", "paylocity", "Recruiting/Jobs/All"},
+	// HR-Manager's job-portal API, which a customer's own careers page calls to list its
+	// postings: /JobPortal.svc/<alias>/PositionList/json/ (embeds spell the path in either
+	// case, hence the case-insensitive prefix). The alias is the board the adapter reads.
+	{"api.hr-manager.net", "hrmanager", "JobPortal.svc"},
 }
 
 // noBoardHosts are hosts under a supported ATS's domain that serve the platform's own
@@ -751,10 +767,13 @@ func recognizeAPI(u *url.URL, host string) (source, board, canonical string, ok 
 		if host != a.host {
 			continue
 		}
-		rest, found := strings.CutPrefix(strings.Trim(u.Path, "/"), a.prefix+"/")
-		if !found {
+		// The prefix matches in any case: an embed spells the path however its author typed it,
+		// and these hosts route case-blind.
+		path := strings.Trim(u.Path, "/")
+		if len(path) <= len(a.prefix) || !strings.EqualFold(path[:len(a.prefix)+1], a.prefix+"/") {
 			return "", "", "", false
 		}
+		rest := path[len(a.prefix)+1:]
 		if board, _, _ = strings.Cut(rest, "/"); board == "" {
 			return "", "", "", false
 		}

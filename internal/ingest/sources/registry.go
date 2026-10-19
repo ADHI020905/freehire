@@ -616,6 +616,15 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["jobboardly"] = NewJobboardly(NewLongTimeoutClient())
 	}
+	// HR-Manager: Danish ATS, board = customer alias, one job-portal API request per board with
+	// every advertisement body inline. The largest customer (663 postings) is a 12 MB answer
+	// that took 5s from the prod host and 25s from a residential line — past the standard 15s
+	// timeout, the HumanBit case again. See hrmanager.go.
+	if c == nil {
+		registry["hrmanager"] = NewHRManager(nil)
+	} else {
+		registry["hrmanager"] = NewHRManager(NewLongTimeoutClient())
+	}
 	// HerKey's posting resource answers in 4-15 s, close enough to the standard 15 s timeout
 	// that a share of every run would time out, so it rides the long-timeout transport, paced
 	// (see herkeyRequestInterval).
