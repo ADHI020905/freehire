@@ -35,6 +35,9 @@ type naukri struct {
 	// spent counts the detail requests claimed across every board of the run, shared by the
 	// adapter's copies (boards may be crawled concurrently, hence atomic).
 	spent *atomic.Int64
+	// refused is set by the first posting-API refusal of the run (naukriRefusal). The refusal
+	// belongs to the egress IP, not to a posting, so it ends hydration for every board.
+	refused *atomic.Bool
 }
 
 const (
@@ -98,7 +101,9 @@ var naukriBoardRE = regexp.MustCompile(`^[0-9]+$`)
 // NewNaukri builds the Naukri adapter over the given HTTP client. The registry builds one
 // adapter per process and cmd/ingest crawls one provider per process, so the adapter's detail
 // counter is the run's.
-func NewNaukri(c HeaderJSONGetter) Source { return naukri{http: c, spent: new(atomic.Int64)} }
+func NewNaukri(c HeaderJSONGetter) Source {
+	return naukri{http: c, spent: new(atomic.Int64), refused: new(atomic.Bool)}
+}
 
 // pacedNaukriGetter holds every request of a run — search and posting — to one limiter.
 func pacedNaukriGetter(c HeaderJSONGetter) HeaderJSONGetter {
@@ -231,19 +236,35 @@ func (s naukri) hydrate(ctx context.Context, rows []naukriListing, tech bool, se
 			base.SeenRefresh = true
 			return base, true
 		}
-		if !s.claimDetail(&board) {
+		if s.refused.Load() || !s.claimDetail(&board) {
 			deferred.Add(1)
 			return Job{}, false
 		}
 		asked.Add(1)
 		job, ok, err := s.withDetail(ctx, base)
 		if err != nil {
+			if naukriRefusal(err) {
+				if s.refused.CompareAndSwap(false, true) {
+					log.Printf("naukri: posting API refused the egress IP (%v); no more details this run", err)
+				}
+				return Job{}, false
+			}
 			log.Printf("naukri: detail %s failed; deferring: %v", base.ExternalID, err)
 			return Job{}, false
 		}
 		answered.Add(1)
 		return job, ok
 	})
+	// A refused run fails each board that yielded nothing, naming the refusal: from the outside
+	// it is the same outage as "none answered", but the fix is an egress, not the adapter. A
+	// board that still refreshed stored postings keeps them.
+	if s.refused.Load() {
+		pending := deferred.Load() + asked.Load() - answered.Load()
+		if len(jobs) == 0 && pending > 0 {
+			return nil, fmt.Errorf("naukri: posting API refused the egress IP (HTTP 406 \"recaptcha required\"); %d new postings deferred", pending)
+		}
+		return jobs, nil
+	}
 	// A crawl that asked for details and got no answer to any of them is broken, not quiet.
 	// "Answered" counts a posting the platform reported expired.
 	if asked.Load() > 0 && answered.Load() == 0 {
@@ -264,6 +285,22 @@ func (s naukri) claimDetail(board *atomic.Int64) bool {
 		return false
 	}
 	return s.spent.Add(1) <= naukriDetailBudget
+}
+
+// naukriRefusal reports whether a posting-API error is the edge refusing the client rather than
+// failing one request: 406 is its "recaptcha required" answer, 403 its Access Denied, 429 a rate
+// limit. Repeating a refused request answers nothing and may hold the refusal up, so the first
+// one ends the run's hydration.
+func naukriRefusal(err error) bool {
+	var se *StatusError
+	if !errors.As(err, &se) {
+		return false
+	}
+	switch se.Code {
+	case http.StatusNotAcceptable, http.StatusForbidden, http.StatusTooManyRequests:
+		return true
+	}
+	return false
 }
 
 // withDetail adds the posting API's body, places, work arrangement and employment type.

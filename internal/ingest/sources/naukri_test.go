@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"regexp"
@@ -447,6 +448,75 @@ func TestNaukriBoardsOfARunShareOneDetailBudget(t *testing.T) {
 	}
 	if perBoard["4"] != 0 {
 		t.Errorf("board 4 got %d details after the run budget was spent", perBoard["4"])
+	}
+}
+
+// naukriRecaptcha is the posting API's refusal of the egress IP, as prod's crawls received it
+// on 2026-10-19: HTTP 406 {"message":"recaptcha required"}.
+func naukriRecaptcha() error {
+	return &StatusError{Method: "GET", Code: http.StatusNotAcceptable, URL: "naukri detail"}
+}
+
+// A refused posting API must stop the run's hydration at the first refusal: on 2026-10-19 each
+// run sent 1,500 refused detail requests through the shared proxy, every one answered 406.
+func TestNaukriRecaptchaRefusalStopsTheRunsHydration(t *testing.T) {
+	f := naukriBacklogFake(t, naukriDetailBudget)
+	for id := range f.details {
+		f.fail[id] = naukriRecaptcha()
+	}
+	src := NewNaukri(f)
+	_, err := src.Fetch(context.Background(), CompanyEntry{Board: "5"})
+	if err == nil || !strings.Contains(err.Error(), "refused") {
+		t.Fatalf("Fetch error = %v, want the board failed as refused", err)
+	}
+	// Only requests already in flight when the first refusal lands may still go out.
+	if n := len(f.detailCalls()); n > naukriDetailWorkers {
+		t.Errorf("sent %d detail requests after a refusal, want at most the %d in flight", n, naukriDetailWorkers)
+	}
+	// The refusal is the egress IP's, so a later board of the same run asks nothing.
+	before := len(f.detailCalls())
+	if _, err := src.Fetch(context.Background(), CompanyEntry{Board: "8"}); err == nil {
+		t.Error("a later board of a refused run must fail too")
+	}
+	if n := len(f.detailCalls()) - before; n != 0 {
+		t.Errorf("a later board sent %d detail requests after the run was refused", n)
+	}
+}
+
+func TestNaukriRefusalAfterSomeAnswersKeepsThem(t *testing.T) {
+	f := naukriFixtures(t)
+	f.fail["181026004273"] = naukriRecaptcha()
+	jobs, err := NewNaukri(f).Fetch(context.Background(), CompanyEntry{Board: "5"})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(jobs) == 0 {
+		t.Fatal("postings hydrated before the refusal must be kept")
+	}
+	if _, ok := naukriByID(jobs)["181026004273"]; ok {
+		t.Error("the refused posting must be deferred, not stored body-less")
+	}
+}
+
+// A refused board still refreshes the liveness of the postings it already stores.
+func TestNaukriRefusedBoardKeepsItsSeenRefreshes(t *testing.T) {
+	f := naukriFixtures(t)
+	for _, id := range naukriFixtureIDs {
+		f.fail[id] = naukriRecaptcha()
+	}
+	seen := map[string]bool{"181026004692": true, "240826006851": true}
+	src := NewNaukri(f).(HydratingSource)
+	jobs, err := src.FetchNew(context.Background(), CompanyEntry{Board: "5"}, func(id string) bool { return seen[id] })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	if len(jobs) != len(seen) {
+		t.Fatalf("got %d jobs, want the %d seen refreshes", len(jobs), len(seen))
+	}
+	for _, j := range jobs {
+		if !j.SeenRefresh {
+			t.Errorf("%s should be a SeenRefresh", j.ExternalID)
+		}
 	}
 }
 
