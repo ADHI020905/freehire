@@ -3157,7 +3157,7 @@ type Querier interface {
 	// over greenhouse's ~300k rows). board_pattern is "<escaped board>:%", built by the repository.
 	JobsExistForBoard(ctx context.Context, arg JobsExistForBoardParams) (bool, error)
 	// Title, location, description and the currently-stored countries/regions for a named set
-	// of ids, for cmd/backfill-remote-region-restriction and cmd/backfill-region-vocab.
+	// of ids, for cmd/backfill-remote-region-restriction.
 	//
 	// Ids come from a Meilisearch query for the same reason JobDescriptionsByIDs's do: a WHERE
 	// over `description` de-TOASTs the column for every row it examines, and the search index
@@ -6360,8 +6360,7 @@ type Querier interface {
 	// (jobview.FromDomain). The column stays the single source; the blob holds only what
 	// the model itself said.
 	SetJobEnrichment(ctx context.Context, arg SetJobEnrichmentParams) error
-	// Write one row's countries and regions, for cmd/backfill-remote-region-restriction and
-	// cmd/backfill-region-vocab.
+	// Write one row's countries and regions, for cmd/backfill-remote-region-restriction.
 	//
 	// A nil slice (Derive resolving nothing) encodes as NULL, which the NOT NULL columns
 	// refuse; COALESCE writes it as the empty array the ingest upserts write.

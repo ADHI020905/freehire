@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/ai/enrich"
+	"github.com/strelov1/freehire/internal/dict/location"
 	"github.com/strelov1/freehire/internal/job/job"
 	"github.com/strelov1/freehire/internal/job/outboundurl"
 	"github.com/strelov1/freehire/internal/platform/db"
@@ -325,7 +326,13 @@ func geoFacet(dictCountries, dictRegions, llmCountries, llmRegions []string) (co
 	if geoPinned(countries, regions) {
 		return countries, regions
 	}
-	llmC, llmR := normalizeSet(llmCountries), normalizeSet(llmRegions)
+	// The LLM writes regions as free text ("us", "emea", "gmt+1 to gmt+5"), so they
+	// are folded into the region vocabulary before they can reach the facet.
+	llmC := normalizeSet(llmCountries)
+	llmR := location.NormalizeRegions(llmRegions)
+	if llmR == nil {
+		llmR = []string{}
+	}
 	if len(llmC) == 0 && len(llmR) == 0 {
 		return countries, regions // the LLM knows no more than the dict — keep it
 	}

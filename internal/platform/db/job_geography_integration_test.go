@@ -1,7 +1,7 @@
 //go:build integration
 
-// Integration tests for SetJobGeography, the write behind the geography backfills
-// (cmd/backfill-remote-region-restriction, cmd/backfill-region-vocab).
+// Integration tests for SetJobGeography, the write behind the geography backfill
+// (cmd/backfill-remote-region-restriction).
 // Run with: go test -tags=integration ./internal/platform/db/
 package db
 

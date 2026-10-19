@@ -3,6 +3,7 @@ package jobview
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -223,6 +224,28 @@ func TestFromRow_DictSilentFacetsAreEmptyNotLLM(t *testing.T) {
 	}
 	if len(view.Regions) != 1 || view.Regions[0] != "eu" {
 		t.Errorf("Regions = %v, want [eu] (LLM fallback when dict silent)", view.Regions)
+	}
+}
+
+// The LLM's regions are free text, not the vocabulary: freehire#3266 found 158
+// off-vocabulary values in the live facet (`us` alone on 18,232 postings), every one
+// of them an enrichment.regions value served through this fallback. The fallback
+// folds them into the vocabulary, and one that folds to nothing is no LLM signal.
+func TestGeoFacet_LLMRegionsFoldIntoVocabulary(t *testing.T) {
+	countries, regions := geoFacet(nil, nil, nil, []string{"us", "EMEA", "gmt+1 to gmt+5"})
+	if len(countries) != 0 {
+		t.Errorf("countries = %v, want empty", countries)
+	}
+	if want := []string{"africa", "eu", "mena", "north_america", "uk"}; !slices.Equal(regions, want) {
+		t.Errorf("regions = %v, want %v", regions, want)
+	}
+
+	countries, regions = geoFacet(nil, []string{"global"}, nil, []string{"outside_us"})
+	if len(countries) != 0 || !slices.Equal(regions, []string{"global"}) {
+		t.Errorf("got %v %v, want [] [global] (an unresolvable LLM region keeps the dictionary's reading)", countries, regions)
+	}
+	if regions == nil || countries == nil {
+		t.Errorf("geoFacet must return non-nil slices, got %#v %#v", countries, regions)
 	}
 }
 

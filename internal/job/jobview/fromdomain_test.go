@@ -77,7 +77,7 @@ func TestFromDomain_MatchesFrozenWireShape(t *testing.T) {
 				Enrichment: json.RawMessage(`{"countries":["es"],"regions":["europe"]}`),
 				CreatedAt:  ts(2026, 1, 6),
 			},
-			want: `{"public_slug":"remote-dev-delta-4","source":"manual","manually_added":false,"external_id":"d:4","url":"","title":"Remote Dev","company":"Delta","company_slug":"delta","location":"","description":"","countries":["es"],"regions":["europe"],"work_mode":"remote","skills":[],"cities":[],"collections":[],"posted_at":"2026-01-06T00:00:00Z","created_at":"2026-01-06T00:00:00Z","updated_at":null,"last_seen_at":null,"closed_at":null,"enrichment":{},"enriched_at":null,"enrichment_version":0,"view_count":0,"applied_count":0,"upvote_count":0,"downvote_count":0,"my_vote":0}`,
+			want: `{"public_slug":"remote-dev-delta-4","source":"manual","manually_added":false,"external_id":"d:4","url":"","title":"Remote Dev","company":"Delta","company_slug":"delta","location":"","description":"","countries":["es"],"regions":["eu"],"work_mode":"remote","skills":[],"cities":[],"collections":[],"posted_at":"2026-01-06T00:00:00Z","created_at":"2026-01-06T00:00:00Z","updated_at":null,"last_seen_at":null,"closed_at":null,"enrichment":{},"enriched_at":null,"enrichment_version":0,"view_count":0,"applied_count":0,"upvote_count":0,"downvote_count":0,"my_vote":0}`,
 		},
 	}
 
