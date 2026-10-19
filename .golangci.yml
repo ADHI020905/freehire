@@ -191,6 +191,8 @@ linters:
         - profissional
         - educacional
         - technicien
+        - immobilier
+        - profesor
 
 formatters:
   enable:

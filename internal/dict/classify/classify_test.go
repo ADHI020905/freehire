@@ -1155,7 +1155,7 @@ func TestParse_ITTailCoverage(t *testing.T) {
 		// the production dictionary matches on word boundaries and cannot make that
 		// mistake, but the next reader will not know that.
 		{"Parts Counterperson", "", ""},
-		{"Parts Interpreter", "", ""},
+		{"Parts Interpreter", "retail", "the dealership parts counter; the point here is that it is not IT"},
 		{"Pit Technician", "", ""},
 		{"SAP Operations Clerk Part Time Day", "", ""},
 
@@ -1879,7 +1879,7 @@ func TestParse_AnalystIsQualifiedOrNothing(t *testing.T) {
 
 		// The bare noun resolves to nothing in every sense the catalogue carries.
 		{"Analyst", ""},
-		{"Board Certified Behavior Analyst (BCBA)", ""},
+		{"Board Certified Behavior Analyst (BCBA)", "healthcare"}, // the clinical ABA seat, not an analyst
 		{"Purchasing Analyst", ""},
 		{"Investment Analyst", ""},
 		{"Global Tax Analyst", ""},
@@ -2279,6 +2279,42 @@ func TestCategories_ClaimedSpanIsNotReadAgain(t *testing.T) {
 	for _, c := range cases {
 		if got := Categories(c.text); !slices.Equal(got, c.want) {
 			t.Errorf("Categories(%q) = %v, want %v", c.text, got, c.want)
+		}
+	}
+}
+
+// The remote tail (2026-10-19): the families that left 40% of open remote postings
+// without a category, and the lookalikes that must keep resolving to nothing.
+func TestParse_RemoteTail(t *testing.T) {
+	for _, tc := range []struct{ title, want string }{
+		{"Real Estate Showing Agent - Kingman", "sales"},
+		{"Agent immobilier indépendant - H/F", "sales"},
+		{"Work From Anywhere-Licensed Life Insurance Agents", "sales"},
+		{"Remote Benefits Representative", "sales"},
+		{"Mortgage Loan Originator", "finance"},
+		{"Remote Travel Advisor (Flexible Hours | No Experience Required)", "hospitality"},
+		{"Board Certified Behavior Analyst (BCBA) - Remote", "healthcare"},
+		{"Licensed Marriage and Family Therapist (LMFT)", "healthcare"},
+		{"Telehealth Registered Dietitian (1099)", "healthcare"},
+		{"Spa Therapist", "personal_services"},
+		{"Experienced Spanish Interpreter (LATAM)", "technical_writing"},
+		{"Creative Director, CPG", "creative"},
+		{"Amazon PPC Specialist", "marketing"},
+		{"React Engineer - Remote, Latin America", "frontend"},
+		{"Laravel Developer + React - Remote", "backend"},
+		{"Mecánico de motocicletas", "skilled_trades"},
+		{"Profesor/a de\r\nguitarra - Purral", "education"},
+
+		// Still nothing, on purpose.
+		{"CAD Engineer - AI Trainer", ""},
+		{"Product Engineer", ""},
+		{"Tech Lead", ""},
+		{"Case Manager", ""},
+		{"Financial Counselor", ""},
+		{"General Application", ""},
+	} {
+		if got := Parse(tc.title).Category; got != tc.want {
+			t.Errorf("Parse(%q).Category = %q, want %q", tc.title, got, tc.want)
 		}
 	}
 }

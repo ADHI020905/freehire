@@ -3136,6 +3136,102 @@ var categoryTable = []aliasEntry{
 	// stays with the personal services.
 	{"vigilante", "public_safety"},
 
+	// THE REMOTE TAIL. Measured 2026-10-19: of 462k open remote postings, 183k resolved
+	// no category, and a posting without one never reaches search. Every spelling below
+	// was read against that corpus and then against a 3% sample of the whole open
+	// catalogue; together they place ~26k of the remote postings and ~107k overall. What
+	// is left is long and flat, or names no craft at all ("General Application",
+	// "Talent Pool", the "work from home opportunity" funnels), and stays unresolved.
+	//
+	// Left out on purpose: "AI Trainer" is the domain it trains in ("CAD Engineer - AI
+	// Trainer"), not a craft of its own; "Product Engineer", "Tech Lead" and "Engineering
+	// Lead" split between software and the plant floor, the same reason "Product Engineer"
+	// is pinned elsewhere; bare "counselor" is financial, camp and admissions as often as
+	// clinical; bare "journeyman" is also a US federal pay grade.
+	//
+	// Selling: real estate, insurance and the benefits funnels, which sell policies.
+	{"real estate agent", "sales"},
+	{"real estate showing agent", "sales"},
+	{"real estate acquisition", "sales"},
+	{"estate agent", "sales"},
+	{"agent immobilier", "sales"},
+	{"conseiller immobilier", "sales"},
+	{"chasseur immobilier", "sales"},
+	{"insurance agents", "sales"},
+	{"insurance representative", "sales"},
+	{"life insurance", "sales"},
+	{"final expense", "sales"},
+	{"insurance broker", "sales"},
+	{"benefits representative", "sales"},
+	{"client benefits", "sales"},
+	{"appointment setter", "sales"},
+	// Lending and billing.
+	{"financial services professional", "finance"},
+	{"financial adviser", "finance"},
+	{"loan originator", "finance"},
+	{"mortgage", "finance"},
+	{"billing specialist", "finance"},
+	{"premium auditor", "finance"},
+	{"finance director", "finance"},
+	// Travel booking is the hospitality trade, home-based or not.
+	{"travel agent", "hospitality"},
+	{"travel advisor", "hospitality"},
+	{"travel consultant", "hospitality"},
+	{"travel specialist", "hospitality"},
+	{"travel planner", "hospitality"},
+	{"travel coordinator", "hospitality"},
+	{"reservation specialist", "hospitality"},
+	// Clinical. The spa therapist is the treatment room, pinned ahead of the bare word.
+	// No "case manager": it is a nurse as often as a social worker (see the suite).
+	{"spa therapist", "personal_services"},
+	{"beauty therapist", "personal_services"},
+	{"behavior analyst", "healthcare"},
+	{"bcba", "healthcare"},
+	{"therapist", "healthcare"},
+	{"mental health", "healthcare"},
+	{"speech language", "healthcare"},
+	{"medical science liaison", "healthcare"},
+	{"clinical research", "healthcare"},
+	{"clinical trial", "healthcare"},
+	{"psychologist", "healthcare"},
+	{"psychotherapist", "healthcare"},
+	{"professional counselor", "healthcare"},
+	{"clinical counselor", "healthcare"},
+	{"dietitian", "healthcare"},
+	{"optometric assistant", "healthcare"},
+	{"attorneys", "legal"},
+	// Interpreting sits with translation (see "translator"). A parts interpreter reads a
+	// parts catalogue at a dealership counter.
+	{"parts interpreter", "retail"},
+	{"interpreter", "technical_writing"},
+	{"interpreters", "technical_writing"},
+	// Marketing and creative.
+	{"creative director", "creative"},
+	{"creative strategist", "marketing"},
+	{"digital marketer", "marketing"},
+	{"ppc specialist", "marketing"},
+	{"ppc manager", "marketing"},
+	{"content editor", "marketing"},
+	// IT spellings the families above never wrote down.
+	{"react engineer", "frontend"},
+	{"laravel developer", "backend"},
+	{"chief technology officer", "software_engineering"},
+	{"product analyst", "data_analytics"},
+	// The vehicle trades, including the Spanish mechanic.
+	{"mecánico", "skilled_trades"},
+	{"técnico de motores", "skilled_trades"},
+	{"tire technician", "skilled_trades"},
+	{"rv technician", "skilled_trades"},
+	{"small engine technician", "skilled_trades"},
+	// The rest. "Profesor" is the Spanish tutor and teacher, the bulk of the thin
+	// Latin American WhatJobs accounts.
+	{"supply chain", "logistics"},
+	{"transaction coordinator", "administration"},
+	{"intake specialist", "administration"},
+	{"intake coordinator", "administration"},
+	{"english trainer", "education"},
+	{"profesor", "education"},
+
 	// The ВОХР armed guard (see the public_safety block), declared last behind the pin
 	// for the military contract posting that also names a rifleman: SOC 55 has no
 	// category here, and the pin only reaches a title nothing above resolved.
