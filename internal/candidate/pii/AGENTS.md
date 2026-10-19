@@ -38,6 +38,13 @@ structured-CV parse in `internal/candidate/resumeextract`, entered via `cmd/serv
   unsafe and it is masked plainly (redactor.go:72-77, 101-108). Emails/phones/links are
   always plain — they never occur inside a real word, so over-redaction is not a risk but
   leaking is. Replacements run longest-first so a value contained in another masks first.
+- **A model span is widened to whole words, and masking never writes inside a placeholder.**
+  The model labels subword tokens and sometimes tags only part of a name ("I" of "Ivan");
+  `toWholeWords` (redactor.go) widens NAME/ADDRESS spans to the words they touch, since a
+  fragment both leaks the rest of the name and masks plainly wherever it occurs. `Redact`
+  replaces only between the placeholders already written (`outsidePlaceholders`), and the
+  self-check cuts placeholders out before counting — a one-letter initial occurs inside
+  every `[REDACTED_NAME_n]`. Until 2026-10-19 neither held, and ~40 CVs never parsed.
 - **Contact fields are extracted deterministically, never by the LLM.** `Redactor.Contacts()`
   (redactor.go:34) recovers first name/email/phone/location and all links from the detected
   spans; `fillContact` (redactor.go:132-156) is defensive on purpose — the model mis-tags

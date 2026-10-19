@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // Contacts are the contact values recovered from a CV's detected spans — what
@@ -68,7 +69,13 @@ func Build(ctx context.Context, text string, d Detector) (*Redactor, error) {
 		return nil, fmt.Errorf("pii: detect: %w", err)
 	}
 
-	spans := append(regexSpans(text), sanitizeSpans(modelSpans, len(text))...)
+	modelSpans = sanitizeSpans(modelSpans, len(text))
+	for i := range modelSpans {
+		if wordyKind[modelSpans[i].Kind] {
+			modelSpans[i] = toWholeWords(text, modelSpans[i])
+		}
+	}
+	spans := append(regexSpans(text), modelSpans...)
 	sort.SliceStable(spans, func(i, j int) bool { return spans[i].Start < spans[j].Start })
 
 	type valueKind struct{ value, kind string }
@@ -122,8 +129,10 @@ func Build(ctx context.Context, text string, d Detector) (*Redactor, error) {
 	r := &Redactor{reps: reps, contacts: found}
 
 	// Fail-closed self-check: masking MUST remove every detected value from the source.
-	// If any survives (a boundary quirk we did not foresee), refuse rather than leak.
-	redacted := r.Redact(text)
+	// If any survives (a boundary quirk we did not foresee), refuse rather than leak. The
+	// placeholders are cut out first: their own letters are not the candidate's, and a
+	// one-letter initial occurs in every one of them.
+	redacted := placeholderRe.ReplaceAllString(r.Redact(text), "\x00")
 	for v := range boundarySafe {
 		if strings.Count(redacted, v) >= strings.Count(text, v) {
 			return nil, fmt.Errorf("pii: redaction left detected value unmasked")
@@ -205,18 +214,66 @@ func containsString(ss []string, s string) bool {
 
 // Redact replaces every detected PII value in text with its placeholder. A nil Redactor is
 // a no-op (callers that fail closed never reach Redact with nil).
+//
+// Each value is replaced only OUTSIDE the placeholders already written: a short value — a
+// one-letter initial — otherwise lands inside "[REDACTED_NAME_1]" itself, and the
+// placeholder it breaks is one Restore can no longer find.
 func (r *Redactor) Redact(text string) string {
 	if r == nil {
 		return text
 	}
 	for _, rep := range r.reps {
-		if rep.re != nil {
-			text = rep.re.ReplaceAllString(text, rep.placeholder)
-		} else {
-			text = strings.ReplaceAll(text, rep.value, rep.placeholder)
-		}
+		text = outsidePlaceholders(text, func(seg string) string {
+			if rep.re != nil {
+				return rep.re.ReplaceAllString(seg, rep.placeholder)
+			}
+			return strings.ReplaceAll(seg, rep.value, rep.placeholder)
+		})
 	}
 	return text
+}
+
+// placeholderRe matches one placeholder as Build spells it.
+var placeholderRe = regexp.MustCompile(regexp.QuoteMeta(PlaceholderPrefix) + `[A-Z]+_[0-9]+\]`)
+
+// outsidePlaceholders applies f to every stretch of text between placeholders, leaving the
+// placeholders themselves untouched.
+func outsidePlaceholders(text string, f func(string) string) string {
+	var b strings.Builder
+	last := 0
+	for _, m := range placeholderRe.FindAllStringIndex(text, -1) {
+		b.WriteString(f(text[last:m[0]]))
+		b.WriteString(text[m[0]:m[1]])
+		last = m[1]
+	}
+	b.WriteString(f(text[last:]))
+	return b.String()
+}
+
+// toWholeWords widens a model span to the words it touches. The model labels subword
+// tokens and sometimes tags only part of a name — "I" of "Ivan", "Pet" of "Petrov" —
+// and a fragment is both a leak (the rest of the name stays readable) and a value that
+// masks plainly wherever it occurs, inside other words included.
+func toWholeWords(text string, s Span) Span {
+	for s.Start > 0 {
+		r, n := utf8.DecodeLastRuneInString(text[:s.Start])
+		if !isWordRune(r) {
+			break
+		}
+		s.Start -= n
+	}
+	for s.End < len(text) {
+		r, n := utf8.DecodeRuneInString(text[s.End:])
+		if !isWordRune(r) {
+			break
+		}
+		s.End += n
+	}
+	return s
+}
+
+func isWordRune(r rune) bool {
+	return r != utf8.RuneError && (unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_')
 }
 
 // Restore maps every placeholder back to its original value. Placeholders are unique, so

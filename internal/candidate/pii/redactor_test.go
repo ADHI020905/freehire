@@ -150,3 +150,50 @@ func TestWordBoundaryAvoidsOverRedaction(t *testing.T) {
 		t.Fatalf("standalone name not masked: %s", masked)
 	}
 }
+
+// spanDetector reports fixed spans, the shape the real model returns.
+type spanDetector []Span
+
+func (s spanDetector) Detect(context.Context, string) ([]Span, error) { return s, nil }
+
+// The model labels subword tokens, and sometimes only part of a name comes back tagged —
+// "I" of "Ivan", "Pet" of "Petrov". Measured on prod CVs: masked as-is, the fragment was
+// replaced everywhere it occurred, inside other words and inside placeholders already
+// written, and Build refused the CV. The whole word is the name; it is what gets masked.
+func TestPartialWordModelSpanMasksTheWholeWord(t *testing.T) {
+	text := "Ivan Petrov. Implemented AWS tooling; Petrova reviewed it."
+	r := mustBuild(t, text, spanDetector{{0, 1, KindName}, {5, 8, KindName}})
+	masked := r.Redact(text)
+	for _, leaked := range []string{"Ivan", "Petrov."} {
+		if strings.Contains(masked, leaked) {
+			t.Errorf("%q not masked: %s", leaked, masked)
+		}
+	}
+	for _, kept := range []string{"Implemented", "AWS", "Petrova"} {
+		if !strings.Contains(masked, kept) {
+			t.Errorf("over-redacted %q: %s", kept, masked)
+		}
+	}
+	if got := r.Restore(masked); got != text {
+		t.Errorf("Restore = %q, want %q", got, text)
+	}
+}
+
+// A one-letter name (a middle initial) occurs inside every placeholder Build writes —
+// [REDACTED_NAME_1] carries three capital E's. Counting those as survivors made the
+// self-check refuse a CV whose every real occurrence was masked; replacing inside them
+// corrupted the placeholders Restore depends on.
+func TestShortNameNeverReachesIntoPlaceholders(t *testing.T) {
+	text := "John E Smith. Experienced engineer."
+	r := mustBuild(t, text, spanDetector{{0, 4, KindName}, {5, 6, KindName}, {7, 12, KindName}})
+	masked := r.Redact(text)
+	if strings.Contains(masked, "John") || strings.Contains(masked, "Smith") || strings.Contains(masked, " E ") {
+		t.Errorf("name not masked: %s", masked)
+	}
+	if !strings.Contains(masked, "Experienced") {
+		t.Errorf("over-redacted: %s", masked)
+	}
+	if got := r.Restore(masked); got != text {
+		t.Errorf("Restore = %q, want %q", got, text)
+	}
+}
