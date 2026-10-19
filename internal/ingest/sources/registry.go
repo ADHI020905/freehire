@@ -443,6 +443,10 @@ func All(c HTTPClient) map[string]Source {
 		// site's edge refuses any self-identifying User-Agent on paths robots.txt allows, hence
 		// the browser string. See techinasia.go.
 		browserUASource(c, NewTechInAsia),
+		// Golang Jobs: niche board of Go developer postings. A client-rendered shell over a
+		// Supabase table read through PostgREST with the public anon key, both read from the
+		// site's app bundle on every run. See golangjobs.go.
+		NewGolangJobs(c),
 		// Welcome to the Jungle: European multi-company board, enumerated by WTTJ's own
 		// profession sub-category (board) over its public Algolia index, hydrating each new
 		// posting's body and apply URL from the posting API. See wttj.go.

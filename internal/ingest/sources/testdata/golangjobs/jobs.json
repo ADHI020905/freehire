@@ -1,0 +1,155 @@
+[
+    {
+        "id": "0d9933eb-8c0b-4a66-87b8-426bf4e84528",
+        "title": "Senior Go Engineer",
+        "company": "Rubix Network",
+        "type": "full-time",
+        "description": "<p>We are looking for a Senior Go Engineer with blockchain or distributed systems experience to join our team at Rubix Network.</p><p>You will be working primarily on the core Rubix node, owning the correctness and reliability of how transactions are validated, agreed&nbsp;on and stored.</p><p>Rubix is a running blockchain network and not just a protocol specification, so the code you work on will eventually make its way into&nbsp;the network.</p><p><br></p><p><strong>Some of the areas you will be working on:</strong></p><p>&nbsp;&nbsp;\u2022 Consensus and validation: making sure every transaction gets the same checks, whichever path it takes into a node</p><p>&nbsp;&nbsp;\u2022 Transaction processing: concurrency, state transitions and handling conflicting transactions</p><p>&nbsp;&nbsp;\u2022 Cryptography in practice: signing, verification, key management and replay protection</p><p>&nbsp;&nbsp;\u2022 Networking and storage: peer-to-peer messaging, node sync, crash recovery and database consistency</p><p>&nbsp;&nbsp;\u2022 Design and code reviews: reviewing new protocol features before they are built, and helping the team raise the bar</p><p><br></p><p><strong>You would be a good fit if you have:</strong></p><p>&nbsp;&nbsp;\u2022 2+ years of professional software development experience</p><p>&nbsp;&nbsp;\u2022 Strong experience with Go, including concurrency, profiling and the race detector</p><p>&nbsp;&nbsp;\u2022 Experience building blockchain or distributed systems where nodes can fail or behave unexpectedly, such as consensus, peer-to-peer&nbsp;</p><p>&nbsp;&nbsp;networking or replicated state</p><p>&nbsp;&nbsp;\u2022 Good understanding of cryptography fundamentals such as hashing, signatures and key derivation</p><p>&nbsp;&nbsp;\u2022 Experience with PostgreSQL or similar databases, including transactions, locking and recovery</p><p><br></p><p><strong>&nbsp;&nbsp;Good to have, but not mandatory:</strong></p><p>&nbsp;&nbsp;\u2022 Experience working with IPFS or libp2p</p><p>&nbsp;&nbsp;\u2022 Contributions to open-source blockchain or distributed systems projects</p><p>&nbsp;&nbsp;\u2022 Experience with property-based testing or formal methods such as TLA+</p>",
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "USD",
+        "posted_at": "2026-10-06T11:03:20.165073+00:00",
+        "application_url": "https://www.linkedin.com/posts/gokul-p-s-3a8445130_we-are-looking-for-a-senior-go-engineer-with-share-7513116461381353472-HB03/",
+        "slug": "golang-jobs-at-rubix-network-0d9933eb",
+        "cities": {
+            "name": "Hyderabad",
+            "country": "India"
+        }
+    },
+    {
+        "id": "1454bf7a-21e4-49f3-8127-c389ee5b3074",
+        "title": "Senior/Staff Platform Engineer",
+        "company": "CodeRabbit",
+        "type": "full-time",
+        "description": "<p>CodeRabbit is hiring its founding Platform Engineer. You'll own the compute, orchestration, and infrastructure layer that CodeRabbit's AI engine and every product on top of it run on, across a multi-region GCP footprint and a product suite that's still growing. This is a 0-to-1 role: you'll build the platform function from the ground up, set the technical direction, establish the patterns everyone else builds on, and make the early architectural calls that are expensive to unwind later. This role carries the same ownership and pace as the rest of CodeRabbit engineering, applied with the rigor that foundational infrastructure demands. The systems you build here need to be right, not just fast \u2014 everything else depends on them.</p><h3><strong>Required Qualifications</strong></h3><ul><li>7+ years in Platform Engineering, Infrastructure Engineering, or Site Reliability Engineering with a strong bias toward building platforms, not just operating them</li><li>Deep, hands-on experience with Kubernetes: you've gone beyond running workloads to understanding and configuring the control plane, writing operators or controllers, tuning schedulers, and debugging at the runtime level; bonus if you've contributed to Kubernetes or built on its internals</li><li>Experience building and running large-scale distributed systems. You understand the trade-offs between consistency and availability, have debugged distributed failures in production, and have designed systems around them</li><li>Strong cloud compute background on GCP or AWS. You've built infrastructure, not just consumed managed services; you understand how compute, networking, and storage primitives work at the layer below the console</li><li>Proficiency in Docker and container runtime internals: image layering, networking modes, security contexts, and build optimization</li></ul><h3><strong>Technical Skills</strong></h3><ul><li>Container &amp; Orchestration: CRDs, operators, admission webhooks, RBAC, network policies, autoscaling; strong Docker/OCI toolchain knowledge</li><li>Distributed Systems: queuing, eventual consistency, backpressure, graceful degradation</li><li>Infrastructure as Code: Advanced Terraform \u2014 module design, state management, programmatic provisioning patterns</li><li>Cloud Platforms: GCP (GKE, Cloud Run, VPC, IAM, Cloud SQL, Cloud Storage, Load Balancing) \u2014 how these work under the hood, not just how to configure them</li><li>Programming: Node.js/TypeScript or Go for platform tooling, operators, and automation</li><li>Observability: Datadog, Prometheus/Grafana or equivalent \u2014 custom instrumentation, distributed tracing, SLO-based alerting</li><li>Systems: Linux internals, networking fundamentals (TCP/IP, DNS, load balancing, eBPF), storage systems</li></ul>",
+        "salary_min": 220000,
+        "salary_max": 280000,
+        "salary_currency": "USD",
+        "posted_at": "2026-09-09T15:08:49.422325+00:00",
+        "application_url": "https://jobs.ashbyhq.com/coderabbit/2dcba427-d10e-42c4-9a3d-028aaca82977",
+        "slug": "golang-jobs-at-coderabbit-1454bf7a",
+        "cities": {
+            "name": "San Francisco",
+            "country": "United States"
+        }
+    },
+    {
+        "id": "166c806f-f75e-4f60-b35a-40bb43687f5d",
+        "title": "Full Stack Developer",
+        "company": "Feelin\u2019s",
+        "type": "internship",
+        "description": "<h3><strong>What You\u2019ll Work On</strong></h3><ul><li>Building and maintaining Flutter or React front-end features</li><li>Designing and scaling Node.js backend APIs and services</li><li>Implementing real-time features using WebSockets</li><li>Handling user authentication and secure session management</li><li>Working with Firebase, Google Cloud</li><li>Working closely with founders and designers in a fast-paced, iterative product loop</li></ul><h3><strong>What We\u2019re Looking For</strong></h3><ul><li>Solid understanding of Node.js, and either Flutter or React</li><li>Knowledge of REST APIs, WebSockets, authentication flows</li><li>Exposure to Firebase, Cloud Functions, or similar cloud tools is a plus</li><li>Strong problem-solving skills and the ability to learn quickly</li><li>A good product mindset \u2013 you care about how things work for user</li><li>Ability to work independently in a startup environment.</li></ul><h3><strong>Bonus (Nice to Have)</strong></h3><ul><li>Experience with real-time communication systems</li><li>Basic DevOps or deployment exposure (Cloud Run, Docker, etc.)</li><li>Familiarity with version control (Git), agile development.</li></ul>",
+        "salary_min": 300000,
+        "salary_max": 300000,
+        "salary_currency": "INR",
+        "posted_at": "2026-08-01T16:59:37.365319+00:00",
+        "application_url": "https://wellfound.com/jobs/4536898-full-stack-developer-internship",
+        "slug": "golang-jobs-at-feelin-s-166c806f",
+        "cities": {
+            "name": "Bengaluru",
+            "country": "India"
+        }
+    },
+    {
+        "id": "6e68367a-59a9-4e46-8b6d-eb87c06b05fb",
+        "title": "Backend Engineer",
+        "company": "Happl",
+        "type": "full-time",
+        "description": "<p>As a Backend Engineer at Happl, your mission is to build the systems that power a global, AI-first benefits platform.</p><p>You\u2019ll design, build, and scale backend services that are reliable, secure, and performant, enabling our product teams to move fast while supporting complex real-world use cases across payroll, finance, and employee benefits.</p><p>This role is for someone who enjoys ownership, thrives in fast-moving environments, and wants to build foundational systems that directly impact how companies support their people.</p><h3><strong>What you\u2019ll be doing</strong></h3><p>This role sits within our Engineering team and works closely with Product, Frontend, Data, and Customer teams across the full development lifecycle.</p><p><br></p><p>You\u2019ll help shape how we build and scale our backend by focusing on:</p><ul><li>Designing and scaling the backend architecture powering a global, AI-first platform</li><li>Building and owning core services across benefits, allowances, payments, and reporting</li><li>Developing scalable data models and ensure integrity across systems</li><li>Improving platform reliability, performance, security, and observability</li><li>Automating workflows and Go Rules to streamline complex operations</li><li>Collaborating closely with product and frontend teams to ship end-to-end features</li><li>Writing clean, well-tested, production-ready code</li><li>Using AI tools to accelerate development and iteration</li><li>Contribute to architecture, technical decisions, and engineering standards</li></ul><p>You\u2019ll play a key role in ensuring Happl\u2019s backend scales as our customer base, features, and global footprint grow.</p><h3><strong>What we\u2019re looking for</strong></h3><ul><li>3+ years experience as a Backend or Software Engineer</li><li>Strong experience with modern backend languages and frameworks (must have a working ability in Golang and Typescript)</li><li>Experience designing and consuming APIs (REST, event-driven systems)</li><li>Solid understanding of databases (SQL / PostgreSQL) and data modelling</li><li>Experience building and scaling production systems</li><li>Familiarity with cloud infrastructure and CI/CD workflows</li><li>Comfortable working with integrations and third-party services</li><li>Experience using AI tools (e.g. ChatGPT, Claude) as part of your workflow</li><li>Clear communicator who works well with both technical and non-technical stakeholders</li><li>Proactive, detail-oriented, and comfortable taking ownership</li></ul><p><br></p>",
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "USD",
+        "posted_at": "2026-09-08T11:12:54.472405+00:00",
+        "application_url": "https://happl.com/careers?ashby_jid=352575c7-faf3-4f48-9a91-4b4ccb399e8c",
+        "slug": "golang-jobs-at-happl-6e68367a",
+        "cities": {
+            "name": "London",
+            "country": "United Kingdom"
+        }
+    },
+    {
+        "id": "7f298f27-d34d-4ec4-8455-b3360083c8a5",
+        "title": "Senior Developer - Java/Golang",
+        "company": "Apar Technologies",
+        "type": "contract",
+        "description": "",
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "INR",
+        "posted_at": "2025-04-07T13:51:46.803243+00:00",
+        "application_url": "https://at.catalyst.otomeyt.ai/candidate-event-register/MTY3ODU=",
+        "slug": "golang-jobs-at-apar-technologies-7f298f27",
+        "cities": {
+            "name": "Bangkok",
+            "country": "Thailand"
+        }
+    },
+    {
+        "id": "cc26513b-9089-4971-9fe4-176f2d91e8bf",
+        "title": "Software Engineer",
+        "company": "Yuktee.ai",
+        "type": "full-time",
+        "description": "<h3><strong>What You'll Work On</strong></h3><p>\u25cf Build and maintain core product features across our Go backend and React frontend.</p><p>\u25cf Contribute to the Agent Council architecture \u2014 the multi-agent system that scores leads on</p><p>budget, timeline, fit and authority.</p><p>\u25cf Write, test and maintain code across services: voice orchestration, WhatsApp integration, and the</p><p>intent-scoring engine.</p><p>\u25cf Work with PostgreSQL and Redis for data modelling, caching and coordination (e.g. distributed</p><p>locking).</p><p>\u25cf Fix bugs, optimize performance, and participate in deployment and monitoring.</p><p>\u25cf Document technical decisions clearly \u2014 including in plain language for non-technical stakeholders.</p><h3><strong>What We're Looking For</strong></h3><p>\u25cf Solid fundamentals in Go, or strong backend experience with the ability to ramp up quickly.</p><p>\u25cf Working knowledge of PostgreSQL and Redis.</p><p>\u25cf Comfort contributing to a React frontend when needed.</p><p>\u25cf Clean, idiomatic code and honest commit history \u2014 we care about how you build, not just what</p><p>ships.</p><p>\u25cf Comfortable with ambiguity, fast iteration, and picking up unfamiliar parts of the stack.</p><p>Nice to Have</p><p>\u25cf Exposure to LLM APIs or provider-agnostic AI orchestration.</p>",
+        "salary_min": 200000,
+        "salary_max": 300000,
+        "salary_currency": "INR",
+        "posted_at": "2026-08-10T09:19:03.768514+00:00",
+        "application_url": "https://wellfound.com/jobs/4571306-software-engineer",
+        "slug": "golang-jobs-at-yuktee-ai-cc26513b",
+        "cities": {
+            "name": "Remote",
+            "country": "India"
+        }
+    },
+    {
+        "id": "e495c526-8315-48cd-a08e-97834d7c6f03",
+        "title": "Backend Engineer",
+        "company": "Happl",
+        "type": "full-time",
+        "description": "<p>As a Backend Engineer at Happl, your mission is to build the systems that power a global, AI-first benefits platform.</p><p>You\u2019ll design, build, and scale backend services that are reliable, secure, and performant, enabling our product teams to move fast while supporting complex real-world use cases across payroll, finance, and employee benefits.</p><p>This role is for someone who enjoys ownership, thrives in fast-moving environments, and wants to build foundational systems that directly impact how companies support their people.</p><h3><strong>What you\u2019ll be doing</strong></h3><p>This role sits within our Engineering team and works closely with Product, Frontend, Data, and Customer teams across the full development lifecycle.</p><p>You\u2019ll help shape how we build and scale our backend by focusing on:</p><ul><li>Designing and scaling the backend architecture powering a global, AI-first platform</li><li>Building and owning core services across benefits, allowances, payments, and reporting</li><li>Developing scalable data models and ensure integrity across systems</li><li>Improving platform reliability, performance, security, and observability</li><li>Automating workflows and Go Rules to streamline complex operations</li><li>Collaborating closely with product and frontend teams to ship end-to-end features</li><li>Writing clean, well-tested, production-ready code</li><li>Using AI tools to accelerate development and iteration</li><li>Contribute to architecture, technical decisions, and engineering standards</li></ul><p>You\u2019ll play a key role in ensuring Happl\u2019s backend scales as our customer base, features, and global footprint grow.</p><h3><strong>What we\u2019re looking for</strong></h3><ul><li>3+ years experience as a Backend or Software Engineer</li><li>Strong experience with modern backend languages and frameworks (must have a working ability in Golang and Typescript)</li><li>Experience designing and consuming APIs (REST, event-driven systems)</li><li>Solid understanding of databases (SQL / PostgreSQL) and data modelling</li><li>Experience building and scaling production systems</li><li>Familiarity with cloud infrastructure and CI/CD workflows</li><li>Comfortable working with integrations and third-party services</li><li>Experience using AI tools (e.g. ChatGPT, Claude) as part of your workflow</li><li>Clear communicator who works well with both technical and non-technical stakeholders</li><li>Proactive, detail-oriented, and comfortable taking ownership</li></ul><p>If you don\u2019t meet every requirement but feel this role fits your trajectory, we\u2019d still love to hear from you.</p>",
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "USD",
+        "posted_at": "2026-10-06T10:55:35.287259+00:00",
+        "application_url": "https://happl.com/careers?ashby_jid=352575c7-faf3-4f48-9a91-4b4ccb399e8c",
+        "slug": "golang-jobs-at-happl-e495c526",
+        "cities": {
+            "name": "London",
+            "country": "United Kingdom"
+        }
+    },
+    {
+        "id": "e9116aca-ae9e-42ac-aaa8-a5f28619c3b6",
+        "title": "Senior Go Developer",
+        "company": "Fruition",
+        "type": "contract",
+        "description": "<p>An incredible opportunity for an experienced Senior Go Developer with strong backend engineering skills to join a prestigious tech client on a contract basis. Known for its high bar for engineering quality, this isn't your typical banking or fintech gig - contractors here are genuinely embedded, involved, and making meaningful impact from day one.</p><p><br></p><p>As a Senior Go Developer, you'll play a key role in building mission-critical, data-driven services that power core parts of the platform. You'll take ownership across the full development lifecycle, from system design and implementation to optimisation and release.</p><p><br></p><p>You'll be working in an open, fast-moving environment where ideas get tested quickly and good engineering practices are taken seriously. If you like seeing your work go live within days - not weeks - you'll fit right in. Contractors are treated as part of the team, contributing to technical decisions, stand-ups, and everything in between.</p><p><br></p><p>Reporting into an Engineering Manager, you'll be hands-on with technologies like AWS, Kubernetes, Docker, and Kafka, and will collaborate closely with product and infrastructure teams to ship well-architected, scalable microservices.</p><p><br></p><p>This is a team that values clean systems, clear thinking, and code that lasts. You'll have the freedom to shape how things are built and the trust to get on with it - whether that's improving infrastructure, shipping new features, or quietly refactoring something that needs it.</p><p><br></p><h3><strong>Key Requirements:</strong></h3><ul><li>Significant professional experience in software development, with a strong focus on backend systems</li><li>Proficiency in Go / Golang and proven expertise in AWS, Kubernetes, and Docker</li><li>Experience with end-to-end software engineering, including system design and architecture</li><li>Hands-on experience working on complex, data-intensive applications</li><li>A product-focused mindset and familiarity with working in technology-driven organisations or start-ups</li><li>Experience with Kafka, Cassandra, gRPC, and microservices architecture will also be beneficial, as well as experience contributing to open-source projects</li></ul><p><br></p><p>If you're a Senior Go Developer looking for a fast-paced, collaborative contract role where your work will ship quickly and matter to real users - apply now. Our client is ready to move quickly for the right person.</p>",
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "USD",
+        "posted_at": "2025-06-14T12:35:03.841378+00:00",
+        "application_url": "https://www.fruitiongroup.com/job/senior-go-developer-609/",
+        "slug": "golang-jobs-at-fruition-e9116aca",
+        "cities": {
+            "name": "London",
+            "country": "United Kingdom"
+        }
+    },
+    {
+        "id": "f0aa72be-a6e0-4c01-9c27-998f1c88a439",
+        "title": "Software Security Researcher, GPU and AI Systems",
+        "company": "Stealthium",
+        "type": "full-time",
+        "description": "<h3><strong>WHAT YOU WILL BE WORKING ON</strong></h3><p>You will own security research into the GPU and AI infrastructure stack, and turn what you find into product.</p><p>This means understanding how NVIDIA GPUs and adjacent accelerator platforms behave under attack: the driver and runtime layers, container and virtualization boundaries, GPU sharing and multi-tenancy models, model and dependency supply chains, and the workload patterns of real training and inference systems.</p><p>Your research directly shapes what the Stealthium platform detects. You will not be writing findings that sit in a document. You will be defining the threat models, building the proof of concepts, and working alongside engineering to convert them into runtime detections that ship.</p><p>This is a hands-on research role. Expect to spend your time in drivers, kernels, container runtimes, firmware interfaces, and real GPU clusters.</p><h3><strong>WHAT YOU WILL DO</strong></h3><ul><li>Conduct applied security research across GPU platforms, accelerator runtimes, and AI infrastructure components</li><li>Build proof-of-concept exploits and attack simulations that demonstrate real risk in GPU and AI workloads, then translate them into detection logic</li><li>Perform threat modeling for AI compute environments: multi-tenant GPU isolation, model and container supply chains, driver and firmware attack surface, orchestration and scheduling layers</li><li>Reverse engineer components of the GPU and AI software stack to understand undocumented behavior and identify weaknesses</li><li>Partner with engineering to define what the platform should observe, why it matters, and how an attack looks in telemetry</li><li>Contribute to core product capabilities around runtime insight, anomaly detection, and supply chain integrity</li><li>Track the external threat landscape for AI infrastructure and bring that intelligence back into the roadmap</li><li>Represent Stealthium's research externally through publications, disclosures, and conference work</li></ul><h3><strong>WHAT WE ARE LOOKING FOR</strong></h3><ul><li>3+ years in security research, vulnerability research, exploit development, or offensive security engineering</li><li>Degree in computer science, electrical engineering, or a related field, or equivalent hands-on experience</li><li>Strong systems fundamentals: Linux internals, memory management, kernel and userspace boundaries, process and container isolation</li><li>Practical experience with at least one of: driver or kernel research, firmware security, virtualization and container escape research, or hardware-adjacent attack surface</li><li>Comfort reading and writing systems code, in C, C++, Rust, Go, or Python, and building your own tooling</li><li>Working knowledge of applied cryptography, common attack vectors, and mitigation techniques</li><li>Ability to work independently in an early-stage environment, take a vague problem, and return with something concrete</li></ul><h3><strong>NICE TO HAVE</strong></h3><ul><li>Direct experience with NVIDIA GPU internals: CUDA, drivers, MIG, vGPU, GPUDirect, DOCA, or BlueField</li><li>Familiarity with AI and ML infrastructure: training and inference pipelines, model formats and serialization risks, ML dependency supply chains</li><li>Experience with Kubernetes, container runtimes, and GPU scheduling in production</li><li>Cloud security experience, especially in multi-tenant or shared infrastructure environments</li><li>Background in observability or detection engineering: metrics, logs, traces, profiling, eBPF</li><li>Published research, CVEs, conference talks, or open source contributions</li><li>M.Sc. or Ph.D. in computer science, electrical engineering, or a related technical field</li><li>Experience with high-performance computing environments or large-scale GPU deployments</li></ul><p><br></p>",
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "USD",
+        "posted_at": "2026-09-08T11:36:49.818066+00:00",
+        "application_url": "https://stealthium.io/careers/security-researcher-gpu-ai-systems",
+        "slug": "golang-jobs-at-stealthium-f0aa72be",
+        "cities": {
+            "name": "Remote",
+            "country": "Global"
+        }
+    }
+]
