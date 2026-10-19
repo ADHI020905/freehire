@@ -392,6 +392,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   pythonorg: 'Python.org',
   jobboardly: 'Job Boardly',
   work180: 'WORK180',
+  emply: 'Emply',
   golangjobs: 'Golang Jobs',
   wuzzuf: 'WUZZUF',
 };

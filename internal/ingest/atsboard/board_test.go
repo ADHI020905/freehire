@@ -221,6 +221,10 @@ func TestRecognize(t *testing.T) {
 		// live: agilitaschweiz answers on both), so only the apex differs. Keyed on softgarden.io
 		// alone, the .de host left the label behind a second DNS label and was declined.
 		{"softgarden regional career host", "https://agilitaschweiz.career.softgarden.de/jobs/65679426/sap-consultant/", "softgarden", "agilitaschweiz", "https://agilitaschweiz.career.softgarden.de", true},
+		// Emply: <tenant>.career.emply.com, the board the adapter fetches at that host. Ad and
+		// apply links both name it.
+		{"emply ad", "https://molslinjen.career.emply.com/ad/it-supporter-soges-til-molslinjen-i-ronne/12us1b/da", "emply", "molslinjen", "https://molslinjen.career.emply.com", true},
+		{"emply apply link", "https://oxfam-dk.career.emply.com/apply/paid-content-producer-til-oxfam-danmark/8xnpso#jobdk", "emply", "oxfam-dk", "https://oxfam-dk.career.emply.com", true},
 		{"hibob careers subdomain", "https://qogita.careers.hibob.com/jobs/ceb6c947-c906-44d1-a56b-bb33ae5599fa", "hibob", "qogita", "https://qogita.careers.hibob.com", true},
 		{"hibob apply tail collapses to the same board", "https://unique.careers.hibob.com/jobs/f8d9a0bc/apply", "hibob", "unique", "https://unique.careers.hibob.com", true},
 		// HRM Direct: the board is the tenant subdomain. Its APPLICATION forms are served from the

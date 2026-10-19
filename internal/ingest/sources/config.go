@@ -27,6 +27,7 @@ var boardIdentity = map[string]func(board string) string{
 	"dayforce": dayforceSiteID,
 	"gusto":    gustoBoardIdentity,
 	"ukgready": ukgreadyTenant,
+	"emply":    emplyHost,
 }
 
 // BoardDedupeKey is the identity two catalog rows are the same crawl target under:

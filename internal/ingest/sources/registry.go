@@ -294,6 +294,10 @@ func All(c HTTPClient) map[string]Source {
 		// within ~2s (see doverRequestInterval's incident note in pacer.go).
 		NewDover(pacedDoverGetter(c)),
 		NewJobylon(c),
+		// Emply: Danish multi-tenant ATS, one career site per board (<slug>.career.emply.com or
+		// a customer domain). One keyless JSON listing carries every vacancy with its body.
+		// See emply.go.
+		NewEmply(c),
 		NewWorkAtAStartup(c),
 		NewJobStash(c),
 		NewArbeitnow(c),

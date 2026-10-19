@@ -222,6 +222,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	// softgarden.io alone, a .de tenant hid behind a second DNS label and was declined.
 	{"career.softgarden.de", "softgarden", modeSubdomain},
 	{"careers.hibob.com", "hibob", modeSubdomain}, // HiBob's careers module: <tenant>.careers.hibob.com
+	// Emply: <tenant>.career.emply.com. A site on the customer's own domain (midtjob.dk) is a
+	// vanity host and stays unrecognised here.
+	{"career.emply.com", "emply", modeSubdomain},
 	// HRM Direct's career site is <board>.hrmdirect.com, exactly what hrmdirect.yml stores. Its
 	// application forms live on the platform's own apply.hrmdirect.com — see this apex's entry
 	// in platformLabelsByApex, without which every apply link on the platform names a board.
