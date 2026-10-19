@@ -744,6 +744,23 @@ func TestDerive_ExplicitRegionOverridesCountryPairedRegion(t *testing.T) {
 	}
 }
 
+// A Regions signal outside the vocabulary is folded before it wins: a stored
+// regions=['us'] fed back by backfill-derive must come out as north_america, and a
+// signal that folds to nothing must leave the dictionary's derivation standing.
+func TestDerive_RegionSignalFoldsIntoVocabulary(t *testing.T) {
+	got := Derive(Input{Title: "Engineer", Company: "Acme", Source: "greenhouse", ExternalID: "1",
+		Location: "Berlin", Regions: []string{"us", "emea"}})
+	if want := []string{"africa", "eu", "mena", "north_america", "uk"}; !reflect.DeepEqual(got.Regions, want) {
+		t.Errorf("Regions = %v, want %v", got.Regions, want)
+	}
+
+	got = Derive(Input{Title: "Engineer", Company: "Acme", Source: "greenhouse", ExternalID: "1",
+		Location: "Berlin", Regions: []string{"gmt+1 to gmt+5"}})
+	if want := []string{"eu"}; !reflect.DeepEqual(got.Regions, want) {
+		t.Errorf("Regions = %v, want %v (an unresolvable signal is no signal)", got.Regions, want)
+	}
+}
+
 // TestDerive_CompanySlugStripsLegalForms pins that the catalogue's company key is
 // normalize.CompanySlug, not normalize.Slug. This one line is the whole of duplicate class
 // 1a: 4,149 folded groups covering 229,004 open jobs on prod are one employer written with

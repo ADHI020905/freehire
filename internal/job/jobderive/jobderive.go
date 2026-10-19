@@ -171,9 +171,12 @@ func Derive(in Input) Derived {
 	}
 	// An explicit region signal is authoritative: it fully replaces the derived regions
 	// (and the country-derived regions above), the same way a stated work mode replaces
-	// the hint.
-	if len(in.Regions) > 0 {
-		regions = in.Regions
+	// the hint. It is folded into the region vocabulary first: a source (or a stored
+	// row fed back by backfill-derive) stating a country, a subdivision or a free
+	// phrase as a "region" must not reach the facet, and one that folds to nothing
+	// is no signal at all.
+	if r := location.NormalizeRegions(in.Regions); len(r) > 0 {
+		regions = r
 	}
 	// An explicit city signal likewise replaces the dictionary's cities outright.
 	cities := geo.Cities
