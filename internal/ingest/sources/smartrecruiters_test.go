@@ -512,3 +512,65 @@ func TestSmartRecruitersEmptyDetailPayloadIsUnreadable(t *testing.T) {
 		})
 	}
 }
+
+// SmartRecruiters re-fetched every posting's detail on every crawl, so a run spent its whole
+// rate budget re-reading bodies it already had: on 2026-10-19 the 50-minute run reached 230 of
+// 7,988 boards (boschgroup alone lists 5,068 postings — 5,068 detail requests at 8 req/s), and
+// 2,879 live boards had never been crawled at all. A posting the catalogue already holds is now
+// re-listed as a liveness refresh and costs no detail request; only a new one is hydrated.
+func TestSmartRecruitersFetchNewSkipsDetailForSeenPostings(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("offset=0", `{"totalFound": 2, "content": [
+			{"id": "P1", "name": "Backend Engineer", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "Berlin", "country": "de"}},
+			{"id": "P2", "name": "Frontend Engineer", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "Paris", "country": "fr"}}
+		]}`).
+		route("/postings/P2", detailBody("P2", "P2"))
+	// No route for P1's detail: requesting it would come back unreadable, which the test rejects.
+
+	src, ok := NewSmartRecruiters(fake).(HydratingSource)
+	if !ok {
+		t.Fatal("smartrecruiters should be a HydratingSource")
+	}
+	jobs, err := src.FetchNew(context.Background(), CompanyEntry{
+		Company: "Acme", Provider: "smartrecruiters", Board: "Acme",
+	}, func(id string) bool { return id == "P1" })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	byID := map[string]Job{}
+	for _, j := range jobs {
+		byID[j.ExternalID] = j
+	}
+	if len(byID) != 2 {
+		t.Fatalf("got %d jobs, want 2: %+v", len(byID), jobs)
+	}
+
+	seen := byID["P1"]
+	if !seen.SeenRefresh || seen.Unreadable {
+		t.Errorf("P1 = %+v, want a SeenRefresh without a detail request", seen)
+	}
+	if seen.Title != "Backend Engineer" || seen.Company != "Acme" {
+		t.Errorf("P1 identity = %q/%q, want the listing's title and the board's company", seen.Title, seen.Company)
+	}
+
+	fresh := byID["P2"]
+	if fresh.SeenRefresh || fresh.Unreadable {
+		t.Fatalf("P2 = %+v, want a hydrated posting", fresh)
+	}
+	if !strings.Contains(fresh.Description, "do the job.") {
+		t.Errorf("P2 Description = %q, want the detail body", fresh.Description)
+	}
+	if fresh.URL != "https://jobs.smartrecruiters.com/Acme/P2" {
+		t.Errorf("P2 URL = %q, want the postingUrl from detail", fresh.URL)
+	}
+}
+
+// A listing failure still aborts FetchNew, exactly as it aborts Fetch: the fullBoardListing
+// claim holds on the hydrating path too.
+func TestSmartRecruitersFetchNewPropagatesAListingError(t *testing.T) {
+	fake := &fakeHTTP{err: errors.New("boom")}
+	src := NewSmartRecruiters(fake).(HydratingSource)
+	if _, err := src.FetchNew(context.Background(), CompanyEntry{Board: "acme"}, func(string) bool { return false }); err == nil {
+		t.Fatal("FetchNew succeeded despite a listing error")
+	}
+}

@@ -263,6 +263,54 @@ func TestResolveOnBoardHydratesOnlyTheTargetPostingOnAHydratingSource(t *testing
 	}
 }
 
+// SmartRecruiters writes a posting's id at the FRONT of its last path segment
+// (…/<company>/<id>-<title-slug>), so the id is never a whole segment. Once that adapter
+// hydrates, a seen predicate matching whole segments only would call the target seen, hand back
+// a URL-less refresh, and lose a link that resolved while the adapter hydrated everything.
+func TestResolveOnBoardHydratesAnIDPrefixedSlugSegment(t *testing.T) {
+	board := &fakeHydratingBoard{
+		provider: "smartrecruiters",
+		jobs: []sources.Job{
+			{ExternalID: "744000011111111", URL: "https://jobs.smartrecruiters.com/Acme/744000011111111-junior-go", Title: "Junior Go"},
+			{ExternalID: "744000022222222", URL: "https://jobs.smartrecruiters.com/Acme/744000022222222-senior-go", Title: "Senior Go"},
+		},
+	}
+	reg := map[string]sources.Source{"smartrecruiters": board}
+
+	raw := "https://jobs.smartrecruiters.com/Acme/744000022222222-senior-go"
+	job, ok, err := ResolveOnBoard(context.Background(), reg, "smartrecruiters", "Acme", raw)
+	if err != nil || !ok {
+		t.Fatalf("ResolveOnBoard = (ok %v, err %v), want the linked vacancy", ok, err)
+	}
+	if job.Title != "Senior Go" || job.SeenRefresh {
+		t.Errorf("resolved %+v, want the hydrated Senior Go posting", job)
+	}
+	if want := []string{"744000022222222"}; !slices.Equal(board.hydrated, want) {
+		t.Errorf("hydrated postings = %v, want only %v", board.hydrated, want)
+	}
+}
+
+// A SmartRecruiters slug follows the title, so a link pasted before the title was edited
+// carries an old slug after the right id. The id still names the posting.
+func TestResolveOnBoardMatchesAnIDPrefixedSegmentWithAStaleSlug(t *testing.T) {
+	board := &fakeHydratingBoard{
+		provider: "smartrecruiters",
+		jobs: []sources.Job{
+			{ExternalID: "744000022222222", URL: "https://jobs.smartrecruiters.com/Acme/744000022222222-staff-go", Title: "Staff Go"},
+		},
+	}
+	reg := map[string]sources.Source{"smartrecruiters": board}
+
+	raw := "https://jobs.smartrecruiters.com/Acme/744000022222222-senior-go"
+	job, ok, err := ResolveOnBoard(context.Background(), reg, "smartrecruiters", "Acme", raw)
+	if err != nil || !ok {
+		t.Fatalf("ResolveOnBoard = (ok %v, err %v), want the vacancy matched by the id in front of the stale slug", ok, err)
+	}
+	if job.Title != "Staff Go" {
+		t.Errorf("resolved %q, want Staff Go", job.Title)
+	}
+}
+
 // TestImportRegistryOrder pins the resolver order the import path depends on. Getting it
 // wrong is silent and expensive: board coverage ahead of the host-scoped adapters would fetch
 // a whole board where a per-job API call would do, and anything after generic would never be

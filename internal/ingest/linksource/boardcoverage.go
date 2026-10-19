@@ -129,9 +129,16 @@ func fetchForResolve(ctx context.Context, adapter sources.Source, e sources.Comp
 	}
 	want := pathSegmentsFromEnd(raw)
 	seen := func(externalID string) bool {
-		return !slices.Contains(want, externalID)
+		return !slices.ContainsFunc(want, func(seg string) bool { return segmentNamesID(seg, externalID) })
 	}
 	return hs.FetchNew(ctx, e, seen)
+}
+
+// segmentNamesID reports whether a URL path segment names the posting id: the whole segment, or
+// the id followed by a readable slug — SmartRecruiters' "<id>-<title-slug>", where the id is
+// never a segment of its own.
+func segmentNamesID(seg, id string) bool {
+	return id != "" && (seg == id || strings.HasPrefix(seg, id+"-"))
 }
 
 // pickPosting finds the posting a link refers to among a board's postings. It tries the URL
@@ -160,7 +167,7 @@ func pickPosting(jobs []sources.Job, raw string) (sources.Job, bool) {
 			if j.Unreadable {
 				continue
 			}
-			if j.ExternalID != "" && j.ExternalID == seg {
+			if segmentNamesID(seg, j.ExternalID) {
 				return j, true
 			}
 		}

@@ -83,6 +83,29 @@ func (s smartRecruiters) Fetch(ctx context.Context, e CompanyEntry) ([]Job, erro
 	}), nil
 }
 
+// FetchNew is Fetch that spends a detail request only on postings the catalogue does not hold.
+// The detail is this adapter's whole cost — one request per posting against a single metered
+// host — and re-reading every stored body each run is what kept a 50-minute run to ~230 of
+// ~8,000 boards (2026-10-19). A seen posting is re-listed as a SeenRefresh carrying the
+// listing's identity, so its liveness refreshes and its hydrated body and facets are kept.
+func (s smartRecruiters) FetchNew(ctx context.Context, e CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
+	postings, err := s.listPostings(ctx, e.Board)
+	if err != nil {
+		return nil, err
+	}
+	return fetchDetails(postings, defaultDetailWorkers, func(p smartRecruitersPosting) (Job, bool) {
+		if seen(p.ID) {
+			return Job{
+				ExternalID:  p.ID,
+				Title:       strings.TrimSpace(p.Name),
+				Company:     e.Company,
+				SeenRefresh: true,
+			}, true
+		}
+		return s.detail(ctx, e, p)
+	}), nil
+}
+
 // listPostings pages through the board's postings, stopping when a page is empty or all
 // postings reported by totalFound have been collected.
 func (s smartRecruiters) listPostings(ctx context.Context, board string) ([]smartRecruitersPosting, error) {

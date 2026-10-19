@@ -237,6 +237,10 @@ type Client struct {
 	userAgent     string
 	maxRetries    int
 	retryDelay    time.Duration
+	// backoff holds back every direct request to a host that has just answered 429, so one
+	// refusal slows the whole crawl rather than only the request that drew it (hostbackoff.go).
+	// Nil disables it; every constructor sets one.
+	backoff *hostBackoff
 	// maxBody overrides maxResponseBody; zero means the default. Only tests set it, so a
 	// cap-trip case need not stream tens of MiB through the loopback.
 	maxBody int64
@@ -285,6 +289,7 @@ func newClientWithProxy(proxy *url.URL) *Client {
 		userAgent:    "freehire/0.1 (+https://freehire.me)",
 		maxRetries:   2,
 		retryDelay:   500 * time.Millisecond,
+		backoff:      newHostBackoff(hostBackoffBase, hostBackoffMax),
 	}
 }
 
@@ -789,6 +794,10 @@ func (c *Client) do(ctx context.Context, r request) error {
 	// the budget from the providers that have no direct path at all.
 	refusalTried := false
 	client := c.httpClient
+	var host string
+	if u, err := url.Parse(r.url); err == nil {
+		host = u.Host
+	}
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
 		if attempt > 0 && delay > 0 {
 			select {
@@ -798,6 +807,15 @@ func (c *Client) do(ctx context.Context, r request) error {
 			}
 		}
 		delay = c.retryDelay
+
+		// The host-wide hold is a property of the DIRECT egress: the refusal fallback is a
+		// different IP that owes the platform nothing.
+		direct := client == c.httpClient
+		if direct {
+			if err := c.backoff.wait(ctx, host); err != nil {
+				return err
+			}
+		}
 
 		var reqBody io.Reader
 		if r.body != nil {
@@ -841,6 +859,9 @@ func (c *Client) do(ctx context.Context, r request) error {
 
 		switch {
 		case resp.StatusCode >= 200 && resp.StatusCode < 300:
+			if direct {
+				c.backoff.served(host)
+			}
 			// Bound the read so a pathological body cannot OOM the worker; Close still
 			// runs on the underlying body to release the connection.
 			resp.Body = cappedBody{
@@ -864,6 +885,12 @@ func (c *Client) do(ctx context.Context, r request) error {
 			return nil
 		case resp.StatusCode == http.StatusTooManyRequests:
 			delay = retryAfter(resp, c.retryDelay) // honor the rate-limit hint
+			if direct && c.backoff != nil {
+				// The hold now carries the wait, for this request's retry and every other
+				// request to the host alike — sleeping here as well would only double it.
+				c.backoff.refused(host, retryAfter(resp, 0))
+				delay = 0
+			}
 			resp.Body.Close()
 			lastErr = &StatusError{Method: r.method, Code: resp.StatusCode, URL: r.url}
 			if c.refusalClient != nil {
