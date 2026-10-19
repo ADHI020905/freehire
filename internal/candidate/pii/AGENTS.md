@@ -18,6 +18,12 @@ structured-CV parse in `internal/candidate/resumeextract`, entered via `cmd/serv
   already mapped to our `Kind` vocabulary (`Span`, `Kind*` consts, detect.go:9-23);
   `NewHTTPDetector` (client.go:25) posts to `PII_FILTER_URL` and any non-2xx is an error.
   Tests inject a fake. The package owns no model and no vocabulary negotiation.
+- **The endpoint counts CHARACTERS, `Span` holds BYTES.** The service is Python and its
+  tokenizer reports code-point offsets; `HTTPDetector.Detect` converts them
+  (`charSpansToBytes`, client.go) before anything slices the text. Until 2026-10-19 it did
+  not, and every span after the first accent, bullet or dash cut the wrong text: the
+  self-check passed on the garbage it was handed while the real name reached the model
+  unmasked, and failed outright on ~60 CVs it could not mask at all.
 - **`PII_FILTER_URL` empty disables the features entirely.** cmd/server treats an unset URL
   as "fail the CV→LLM paths closed" (cmd/server/main.go:245), not as "send unmasked" — the
   analysis buttons degrade rather than leak.
