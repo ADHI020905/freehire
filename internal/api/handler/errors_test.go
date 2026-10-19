@@ -234,3 +234,15 @@ func TestClassify_ReportsOnlyUnexpected500(t *testing.T) {
 type errString string
 
 func (e errString) Error() string { return string(e) }
+
+// Too many OR alternatives is the caller's mistake, and the 400 says which limit
+// they hit instead of the generic "invalid search query".
+func TestClassifyNamesTheOrAlternativeLimit(t *testing.T) {
+	status, msg, report := classify(fmt.Errorf("search: facet query: %w", search.ErrTooManyAlternatives))
+	if status != fiber.StatusBadRequest || report {
+		t.Fatalf("status = %d report = %v, want 400 and no report", status, report)
+	}
+	if msg != "q has more than 5 OR alternatives" {
+		t.Fatalf("message = %q, want the limit named", msg)
+	}
+}

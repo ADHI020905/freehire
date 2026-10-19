@@ -165,7 +165,7 @@
             "name": "q",
             "in": "query",
             "required": false,
-            "description": "Full-text query over `title`, `company`, `description`, and `location`. Unquoted words match as an OR of stemmed tokens; quoted (`\"systems engineer\"`) as an order-independent AND — quoting is not a contiguous-phrase match. Narrow which fields it matches with `q_fields`. Exact-phrase matching is not offered, and default relevance order does not reliably rank a contiguous match above a scattered-token one.",
+            "description": "Full-text query over `title`, `company`, `description`, and `location`. Plain words use the default engine matching: the first words are required and trailing ones are dropped when too few postings match, so word order can change the result. Operators: quotes (`\"systems engineer\"`) require every quoted word in any order (not a contiguous phrase); `-word` excludes; uppercase `OR` between words matches any alternative (at most 5, merged and deduplicated); `title:` at the start of an alternative matches it in the title only, e.g. `title:\"product owner\" -junior OR title:produktchef`. Narrow the fields of the other alternatives with `q_fields`. Exact-phrase matching is not offered, and default relevance order does not reliably rank a contiguous match above a scattered-token one.",
             "schema": {
               "type": "string"
             },
@@ -251,7 +251,7 @@
             "name": "q",
             "in": "query",
             "required": false,
-            "description": "Full-text query over `title`, `company`, `description`, and `location`. Unquoted words match as an OR of stemmed tokens; quoted (`\"systems engineer\"`) as an order-independent AND — quoting is not a contiguous-phrase match. Narrow which fields it matches with `q_fields`. Exact-phrase matching is not offered, and default relevance order does not reliably rank a contiguous match above a scattered-token one.",
+            "description": "Full-text query over `title`, `company`, `description`, and `location`. Plain words use the default engine matching: the first words are required and trailing ones are dropped when too few postings match, so word order can change the result. Operators: quotes (`\"systems engineer\"`) require every quoted word in any order (not a contiguous phrase); `-word` excludes; uppercase `OR` between words matches any alternative (at most 5, merged and deduplicated); `title:` at the start of an alternative matches it in the title only, e.g. `title:\"product owner\" -junior OR title:produktchef`. Narrow the fields of the other alternatives with `q_fields`. Exact-phrase matching is not offered, and default relevance order does not reliably rank a contiguous match above a scattered-token one.",
             "schema": {
               "type": "string"
             },

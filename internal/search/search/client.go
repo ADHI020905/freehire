@@ -542,16 +542,37 @@ func buildSearchRequest(p SearchParams) *meilisearch.SearchRequest {
 
 // Search runs a query against the jobs (facet/keyword) index and decodes the hits.
 func (c *Client) Search(ctx context.Context, p SearchParams) (SearchResult, error) {
-	resp, err := c.facet.SearchWithContext(ctx, p.Query, buildSearchRequest(p))
+	alts, err := ParseQuery(p.Query)
 	if err != nil {
-		return SearchResult{}, queryErr(ctx, "search: query", err)
+		return SearchResult{}, err
+	}
+	var (
+		hits  meilisearch.Hits
+		total int64
+	)
+	if len(alts) == 1 {
+		p.Query = alts[0].Text
+		if alts[0].Fields != nil {
+			p.QFields = alts[0].Fields
+		}
+		resp, err := c.facet.SearchWithContext(ctx, p.Query, buildSearchRequest(p))
+		if err != nil {
+			return SearchResult{}, queryErr(ctx, "search: query", err)
+		}
+		hits, total = resp.Hits, resp.EstimatedTotalHits
+	} else {
+		resp, err := c.manager.MultiSearchWithContext(ctx, buildFederatedSearch(p, alts))
+		if err != nil {
+			return SearchResult{}, queryErr(ctx, "search: federated query", err)
+		}
+		hits, total = resp.Hits, resp.EstimatedTotalHits
 	}
 
-	var hits []JobDocument
-	if err := resp.Hits.DecodeInto(&hits); err != nil {
+	var docs []JobDocument
+	if err := hits.DecodeInto(&docs); err != nil {
 		return SearchResult{}, fmt.Errorf("search: decode hits: %w", err)
 	}
-	return SearchResult{Hits: hits, Total: resp.EstimatedTotalHits}, nil
+	return SearchResult{Hits: docs, Total: total}, nil
 }
 
 // CurrentEmbedderModel is the identity of the embedder currently embedding jobs.

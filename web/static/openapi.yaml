@@ -912,12 +912,26 @@ components:
       description: |
         Full-text query over `title`, `company`, `description`, and `location`.
 
-        Unquoted, multiple words match as an OR of (stemmed) tokens: any word
-        matching in any of those fields is a hit. Double-quoted (e.g.
-        `q="systems engineer"`), the words match as an AND, irrespective of
-        their order or adjacency in the matched field — quoting does **not**
-        request a contiguous phrase match. Use `q_fields` to narrow which
-        fields `q` is matched against.
+        Plain words follow Meilisearch's default matching: the first words
+        are required, and trailing ones are dropped when too few postings
+        match. Word order can therefore change the result (`golang rust` and
+        `rust golang` differ). It is neither a strict AND nor an OR.
+
+        Operators:
+        - `"..."`: every quoted word must match, in any order and position
+          within the matched field. Quoting does **not** request a contiguous
+          phrase match.
+        - `-word` or `-"..."`: exclude postings that match it.
+        - `OR` (uppercase, between words, outside quotes): a posting matching
+          any alternative is a hit. Paging, `sort`, the total and facet counts
+          describe the merged set, and a posting matched twice counts once. At
+          most 5 alternatives; more is a 400.
+        - `title:` at the start of an alternative: match that alternative in
+          the title only, e.g.
+          `title:"product owner" -junior OR title:produktchef`.
+
+        `q_fields` narrows the fields for every alternative that does not
+        start with `title:`.
 
         Exact-phrase matching is not offered today, and the default relevance
         order (`sort` omitted) does not reliably rank a contiguous match above

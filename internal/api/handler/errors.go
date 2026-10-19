@@ -154,6 +154,10 @@ func classify(err error) (status int, msg string, report bool) {
 	// here: that is our own deadline firing and is worth reporting.
 	case errors.Is(err, context.Canceled):
 		return statusClientClosedRequest, "client closed request", false
+	// q carried more OR alternatives than search allows. Say which limit was hit:
+	// the generic "invalid search query" would leave the caller guessing.
+	case errors.Is(err, search.ErrTooManyAlternatives):
+		return fiber.StatusBadRequest, search.ErrTooManyAlternatives.Error(), false
 	// Meilisearch rejected the request as malformed (a 400) — e.g. an unparseable
 	// filter value from client input. That is a bad request, not a fault.
 	case errors.Is(err, search.ErrBadQuery):

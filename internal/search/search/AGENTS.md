@@ -218,6 +218,25 @@ HNSW graph construction, so it lands on full rebuilds, not on incremental
 `search_outbox` pushes. Schedule it deliberately; `freehire-reindexw` has outgrown its
 slot before, and the disk floor already refuses rebuilds when free space is tight.
 
+## Query operators
+
+`ParseQuery` (`query_syntax.go`) reads `OR` and a leading `title:` in `q`. A
+query with neither is one alternative whose text is `q` byte-for-byte, so it
+builds exactly the single-index request it built before operators existed.
+Keep it that way: every search on the site goes through it.
+
+Two or more alternatives go out as ONE federated `/multi-search`
+(`federated.go`). Each query carries the same filter, sort and vector, and the
+federation pages, deduplicates and merges facets. Two traps:
+
+- Per-query `limit`, `offset` and `facets` are a 400 inside a federation.
+- `mergeFacets` defaults to 100 values per facet, so it must pass
+  `maxValuesPerFacet`.
+
+The merged sort is global only because the ranking rules put `sort` right after
+`words`. Each hit fully matches its own alternative, so the sort decides.
+Moving `sort` later breaks that, and `TestSearchOperatorsOnRealEngine` catches it.
+
 ## Limitations
 
 - **A filter Meilisearch rejects degrades rather than failing the request** (`internal/api/handler/search.go`'s `runJobSearch`, both job-search endpoints). This bullet used to claim the failure was a flat 500 — it was not, even before this fixed anything: `queryErr` already classified it as `ErrBadQuery`, and `errors.go` already mapped that to 400. The stale wording aside, the substance held: a 400 still failed the whole request rather than getting the "drop it, report it" treatment `search.UnknownParams` already gives an unrecognized param. Now: when the primary query fails as `ErrBadQuery` and a dynamic filter was actually part of the request, the handler retries once with the filter dropped and reports every active filter param in `meta.ignored_params` — `search.ActiveFilterParams` is the mirror of `UnknownParams` this needed. The realistic trigger stays what it always was: the "Adding a filterable attribute" deploy window above, not a malformed client value (every facet/scalar value is escaped before it reaches Meilisearch). See `openspec/changes/search-filter-error-degrade`.

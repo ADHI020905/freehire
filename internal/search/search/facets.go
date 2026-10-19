@@ -39,15 +39,34 @@ type FacetStat struct {
 // responsibility from returning ranked hits, so it runs with limit 0 (no
 // documents), no sort, and no hybrid embedder — just the distribution.
 func (c *Client) FacetCounts(ctx context.Context, p FacetParams) (FacetResult, error) {
-	resp, err := c.facet.SearchWithContext(ctx, p.Query, &meilisearch.SearchRequest{
-		Filter: p.Filter,
-		Facets: p.Facets,
-		Limit:  0,
-	})
+	resp, err := c.facetSearch(ctx, p.Query, p.Filter, p.Facets)
 	if err != nil {
 		return FacetResult{}, queryErr(ctx, "search: facet query", err)
 	}
 	return buildFacetResult(resp)
+}
+
+// facetSearch runs one facet-count query, reading q's operators the same way
+// Search does: a single alternative is today's single-index request, several are
+// one federated request whose merged counts are per document.
+func (c *Client) facetSearch(ctx context.Context, query string, filter any, facets []string) (*meilisearch.SearchResponse, error) {
+	alts, err := ParseQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	if len(alts) == 1 {
+		return c.facet.SearchWithContext(ctx, alts[0].Text, &meilisearch.SearchRequest{
+			Filter:               filter,
+			Facets:               facets,
+			Limit:                0,
+			AttributesToSearchOn: alts[0].Fields,
+		})
+	}
+	resp, err := c.manager.MultiSearchWithContext(ctx, buildFederatedFacets(alts, filter, facets))
+	if err != nil {
+		return nil, err
+	}
+	return federatedAsSearchResponse(resp)
 }
 
 // FacetReq is one facet's disjunctive request: the attribute to distribute and
@@ -67,9 +86,7 @@ type facetSearcher func(ctx context.Context, query string, filter any, facets []
 // total under the full filter. All queries run concurrently, so the latency is
 // that of the slowest single facet query, not their sum.
 func (c *Client) DisjunctiveFacetCounts(ctx context.Context, query string, reqs []FacetReq, totalFilter any) (FacetResult, error) {
-	return disjunctiveFacetCounts(ctx, query, reqs, totalFilter, func(ctx context.Context, q string, filter any, facets []string) (*meilisearch.SearchResponse, error) {
-		return c.facet.SearchWithContext(ctx, q, &meilisearch.SearchRequest{Filter: filter, Facets: facets, Limit: 0})
-	})
+	return disjunctiveFacetCounts(ctx, query, reqs, totalFilter, c.facetSearch)
 }
 
 func disjunctiveFacetCounts(ctx context.Context, query string, reqs []FacetReq, totalFilter any, search facetSearcher) (FacetResult, error) {

@@ -18,3 +18,15 @@ type fakeSearchIndex struct {
 func (f fakeSearchIndex) SearchWithContext(ctx context.Context, query string, req *meilisearch.SearchRequest) (*meilisearch.SearchResponse, error) {
 	return f.searchFn(ctx, query, req)
 }
+
+// fakeManager stubs meilisearch.ServiceManager for unit tests that only need
+// MultiSearchWithContext (the federated OR path). Embedding the interface
+// satisfies every other method.
+type fakeManager struct {
+	meilisearch.ServiceManager
+	multiFn func(ctx context.Context, req *meilisearch.MultiSearchRequest) (*meilisearch.MultiSearchResponse, error)
+}
+
+func (f fakeManager) MultiSearchWithContext(ctx context.Context, req *meilisearch.MultiSearchRequest) (*meilisearch.MultiSearchResponse, error) {
+	return f.multiFn(ctx, req)
+}
