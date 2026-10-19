@@ -122,6 +122,7 @@ import type {
   ActivityPoint,
   UserGrowthPoint,
   CatalogScale,
+  EmbedProgress,
   EngagementStats,
   IngestStatus,
   SourceEntry,
@@ -781,6 +782,17 @@ export function createApi(
    *  open-job count and `exact: false`. Aggregate-only, unauthenticated. */
   async function catalogScale(): Promise<CatalogScale> {
     return requestData<CatalogScale>(`/api/v1/stats/catalog`);
+  }
+
+  /** Semantic-embedding coverage of the catalogue for the public /embeddings page.
+   *  Unmeasured figures are `null`. Aggregate-only, unauthenticated. */
+  async function embedProgress(): Promise<EmbedProgress> {
+    return requestData<EmbedProgress>(`/api/v1/stats/embeddings`);
+  }
+
+  /** The same-origin URL for the live stream of `embedProgress` documents (public). */
+  function embedProgressStreamUrl(): string {
+    return `${baseUrl}/api/v1/stats/embeddings/stream`;
   }
 
   /** The public status read: the site/API's own live status (`site`), plus a
@@ -3064,6 +3076,8 @@ export function createApi(
     engagementStats,
     statsFacets,
     catalogScale,
+    embedProgress,
+    embedProgressStreamUrl,
     ingestStatus,
     listSources,
     listCompanies,

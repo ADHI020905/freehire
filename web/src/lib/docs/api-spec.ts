@@ -3059,6 +3059,46 @@ data: {"type":"result","stop_reason":"completed"}
       },
       {
         method: 'GET',
+        path: '/stats/embeddings',
+        auth: 'none',
+        summary: 'How much of the catalogue carries a semantic embedding, and how fast the rest is going.',
+        description:
+          'Backs the public /embeddings page. `eligible` and `snapshot_covered` come ' +
+          'from a snapshot `cmd/rollup-stats` measures every few hours (the count ' +
+          'is too slow for a request); `queued` is the embedding queue, sampled ' +
+          'every 15 seconds, and `covered` is `eligible − queued`. ' +
+          '`rate_per_minute` counts only what left the queue over the last 10 ' +
+          'minutes, so a batch of new postings arriving at once does not read as ' +
+          'negative progress. Any figure not yet measured is `null`, never `0`.',
+        curl: `curl "${BASE_URL}/stats/embeddings"`,
+        responseExample: `{
+  "data": {
+    "eligible": 1903114,
+    "covered": 1897020,
+    "snapshot_covered": 1889512,
+    "queued": 6094,
+    "rate_per_minute": 570.4,
+    "eta_seconds": 641,
+    "snapshot_at": "2026-10-19T09:22:03Z",
+    "measured_at": "2026-10-19T12:04:15Z"
+  }
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/stats/embeddings/stream',
+        auth: 'none',
+        summary: 'The same document as server-sent events, one per sample.',
+        description:
+          'A `progress` event carrying the full document on connect and after ' +
+          'every 15-second sample, with a `ping` event between to keep idle ' +
+          'connections alive. Connections are rate-limited per IP.',
+        curl: `curl -N "${BASE_URL}/stats/embeddings/stream"`,
+        responseExample: `event: progress
+data: {"eligible":1903114,"covered":1897020,"snapshot_covered":1889512,"queued":6094,"rate_per_minute":570.4,"eta_seconds":641,"snapshot_at":"2026-10-19T09:22:03Z","measured_at":"2026-10-19T12:04:15Z"}`,
+      },
+      {
+        method: 'GET',
         path: '/insights/roles',
         auth: 'none',
         summary: 'Roles (category × seniority) ranked by openings or growth.',

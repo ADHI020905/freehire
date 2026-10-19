@@ -69,6 +69,9 @@
         // questions — where the jobs come from, and whether we are still reading them.
         { label: 'Sources', href: resolve('/sources') },
         { label: 'Status', href: resolve('/status') },
+        // Beside Status: both are a live reading of the machine behind the catalogue,
+        // and this one also says how to lend it a hand.
+        { label: 'Embeddings', href: resolve('/embeddings') },
         { label: 'Support', href: resolve('/support') },
         { label: 'Privacy', href: resolve('/privacy') },
         { label: 'Terms', href: resolve('/terms') },

@@ -6168,6 +6168,28 @@ type Querier interface {
 	// external_id rides along for sources verified by a per-posting API keyed on it rather
 	// than by fetching the stored url (echojobs: see cmd/liveness/echojobs.go).
 	SelectStaleRegisteredCandidates(ctx context.Context, arg SelectStaleRegisteredCandidatesParams) ([]SelectStaleRegisteredCandidatesRow, error)
+	// How much of the catalogue carries a current embedding, for the public
+	// embedding-progress page (openspec/changes/embedding-progress-page). "Eligible" is
+	// the first branch of EnqueuePendingSemanticJobs' predicate without its staleness
+	// test, and "covered" is that branch negated — so a posting is exactly one of covered
+	// or queueable, and the queue's claimable depth is the uncovered remainder. Keep the
+	// two in step: a gate added there and not here makes the page count postings nothing
+	// will ever embed.
+	//
+	// NOT is_private, unlike the enqueue: a private posting is one user's pasted JD and must
+	// not change a figure published to everyone else (private_job_rule_test). The queue
+	// still carries the few private rows being embedded, so eligible − queued undercounts
+	// coverage by that handful — the direction the page can afford.
+	//
+	// A scan over every open posting: measured on production 2026-10-19 it did not finish
+	// inside 60s on a loaded host. It runs in cmd/rollup-stats, never on a request path.
+	SemanticCoverageCounts(ctx context.Context, targetModel string) (SemanticCoverageCountsRow, error)
+	// The work left in semantic_outbox: rows a worker can still claim. A dead letter is
+	// not work left, it is work given up on. Reads semantic_outbox_claimable_idx (partial
+	// on failed_at IS NULL), 4.5ms on production — cheap enough for cmd/server to sample
+	// every 15s, which SemanticOutboxMetrics (a full scan for dead letters and the
+	// oldest row as well) is not meant for.
+	SemanticOutboxClaimableDepth(ctx context.Context) (int64, error)
 	// Same shape and same reasoning as SearchOutboxMetrics.
 	SemanticOutboxMetrics(ctx context.Context) (SemanticOutboxMetricsRow, error)
 	// Turn the activity group on or off for one account. Separate from

@@ -358,3 +358,36 @@ SET similar_job_ids = sqlc.arg(similar_job_ids)::bigint[],
     similar_computed_at = now()
 WHERE id = sqlc.arg(id)::bigint
   AND semantic_embedded_hash IS NOT DISTINCT FROM sqlc.narg(expected_generation);
+
+-- name: SemanticCoverageCounts :one
+-- How much of the catalogue carries a current embedding, for the public
+-- embedding-progress page (openspec/changes/embedding-progress-page). "Eligible" is
+-- the first branch of EnqueuePendingSemanticJobs' predicate without its staleness
+-- test, and "covered" is that branch negated — so a posting is exactly one of covered
+-- or queueable, and the queue's claimable depth is the uncovered remainder. Keep the
+-- two in step: a gate added there and not here makes the page count postings nothing
+-- will ever embed.
+--
+-- NOT is_private, unlike the enqueue: a private posting is one user's pasted JD and must
+-- not change a figure published to everyone else (private_job_rule_test). The queue
+-- still carries the few private rows being embedded, so eligible − queued undercounts
+-- coverage by that handful — the direction the page can afford.
+--
+-- A scan over every open posting: measured on production 2026-10-19 it did not finish
+-- inside 60s on a loaded host. It runs in cmd/rollup-stats, never on a request path.
+SELECT
+    count(*)::bigint AS eligible,
+    count(*) FILTER (
+        WHERE semantic_embedded_model = sqlc.arg(target_model)::text
+          AND semantic_embedded_hash IS NOT DISTINCT FROM content_hash
+    )::bigint AS covered
+FROM jobs
+WHERE closed_at IS NULL AND duplicate_of IS NULL AND is_tech IS TRUE AND NOT is_private;
+
+-- name: SemanticOutboxClaimableDepth :one
+-- The work left in semantic_outbox: rows a worker can still claim. A dead letter is
+-- not work left, it is work given up on. Reads semantic_outbox_claimable_idx (partial
+-- on failed_at IS NULL), 4.5ms on production — cheap enough for cmd/server to sample
+-- every 15s, which SemanticOutboxMetrics (a full scan for dead letters and the
+-- oldest row as well) is not meant for.
+SELECT count(*)::bigint FROM semantic_outbox WHERE failed_at IS NULL;

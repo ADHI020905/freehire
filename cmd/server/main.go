@@ -49,6 +49,7 @@ import (
 	"github.com/strelov1/freehire/internal/platform/llm"
 	"github.com/strelov1/freehire/internal/platform/observability"
 	"github.com/strelov1/freehire/internal/platform/tokencrypt"
+	"github.com/strelov1/freehire/internal/search/embedprogress"
 	"github.com/strelov1/freehire/internal/search/search"
 	"github.com/strelov1/freehire/internal/search/suggest"
 
@@ -345,6 +346,12 @@ func main() {
 	recentFeedPoller := recentfeed.NewPoller(db.New(pool), recentFeedBroadcaster, recentFeedBatchSize)
 	go recentFeedPoller.Run(ctx, recentFeedPollInterval)
 
+	// The public /embeddings page: samples semantic_outbox's claimable depth (a 4.5ms
+	// index read) and combines it with the coverage snapshot cmd/rollup-stats
+	// publishes. See openspec/changes/embedding-progress-page.
+	embedProgress := embedprogress.NewSampler(db.New(pool), cache.NewRedisCache(redisClient), time.Now)
+	go embedProgress.Run(ctx, embedprogress.SampleInterval)
+
 	handler.Register(app, handler.Config{
 		Pool:                        pool,
 		Throttler:                   throttler,
@@ -407,6 +414,7 @@ func main() {
 		InngestEventKey:             cfg.InngestEventKey,
 
 		RecentJobsFeed: recentFeedBroadcaster,
+		EmbedProgress:  embedProgress,
 	})
 
 	// Site-status daily history sampler: no MeiliKey-style gate, since it has no

@@ -69,6 +69,7 @@ import (
 	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/platform/llm"
 	"github.com/strelov1/freehire/internal/platform/tokencrypt"
+	"github.com/strelov1/freehire/internal/search/embedprogress"
 	"github.com/strelov1/freehire/internal/search/search"
 	"github.com/strelov1/freehire/internal/search/suggest"
 )
@@ -465,6 +466,10 @@ type Config struct {
 	// this handler only subscribes. Nil disables the route with a 503 rather than
 	// serving a feed that will never receive anything.
 	RecentJobsFeed *recentfeed.Broadcaster
+	// EmbedProgress backs the public /embeddings page's figures and stream
+	// (internal/search/embedprogress). cmd/server owns the Sampler's tick; this handler
+	// only reads it. Nil serves 503 on both routes.
+	EmbedProgress *embedprogress.Sampler
 }
 
 // Register wires all routes onto the application from cfg. Auth is same-origin
@@ -509,6 +514,13 @@ func Register(app *fiber.App, cfg Config) {
 	jobsH := newJobsHandlers(queries, moderationSvc, postingURLs, cfg.Cache)
 	statsH := newStatsHandlers(queries, cfg.Cache, cfg.Pool)
 	recentFeedH := newRecentFeedHandlers(cfg.RecentJobsFeed, cfg.Throttler)
+	// A nil *Sampler in an interface is not a nil interface, so the 503 path needs the
+	// conversion skipped, not done.
+	var embedProgressSrc embedProgressSource
+	if cfg.EmbedProgress != nil {
+		embedProgressSrc = cfg.EmbedProgress
+	}
+	embedProgressH := newEmbedProgressHandlers(embedProgressSrc, cfg.Throttler)
 	ogH := newOGHandlers(queries, cfg.Cache)
 	votesH := newVoteHandlers(queries, cfg.Pool)
 	communityH := newCommunityHandlers(queries)
@@ -972,6 +984,8 @@ func Register(app *fiber.App, cfg Config) {
 	statsH.register(api, optionalAuth)
 	// The homepage's live "recently added jobs" SSE feed (see recentFeedHandlers).
 	recentFeedH.register(api)
+	// The public /embeddings page's coverage figures and their live stream.
+	embedProgressH.register(api)
 	// The /open and /about pages' OG preview cards (see ogHandlers) — reads the
 	// same snapshot statsH.CatalogScale serves.
 	ogH.register(api)

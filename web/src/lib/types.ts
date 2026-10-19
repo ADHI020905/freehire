@@ -1194,6 +1194,20 @@ export interface CatalogScale {
   exact: boolean;
 }
 
+/** Semantic-embedding coverage of the catalogue, behind the public /embeddings
+ *  page (`GET /api/v1/stats/embeddings` and its stream). Every figure is `null`
+ *  until it has been measured — render that as "measuring", never as 0. */
+export interface EmbedProgress {
+  eligible: number | null;
+  covered: number | null;
+  snapshot_covered: number | null;
+  queued: number | null;
+  rate_per_minute: number | null;
+  eta_seconds: number | null;
+  snapshot_at: string | null;
+  measured_at: string | null;
+}
+
 /** The derived health verdict for a provider (and the fleet) on the public
  *  /status page. */
 export type HealthStatus = 'operational' | 'degraded' | 'down';

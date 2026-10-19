@@ -597,6 +597,60 @@ func (q *Queries) SelectJobsNeedingSimilarBackfill(ctx context.Context, limitCou
 	return items, nil
 }
 
+const semanticCoverageCounts = `-- name: SemanticCoverageCounts :one
+SELECT
+    count(*)::bigint AS eligible,
+    count(*) FILTER (
+        WHERE semantic_embedded_model = $1::text
+          AND semantic_embedded_hash IS NOT DISTINCT FROM content_hash
+    )::bigint AS covered
+FROM jobs
+WHERE closed_at IS NULL AND duplicate_of IS NULL AND is_tech IS TRUE AND NOT is_private
+`
+
+type SemanticCoverageCountsRow struct {
+	Eligible int64 `json:"eligible"`
+	Covered  int64 `json:"covered"`
+}
+
+// How much of the catalogue carries a current embedding, for the public
+// embedding-progress page (openspec/changes/embedding-progress-page). "Eligible" is
+// the first branch of EnqueuePendingSemanticJobs' predicate without its staleness
+// test, and "covered" is that branch negated — so a posting is exactly one of covered
+// or queueable, and the queue's claimable depth is the uncovered remainder. Keep the
+// two in step: a gate added there and not here makes the page count postings nothing
+// will ever embed.
+//
+// NOT is_private, unlike the enqueue: a private posting is one user's pasted JD and must
+// not change a figure published to everyone else (private_job_rule_test). The queue
+// still carries the few private rows being embedded, so eligible − queued undercounts
+// coverage by that handful — the direction the page can afford.
+//
+// A scan over every open posting: measured on production 2026-10-19 it did not finish
+// inside 60s on a loaded host. It runs in cmd/rollup-stats, never on a request path.
+func (q *Queries) SemanticCoverageCounts(ctx context.Context, targetModel string) (SemanticCoverageCountsRow, error) {
+	row := q.db.QueryRow(ctx, semanticCoverageCounts, targetModel)
+	var i SemanticCoverageCountsRow
+	err := row.Scan(&i.Eligible, &i.Covered)
+	return i, err
+}
+
+const semanticOutboxClaimableDepth = `-- name: SemanticOutboxClaimableDepth :one
+SELECT count(*)::bigint FROM semantic_outbox WHERE failed_at IS NULL
+`
+
+// The work left in semantic_outbox: rows a worker can still claim. A dead letter is
+// not work left, it is work given up on. Reads semantic_outbox_claimable_idx (partial
+// on failed_at IS NULL), 4.5ms on production — cheap enough for cmd/server to sample
+// every 15s, which SemanticOutboxMetrics (a full scan for dead letters and the
+// oldest row as well) is not meant for.
+func (q *Queries) SemanticOutboxClaimableDepth(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, semanticOutboxClaimableDepth)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const setSimilarJobIDs = `-- name: SetSimilarJobIDs :execrows
 UPDATE jobs
 SET similar_job_ids = $1::bigint[],

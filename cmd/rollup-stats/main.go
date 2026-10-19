@@ -119,6 +119,10 @@ func run() int {
 	// reason and on the same terms.
 	rebuildSourceStats(ctx, pool, cfg.MeiliURL, cfg.MeiliKey)
 
+	// And the embedding-coverage snapshot behind /embeddings: a scan over every open
+	// posting, which is why it is here and never on a request path.
+	rebuildEmbedProgress(ctx, pool, cfg.RedisURL)
+
 	return 0
 }
 

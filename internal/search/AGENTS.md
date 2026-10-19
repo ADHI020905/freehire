@@ -16,8 +16,8 @@ reports the whole graph at once, including imports that exist only in test files
 
 ## Packages
 
-`facetsnapshot` `savedsearch` `search` `searchdrain` `searchintent` `similarjobs`
-`suggest`
+`embedprogress` `facetsnapshot` `savedsearch` `search` `searchdrain` `searchintent`
+`similarjobs` `suggest`
 
 ## The suggestions dictionary (`suggest`)
 

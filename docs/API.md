@@ -2487,6 +2487,50 @@ curl "https://freehire.me/api/v1/stats/catalog"
 }
 ```
 
+### `GET /stats/embeddings`
+
+**Auth:** Public
+
+How much of the catalogue carries a semantic embedding, and how fast the rest is going.
+
+Backs the public /embeddings page. `eligible` and `snapshot_covered` come from a snapshot `cmd/rollup-stats` measures every few hours (the count is too slow for a request); `queued` is the embedding queue, sampled every 15 seconds, and `covered` is `eligible − queued`. `rate_per_minute` counts only what left the queue over the last 10 minutes, so a batch of new postings arriving at once does not read as negative progress. Any figure not yet measured is `null`, never `0`.
+
+```bash
+curl "https://freehire.me/api/v1/stats/embeddings"
+```
+
+```json
+{
+  "data": {
+    "eligible": 1903114,
+    "covered": 1897020,
+    "snapshot_covered": 1889512,
+    "queued": 6094,
+    "rate_per_minute": 570.4,
+    "eta_seconds": 641,
+    "snapshot_at": "2026-10-19T09:22:03Z",
+    "measured_at": "2026-10-19T12:04:15Z"
+  }
+}
+```
+
+### `GET /stats/embeddings/stream`
+
+**Auth:** Public
+
+The same document as server-sent events, one per sample.
+
+A `progress` event carrying the full document on connect and after every 15-second sample, with a `ping` event between to keep idle connections alive. Connections are rate-limited per IP.
+
+```bash
+curl -N "https://freehire.me/api/v1/stats/embeddings/stream"
+```
+
+```json
+event: progress
+data: {"eligible":1903114,"covered":1897020,"snapshot_covered":1889512,"queued":6094,"rate_per_minute":570.4,"eta_seconds":641,"snapshot_at":"2026-10-19T09:22:03Z","measured_at":"2026-10-19T12:04:15Z"}
+```
+
 ### `GET /insights/roles`
 
 **Auth:** Public

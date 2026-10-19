@@ -153,6 +153,9 @@ export const STATIC_PATHS = [
   // the committed snapshot via contributorPaths(), the same way collections do.
   '/contributors',
   '/status',
+  // Live semantic-embedding coverage of the catalogue, and the invitation to help with
+  // it — public, and meant to be found by someone who might lend a machine.
+  '/embeddings',
   // Named as the App Store listing's Support URL, so it must resolve and stay
   // indexable — a 404 there is a rejection.
   '/support',
