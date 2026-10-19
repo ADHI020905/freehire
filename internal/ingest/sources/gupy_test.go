@@ -171,3 +171,82 @@ func TestGupyFetchMarksADetailWithNoBody(t *testing.T) {
 		t.Fatalf("jobs = %+v, want one Unreadable marker", jobs)
 	}
 }
+
+// Gupy re-fetched every posting's detail on every crawl, because the listing carries no body:
+// with 3,324 career-page boards and ~72k open postings that was ~72k detail requests per run
+// against a 50-minute timeout (2026-10-19). A posting the catalogue already holds is now
+// re-listed as a liveness refresh and costs no detail request; only a new one is hydrated.
+func TestGupyFetchNewSkipsDetailForSeenPostings(t *testing.T) {
+	// No route for the detail: requesting it would come back unreadable, which the test rejects.
+	fake := (&routedHTTP{}).route("subdomain=caju", gupyFixture(t, "list_caju.json"))
+
+	src, ok := NewGupy(fake).(HydratingSource)
+	if !ok {
+		t.Fatal("gupy should be a HydratingSource")
+	}
+	jobs, err := src.FetchNew(context.Background(), CompanyEntry{
+		Company: "Caju", Provider: "gupy", Board: "caju",
+	}, func(id string) bool { return id == "12691526" })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("len(jobs) = %d, want 1: %+v", len(jobs), jobs)
+	}
+	j := jobs[0]
+	if !j.SeenRefresh || j.Unreadable {
+		t.Fatalf("job = %+v, want a SeenRefresh without a detail request", j)
+	}
+	if j.ExternalID != "12691526" || j.Title != "Pessoa Desenvolvedora FrontEnd Sênior" || j.Company != "Caju" {
+		t.Errorf("identity = %q/%q/%q, want the listing's id and title and the board's company", j.ExternalID, j.Title, j.Company)
+	}
+}
+
+func TestGupyFetchNewHydratesAnUnseenPosting(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("job-publication/public/jobs?subdomain=caju", gupyFixture(t, "list_caju.json")).
+		route("job-publication/public/jobs/12691526", gupyFixture(t, "detail_12691526.json"))
+
+	jobs, err := NewGupy(fake).(HydratingSource).FetchNew(context.Background(), CompanyEntry{
+		Company: "Caju", Provider: "gupy", Board: "caju",
+	}, func(string) bool { return false })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	if len(jobs) != 1 || jobs[0].SeenRefresh || jobs[0].Unreadable {
+		t.Fatalf("jobs = %+v, want one hydrated posting", jobs)
+	}
+	if !strings.Contains(jobs[0].Description, "Desenvolvimento de aplicações web") {
+		t.Errorf("Description = %q, want the detail body", jobs[0].Description)
+	}
+}
+
+func TestGupyFetchNewMarksAnUnreadableDetail(t *testing.T) {
+	// An unseen posting's detail is still its only body, so the FAILED-vs-GONE rule holds on
+	// the hydrating path: a failure is a marker, not a drop.
+	fake := (&routedHTTP{}).
+		routeErr("job-publication/public/jobs/12691526", errors.New("timeout")).
+		route("subdomain=caju", gupyFixture(t, "list_caju.json"))
+
+	jobs, err := NewGupy(fake).(HydratingSource).FetchNew(context.Background(), CompanyEntry{
+		Company: "Caju", Provider: "gupy", Board: "caju",
+	}, func(string) bool { return false })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	if len(jobs) != 1 || !jobs[0].Unreadable {
+		t.Fatalf("jobs = %+v, want one Unreadable marker", jobs)
+	}
+}
+
+// A listing failure still aborts FetchNew, exactly as it aborts Fetch: the fullBoardListing
+// claim holds on the hydrating path too.
+func TestGupyFetchNewFailsWhenTheCareerPageIsGone(t *testing.T) {
+	fake := (&routedHTTP{}).routeErr("subdomain=", &StatusError{Method: http.MethodGet, Code: http.StatusNotFound})
+
+	if _, err := NewGupy(fake).(HydratingSource).FetchNew(context.Background(), CompanyEntry{
+		Company: "Gone", Provider: "gupy", Board: "gone",
+	}, func(string) bool { return false }); err == nil {
+		t.Fatal("FetchNew succeeded on a missing career page, want an error")
+	}
+}

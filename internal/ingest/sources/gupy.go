@@ -27,7 +27,7 @@ const gupyJobsURL = "https://private-api.gupy.io/job-publication/public/jobs"
 
 // gupy adapts Gupy career pages. The listing carries title, address and workplace type but
 // no body, so each posting's description comes from its detail — the posting's only source,
-// re-read on every crawl.
+// read once: as a HydratingSource it fetches the detail only for postings not yet stored.
 type gupy struct {
 	http JSONGetter
 }
@@ -54,16 +54,50 @@ type gupyPosting struct {
 }
 
 func (g gupy) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
+	postings, err := g.list(ctx, e.Board)
+	if err != nil {
+		return nil, err
+	}
+	return fetchDetails(postings, defaultDetailWorkers, func(p gupyPosting) (Job, bool) {
+		return g.detail(ctx, e, p)
+	}), nil
+}
+
+// FetchNew is Fetch that spends a detail request only on postings the catalogue does not hold.
+// The detail is this adapter's whole cost: re-reading every stored body on every run was ~72k
+// detail requests across 3,324 career pages (2026-10-19), which no run could finish. A seen
+// posting is re-listed as a SeenRefresh carrying the listing's identity — the listing itself
+// proves the posting is still published — so its liveness refreshes and its hydrated body and
+// facets are kept.
+func (g gupy) FetchNew(ctx context.Context, e CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
+	postings, err := g.list(ctx, e.Board)
+	if err != nil {
+		return nil, err
+	}
+	return fetchDetails(postings, defaultDetailWorkers, func(p gupyPosting) (Job, bool) {
+		if id := strconv.FormatInt(p.ID, 10); seen(id) {
+			return Job{
+				ExternalID:  id,
+				Title:       strings.TrimSpace(p.Name),
+				Company:     e.Company,
+				SeenRefresh: true,
+			}, true
+		}
+		return g.detail(ctx, e, p)
+	}), nil
+}
+
+// list reads a career page's whole listing, one unpaginated answer. A failure fails the board
+// — never an empty board, which would license a sweep.
+func (g gupy) list(ctx context.Context, board string) ([]gupyPosting, error) {
 	var resp struct {
 		Data []gupyPosting `json:"data"`
 	}
-	listURL := gupyJobsURL + "?subdomain=" + url.QueryEscape(e.Board)
+	listURL := gupyJobsURL + "?subdomain=" + url.QueryEscape(board)
 	if err := g.http.GetJSON(ctx, listURL, &resp); err != nil {
-		return nil, fmt.Errorf("gupy: list career page %s: %w", e.Board, err)
+		return nil, fmt.Errorf("gupy: list career page %s: %w", board, err)
 	}
-	return fetchDetails(resp.Data, defaultDetailWorkers, func(p gupyPosting) (Job, bool) {
-		return g.detail(ctx, e, p)
-	}), nil
+	return resp.Data, nil
 }
 
 // gupyDetail is a posting's structured detail. Gupy splits a job into fixed sections;
