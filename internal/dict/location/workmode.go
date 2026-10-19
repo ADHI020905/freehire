@@ -61,7 +61,8 @@ func WorkModeFromDescription(desc string) string {
 }
 
 // phraseMatches reports whether p occurs in text (already lowercased) unguarded. A
-// travelPerkPhrases match that IS qualified does not end the search for p — the same
+// travelPerkPhrases match that IS qualified, or an allowancePhrases match that counts a
+// perk ("45 work-from-anywhere days"), does not end the search for p — the same
 // "scan past a qualified match" property RemoteContradicted's loop has for denial phrases
 // (see TestRemoteContradictedReadsPastAQualifiedDenial): a description may hedge one
 // occurrence of "work from anywhere" as a bounded perk and state another, unqualified one
@@ -76,7 +77,9 @@ func phraseMatches(text, p string) bool {
 			return false
 		}
 		start, end := offset+i, offset+i+len(p)
-		if !guarded || !travelPerkQualified(text, start, end) {
+		perk := (guarded && travelPerkQualified(text, start, end)) ||
+			(allowancePhrases[p] && countsAllowance(text[end:]))
+		if !perk {
 			return true
 		}
 		offset = end
@@ -96,6 +99,42 @@ func phraseMatches(text, p string) bool {
 var travelPerkPhrases = map[string]bool{
 	"work from anywhere": true,
 	"work-from-anywhere": true,
+}
+
+// allowancePhrases are the home-working phrases that also serve as an ADJECTIVE on a counted
+// perk — "45 work-from-anywhere days", "one work-from-home day each week" — rather than a
+// statement of the posting's arrangement. Both sentences are real (job_reports, 2026-10): a
+// Workable posting whose own workplace field says hybrid, and a Teamtailor one whose
+// remoteStatus says hybrid, each served as remote because the perk line matched. No nearby
+// qualifier is needed for this shape: a phrase immediately followed by the unit it counts is
+// never the sentence an employer writes to say the job itself is remote.
+var allowancePhrases = map[string]bool{
+	"work from anywhere": true,
+	"work-from-anywhere": true,
+	"work from home":     true,
+	"work-from-home":     true,
+}
+
+// allowanceUnits are the nouns a counted home-working perk is measured in.
+var allowanceUnits = []string{"days", "day", "weeks", "week"}
+
+// countsAllowance reports whether rest (the lowercased text right after a phrase) opens with
+// an allowanceUnits noun as a whole word. "day-to-day" is not a unit: "work from home
+// day-to-day" states the arrangement, so a hyphen or letter after the noun rules it out.
+func countsAllowance(rest string) bool {
+	rest = strings.TrimLeft(rest, " ")
+	for _, u := range allowanceUnits {
+		if !strings.HasPrefix(rest, u) {
+			continue
+		}
+		after := rest[len(u):]
+		if after == "" {
+			return true
+		}
+		r := rune(after[0])
+		return r != '-' && !unicode.IsLetter(r)
+	}
+	return false
 }
 
 // travelPerkQualifiers mark a travelPerkPhrases match as a bounded allowance rather than

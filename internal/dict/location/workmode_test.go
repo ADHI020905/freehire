@@ -48,6 +48,20 @@ func TestWorkModeFromDescription(t *testing.T) {
 			"days work from anywhere per year. Separately, you can work from anywhere in the EU on a " +
 			"permanent basis.", "remote"},
 
+		// Allowance-noun guard — real prod sentences where the phrase COUNTS days of a perk
+		// rather than stating the arrangement. Both postings are hybrid on their own ATS
+		// (Workable workplace "hybrid", Teamtailor remoteStatus "hybrid"), and both were served
+		// as remote off these lines (job_reports, 2026-10).
+		{"work-from-anywhere days perk", "<li>25 days holiday + bank holidays</li><li>45 " +
+			"work-from-anywhere days: giving you the flexibility to work your way.</li>", ""},
+		{"work-from-home day perk", "Take your birthday off, wrap up two hours earlier on Fridays, " +
+			"and enjoy one work-from-home day each week—plus 20 extra remote days from anywhere in the world.", ""},
+		{"work from home weeks perk", "Two work from home weeks a year on top of your holiday.", ""},
+		{"allowance guard does not block a plain statement", "Enjoy 10 work-from-anywhere days. " +
+			"Otherwise this is a work from home position.", "remote"},
+		{"work from home day-to-day is not an allowance", "You will work from home day-to-day " +
+			"with occasional client visits.", "remote"},
+
 		// Trap negatives — incidental tokens that must NOT trigger a match.
 		{"distributed systems", "Experience building distributed systems at scale.", ""},
 		{"hybrid cloud", "You will manage our hybrid cloud infrastructure.", ""},

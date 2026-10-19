@@ -108,7 +108,7 @@ var refusalRetryProviders = map[string]func(HTTPClient) Source{
 	// Paced as well as refusal-retried: the proxy recovers a refused request, the pacer stops
 	// producing them. Without the pacer this entry alone moved only a quarter of the failures.
 	"teamtailor": func(c HTTPClient) Source {
-		return NewTeamtailor(pacedHTMLGetter(c, teamtailorRequestInterval, teamtailorRequestBurst))
+		return NewTeamtailor(pacedTeamtailorGetter(c))
 	},
 	// ADP is the same shape as teamtailor, measured on prod 2026-09-09 after the catalogue grew
 	// from 2,798 boards to 7,890: one run logged 3,028 boards refused on their listing call, and

@@ -129,3 +129,61 @@ func TestPaylocityFetchEmpty(t *testing.T) {
 		t.Fatalf("jobs = %d, want 0", len(jobs))
 	}
 }
+
+// paylocityRemoteWorkerListingHTML carries two briefs captured verbatim from live listings
+// (2026-10-18; descriptions truncated). LocationName is the tenant's own label for a location
+// record — "Remote Worker", "Concord Office" — and names no place, so the dictionary reads
+// nothing from it. JobLocation is the structured record behind the label, and its Country is
+// the only place the platform states where the work is: a "Remote Worker" posting with
+// Country "USA" is US remote, which the catalogue served as unrestricted (job_reports 2026-10,
+// Vector Solutions "Product Manager").
+const paylocityRemoteWorkerListingHTML = `<html><body>
+<script>window.pageData = {"Jobs":[
+{"JobId": 4594212, "JobTitle": "Manager, Intake", "LocationName": "Remote Worker", "ShouldDisplayLocation": true, "PublishedDate": "2026-10-16T15:33:57-05:00", "Description": "AdaptHealth Opportunity – Apply Today!Ab", "IsInternal": false, "HiringDepartment": null, "JobLocation": {"LocationId": 4519575, "ModuleId": 14333, "Name": "Remote Worker", "Address": null, "Address2": null, "Metro": null, "City": null, "State": null, "Zip": null, "Country": "USA", "County": "-", "SmartyAddressId": "f2ac88bb-0cb4-4295-b5d7-2a109fb79097"}, "IsRemote": false, "IndeedRemoteType": 2},
+{"JobId":4417556,"JobTitle":"Two-Day Summit 2027","LocationName":"Concord Office","ShouldDisplayLocation":true,"PublishedDate":"2026-08-13T10:54:40-05:00","Description":"If you want to dive deeper into understanding what it is like to work as an accounting professional, Nathan We","IsInternal":false,"HiringDepartment":null,"JobLocation":{"LocationId":4342808,"ModuleId":15120,"Name":"Concord Office","Address":"70 Commercial St, 4th Floor","Address2":null,"Metro":null,"City":"Concord","State":"NH","Zip":"03301-5094","Country":"USA","County":"Merrimack","SmartyAddressId":"84faf7ae-a60e-4cc2-b8aa-b772114cbea9"},"IsRemote":false,"IndeedRemoteType":2}
+]};</script>
+</body></html>`
+
+func TestPaylocityCountryFromJobLocation(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("/Recruiting/Jobs/All/", paylocityRemoteWorkerListingHTML).
+		route("/Recruiting/Jobs/Details/", paylocityDetailHTML)
+
+	jobs, err := NewPaylocity(fake).Fetch(context.Background(), CompanyEntry{Company: "AdaptHealth", Board: "guid"})
+	if err != nil {
+		t.Fatalf("fetch: %v", err)
+	}
+	byID := map[string]Job{}
+	for _, j := range jobs {
+		byID[j.ExternalID] = j
+	}
+	for _, id := range []string{"4594212", "4417556"} {
+		j, ok := byID[id]
+		if !ok {
+			t.Fatalf("missing job %s", id)
+		}
+		if len(j.Countries) != 1 || j.Countries[0] != "us" {
+			t.Errorf("job %s countries = %v, want [us]", id, j.Countries)
+		}
+	}
+	if !byID["4594212"].Remote {
+		t.Error(`"Remote Worker" posting not flagged remote`)
+	}
+}
+
+// A brief with no JobLocation (the older listing shape above) states no country, and none
+// is invented.
+func TestPaylocityNoJobLocationNoCountry(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("/Recruiting/Jobs/All/", paylocityListingHTML).
+		route("/Recruiting/Jobs/Details/", paylocityDetailHTML)
+	jobs, err := NewPaylocity(fake).Fetch(context.Background(), CompanyEntry{Board: "guid"})
+	if err != nil {
+		t.Fatalf("fetch: %v", err)
+	}
+	for _, j := range jobs {
+		if j.Countries != nil {
+			t.Errorf("job %s countries = %v, want nil", j.ExternalID, j.Countries)
+		}
+	}
+}

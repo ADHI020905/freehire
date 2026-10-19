@@ -77,9 +77,10 @@ func TestTeamtailorFetchNewIssuesOneDetailRequestPerUnseenPosting(t *testing.T) 
 		func(id string) bool { return id == "1" || id == "2" }); err != nil {
 		t.Fatalf("FetchNew: %v", err)
 	}
-	// 2 listing pages + 1 detail. Unpaced, the old crawl would have made 5.
-	if fake.calls != 3 {
-		t.Errorf("made %d requests, want 3 (2 listing + 1 detail for the single unseen posting)", fake.calls)
+	// 2 listing pages + 1 feed request (the unseen posting's remoteStatus) + 1 detail. The old
+	// crawl, hydrating everything, would have made 5.
+	if fake.calls != 4 {
+		t.Errorf("made %d requests, want 4 (2 listing + 1 feed + 1 detail for the single unseen posting)", fake.calls)
 	}
 }
 

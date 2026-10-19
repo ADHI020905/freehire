@@ -99,6 +99,7 @@ func (s paylocity) detail(ctx context.Context, e CompanyEntry, b paylocityBrief)
 		Location:    b.LocationName,
 		Description: description,
 		Remote:      b.IsRemote || isRemote(b.LocationName),
+		Countries:   b.countries(),
 		PostedAt:    parseRFC3339(b.PublishedDate),
 	}, true
 }
@@ -135,6 +136,22 @@ type paylocityBrief struct {
 	LocationName  string `json:"LocationName"`
 	PublishedDate string `json:"PublishedDate"`
 	IsRemote      bool   `json:"IsRemote"`
+	// JobLocation is the structured location record LocationName labels. LocationName is
+	// the tenant's own name for it ("Remote Worker", "Concord Office") and usually names no
+	// place, so Country here is the only statement of where the work is — "USA" on every one
+	// of 392 briefs sampled across 40 live boards (2026-10-18).
+	JobLocation *struct {
+		Country string `json:"Country"`
+	} `json:"JobLocation"`
+}
+
+// countries is the brief's structured country, nil when the listing carries no location
+// record or a country the dictionary does not resolve.
+func (b paylocityBrief) countries() []string {
+	if b.JobLocation == nil {
+		return nil
+	}
+	return countryFromCode(b.JobLocation.Country)
 }
 
 // paylocityPosting is the schema.org JobPosting decoded from a detail page's ld+json.

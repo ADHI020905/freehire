@@ -281,6 +281,11 @@ func (f *ttEndlessListingFake) GetHTML(_ context.Context, rawURL string) (*html.
 	return html.Parse(strings.NewReader(body))
 }
 
+// GetXML is never reached: the listing walk fails at the cap before any feed request.
+func (f *ttEndlessListingFake) GetXML(_ context.Context, u string, _ any) error {
+	return fmt.Errorf("unexpected feed request %s", u)
+}
+
 // A listing still yielding new links past ttMaxPages is a truncated walk, not a genuinely
 // exhausted one, and must fail rather than silently return the links gathered so far — the
 // same partial-success shape that forced freehire#2337's revert.
@@ -378,6 +383,11 @@ func (h ttRootListingHTTP) GetHTML(_ context.Context, u string) (*html.Node, err
 	default: // /?page=2 and beyond → empty listing ends enumeration
 		return html.Parse(strings.NewReader(ttListingHTML()))
 	}
+}
+
+// GetXML answers jobs.rss with a 404, as jobs.proxify.io does live (2026-10-18).
+func (h ttRootListingHTTP) GetXML(_ context.Context, u string, _ any) error {
+	return &StatusError{Method: "GET", Code: 404, URL: u}
 }
 
 func TestTeamtailorFallsBackToRootListingWhenJobsPath404s(t *testing.T) {

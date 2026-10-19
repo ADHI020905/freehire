@@ -561,6 +561,36 @@ const (
 	teamtailorRequestBurst    = 8
 )
 
+// rateLimitedTeamtailorGetter paces both of teamtailor's request kinds — its pages (HTML) and
+// its jobs.rss feed (XML) — through one limiter, so the feed shares the platform's budget
+// rather than adding a second, unpaced stream beside it.
+type rateLimitedTeamtailorGetter struct {
+	inner   teamtailorHTTP
+	limiter waiter
+}
+
+func (g rateLimitedTeamtailorGetter) GetHTML(ctx context.Context, url string) (*html.Node, error) {
+	if err := g.limiter.Wait(ctx); err != nil {
+		return nil, err
+	}
+	return g.inner.GetHTML(ctx, url)
+}
+
+func (g rateLimitedTeamtailorGetter) GetXML(ctx context.Context, url string, v any) error {
+	if err := g.limiter.Wait(ctx); err != nil {
+		return err
+	}
+	return g.inner.GetXML(ctx, url, v)
+}
+
+// pacedTeamtailorGetter wraps c with a fresh limiter at teamtailor's rate.
+func pacedTeamtailorGetter(c teamtailorHTTP) teamtailorHTTP {
+	return rateLimitedTeamtailorGetter{
+		inner:   c,
+		limiter: rate.NewLimiter(rate.Every(teamtailorRequestInterval), teamtailorRequestBurst),
+	}
+}
+
 // Wellfound's requests go through the hosted Firecrawl tier, so the ceiling being throttled
 // against is Firecrawl's own account-level limit, not the target site's edge — and, unlike
 // every rate-based pace in this file, it is shared across every OTHER firecrawl-tier

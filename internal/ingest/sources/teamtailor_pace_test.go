@@ -35,7 +35,7 @@ func TestTeamtailorPaceFitsTheRunBudget(t *testing.T) {
 // proxy one serves prod. Pacing only one leaves prod or dev firing the burst that caused this.
 func TestTeamtailorPacedInBothWirings(t *testing.T) {
 	direct := All(NewClient())["teamtailor"]
-	if _, paced := unwrapTeamtailorGetter(direct).(rateLimitedHTMLGetter); !paced {
+	if _, paced := unwrapTeamtailorGetter(direct).(rateLimitedTeamtailorGetter); !paced {
 		t.Error("registry teamtailor is not paced")
 	}
 
@@ -44,13 +44,13 @@ func TestTeamtailorPacedInBothWirings(t *testing.T) {
 	if err := ApplyProxyEgress(registry); err != nil {
 		t.Fatalf("ApplyProxyEgress: %v", err)
 	}
-	if _, paced := unwrapTeamtailorGetter(registry["teamtailor"]).(rateLimitedHTMLGetter); !paced {
+	if _, paced := unwrapTeamtailorGetter(registry["teamtailor"]).(rateLimitedTeamtailorGetter); !paced {
 		t.Error("proxied teamtailor is not paced")
 	}
 }
 
 // unwrapTeamtailorGetter reaches the HTMLGetter the adapter was built over.
-func unwrapTeamtailorGetter(s Source) HTMLGetter {
+func unwrapTeamtailorGetter(s Source) teamtailorHTTP {
 	tt, ok := s.(teamtailor)
 	if !ok {
 		return nil

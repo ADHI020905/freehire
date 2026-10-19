@@ -16,11 +16,18 @@ import (
 // server-rendered HTML carrying a schema.org JobPosting ld+json block, so the description
 // comes from a per-job detail fetch (bounded-concurrency), like the other detail adapters.
 type teamtailor struct {
-	http HTMLGetter
+	http teamtailorHTTP
+}
+
+// teamtailorHTTP is the client capability teamtailor needs: the listing and job pages as
+// parsed HTML, and the board's RSS feed (remoteStatuses) as XML.
+type teamtailorHTTP interface {
+	HTMLGetter
+	XMLGetter
 }
 
 // NewTeamtailor builds the Teamtailor adapter over the given HTTP client.
-func NewTeamtailor(c HTMLGetter) Source { return teamtailor{http: c} }
+func NewTeamtailor(c teamtailorHTTP) Source { return teamtailor{http: c} }
 
 func (teamtailor) Provider() string { return "teamtailor" }
 
@@ -49,9 +56,10 @@ func (t teamtailor) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
 		return nil, err
 	}
 
+	statuses := t.remoteStatuses(ctx, e, urls)
 	// Each job's posting comes from its own page fetch, fanned out under a bounded pool.
 	return fetchDetails(urls, defaultDetailWorkers, func(u string) (Job, bool) {
-		return t.detail(ctx, e, u)
+		return t.detail(ctx, e, u, statuses[ttJobID(u)])
 	}), nil
 }
 
@@ -71,6 +79,16 @@ func (t teamtailor) FetchNew(ctx context.Context, e CompanyEntry, seen func(exte
 		return nil, err
 	}
 
+	// The feed is read only for what will be hydrated: a run where every posting is already
+	// known — the steady state — costs no feed request either.
+	var unseen []string
+	for _, u := range urls {
+		if id := ttJobID(u); id != "" && !seen(id) {
+			unseen = append(unseen, u)
+		}
+	}
+	statuses := t.remoteStatuses(ctx, e, unseen)
+
 	return fetchDetails(urls, defaultDetailWorkers, func(u string) (Job, bool) {
 		id := ttJobID(u)
 		if id == "" {
@@ -85,7 +103,7 @@ func (t teamtailor) FetchNew(ctx context.Context, e CompanyEntry, seen func(exte
 			// content-less listing — so no title is the honest thing to send, not a defect.
 			return Job{ExternalID: id, URL: u, Company: e.Company, SeenRefresh: true}, true
 		}
-		return t.detail(ctx, e, u)
+		return t.detail(ctx, e, u, statuses[id])
 	}), nil
 }
 
@@ -158,8 +176,9 @@ func (t teamtailor) jobURLs(ctx context.Context, e CompanyEntry) ([]string, erro
 
 // detail fetches one job page and maps its JobPosting ld+json to a Job, returning ok=false
 // when the page fetch fails, carries no JobPosting, or has no parseable id, so the caller
-// skips just that posting.
-func (t teamtailor) detail(ctx context.Context, e CompanyEntry, jobURL string) (Job, bool) {
+// skips just that posting. remoteStatus is the posting's feed <remoteStatus>, "" when the
+// feed did not carry it.
+func (t teamtailor) detail(ctx context.Context, e CompanyEntry, jobURL, remoteStatus string) (Job, bool) {
 	id := ttJobID(jobURL)
 	if id == "" {
 		return Job{}, false // no native id → would collide on the dedup key; skip it
@@ -180,6 +199,15 @@ func (t teamtailor) detail(ctx context.Context, e CompanyEntry, jobURL string) (
 	}
 	location := joinNonEmpty(city, country)
 
+	// The feed's remoteStatus is the posting's stated arrangement; jobLocationType
+	// TELECOMMUTE is how the page itself marks a "fully" remote one, and is all there is
+	// when the feed is unavailable. Teamtailor emits no jobLocationType for hybrid or
+	// on-site, so without the feed those stay to the dictionaries.
+	workMode := ttRemoteStatusMode(remoteStatus)
+	if workMode == "" && p.JobLocationType == "TELECOMMUTE" {
+		workMode = "remote"
+	}
+
 	return Job{
 		ExternalID:  id,
 		URL:         jobURL,
@@ -187,9 +215,10 @@ func (t teamtailor) detail(ctx context.Context, e CompanyEntry, jobURL string) (
 		Company:     e.Company,
 		Location:    location,
 		Description: sanitizeHTML(html.UnescapeString(p.Description)),
-		// jobLocationType is the authoritative remote signal; isRemote(location) is only a
-		// fallback (never the title, which false-positives on "Remote …" role names).
-		Remote:   p.JobLocationType == "TELECOMMUTE" || isRemote(location),
+		// The stated arrangement is the authoritative remote signal; isRemote(location) is
+		// only a fallback (never the title, which false-positives on "Remote …" role names).
+		Remote:   workMode == "remote" || (workMode == "" && isRemote(location)),
+		WorkMode: workMode,
 		PostedAt: parseRFC3339(p.DatePosted),
 	}, true
 }
@@ -234,4 +263,80 @@ func ttJobLinks(base *url.URL, root *html.Node) []string {
 func ttJobPosting(root *html.Node) (ttPosting, bool) {
 	var p ttPosting
 	return p, ldJobPosting(root, &p)
+}
+
+// ttFeedPageSize is how many items one jobs.rss request asks for. The feed honours
+// per_page and offset (verified 2026-10-18: 100 items by default, 5000 on request, offset
+// pages contiguous with a single larger page); 500 keeps one response near 4 MB with
+// descriptions inline.
+const ttFeedPageSize = 500
+
+// ttFeedMaxPages bounds the feed walk. Unlike the listing it proves nothing about the
+// board, so running out of pages is not a failure: postings past it fall back to what
+// their page states.
+const ttFeedMaxPages = 20
+
+// remoteStatuses reads the board's jobs.rss for the <remoteStatus> of each posting in urls,
+// keyed by posting id. The job page states the same field only in a <dl> whose label and
+// value are in the career site's own language ("Status Homeoffice/Vor Ort" on a German
+// site), omitted for on-site, and its ld+json says nothing for hybrid; the feed carries it
+// as a closed, unlocalized enum.
+//
+// It is best-effort: the feed is a facet source, never the listing, so a failed request
+// ends the walk with what it has and a missing status leaves the posting to its page and
+// the dictionaries. Newest postings come first, so a run hydrating only new ones usually
+// stops after a single request.
+func (t teamtailor) remoteStatuses(ctx context.Context, e CompanyEntry, urls []string) map[string]string {
+	want := make(map[string]bool, len(urls))
+	for _, u := range urls {
+		if id := ttJobID(u); id != "" {
+			want[id] = true
+		}
+	}
+	out := make(map[string]string, len(want))
+	for page := 0; page < ttFeedMaxPages && len(want) > 0; page++ {
+		feedURL := fmt.Sprintf("https://%s/jobs.rss?offset=%d&per_page=%d", e.Board, page*ttFeedPageSize, ttFeedPageSize)
+		var feed ttFeed
+		if err := t.http.GetXML(ctx, feedURL, &feed); err != nil {
+			return out
+		}
+		for _, it := range feed.Channel.Items {
+			id := ttJobID(it.Link)
+			if want[id] {
+				out[id] = it.RemoteStatus
+				delete(want, id)
+			}
+		}
+		if len(feed.Channel.Items) < ttFeedPageSize {
+			break
+		}
+	}
+	return out
+}
+
+// ttFeed is the part of a Teamtailor jobs.rss the adapter reads.
+type ttFeed struct {
+	Channel struct {
+		Items []struct {
+			Link         string `xml:"link"`
+			RemoteStatus string `xml:"remoteStatus"`
+		} `xml:"item"`
+	} `xml:"channel"`
+}
+
+// ttRemoteStatusMode maps the feed's remoteStatus enum to a work mode. Sampled over 25 live
+// boards (2026-10-18) the values are none, onsite, hybrid and fully; Teamtailor also
+// documents temporary. "none" is the default nobody changed, and "temporary" (remote for
+// now) does not state the arrangement the posting hires into, so both stay "".
+func ttRemoteStatusMode(s string) string {
+	switch s {
+	case "fully":
+		return "remote"
+	case "hybrid":
+		return "hybrid"
+	case "onsite":
+		return "onsite"
+	default:
+		return ""
+	}
 }
