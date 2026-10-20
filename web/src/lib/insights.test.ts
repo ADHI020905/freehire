@@ -40,6 +40,20 @@ describe('coveredCategories', () => {
     expect(coveredCategories(roles)).toHaveLength(0);
   });
 
+  // The rollup counts whatever `jobs.category` holds, so a retired value lingers in the
+  // ranking until every posting carrying it is re-derived — `management` did, with 1,458
+  // open postings. The API refuses it as a scope, so a page for it answered 500.
+  it('excludes a category the vocabulary no longer names', () => {
+    const roles = [role('management', 'senior', 1458), role('backend', 'senior', 100)];
+    expect(coveredCategories(roles).map((c) => c.category)).toEqual(['backend']);
+    expect(isCovered(roles, 'management')).toBe(false);
+  });
+
+  it('does not mistake an inherited object key for a category', () => {
+    const roles = [role('toString', 'senior', 1000), role('constructor', 'senior', 1000)];
+    expect(coveredCategories(roles)).toHaveLength(0);
+  });
+
   it('sorts by demand descending', () => {
     const roles = [
       role('frontend', 'senior', 100),

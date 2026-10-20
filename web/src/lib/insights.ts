@@ -43,12 +43,14 @@ export interface CoveredCategory {
 
 /** Derive the published category set from the global roles ranking: a category is
  *  covered when its total open-count across seniorities clears MIN_CATEGORY_OPEN.
- *  `other` and blanks are excluded. Sorted by demand, so the hub lists the biggest
- *  categories first. */
+ *  `other`, blanks, and any value the vocabulary no longer names are excluded — the
+ *  ranking counts stored postings, so a retired category outlives its retirement there,
+ *  and the API answers it with a 400 that a page load turns into a 500. Sorted by
+ *  demand, so the hub lists the biggest categories first. */
 export function coveredCategories(roles: InsightRole[]): CoveredCategory[] {
   const totals = new Map<string, number>();
   for (const r of roles) {
-    if (!r.category || r.category === 'other') continue;
+    if (r.category === 'other' || !Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, r.category)) continue;
     totals.set(r.category, (totals.get(r.category) ?? 0) + r.open_count);
   }
   return [...totals.entries()]
