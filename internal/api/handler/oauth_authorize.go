@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"html"
 	"net/url"
 	"strings"
 	"time"
@@ -85,8 +84,12 @@ func (h *authHandlers) OAuthAuthorize(c *fiber.Ctx) error {
 		return fmt.Errorf("read the account behind the oauth consent of user %d: %w", userID, err)
 	}
 
+	page, err := oauthConsentPage(client.ClientName, user.Email, h.frontendOrigin, params)
+	if err != nil {
+		return fmt.Errorf("render the oauth consent for user %d: %w", userID, err)
+	}
 	c.Type("html")
-	return c.SendString(oauthConsentPage(client.ClientName, user.Email, h.frontendOrigin, params))
+	return c.SendString(page)
 }
 
 // OAuthAuthorizeSubmit acts on the consent decision. On approval it mints a
@@ -192,30 +195,25 @@ func redirectDestination(redirectURI string) string {
 }
 
 // oauthConsentPage is the approval screen for every OAuth client — an AI app
-// (ChatGPT, Claude) or a CLI on a loopback port. The caution names the redirect
-// host beside the self-chosen client name, because the host is what a phishing
+// (ChatGPT, Claude) or a CLI on a loopback port. It names the redirect host
+// beside the self-chosen client name, because the host is what a phishing
 // registration cannot fake.
-func oauthConsentPage(clientName, email, origin string, params authorizeParams) string {
-	name := html.EscapeString(clientName)
+func oauthConsentPage(clientName, email, origin string, params authorizeParams) (string, error) {
 	return renderConsentScreen(consentScreen{
-		Title:    "Connect " + clientName + " to freehire",
-		SignedIn: email,
-		Allows: []string{
-			"Search jobs and read job details.",
-			"Read your profile, CV and saved jobs.",
-			"Save jobs, track applications and edit your CV on your behalf.",
-		},
-		Caution: "Access will be sent to <strong>" + html.EscapeString(redirectDestination(params.RedirectURI)) + "</strong>. " +
-			name + " chose its own name; freehire has not verified it. Allow only if you started this connection yourself.",
-		Action: "/api/v1/oauth/authorize",
-		Hidden: [][2]string{
+		Title:       clientName + " wants to access your freehire account",
+		SignedIn:    email,
+		Allows:      bearerAllows,
+		Denies:      bearerDenies,
+		Destination: redirectDestination(params.RedirectURI),
+		Caution:     clientName + " chose its own name; freehire has not verified it. Allow only if you started this connection yourself.",
+		Action:      "/api/v1/oauth/authorize",
+		Hidden: []hiddenField{
 			{"client_id", params.ClientID},
 			{"redirect_uri", params.RedirectURI},
 			{"state", params.State},
 			{"code_challenge", params.CodeChallenge},
 			{"code_challenge_method", params.CodeChallengeMethod},
 		},
-		Decline: "deny",
-		Origin:  origin,
+		Origin: origin,
 	})
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"html"
 	"net/url"
 	"slices"
 	"strings"
@@ -88,8 +87,12 @@ func (h *authHandlers) ExtensionConnect(c *fiber.Ctx) error {
 		// It is the loop stop: without it, a session the browsing profile has but this
 		// window cannot see would bounce between the two forever.
 		if c.Query("via") == "web" {
+			page, err := noSessionPage(h.frontendOrigin)
+			if err != nil {
+				return fmt.Errorf("render the extension no-session page: %w", err)
+			}
 			c.Type("html")
-			return c.Status(fiber.StatusUnauthorized).SendString(noSessionPage(h.frontendOrigin))
+			return c.Status(fiber.StatusUnauthorized).SendString(page)
 		}
 		return c.Redirect(h.signInURL(redirectURI, state), fiber.StatusFound)
 	}
@@ -97,8 +100,12 @@ func (h *authHandlers) ExtensionConnect(c *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("read the account behind the extension connect of user %d: %w", userID, err)
 	}
+	page, err := consentPage(redirectURI, state, user.Email, h.frontendOrigin)
+	if err != nil {
+		return fmt.Errorf("render the extension consent for user %d: %w", userID, err)
+	}
 	c.Type("html")
-	return c.SendString(consentPage(redirectURI, state, user.Email, h.frontendOrigin))
+	return c.SendString(page)
 }
 
 // ExtensionConnectSubmit acts on the consent decision. On approval it issues a
@@ -156,34 +163,31 @@ func (h *authHandlers) ExtensionConnectSubmit(c *fiber.Ctx) error {
 // noSessionPage is the dead end of the sign-in round trip: the visitor came back from
 // the web app and this window still has no session. It says what to do instead of
 // leaving Chrome to report "Authorization page could not be loaded".
-func noSessionPage(origin string) string {
-	home := strings.TrimSuffix(origin, "/")
-	return fmt.Sprintf(`<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Sign in to connect the extension</title></head>
-<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem">
-  <h1>Not signed in</h1>
-  <p>This window could not pick up a freehire session. Sign in at
-     <a href="%s">%s</a>, then press <b>Sign in with freehire</b> in the extension again.</p>
-</body>
-</html>`, html.EscapeString(home), html.EscapeString(home))
+func noSessionPage(origin string) (string, error) {
+	return renderNoticeScreen(noticeScreen{
+		Title:     "Not signed in",
+		Message:   "This window could not pick up a freehire session. Sign in on the website, then press Sign in with freehire in the extension again.",
+		LinkURL:   strings.TrimSuffix(origin, "/") + "/signin",
+		LinkLabel: "Sign in to freehire",
+	})
 }
 
+// extensionAllows adds the one capability only the extension's own connection
+// has: auth.IsExtensionBearer confines the assistant's page tools and autofill
+// to it.
+var extensionAllows = append(slices.Clone(bearerAllows), "Read and fill in the web pages you ask it to work on.")
+
 // consentPage is the browser extension's approval screen. The redirect and state
-// ride hidden fields back to the POST, escaped into attribute values by the shared
-// renderer.
-func consentPage(redirectURI, state, email, origin string) string {
+// ride hidden fields back to the POST.
+func consentPage(redirectURI, state, email, origin string) (string, error) {
 	return renderConsentScreen(consentScreen{
-		Title:    "Connect the freehire extension",
+		Title:    "The freehire extension wants to access your account",
 		SignedIn: email,
-		Allows: []string{
-			"Read your profile, CV and saved jobs.",
-			"Save jobs and track applications from the pages you browse.",
-		},
-		Caution: "The extension acts as you. Allow only if you pressed <strong>Sign in with freehire</strong> in it yourself.",
-		Action:  "/api/v1/auth/extension/connect",
-		Hidden:  [][2]string{{"redirect_uri", redirectURI}, {"state", state}},
-		Decline: "cancel",
-		Origin:  origin,
+		Allows:   extensionAllows,
+		Denies:   bearerDenies,
+		Caution:  "The extension acts as you. Allow only if you pressed Sign in with freehire in it yourself.",
+		Action:   "/api/v1/auth/extension/connect",
+		Hidden:   []hiddenField{{"redirect_uri", redirectURI}, {"state", state}},
+		Origin:   origin,
 	})
 }

@@ -23,10 +23,13 @@ func TestRedirectDestination(t *testing.T) {
 // beside the self-chosen name — that host is what a phishing registration
 // cannot fake.
 func TestOAuthConsentPage_NamesRedirectHostAndFlagsUnverifiedName(t *testing.T) {
-	page := oauthConsentPage("Claude", "me@example.com", "https://freehire.me", authorizeParams{
+	page, err := oauthConsentPage("Claude", "me@example.com", "https://freehire.me", authorizeParams{
 		ClientID:    "cid",
 		RedirectURI: "https://attacker.example.com/cb",
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !strings.Contains(page, "<strong>attacker.example.com</strong>") {
 		t.Errorf("consent page does not name the redirect host:\n%s", page)
 	}
