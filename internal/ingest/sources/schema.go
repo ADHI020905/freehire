@@ -29,6 +29,21 @@ func schemaEmploymentType(t string) string {
 	}
 }
 
+// schemaSalaryPeriods maps a schema.org QuantitativeValue unitText onto the freehire salary
+// period vocabulary. WEEK has no counterpart there and yields "".
+var schemaSalaryPeriods = map[string]string{
+	"HOUR":  "hour",
+	"DAY":   "day",
+	"MONTH": "month",
+	"YEAR":  "year",
+}
+
+// schemaSalaryPeriod maps a JobPosting baseSalary's unitText onto the freehire vocabulary,
+// returning "" for an absent or unmapped unit.
+func schemaSalaryPeriod(unit string) string {
+	return schemaSalaryPeriods[strings.ToUpper(strings.TrimSpace(unit))]
+}
+
 // schemaAddress is a schema.org PostalAddress as ATS JobPosting ld+json emits it. The ld+json
 // adapters decode jobLocation.address into it instead of each redeclaring the same three fields.
 type schemaAddress struct {

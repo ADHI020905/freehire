@@ -620,6 +620,46 @@ func pacedTeamtailorGetter(c teamtailorHTTP) teamtailorHTTP {
 	}
 }
 
+// app.idealtraits.com serves every IdealTraits board from one host and meters it per IP, with a
+// long penalty: measured 2026-10-20 against posting pages, 4 req/s was served for ~120 requests
+// and then refused every request with 429 and a Retry-After of ~240s, while 1.5 req/s held for
+// 200 requests (142s) with no refusal. The pace takes that measured clean rate; the hydrating
+// crawl keeps a steady-state run near one listing request per board.
+const (
+	idealtraitsRequestInterval = time.Second * 2 / 3 // 1.5 req/s
+	idealtraitsRequestBurst    = 2
+)
+
+// rateLimitedIdealTraitsGetter paces both of the adapter's request kinds — the listing XHR (JSON)
+// and the posting pages (HTML) — through one limiter, since both hit the same metered host.
+type rateLimitedIdealTraitsGetter struct {
+	inner   idealtraitsHTTP
+	limiter waiter
+}
+
+func (g rateLimitedIdealTraitsGetter) GetJSONWithHeaders(ctx context.Context, url string, headers map[string]string, v any) error {
+	if err := g.limiter.Wait(ctx); err != nil {
+		return err
+	}
+	return g.inner.GetJSONWithHeaders(ctx, url, headers, v)
+}
+
+func (g rateLimitedIdealTraitsGetter) GetHTML(ctx context.Context, url string) (*html.Node, error) {
+	if err := g.limiter.Wait(ctx); err != nil {
+		return nil, err
+	}
+	return g.inner.GetHTML(ctx, url)
+}
+
+// pacedIdealTraitsGetter wraps c with a fresh limiter at IdealTraits' rate, shared across one
+// registry build so every board's listing and posting requests draw on one budget.
+func pacedIdealTraitsGetter(c idealtraitsHTTP) idealtraitsHTTP {
+	return rateLimitedIdealTraitsGetter{
+		inner:   c,
+		limiter: rate.NewLimiter(rate.Every(idealtraitsRequestInterval), idealtraitsRequestBurst),
+	}
+}
+
 // Wellfound's requests go through the hosted Firecrawl tier, so the ceiling being throttled
 // against is Firecrawl's own account-level limit, not the target site's edge — and, unlike
 // every rate-based pace in this file, it is shared across every OTHER firecrawl-tier

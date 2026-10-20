@@ -207,6 +207,9 @@ func All(c HTTPClient) map[string]Source {
 		NewRapyd(c),
 		NewCareerPlug(c),
 		NewHRMDirect(c),
+		// Rate-paced (pacedIdealTraitsGetter): every board shares one host that refuses an IP
+		// for minutes once its budget is spent. See pacer.go.
+		NewIdealTraits(pacedIdealTraitsGetter(c)),
 		NewAppliTrack(c),
 		// Paced per board to robots.txt's Crawl-delay (each tenant is its own host); see
 		// applicantstack.go.

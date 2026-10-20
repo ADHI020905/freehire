@@ -475,6 +475,17 @@ func TestRecognize(t *testing.T) {
 		{"gusto posting carries no board", "https://jobs.gusto.com/postings/quality-it-solutions-corp-full-stack-developer-9c8d3a4c-f831-4f68-b552-43124cab8591", "", "", "", false},
 		{"schoolspring posting carries no board", "https://www.schoolspring.com/jobdetail?jobId=5954920", "", "", "", false},
 		{"edjoin posting carries no board", "https://www.edjoin.org/Home/JobPosting/2285802", "", "", "", false},
+		// IdealTraits: the board is the business id the career-site path carries base64-encoded
+		// (MTE2MjI5Mg== is 1162292). The posting links are real ones; they name the employer's
+		// slug but not its id, so they carry no board.
+		{"idealtraits career site", "https://app.idealtraits.com/Comma-Insurance/MTE2MjI5Mg==/careers", "idealtraits", "1162292", "https://app.idealtraits.com/Comma-Insurance/MTE2MjI5Mg==/careers", true},
+		{"idealtraits career site page", "https://app.idealtraits.com/Williams-Insurance-Group/MTAxMTA=/careers?page=2", "idealtraits", "10110", "https://app.idealtraits.com/Williams-Insurance-Group/MTAxMTA=/careers", true},
+		{"idealtraits career site with escaped slug", "https://app.idealtraits.com/Goodwin,-Lademan-&amp;-Associates,-Inc./MTE2MzQ2OQ==/careers", "idealtraits", "1163469", "https://app.idealtraits.com/Goodwin,-Lademan-&amp;-Associates,-Inc./MTE2MzQ2OQ==/careers", true},
+		{"idealtraits posting carries no board", "https://app.idealtraits.com/career/Comma-Insurance/367535CPG", "", "", "", false},
+		{"idealtraits posting with ampersand slug carries no board", "https://app.idealtraits.com/career/Cragin-&-Pike/369329CPG", "", "", "", false},
+		{"idealtraits non-numeric key is not a board", "https://app.idealtraits.com/Acme/YWJj/careers", "", "", "", false},
+		{"idealtraits key that is not base64", "https://app.idealtraits.com/Acme/not*base64/careers", "", "", "", false},
+		{"idealtraits bare host", "https://app.idealtraits.com/", "", "", "", false},
 
 		{"unknown host", "https://example.com/careers/1", "", "", "", false},
 		{"not http", "ftp://acme.recruitee.com", "", "", "", false},

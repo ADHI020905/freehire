@@ -816,6 +816,7 @@ var probers = map[string]prober{
 	"applicantstack":  applicantstackProber{},
 	"hiringthing":     hiringthingProber{},
 	"hrmdirect":       hrmdirectProber{},
+	"idealtraits":     idealtraitsProber{},
 	"paycom":          paycomProber{},
 	"paycor":          paycorProber{},
 	"tenstreet":       tenstreetProber{},

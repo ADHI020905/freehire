@@ -17,6 +17,7 @@
 package atsboard
 
 import (
+	"encoding/base64"
 	"net/url"
 	"regexp"
 	"slices"
@@ -133,6 +134,14 @@ const (
 	// bare first segment nor a subdomain match is evidence of a brand. The platform matches the
 	// slug case-blind; it is lower-cased here, the spelling the catalogue stores.
 	modePathJob = "pathjob"
+	// encodedcareers: board = the decimal id a career site's path carries base64-encoded, from
+	// "/<slug>/<base64 id>/careers". IdealTraits addresses an employer by its numeric business id
+	// and spells it that way in the career-site URL; the slug is decoration (a wrong one 301s to
+	// the right one), and the adapter (internal/ingest/sources/idealtraits.go) takes the decimal
+	// id. A posting link ("/career/<slug>/<posting id>") carries no business id at all and is
+	// declined — boardresolve reaches the board through the career-site link every posting page
+	// carries.
+	modeEncodedCareers = "encodedcareers"
 )
 
 // atsBoards lists the supported multi-tenant ATS: a host (exact or subdomain-suffix match) →
@@ -382,6 +391,9 @@ var atsBoards = []struct{ host, source, mode string }{
 
 	// --- pathjob: board = the first path segment of a POSTING url, on the apex host only.
 	{"harri.com", "harri", modePathJob},
+
+	// --- encodedcareers: board = the base64-encoded numeric id in "/<slug>/<id>/careers" ---
+	{"app.idealtraits.com", "idealtraits", modeEncodedCareers},
 }
 
 // tenantHostPostingSegments names, per modeTenantHost apex, a path segment a URL must carry to be
@@ -407,6 +419,9 @@ var keyedSegmentBoards = map[string]struct {
 	// URL opens with (internal/ingest/sources/workstream.go).
 	"workstream.us": {key: "j", boardPattern: regexp.MustCompile(`^[0-9a-f]{8}$`)},
 }
+
+// businessID is the shape of a decoded modeEncodedCareers board: a decimal id with no leading zero.
+var businessID = regexp.MustCompile(`^[1-9][0-9]*$`)
 
 // queryBoards holds, per matched host entry in modeQuery, the query parameter that names the
 // board, the shape its value must have to BE one, and the path the board's listing is served
@@ -855,6 +870,21 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 		u.RawQuery, u.Fragment = "", ""
 		u.Path = "/" + board
 		return src, board, u.String(), true
+	case modeEncodedCareers:
+		// IdealTraits: /<slug>/<base64 id>/careers → board = the decoded id. The decoded value
+		// must be a plain decimal number: base64 decodes plenty of other paths into bytes, and
+		// only the shape proves the segment is a business id. Canonical keeps the career-site
+		// path as given, without query or fragment (the listing's ?page=N).
+		segs := strings.Split(strings.Trim(u.Path, "/"), "/")
+		if len(segs) != 3 || segs[0] == "" || segs[2] != "careers" {
+			return "", "", "", false
+		}
+		decoded, err := base64.StdEncoding.DecodeString(segs[1])
+		if err != nil || !businessID.Match(decoded) {
+			return "", "", "", false
+		}
+		u.RawQuery, u.Fragment = "", ""
+		return src, string(decoded), u.String(), true
 
 	case modePath, modePathNumeric:
 		// The board is the first path segment that isn't platform machinery — declined

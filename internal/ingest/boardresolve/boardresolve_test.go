@@ -3,6 +3,7 @@ package boardresolve
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 )
 
@@ -44,6 +45,24 @@ func TestResolveDetectsPeopleForceApplyUrl(t *testing.T) {
 	src, board, _, ok := resolver(html, nil).Resolve(context.Background(), "https://akvelon.dev/jobs/215183")
 	if !ok || src != "peopleforce" || board != "akvelon" {
 		t.Errorf("(%q,%q,%v), want (peopleforce, akvelon, true)", src, board, ok)
+	}
+}
+
+// An IdealTraits posting link names the employer's slug but not the business id its board is,
+// so the link alone is unrecognised; the posting page links the employer's career site, which
+// carries the id. The page is a real one, recorded for the sources adapter's tests.
+func TestResolveIdealTraitsPostingThroughItsCareerSiteLink(t *testing.T) {
+	page, err := os.ReadFile("../sources/testdata/idealtraits/job_367535.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	src, board, canon, ok := resolver(string(page), nil).Resolve(context.Background(),
+		"https://app.idealtraits.com/career/Comma-Insurance/367535CPG")
+	if !ok || src != "idealtraits" || board != "1162292" {
+		t.Errorf("(%q,%q,%v), want (idealtraits, 1162292, true)", src, board, ok)
+	}
+	if canon != "https://app.idealtraits.com/career/Comma-Insurance/367535CPG" {
+		t.Errorf("canonical = %q, want the pasted link", canon)
 	}
 }
 

@@ -338,6 +338,20 @@ func TestFromURL(t *testing.T) {
 			url:  "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=123622&portal_user_id=1",
 			ok:   false,
 		},
+		// IdealTraits: the career-site link carries the board (the business id, base64-encoded);
+		// an apply link names only the employer's slug and a posting id, so it carries none —
+		// boardresolve reaches the board by fetching the posting page, which links the career
+		// site. Both URLs are real.
+		{
+			name:     "idealtraits career site",
+			url:      "https://app.idealtraits.com/Al-Bourdeau-Insurance-Agency/MTA3NjY=/careers",
+			provider: "idealtraits", board: "10766", ok: true,
+		},
+		{
+			name: "idealtraits apply link carries no board",
+			url:  "https://app.idealtraits.com/career/Al-Bourdeau-Insurance-Agency/370429CPG",
+			ok:   false,
+		},
 		{
 			name: "unknown host",
 			url:  "https://www.caci.com/careers/123",
