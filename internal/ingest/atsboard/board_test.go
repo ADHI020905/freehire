@@ -228,6 +228,18 @@ func TestRecognize(t *testing.T) {
 		{"ukgready tenant without the careers suffix", "https://secure7.saashr.com/ta/6010265", "", "", "", false},
 		{"ukgready bare host", "https://secure7.saashr.com/", "", "", "", false},
 
+		// hostsite — Paradox: "<instance host>/<site>", lower-cased, canonical the site's job list
+		{"paradox posting", "https://olivia.paradox.ai/co/ChickenSaladChick1/Job?job_id=P1-6592465-1", "paradox", "olivia.paradox.ai/chickensaladchick1", "https://olivia.paradox.ai/co/chickensaladchick1/jobs", true},
+		{"paradox posting with posting_type", "https://olivia.paradox.ai/co/SonarIncTacoBell/Job?job_id=P1-6357073-1&posting_type=1", "paradox", "olivia.paradox.ai/sonarinctacobell", "https://olivia.paradox.ai/co/sonarinctacobell/jobs", true},
+		{"paradox opaque job id", "https://olivia.paradox.ai/co/BurgerKing2/Job?job_id=PDX_BK_1DCB993D-D9FE-47C6-B377-E5CD9AF2E352_21981613", "paradox", "olivia.paradox.ai/burgerking2", "https://olivia.paradox.ai/co/burgerking2/jobs", true},
+		{"paradox digit-led site", "https://olivia.paradox.ai/co/2ndFamily28/Job?job_id=PDX_2F_5E4133CD-7D68-4E6A-9966-F03D5B1F555C_24833714", "paradox", "olivia.paradox.ai/2ndfamily28", "https://olivia.paradox.ai/co/2ndfamily28/jobs", true},
+		{"paradox eu instance", "https://olivia.eu1.paradox.ai/co/Pandora/Job?job_id=PDX_PA_A22F58C3-7DC3-4E13-90A2-1F54B2381FDE_22070543", "paradox", "olivia.eu1.paradox.ai/pandora", "https://olivia.eu1.paradox.ai/co/pandora/jobs", true},
+		{"paradox customer instance", "https://darden.paradox.ai/co/RuthsChris/Job?job_id=PDX_RC_1C7BB604-FFEF-49A3-8480-B1B732C76B30_97829&posting_type=1", "paradox", "darden.paradox.ai/ruthschris", "https://darden.paradox.ai/co/ruthschris/jobs", true},
+		{"paradox job list", "https://olivia.paradox.ai/co/KFC28/jobs", "paradox", "olivia.paradox.ai/kfc28", "https://olivia.paradox.ai/co/kfc28/jobs", true},
+		{"paradox marketing apex", "https://paradox.ai/co/Acme/Job?job_id=1", "", "", "", false},
+		{"paradox path outside /co", "https://olivia.paradox.ai/help/article", "", "", "", false},
+		{"paradox /co with no site", "https://olivia.paradox.ai/co/", "", "", "", false},
+
 		// subdomain — canonical collapses to the bare host
 		{"recruitee vacancy strips path", "https://acme.recruitee.com/o/senior-go/apply?utm=x", "recruitee", "acme", "https://acme.recruitee.com", true},
 		{"recruitee board listing", "https://acme.recruitee.com", "recruitee", "acme", "https://acme.recruitee.com", true},

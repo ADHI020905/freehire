@@ -657,6 +657,14 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["tenstreet"] = NewTenstreet(pacedHTMLGetter(NewLongTimeoutClient(), tenstreetRequestInterval, tenstreetRequestBurst))
 	}
+	// Paradox: frontline-hiring ATS, board = "<host>/<site>". The listing API spends ~50 ms per
+	// row, so a 100-row page took up to 11 s — too close to the standard 15 s timeout — and the
+	// API meters a per-IP request budget, so the run is paced. See paradox.go.
+	if c == nil {
+		registry["paradox"] = NewParadox(nil)
+	} else {
+		registry["paradox"] = NewParadox(pacedParadoxGetter(NewLongTimeoutClient()))
+	}
 	// HerKey's posting resource answers in 4-15 s, close enough to the standard 15 s timeout
 	// that a share of every run would time out, so it rides the long-timeout transport, paced
 	// (see herkeyRequestInterval).

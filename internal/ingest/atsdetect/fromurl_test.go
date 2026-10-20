@@ -375,6 +375,24 @@ func TestFromURL(t *testing.T) {
 			url:  "https://app.higherme.com/jobs/6acfccec3d0b8",
 			ok:   false,
 		},
+		// Paradox: board is the instance host + the career site, lower-cased.
+		{
+			name:     "paradox posting",
+			url:      "https://olivia.paradox.ai/co/Wingstop161/Job?job_id=P1-2507154-1",
+			provider: "paradox", board: "olivia.paradox.ai/wingstop161", ok: true,
+		},
+		{
+			name:     "paradox eu instance",
+			url:      "https://olivia.eu1.paradox.ai/co/Pandora/Job?job_id=PDX_PA_A22F58C3-7DC3-4E13-90A2-1F54B2381FDE_22070543",
+			provider: "paradox", board: "olivia.eu1.paradox.ai/pandora", ok: true,
+		},
+		{
+			// McDonald's white-label of the platform is a different host family; not a
+			// paradox.ai instance, so it is not read as one.
+			name: "mchire is not a paradox instance",
+			url:  "https://www.mchire.com/co/McDonalds2523/Job?job_id=PDX_MC_C8C45FE7-AF20-4638-AC29-65BF8F219B8E_76278",
+			ok:   false,
+		},
 		{
 			name: "unknown host",
 			url:  "https://www.caci.com/careers/123",

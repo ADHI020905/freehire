@@ -46,7 +46,9 @@ nothing but the URL. No network, no database.
   harri.com also serves the vendor's own pages — a bare `harri.com/<slug>` career page is
   declined rather than guessed at), `encodedcareers` (the
   decimal id an IdealTraits career site carries base64-encoded in `/<slug>/<id>/careers`; its
-  posting links carry no id, so they are declined and left to `boardresolve`).
+  posting links carry no id, so they are declined and left to `boardresolve`), `hostsite`
+  (`<host>/<site>` from `<host>/co/<site>/…`, lower-cased, for Paradox, whose career sites
+  each live on one of several `*.paradox.ai` instance hosts).
 - **The mode must match how the ingest adapter addresses the board**, not how the URL reads. The
   board string is copied verbatim into the `boards` catalog and into the `external_id`
   namespace, so a truncated one is a board that 404s every crawl: Huntflow's adapter fetches

@@ -44,6 +44,10 @@ regexes = [
   '''^747e3af5-f7ef-4bd9-87f2-69c6499f4914$''',
   '''^4bf8bdb8-e735-4205-a17e-891be1e1ffbd$''',
   '''^0721c00d-3962-48a3-bc8b-3834a3765170$''',
+  # internal/ingest/sources — paradox: the detail resource's "job_token" is the posting's
+  # public id, the same value every apply URL carries as ?job_id= (generic-api-key fires on
+  # the field name). The shape is the platform's: PDX_<site code>_<uuid>_<location id>.
+  '''^PDX_[A-Z0-9]+_[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}_[0-9]+$''',
 ]
 
 [[allowlists]]

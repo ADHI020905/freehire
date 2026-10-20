@@ -843,6 +843,7 @@ var probers = map[string]prober{
 	"harri":           harriProber{},
 	"hcshiring":       hcshiringProber{},
 	"appone":          apponeProber{},
+	"paradox":         paradoxProber{},
 	// Not an ATS: its boards are the platform's own job categories, enumerated from its
 	// sitemap index rather than seeded. See profession_prober.go.
 	"profession":  newProfessionProber(),

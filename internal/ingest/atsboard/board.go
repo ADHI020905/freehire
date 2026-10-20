@@ -142,6 +142,12 @@ const (
 	// declined — boardresolve reaches the board through the career-site link every posting page
 	// carries.
 	modeEncodedCareers = "encodedcareers"
+	// hostsite: board = "<host>/<site>" from <host>/co/<site>/…, lower-cased. Paradox serves
+	// every career site under "/co/<site>" on one of several instance hosts — regional
+	// (olivia.paradox.ai, olivia.eu1.paradox.ai) and per-customer (darden.paradox.ai) — and a
+	// site exists on exactly one of them, so the adapter needs both
+	// (internal/ingest/sources/paradox.go). Site slugs are case-insensitive at the platform.
+	modeHostSite = "hostsite"
 )
 
 // atsBoards lists the supported multi-tenant ATS: a host (exact or subdomain-suffix match) →
@@ -368,6 +374,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"mykronos.com", "ukgready", modeHostCareers},
 	{"workforceready.com.au", "ukgready", modeHostCareers},
 	{"workforceready.eu", "ukgready", modeHostCareers},
+
+	// --- hostsite: board = "<host>/<site>" (Paradox: <instance>.paradox.ai/co/<site>/…) ---
+	{"paradox.ai", "paradox", modeHostSite},
 
 	// --- allowedfirstsegment: board = the segment after an ALLOWED leading segment (see
 	// allowedFirstSegments) — app.dover.com is Dover's whole product SPA, not a dedicated
@@ -836,6 +845,18 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 		u.Path = "/" + board
 		return src, board, u.String(), true
 
+	case modeHostSite:
+		// Paradox: <host>/co/<site>/… → board "<host>/<site>". The bare apex is the vendor's
+		// marketing site, never an instance, and a path not under "/co/" names no career site.
+		segs := strings.Split(strings.Trim(u.Path, "/"), "/")
+		if host == apex || len(segs) < 2 || !strings.EqualFold(segs[0], "co") || !paradoxSite.MatchString(segs[1]) {
+			return "", "", "", false
+		}
+		site := strings.ToLower(segs[1])
+		u.RawQuery, u.Fragment = "", ""
+		u.Path = "/co/" + site + "/jobs"
+		return src, host + "/" + site, u.String(), true
+
 	case modeAllowedFirstSegment:
 		// Dover: board = the segment right after an ALLOWED leading segment ("apply"/"jobs").
 		// Any other leading segment — or a leading segment with nothing behind it — carries no
@@ -1064,6 +1085,9 @@ func platformHost(host, apex string) bool {
 	}
 	return platformLabels[label] || slices.Contains(platformLabelsByApex[apex], label)
 }
+
+// paradoxSite matches a Paradox career-site slug ("ChickenSaladChick1", "2ndFamily28").
+var paradoxSite = regexp.MustCompile(`^[A-Za-z0-9_.-]+$`)
 
 // smartrecruitersPosting matches a SmartRecruiters posting segment: the posting id (numeric or a
 // UUID) followed by the title slug.
