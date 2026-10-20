@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { CLI_INSTALL, CLI_REPO, MCP_REPO } from '$lib/cliLinks';
-  import { Button, SectionLabel, Tabs } from '$lib/ui';
+  import { Button, SectionLabel, TabStrip, tabStripId } from '$lib/ui';
 
   const SKILLS_URL = 'https://github.com/strelov1/freehire-cli/tree/main/skills';
 
@@ -84,7 +84,7 @@
     },
     {
       value: 'cv',
-      label: 'CV',
+      label: 'Tailor a CV',
       intro:
         "Reframe your CV toward one job, grounded in what you actually did, then export an ATS-ready PDF. cv context splits the job's requirements into the ones your history covers but buries (reframe those) and the ones it doesn't (ask, don't invent).",
       commands: [
@@ -122,6 +122,8 @@
   ];
 
   let tab = $state('discover');
+  const commandTabs = groups.map(({ value, label }) => ({ id: value, label }));
+  const commandsPanelId = 'cli-commands-panel';
 
   // One copy confirmation at a time, keyed by the text that was copied.
   let copied = $state<string | null>(null);
@@ -272,27 +274,33 @@
       </p>
     </div>
 
-    <div class="mt-6 overflow-x-auto">
-      <Tabs tabs={groups.map(({ value, label }) => ({ value, label }))} bind:value={tab}>
-        {#each groups as group (group.value)}
-          <div hidden={group.value !== tab} class="mt-4">
-            {#if group.intro}
-              <p class="max-w-2xl text-sm leading-relaxed text-muted-foreground">{group.intro}</p>
-            {/if}
-            <dl class="mt-5 divide-y divide-border overflow-hidden rounded-xl border border-border">
-              {#each group.commands as row (row.cmd)}
-                <div class="grid gap-x-6 gap-y-1 px-4 py-3 sm:grid-cols-5 sm:items-center">
-                  <dt class="font-mono text-sm sm:col-span-2">
-                    <span class="text-muted-foreground">freehire</span> {row.cmd}
-                  </dt>
-                  <dd class="text-sm leading-relaxed text-muted-foreground sm:col-span-2">{row.desc}</dd>
-                  <dd class="hidden justify-self-end sm:block">{@render copyButton(`freehire ${row.cmd}`, row.cmd)}</dd>
-                </div>
-              {/each}
-            </dl>
-          </div>
-        {/each}
-      </Tabs>
+    <TabStrip
+      tabs={commandTabs}
+      active={tab}
+      onSelect={(id) => (tab = id)}
+      label="Command groups"
+      panelId={commandsPanelId}
+      class="mt-6"
+    />
+    <div id={commandsPanelId} role="tabpanel" aria-labelledby={tabStripId(commandsPanelId, tab)} tabindex="-1">
+      {#each groups as group (group.value)}
+        <div hidden={group.value !== tab} class="mt-5">
+          {#if group.intro}
+            <p class="max-w-2xl text-sm leading-relaxed text-muted-foreground">{group.intro}</p>
+          {/if}
+          <dl class="mt-5 divide-y divide-border overflow-hidden rounded-xl border border-border">
+            {#each group.commands as row (row.cmd)}
+              <div class="grid gap-x-6 gap-y-1 px-4 py-3 sm:grid-cols-5 sm:items-center">
+                <dt class="font-mono text-sm sm:col-span-2">
+                  <span class="text-muted-foreground">freehire</span> {row.cmd}
+                </dt>
+                <dd class="text-sm leading-relaxed text-muted-foreground sm:col-span-2">{row.desc}</dd>
+                <dd class="hidden justify-self-end sm:block">{@render copyButton(`freehire ${row.cmd}`, row.cmd)}</dd>
+              </div>
+            {/each}
+          </dl>
+        </div>
+      {/each}
     </div>
   </section>
 
@@ -316,7 +324,7 @@
         <p class="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
           It reads the CLI's sign-in from <code class="font-mono text-foreground">~/.freehire/creds.json</code>.
           On a machine without it, add
-          <code class="font-mono text-foreground">"env": &lbrace; "FREEHIRE_TOKEN": "fhk_…" &rbrace;</code> with a key
+          <code class="whitespace-nowrap font-mono text-foreground">"env": &lbrace; "FREEHIRE_TOKEN": "fhk_…" &rbrace;</code> with a key
           from <a href={resolve('/my/api-keys')} class="font-medium text-foreground underline-offset-4 hover:underline"
             >API keys</a
           >.
