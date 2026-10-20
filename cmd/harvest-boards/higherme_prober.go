@@ -8,7 +8,10 @@ import (
 // highermeProber probes a HigherMe brand (board = the 13-hex brand id from
 // app.higherme.com/careers/<brand>) with one request: the brand-filtered listing at page size 1,
 // whose meta.total is the brand's whole posting count. An unknown brand answers an empty listing,
-// not an error, so a zero total is simply not live.
+// not an error, so a zero total is simply not live — and therefore every error is returned, never
+// read as absence. The API's firewall blocks an IP that probes faster than ~0.2 req/s, and the
+// first prober swallowed that as "0 postings": a 2026-10-20 run reported 29 of 511 brands live
+// with probe-failures=0, while the brands it dropped were live from any other address.
 //
 // The brand resource does carry a name, but not one the corroboration gate can stand on: a brand
 // is the CONCEPT ("La Quinta Inn & Suites", "Gil's") while a seed names the operator that runs
@@ -35,7 +38,7 @@ func (highermeProber) probe(ctx context.Context, c httpClient, brand string) (st
 		} `json:"meta"`
 	}
 	if err := c.GetJSON(ctx, highermeProbeURL(brand), &resp); err != nil {
-		return "", 0, nil
+		return "", 0, err
 	}
 	return "", resp.Meta.Total, nil
 }

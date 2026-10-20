@@ -18,9 +18,10 @@ func TestHigherMeProbe(t *testing.T) {
 	if _, n, err := p.probe(context.Background(), getter, "0000000000000"); err != nil || n != 0 {
 		t.Errorf("unknown brand: got n=%d err=%v, want 0,nil", n, err)
 	}
-	// An unreachable listing is not live, and never a fatal error.
-	if _, n, err := p.probe(context.Background(), getter, "fffffffffffff"); err != nil || n != 0 {
-		t.Errorf("unreachable: got n=%d err=%v, want 0,nil", n, err)
+	// A failed request is a probe failure, not an empty brand: the platform answers an unknown
+	// brand with an empty listing, so an error only ever means the probe did not get through.
+	if _, _, err := p.probe(context.Background(), getter, "fffffffffffff"); err == nil {
+		t.Error("unreachable: got nil error, want the request's error")
 	}
 	if got := highermeProbeURL("6078977d8dfec"); got != "https://api.higherme.com/classic/jobs?filters%5Bbrand.id%5D=6078977d8dfec&limit=1&page=1" {
 		t.Errorf("probe url = %q", got)
