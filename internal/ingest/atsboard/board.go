@@ -238,6 +238,7 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"recruitee.com", "recruitee", modeSubdomain},
 	{"bamboohr.com", "bamboohr", modeSubdomain},
 	{"breezy.hr", "breezy", modeSubdomain},
+	{"jobspage.co", "jobspage", modeSubdomain},
 	{"freshteam.com", "freshteam", modeSubdomain},
 	{"peopleforce.io", "peopleforce", modeSubdomain},
 	// Potok: <tenant>.potok.io/open/jobs/<id>. Its own infrastructure hosts share the wildcard
@@ -1105,6 +1106,8 @@ var platformLabelsByApex = map[string][]string{
 	"eploy":          {"www"}, // www.eploy.com is the vendor's marketing site
 	"hiringroom.com": {"www", "ve", "api-ve", "contacto-comercial"},
 	"easyapply.co":   {"www"}, // www.easyapply.co 404s; every tenant is a bare label
+	// www is the vendor's marketing site; demo is its sample board for a fictional "Acme".
+	"jobspage.co": {"www", "demo"},
 	// www is the vendor's marketing site (an unknown tenant redirects to its "job-not-found"
 	// page); www2 and public serve the shared assets and logos every tenant page links.
 	"applicantstack.com": {"www", "www2", "public"},
