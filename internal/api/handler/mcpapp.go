@@ -53,6 +53,8 @@ type mcpappHandlers struct {
 	facets    facetCounter
 	cache     cache.Cache
 	projector mcpapp.Projector
+	// origin is the site's address; the MCP server builds its icon and website link from it.
+	origin string
 }
 
 func newMCPAppHandlers(s searcher, cs companySearcher, store mcpappStore, origin string) *mcpappHandlers {
@@ -61,6 +63,7 @@ func newMCPAppHandlers(s searcher, cs companySearcher, store mcpappStore, origin
 		companySearch: cs,
 		store:         store,
 		projector:     mcpapp.NewProjector(origin),
+		origin:        origin,
 	}
 	if q, ok := store.(*db.Queries); ok && q != nil {
 		h.attachReality = realityAttacher(q)
@@ -80,7 +83,7 @@ func (h *mcpappHandlers) register(api fiber.Router, mw middleware) {
 	// Public and unauthenticated like the other job reads, under the same agent-search rate
 	// limit the OJCP endpoints use. A separate figure here would be a second answer to "how
 	// hard may a machine ask", with nothing deciding which one is right.
-	api.All("/mcp", agentSearchLimiter(mw.throttler), adaptor.HTTPHandler(mcpapp.Handler(h)))
+	api.All("/mcp", agentSearchLimiter(mw.throttler), adaptor.HTTPHandler(mcpapp.Handler(h, h.origin)))
 }
 
 // SearchJobs answers `search_jobs`.

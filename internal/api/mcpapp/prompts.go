@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/strelov1/freehire/internal/dict/vocab"
 )
 
 // Prompts are templates a person picks in their client (Claude lists them as commands), not
@@ -19,9 +21,14 @@ const (
 
 // promptSpec is one prompt and how it renders. render is handed only the arguments the
 // client sent, with required ones already checked present.
+//
+// vocabularies names the arguments whose values come from a closed dictionary, which the
+// client then offers as the person types (see completePromptArgument). The dictionaries
+// themselves, never a copy — the same rule checkedFacets follows.
 type promptSpec struct {
-	prompt *mcp.Prompt
-	render func(args map[string]string) string
+	prompt       *mcp.Prompt
+	render       func(args map[string]string) string
+	vocabularies map[string][]string
 }
 
 var prompts = []promptSpec{
@@ -42,6 +49,7 @@ var prompts = []promptSpec{
 				"salary where stated, the job board each came from and the employer's own link, " +
 				"and flag any that look stale or possibly not being filled."
 		},
+		vocabularies: map[string][]string{"seniority": vocab.SeniorityValues},
 	},
 	{
 		prompt: &mcp.Prompt{
@@ -75,6 +83,7 @@ var prompts = []promptSpec{
 				"range with the sample size behind them, keep currencies separate, and say how " +
 				"many matching postings are open right now."
 		},
+		vocabularies: map[string][]string{"role": vocab.CategoryValues, "seniority": vocab.SeniorityValues},
 	},
 }
 
@@ -99,6 +108,38 @@ func addPrompts(server *mcp.Server) {
 			}, nil
 		})
 	}
+}
+
+// maxCompletions is the most values one completion answer may carry; the MCP specification
+// caps it at 100, and the client is told there are more.
+const maxCompletions = 100
+
+// completePromptArgument answers completion/complete for a prompt argument: the values of
+// its vocabulary that start with what the person has typed, case folded, in the
+// vocabulary's own order. An argument with no vocabulary, an unknown prompt, or a resource
+// reference gets an empty answer — a suggestion we would have to guess is worse than none,
+// and an error would surface in the client as a failure while the person is typing.
+func completePromptArgument(_ context.Context, req *mcp.CompleteRequest) (*mcp.CompleteResult, error) {
+	values := []string{}
+	if ref := req.Params.Ref; ref != nil && ref.Type == "ref/prompt" {
+		typed := strings.ToLower(strings.TrimSpace(req.Params.Argument.Value))
+		for _, spec := range prompts {
+			if spec.prompt.Name != ref.Name {
+				continue
+			}
+			for _, value := range spec.vocabularies[req.Params.Argument.Name] {
+				if strings.HasPrefix(value, typed) {
+					values = append(values, value)
+				}
+			}
+		}
+	}
+	result := &mcp.CompleteResult{Completion: mcp.CompletionResultDetails{Values: values, Total: len(values)}}
+	if len(values) > maxCompletions {
+		result.Completion.Values = values[:maxCompletions]
+		result.Completion.HasMore = true
+	}
+	return result, nil
 }
 
 // spaced is an optional word followed by a space, or nothing — so an omitted argument leaves

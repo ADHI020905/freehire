@@ -22,20 +22,33 @@ const accountServerInstructions = "This server acts as the signed-in freehire ac
 // user. tools is the caller's assistantDiscoveryTools() + assistantTrackingTools()
 // — the same capabilities the in-app assistant already has, reused rather than
 // reimplemented so a tool result here and in the assistant can never disagree.
-func NewAccountServer(tools []assistant.Tool, userID int64) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{
-		Name:    "freehire-account",
-		Version: Version,
-	}, &mcp.ServerOptions{Instructions: accountServerInstructions})
+func NewAccountServer(tools []assistant.Tool, userID int64, origin string) *mcp.Server {
+	server := mcp.NewServer(Identity("freehire-account", Version, origin),
+		&mcp.ServerOptions{Instructions: accountServerInstructions})
 
 	for _, t := range tools {
 		server.AddTool(&mcp.Tool{
 			Name:        t.Name,
 			Description: t.Description,
 			InputSchema: t.Schema,
+			Annotations: accountAnnotations(t.Effect),
 		}, accountToolHandler(t, userID))
 	}
 	return server
+}
+
+// accountAnnotations declares what a tool does to the account, from the effect the tool
+// itself carries. A client reads these to decide whether to ask the person before a call,
+// so they are not decoration: unset, every search is a confirmation prompt. Every tool is
+// open-world for the same reason the anonymous server's are: the catalogue and the
+// tracking board both change outside this conversation, on the website.
+func accountAnnotations(effect assistant.Effect) *mcp.ToolAnnotations {
+	destructive, openWorld := effect == assistant.EffectOverwrites, true
+	return &mcp.ToolAnnotations{
+		ReadOnlyHint:    effect == assistant.EffectReads,
+		DestructiveHint: &destructive,
+		OpenWorldHint:   &openWorld,
+	}
 }
 
 // accountToolHandler closes over the request's resolved userID — set once, when
@@ -79,7 +92,7 @@ const AccountUserIDHeader = "X-Freehire-Account-User-Id"
 // trusts AccountUserIDHeader entirely — a request reaching it with no valid
 // value there is this package's own wiring bug, not a caller's, so it answers
 // 500 rather than 401.
-func AccountHandler(tools []assistant.Tool) http.Handler {
+func AccountHandler(tools []assistant.Tool, origin string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, err := strconv.ParseInt(r.Header.Get(AccountUserIDHeader), 10, 64)
 		if err != nil {
@@ -87,7 +100,7 @@ func AccountHandler(tools []assistant.Tool) http.Handler {
 			return
 		}
 		mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
-			return NewAccountServer(tools, userID)
+			return NewAccountServer(tools, userID, origin)
 		}, &mcp.StreamableHTTPOptions{Stateless: true}).ServeHTTP(w, r)
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -84,17 +85,18 @@ func readOnly() *mcp.ToolAnnotations {
 // up is the GET event stream and DELETE (405 in this mode), neither of which any tool here
 // has ever needed. The handshake lifecycle still works, so clients that send `initialize`
 // are unaffected — see discovery_test.go, which holds both lifecycles to that promise.
-func Handler(r Reader) http.Handler {
+//
+// origin is the site's own address, which the server's icons and website link are built
+// from.
+func Handler(r Reader, origin string) http.Handler {
 	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
-		return newServer(r)
+		return newServer(r, origin)
 	}, &mcp.StreamableHTTPOptions{Stateless: true})
 }
 
-func newServer(r Reader) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{
-		Name:    "freehire",
-		Version: Version,
-	}, &mcp.ServerOptions{Instructions: serverInstructions})
+func newServer(r Reader, origin string) *mcp.Server {
+	server := mcp.NewServer(Identity("freehire", Version, origin),
+		&mcp.ServerOptions{Instructions: serverInstructions, CompletionHandler: completePromptArgument})
 
 	addPrompts(server)
 
@@ -212,6 +214,28 @@ func newServer(r Reader) *mcp.Server {
 	})
 
 	return server
+}
+
+// Identity is how a server introduces itself: its name, and the logo and website a client
+// shows beside it in its list of connections. Every freehire MCP server introduces itself
+// through this, so all of them carry the same face.
+//
+// With no origin it is the name alone. An icon is a URL the client fetches, and a path
+// with no host is one it cannot — the same rule the projector follows for job links.
+func Identity(name, version, origin string) *mcp.Implementation {
+	id := &mcp.Implementation{Name: name, Title: "freehire", Version: version}
+	origin = strings.TrimSuffix(origin, "/")
+	if origin == "" {
+		return id
+	}
+	id.WebsiteURL = origin
+	// The SVG scales and follows the client's light or dark theme on its own; the PNG
+	// is for a client that does not render SVG.
+	id.Icons = []mcp.Icon{
+		{Source: origin + "/favicon.svg", MIMEType: "image/svg+xml", Sizes: []string{"any"}},
+		{Source: origin + "/apple-touch-icon.png", MIMEType: "image/png", Sizes: []string{"180x180"}},
+	}
+	return id
 }
 
 // toolResult renders a failure the way this audience can act on: an error RESULT carrying a

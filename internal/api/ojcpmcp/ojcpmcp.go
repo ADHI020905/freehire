@@ -22,6 +22,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/strelov1/freehire/internal/api/mcpapp"
 	"github.com/strelov1/freehire/internal/api/ojcp"
 )
 
@@ -73,20 +74,30 @@ type employerContextInput struct {
 
 // Handler builds the HTTP handler serving the OJCP tools over MCP's streamable transport.
 // Mount it with Fiber's adaptor at the path the manifest declares as `mcp_endpoint`.
-func Handler(r Reader) http.Handler {
+func Handler(r Reader, origin string) http.Handler {
 	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
-		return newServer(r)
+		return newServer(r, origin)
 	}, nil)
 }
 
-func newServer(r Reader) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{
-		Name:    "freehire-ojcp",
-		Version: ojcp.Version,
-	}, nil)
+// readOnly is every tool's annotation block, written once. All three read a catalogue that
+// changes outside the conversation; left unset, MCP's defaults announce a tool that may
+// destroy data, which is what a client then warns a person about.
+func readOnly() *mcp.ToolAnnotations {
+	destructive, openWorld := false, true
+	return &mcp.ToolAnnotations{
+		ReadOnlyHint:    true,
+		DestructiveHint: &destructive,
+		OpenWorldHint:   &openWorld,
+	}
+}
+
+func newServer(r Reader, origin string) *mcp.Server {
+	server := mcp.NewServer(mcpapp.Identity("freehire-ojcp", ojcp.Version, origin), nil)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:         toolSearchJobs,
+		Annotations:  readOnly(),
 		OutputSchema: searchJobsOutputSchema,
 		Description: "Search freehire's job catalogue. Returns OJCP JobPostings, each with " +
 			"the application paths it can be applied through and whether an agent can submit " +
@@ -100,6 +111,7 @@ func newServer(r Reader) *mcp.Server {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:         toolGetJobDetail,
+		Annotations:  readOnly(),
 		OutputSchema: jobDetailOutputSchema,
 		Description:  "Read one posting in full, by the ojcp_id a search result carries.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in jobDetailInput) (*mcp.CallToolResult, ojcp.JobDetailResponse, error) {
@@ -108,7 +120,8 @@ func newServer(r Reader) *mcp.Server {
 	})
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name: toolGetEmployerContext,
+		Name:        toolGetEmployerContext,
+		Annotations: readOnly(),
 		Description: "Read what is known about an employer, by the ojcp_employer_id a " +
 			"posting carries — including how many roles they have open right now.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in employerContextInput) (*mcp.CallToolResult, ojcp.EmployerContextResponse, error) {

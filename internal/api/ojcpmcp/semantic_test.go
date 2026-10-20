@@ -30,7 +30,7 @@ func connectOJCP(t *testing.T, r Reader) *mcp.ClientSession {
 	t.Helper()
 	ctx := context.Background()
 	clientTransport, serverTransport := mcp.NewInMemoryTransports()
-	server, err := newServer(r).Connect(ctx, serverTransport, nil)
+	server, err := newServer(r, "").Connect(ctx, serverTransport, nil)
 	if err != nil {
 		t.Fatalf("server connect: %v", err)
 	}

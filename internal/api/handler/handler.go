@@ -968,7 +968,7 @@ func Register(app *fiber.App, cfg Config) {
 	// The signed-in MCP server (freehire#3114): bearer-gated by an MCP OAuth
 	// grant, reusing assistantH's own tool set so this surface and the in-app
 	// assistant can never disagree about what a tool does.
-	mountMCPAccount(api, mw, assistantH)
+	mountMCPAccount(api, mw, assistantH, cfg.FrontendOrigin)
 	jobsH.register(api, mw)
 	companiesH.register(api, mw)
 	geoH.register(api, mw)

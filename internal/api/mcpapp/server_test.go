@@ -21,7 +21,7 @@ func connect(t *testing.T, r Reader) *mcp.ClientSession {
 	ctx := context.Background()
 
 	clientTransport, serverTransport := mcp.NewInMemoryTransports()
-	server, err := newServer(r).Connect(ctx, serverTransport, nil)
+	server, err := newServer(r, "").Connect(ctx, serverTransport, nil)
 	if err != nil {
 		t.Fatalf("server connect: %v", err)
 	}
@@ -313,4 +313,27 @@ func TestSearchJobsQueryAdvertisesTheOperators(t *testing.T) {
 		return
 	}
 	t.Fatalf("%s is not registered", toolSearchJobs)
+}
+
+// A client shows a server's logo and website beside it in its list of connections, from
+// what the server introduces itself with. Built from the origin, so a deployment with none
+// introduces itself by name alone rather than with icon paths no client can fetch.
+func TestIdentityCarriesTheLogoWhenTheOriginIsKnown(t *testing.T) {
+	id := Identity("freehire", Version, "https://freehire.example/")
+	if id.WebsiteURL != "https://freehire.example" {
+		t.Errorf("WebsiteURL = %q, want the origin without its trailing slash", id.WebsiteURL)
+	}
+	if len(id.Icons) == 0 {
+		t.Fatal("no icons")
+	}
+	for _, icon := range id.Icons {
+		if !strings.HasPrefix(icon.Source, "https://freehire.example/") {
+			t.Errorf("icon %q is not an absolute URL on the origin", icon.Source)
+		}
+	}
+
+	bare := Identity("freehire", Version, "")
+	if bare.WebsiteURL != "" || len(bare.Icons) != 0 {
+		t.Errorf("with no origin: WebsiteURL = %q, icons = %v; want neither", bare.WebsiteURL, bare.Icons)
+	}
 }

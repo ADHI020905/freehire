@@ -54,6 +54,8 @@ type ojcpHandlers struct {
 	// scoreThreshold is the ranking-score floor of a hybrid query (see
 	// search.SearchParams.ScoreThreshold).
 	scoreThreshold float64
+	// origin is the site's address; the MCP server builds its icon and website link from it.
+	origin string
 }
 
 // queryEmbedder is the query-side embedding call. *search.QueryEmbedder satisfies it.
@@ -75,6 +77,7 @@ func newOJCPHandlers(s searcher, store ojcpStore, origin string, submittable map
 		search:    s,
 		store:     store,
 		projector: ojcp.NewProjector(origin, submittable),
+		origin:    origin,
 	}
 	// The reality lookups need the concrete queries, which the production store is. The nil
 	// check is here rather than inside the attacher so it runs once per construction instead
@@ -98,7 +101,7 @@ func (h *ojcpHandlers) register(api fiber.Router, mw middleware) {
 	// serves the SAME methods the three routes above call, so the two cannot answer one
 	// question differently. `All` because MCP's streamable transport uses POST to call and
 	// GET to open the server-to-client stream.
-	api.All("/ojcp/mcp", limit, adaptor.HTTPHandler(ojcpmcp.Handler(h)))
+	api.All("/ojcp/mcp", limit, adaptor.HTTPHandler(ojcpmcp.Handler(h, h.origin)))
 
 	// The manifest, rendered. It is served to an agent at /.well-known/ojcp.json, which the
 	// SPA proxies to this route — nginx sends /api/ here and everything else to the Node

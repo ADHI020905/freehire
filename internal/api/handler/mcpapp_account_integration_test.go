@@ -10,6 +10,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,7 +56,7 @@ func TestMCPAccountEndToEnd(t *testing.T) {
 	}
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	api := app.Group("/api/v1")
-	mountMCPAccount(api, middleware{}, assistants)
+	mountMCPAccount(api, middleware{}, assistants, testMCPOrigin)
 
 	server := httptest.NewServer(adaptor.FiberApp(app))
 	defer server.Close()
@@ -73,6 +74,12 @@ func TestMCPAccountEndToEnd(t *testing.T) {
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusUnauthorized {
 			t.Fatalf("status = %d, want 401", resp.StatusCode)
+		}
+		// RFC 6750: a token that was presented and refused is invalid_token, which is
+		// what tells a client to re-run the sign-in rather than retry the same token.
+		if got := resp.Header.Get("WWW-Authenticate"); !strings.Contains(got, `error="invalid_token"`) ||
+			!strings.Contains(got, "resource_metadata=") {
+			t.Fatalf("WWW-Authenticate = %q, want an invalid_token challenge naming resource_metadata", got)
 		}
 	})
 
@@ -118,7 +125,7 @@ func TestMCPAccountAuthenticate_InfraFailureIsA500NotA401(t *testing.T) {
 	}
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	api := app.Group("/api/v1")
-	mountMCPAccount(api, middleware{}, assistants)
+	mountMCPAccount(api, middleware{}, assistants, testMCPOrigin)
 
 	pool.Close() // simulate the database going away, not an unknown token
 

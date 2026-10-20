@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/strelov1/freehire/internal/api/ojcp"
 )
@@ -143,4 +144,33 @@ func (r *recordingReader) canServe(tool string) bool {
 		return err == nil
 	}
 	return false
+}
+
+// Every OJCP tool reads, and a client decides whether to ask the person before a call from
+// these hints — unset, readOnlyHint is false and destructiveHint true, so a search was being
+// announced as a tool that may delete data. Walks the REGISTERED tools over the SDK, so a
+// tool added without the block fails here.
+func TestEveryToolIsAnnouncedReadOnly(t *testing.T) {
+	clientTransport, serverTransport := mcp.NewInMemoryTransports()
+	go func() { _ = newServer(&recordingReader{}, "").Run(context.Background(), serverTransport) }()
+	client := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "0"}, nil)
+	session, err := client.Connect(context.Background(), clientTransport, nil)
+	if err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+	defer func() { _ = session.Close() }()
+
+	listed, err := session.ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	if len(listed.Tools) == 0 {
+		t.Fatal("no tools listed")
+	}
+	for _, tool := range listed.Tools {
+		a := tool.Annotations
+		if a == nil || !a.ReadOnlyHint || a.DestructiveHint == nil || *a.DestructiveHint || a.OpenWorldHint == nil {
+			t.Errorf("%s: annotations = %+v, want readOnlyHint true, destructiveHint false, openWorldHint set", tool.Name, a)
+		}
+	}
 }

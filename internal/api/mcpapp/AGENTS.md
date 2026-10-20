@@ -118,6 +118,12 @@ model never calls them. Each renders one plain user request and names no tool: w
 answers it is the server instructions' job. A missing required argument is an error; an
 omitted optional one leaves no trace in the text.
 
+An argument whose values come from a closed dictionary (`seniority`, `role`) declares it in
+its spec's `vocabularies`, and `completion/complete` offers the dictionary's values as the
+person types — the vocabulary itself, never a copy. A free-text argument (`stack`,
+`postings`) offers nothing: a client replaces the whole field with what it picks, so a
+suggestion for one word of "Go and Kubernetes" would erase the rest.
+
 ## Descriptions say what a tool returns, never which tool to call
 
 Anthropic's directory policy rules out tool descriptions that instruct the model about other
@@ -136,6 +142,20 @@ rather than a list beside them — checked by removing one annotation and watchi
 A tool on THIS (anonymous) server that writes anything belongs behind authentication, which
 this surface does not have — that is what `account.go`'s separate, authenticated server is
 for; do not add a write tool here instead of there.
+
+The account server's annotations come from each tool's own `assistant.Effect` —
+`EffectReads`, `EffectAdds` (nothing already held is lost: `save_job`, `apply_job`) or
+`EffectOverwrites` (`unsave_job`, and `track_job`, which REPLACES the note). The zero value
+is `EffectOverwrites` on purpose: a tool that declares nothing is announced as one that may
+lose data. `TestMCPAccountTools_DeclareTheirEffect` walks the set the mount actually serves,
+so a tool joining it must be classified there.
+
+`present_jobs` is NOT served there (`mcpAccountTools`). It draws cards in our own chat UI and
+its description tells the model never to write a job link; in a client with no card renderer
+a model obeying it showed the person no vacancies at all.
+
+Every server — both here and the OJCP one — introduces itself through `Identity`, which adds
+the site's logo and website link when the origin is known.
 
 ## Testing
 

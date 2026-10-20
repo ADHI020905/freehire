@@ -20,7 +20,30 @@ type Tool struct {
 	Description string
 	Schema      map[string]any
 	Run         func(ctx context.Context, userID int64, args json.RawMessage) (any, error)
+
+	// Effect is what the tool does to the account it runs as. The in-app loop
+	// ignores it; a surface that must declare a tool's effects to its client (the
+	// signed-in MCP server's annotations) reads it.
+	Effect Effect
 }
+
+// Effect is what a tool does to the account it runs as.
+//
+// The zero value is the most dangerous kind on purpose: a tool that declares
+// nothing is announced as one that may lose data. Overclaiming costs the person a
+// confirmation prompt; underclaiming would skip one before a write.
+type Effect int
+
+const (
+	// EffectOverwrites may remove or replace something the account holds — a
+	// bookmark taken away, a note's previous text gone.
+	EffectOverwrites Effect = iota
+	// EffectAdds writes, but only adds to what the account holds: nothing that was
+	// there before is lost.
+	EffectAdds
+	// EffectReads changes nothing.
+	EffectReads
+)
 
 // Result is one tool's answer as the model will see it. Content is always valid
 // JSON — either the tool's payload or an error envelope — because a tool failure

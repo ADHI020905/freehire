@@ -85,7 +85,8 @@ func assistantFacetNames() []string {
 // rather than invented.
 func (h *assistantHandlers) facetsTool() assistant.Tool {
 	return assistant.Tool{
-		Name: "facets",
+		Name:   "facets",
+		Effect: assistant.EffectReads,
 		Description: "List the live filter vocabulary: every filter's valid values with a vacancy count each, " +
 			"plus numeric ranges. Call this BEFORE filtering a search, and take skill slugs from its `skills` " +
 			"distribution — never invent a filter value.",
@@ -126,7 +127,8 @@ func (h *assistantHandlers) facetsTool() assistant.Tool {
 // description so the agent screens a whole set in one call.
 func (h *assistantHandlers) searchJobsTool() assistant.Tool {
 	return assistant.Tool{
-		Name: "search_jobs",
+		Name:   "search_jobs",
+		Effect: assistant.EffectReads,
 		Description: "Search open vacancies by keyword and facet filters. Every result carries its full " +
 			"description as markdown and its public_slug — link a vacancy as https://freehire.me/jobs/<public_slug>. " +
 			"Take filter names and values from the facets tool.",
@@ -198,6 +200,7 @@ func (h *assistantHandlers) searchJobsTool() assistant.Tool {
 func (h *assistantHandlers) getJobTool() assistant.Tool {
 	return assistant.Tool{
 		Name:        "get_job",
+		Effect:      assistant.EffectReads,
 		Description: "Read one vacancy in full by its public_slug.",
 		Schema: map[string]any{
 			"type":       "object",
@@ -232,6 +235,7 @@ func (h *assistantHandlers) getJobTool() assistant.Tool {
 func (h *assistantHandlers) getCompanyTool() assistant.Tool {
 	return assistant.Tool{
 		Name:        "get_company",
+		Effect:      assistant.EffectReads,
 		Description: "Read one company and a page of its open vacancies, by company slug.",
 		Schema: map[string]any{
 			"type":       "object",
@@ -274,7 +278,8 @@ func (h *assistantHandlers) getCompanyTool() assistant.Tool {
 // unlock the most vacancies.
 func (h *assistantHandlers) marketFitTool() assistant.Tool {
 	return assistant.Tool{
-		Name: "market_fit",
+		Name:   "market_fit",
+		Effect: assistant.EffectReads,
 		Description: "Score a skill list against the live open-vacancy market for a filtered role: what share of " +
 			"vacancies list at least one of the skills, which must-have skills are held, and which missing skills " +
 			"unlock the most vacancies. Here `skills` is the MEASURED set, not a filter.",

@@ -25,7 +25,7 @@ func TestNewAccountServer_RunsToolAsTheResolvedUser(t *testing.T) {
 			return map[string]any{"user_id": userID}, nil
 		},
 	}
-	server := mcpapp.NewAccountServer([]assistant.Tool{tool}, 42)
+	server := mcpapp.NewAccountServer([]assistant.Tool{tool}, 42, "")
 	if server == nil {
 		t.Fatal("NewAccountServer returned nil")
 	}
@@ -62,7 +62,7 @@ func TestNewAccountServer_ToolErrorBecomesAnErrorResult(t *testing.T) {
 			return nil, errors.New("boom")
 		},
 	}
-	server := mcpapp.NewAccountServer([]assistant.Tool{tool}, 1)
+	server := mcpapp.NewAccountServer([]assistant.Tool{tool}, 1, "")
 
 	clientTransport, serverTransport := mcp.NewInMemoryTransports()
 	go func() { _ = server.Run(context.Background(), serverTransport) }()
@@ -99,7 +99,7 @@ func TestAccountHandler_ReadsUserIDFromTrustedHeader(t *testing.T) {
 			return map[string]any{"user_id": userID}, nil
 		},
 	}
-	handler := mcpapp.AccountHandler([]assistant.Tool{tool})
+	handler := mcpapp.AccountHandler([]assistant.Tool{tool}, "")
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
@@ -133,7 +133,7 @@ func TestAccountHandler_MissingTrustedHeaderIsAnInternalError(t *testing.T) {
 	// Reaching AccountHandler with no resolved user id means the auth
 	// middleware was skipped or misconfigured — a wiring bug, not a caller
 	// mistake, so it must read as 500, not as the caller's fault.
-	handler := mcpapp.AccountHandler(nil)
+	handler := mcpapp.AccountHandler(nil, "")
 
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
@@ -151,4 +151,53 @@ func (rt headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		req.Header[k] = v
 	}
 	return http.DefaultTransport.RoundTrip(req)
+}
+
+// A read tool and a write tool must be told apart in the annotations a client sees: a client
+// asks a person to confirm a write and may run a read without asking, so a missing hint
+// turns every search into a confirmation prompt — and a wrong one skips the prompt on a write.
+func TestNewAccountServer_AnnotatesReadsAndWrites(t *testing.T) {
+	noop := func(context.Context, int64, json.RawMessage) (any, error) { return nil, nil }
+	server := mcpapp.NewAccountServer([]assistant.Tool{
+		{Name: "reader", Description: "reads", Schema: map[string]any{"type": "object"}, Effect: assistant.EffectReads, Run: noop},
+		{Name: "adder", Description: "adds", Schema: map[string]any{"type": "object"}, Effect: assistant.EffectAdds, Run: noop},
+		{Name: "undeclared", Description: "declares nothing", Schema: map[string]any{"type": "object"}, Run: noop},
+	}, 1, "")
+
+	clientTransport, serverTransport := mcp.NewInMemoryTransports()
+	go func() { _ = server.Run(context.Background(), serverTransport) }()
+	client := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "0"}, nil)
+	session, err := client.Connect(context.Background(), clientTransport, nil)
+	if err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+	defer func() { _ = session.Close() }()
+
+	listed, err := session.ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	got := map[string]*mcp.ToolAnnotations{}
+	for _, tool := range listed.Tools {
+		got[tool.Name] = tool.Annotations
+	}
+
+	reader := got["reader"]
+	if reader == nil || !reader.ReadOnlyHint || reader.DestructiveHint == nil || *reader.DestructiveHint {
+		t.Errorf("reader annotations = %+v, want readOnlyHint true and destructiveHint false", reader)
+	}
+	adder := got["adder"]
+	if adder == nil || adder.ReadOnlyHint || adder.DestructiveHint == nil || *adder.DestructiveHint {
+		t.Errorf("adder annotations = %+v, want readOnlyHint false and destructiveHint false", adder)
+	}
+	// A tool that declares nothing is announced as the most dangerous kind.
+	undeclared := got["undeclared"]
+	if undeclared == nil || undeclared.ReadOnlyHint || undeclared.DestructiveHint == nil || !*undeclared.DestructiveHint {
+		t.Errorf("undeclared annotations = %+v, want readOnlyHint false and destructiveHint true", undeclared)
+	}
+	for name, a := range got {
+		if a == nil || a.OpenWorldHint == nil {
+			t.Errorf("%s: openWorldHint unset — OpenAI's review rejects a tool that leaves it out", name)
+		}
+	}
 }

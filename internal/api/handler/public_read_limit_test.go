@@ -246,7 +246,7 @@ func publicReadRoutes(t *testing.T, throttler ratelimit.Throttler) (map[string]*
 		// budget as the two anonymous MCP/OJCP surfaces above: every tool call still
 		// costs what a catalogue read costs, whichever credential reached it.
 		"mountMCPAccount": mount(func(r fiber.Router, m middleware) {
-			mountMCPAccount(r, m, &assistantHandlers{})
+			mountMCPAccount(r, m, &assistantHandlers{}, testMCPOrigin)
 		}),
 	}, iss
 }

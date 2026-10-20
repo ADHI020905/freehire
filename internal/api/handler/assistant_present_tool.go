@@ -66,12 +66,17 @@ type presentJobsResult struct {
 	Dropped   []presentJobsDropped `json:"dropped"`
 }
 
+// presentJobsToolName is named once so the signed-in MCP server, which cannot
+// render what this tool presents, can leave it out (see mcpAccountTools).
+const presentJobsToolName = "present_jobs"
+
 // presentJobsTool is how a vacancy reaches the user's screen. It is the one tool
 // whose purpose is presentation: it writes no state and reads only enough to
 // refuse a slug that does not exist.
 func presentJobsTool(resolver jobSlugResolver) assistant.Tool {
 	return assistant.Tool{
-		Name: "present_jobs",
+		Name:   presentJobsToolName,
+		Effect: assistant.EffectReads,
 		Description: "Show vacancies to the user. This is the ONLY way a vacancy reaches the " +
 			"user's screen — never write a job link or a job's title into your reply text. " +
 			"Each entry pairs a public_slug, copied from a search or read result, with your " +
