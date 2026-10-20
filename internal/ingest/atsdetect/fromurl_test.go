@@ -295,6 +295,49 @@ func TestFromURL(t *testing.T) {
 			url:  "https://easyapply.co/job/produce-clerk-120",
 			ok:   false,
 		},
+		// Tenstreet: real apply links, the board is the carrier's numeric company_id. The
+		// carriers' other apply host, intelliapp.driverapponline.com/c/<slug>, names no
+		// company id and is declined.
+		{
+			name:     "tenstreet posting",
+			url:      "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=123622&company_id=774&portal_user_id=1",
+			provider: "tenstreet", board: "774", ok: true,
+		},
+		{
+			name:     "tenstreet posting, seven-digit company",
+			url:      "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=53720&company_id=2337095&portal_user_id=1",
+			provider: "tenstreet", board: "2337095", ok: true,
+		},
+		{
+			name:     "tenstreet posting, four-digit company",
+			url:      "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=116117&company_id=2272&portal_user_id=1",
+			provider: "tenstreet", board: "2272", ok: true,
+		},
+		{
+			name:     "tenstreet posting, 3665093",
+			url:      "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=130245&company_id=3665093&portal_user_id=1",
+			provider: "tenstreet", board: "3665093", ok: true,
+		},
+		{
+			name:     "tenstreet posting, 3041402",
+			url:      "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=126863&company_id=3041402&portal_user_id=1",
+			provider: "tenstreet", board: "3041402", ok: true,
+		},
+		{
+			name:     "tenstreet carrier profile",
+			url:      "https://pulse.tenstreet.com/share_app_index.php?company_id=140868",
+			provider: "tenstreet", board: "140868", ok: true,
+		},
+		{
+			name: "tenstreet intelliapp link names no company",
+			url:  "https://intelliapp.driverapponline.com/c/hawaiitrans",
+			ok:   false,
+		},
+		{
+			name: "tenstreet posting without a company id",
+			url:  "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=123622&portal_user_id=1",
+			ok:   false,
+		},
 		{
 			name: "unknown host",
 			url:  "https://www.caci.com/careers/123",

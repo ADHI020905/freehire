@@ -194,6 +194,7 @@ var atsBoards = []struct{ host, source, mode string }{
 	// --- query: board = a named query parameter (see queryBoards) ---
 	{"recruitingbypaycor.com", "paycor", modeQuery},
 	{"candidate.hr-manager.net", "hrmanager", modeQuery},
+	{"pulse.tenstreet.com", "tenstreet", modeQuery},
 
 	// --- querypair: board = two named query parameters joined by ":" (see queryPairBoards) ---
 	{"workforcenow.adp.com", "adp", modeQueryPair},
@@ -426,6 +427,16 @@ var queryBoards = map[string]struct {
 		param:        "customer",
 		listingPath:  "/vacancies/list.aspx",
 		boardPattern: regexp.MustCompile(`^[a-z0-9_-]*[a-z][a-z0-9_-]*$`),
+	},
+	// Tenstreet's Pulse pages name a carrier by its numeric company_id on every page: the
+	// carrier's profile /share_app_index.php?company_id=<board> (the listing the adapter reads)
+	// and a posting /share_app_show_active_jobs.php?active_job_id=<id>&company_id=<board>&….
+	// Its other apply host, intelliapp.driverapponline.com/c/<slug>, names no company id and
+	// is not recognised.
+	"pulse.tenstreet.com": {
+		param:        "company_id",
+		listingPath:  "/share_app_index.php",
+		boardPattern: regexp.MustCompile(`^[0-9]+$`),
 	},
 }
 

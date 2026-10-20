@@ -1,0 +1,192 @@
+<!doctype html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:fb="http://ogp.me/ns/fb#">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" href="/includes/css/main.css?v=1.0">
+		<LINK HREF="/global/css/font-awesome/css/font-awesome.css" REL="stylesheet" TYPE="text/css">
+		<LINK HREF="/global/css/octicons/octicons.css" REL="stylesheet" TYPE="text/css">
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+		<script src="/global/js/jquery.min.js"></script>
+	</head>
+	<body style="background: #fff;">
+		<div id="active_job_detail_content">
+			<table width="100%" cellpadding="0" cellspacing="0" id="portal_header_table">
+				<tr>
+					<td style="width: 15%;">
+						<div id="back_button" class="back_button" style="display: block;" onclick="window.location='https://portal.tenstreet.com/share_app_index.php?company_id=774&portal_user_id=1'">
+							<span class="octicon octicon-chevron-left">&nbsp;</span>
+						</div>
+					</td>
+					<td style="width: 60%;" class="portal_header_title" nowrap="" align="right">
+						<table id="logo_title_table" cellpadding="0" cellspacing="0" style="width: 215px; height: 31px; display: inline-block;">
+							<tr>
+								<td>
+									<img style="float: left;top: 0px;display: inline-block;width: 33px;height: 33px;padding-top: 2px;" class="pulse_icon_image" src="images/pulse_svg.svg?v=.04">
+									<img style="position: relative; top: -7px;color: #FFF;height: 14px;padding-left: 5px;" src="images/pulse_jap.svg">
+									<div style="position: relative; top: -16px; float: left; padding-left:6px; font-style: italic; color:#9E9E9E;font-size: 0.6em;font-family: arial;font-weight: normal !important;text-shadow: none;">by tenstreet</div>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td style="width: 15%;text-align: right;" class="pulse_icon_table_cell" onclick="pulse.toggle_menu()">
+						<i style="padding-bottom: 0px;padding-right:10px;font-size: 30px;display: none;" class="fa fa-navicon"></i>
+					</td>
+				</tr>
+			</table>
+			<table style="width: 100%;background: #fff;margin-bottom: 85px;">
+				<tr>
+					<td style="text-align: center;">
+						<img id="carrier_detail_company_logo_image" class="carrier_view_company_logo pulse-rounded-corners" style="max-width: 150px;margin-top: 15px;" src="https://portal.tenstreet.com/images/company_logos/"/>
+					</td>
+				</tr>
+				<tr>
+					<td style="text-align: center; width:100%; font-weight: bold;font-size: 1em;padding-left: 10px;">
+						<span id="carrier_detail_company_name"></span>
+					</td>
+				</tr>
+				<tr>
+					<td id="job_title" style="text-align: center;font-weight: bold; color:#c80501;">
+						 ()
+					</td>
+				</tr>
+				<tr><td colspan="4"><hr style="width: 100%;"></td></tr>
+				<tr>
+					<td style="text-align: center;">
+						<b><u>Hiring Locations</u></b>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div id="geochart_loading_spinner" style="font-size: 10px;color:#c80501;">
+							<p style="text-align: center;">
+								<i class="fa fa-circle-o-notch fa-spin fa-3x"></i>
+							</p>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div id="geochart-colors" style="width: 100%;"></div>
+					</td>
+				</tr>
+				<tr><td colspan="4"><hr style="width: 100%;"></td></tr>
+				<tr>
+					<td style="text-align: center;">
+						<b><u>Job Description</u></b>
+					</td>
+				</tr>
+				<tr>
+					<td id="job_description">
+											</td>
+				</tr>
+				<tr><td colspan="4"><hr style="width: 100%;"></td></tr>
+				<tr>
+					<td style="text-align: center;">
+						<b><u>Job Requirements</u></b>
+					</td>
+				</tr>
+				<tr>
+					<td id="job_requirements">
+											</td>
+				</tr>
+
+
+				<!--<tr><td colspan="4"><hr style="width: 100%;"></td></tr>-->
+				<!--<tr>-->
+				<!--    <td style="text-align: center;">-->
+				<!--        <b><u>Hiring Locations</u></b>-->
+				<!--    </td>-->
+				<!--</tr>-->
+				<!--<tr>-->
+				<!--    <td>-->
+				<!--        OK,TX,MO,NV,KS,CO,AZ,UT,ID,TN,KY-->
+				<!--    </td>-->
+				<!--</tr>-->
+			</table>
+			<div>
+				<table id="active_job_footer" class="offer_footer" style="width:100%;">
+						<td id="offer_button_1" style=""><div class="carrier_detail_footer_button" id="message_detail_apply_button" onclick="window.location='https://intelliapp.driverapponline.com/c/?r=pulse_fb_share&pulse_share_user=1'"><span class="fa-stack fa-lg" style="margin-left: 3px;font-size: 33px;"><i class="fa fa-circle fa-stack-2x" style="color:#007aff;"></i>
+                            <i class="fa fa-pencil fa-stack-1x fa-inverse" style="color: #fff;"></i>
+                            </span>
+                            <br>
+                            <span id="carrier_apply_button_text" style="padding-top:0px;color:#818181;">Apply</span>
+                        </div>
+                    </td>
+				</table>
+			</div>
+		</div>
+		<script>
+		var map_array = [];
+		var active_job_array = null;
+		map_array.push(['State', 'Number of Jobs']);
+		$.each(active_job_array, function(index, job_info)
+			   {
+					if (job_info.location_type == 'zip_radius')
+					{
+						//then we need to use the state
+						map_array.push(['US-'+job_info.state, 1]);
+					}
+					else
+					{
+						if (job_info.location_type == 'select_states')
+						{
+							map_array.push(['US-'+job_info.value, 1]);
+						}
+					}
+			   });
+
+		google.charts.load('upcoming', {'packages':['geochart']});
+		google.charts.setOnLoadCallback(drawRegionsMap);
+		//window.setTimeout(function(){drawRegionsMap();}, 500);
+
+		//if (!pulse.maps_loaded)
+		//{
+		//	google.charts.load('current', {'packages': ['geochart']});
+		//	google.charts.setOnLoadCallback(pulse.drawRegionsMap);
+		//	pulse.maps_loaded = true;
+		//}
+		//else
+		//{
+		//	window.setTimeout(function(){drawRegionsMap();}, 500);
+		//
+		//}
+
+		function drawRegionsMap()
+		{
+			$("#active_job_detail_content #geochart_loading_spinner").hide();
+			var data = google.visualization.arrayToDataTable(map_array);
+
+
+			//[
+			//  ['State', 'Number of Jobs'],
+			//  ['US-IL', 1],
+			//  ['US-IN', 1],
+			//  ['US-IA', 2],
+			//  ['US-RI', 1],
+			//  ['US-OK', 1],
+			//  ['US-TX', 4],
+			//  ['US-KS', 2],
+			//  ['US-UT', 4]
+			//]
+
+			var options = {
+			  region: 'US', // Africa
+			  colorAxis: {
+				colors: ['#F1C0BF', '#c80501', '#c80501']
+			  },
+			  //backgroundColor: '#81d4fa',
+			  //datalessRegionColor: '#f8bbd0',
+			  //defaultColor: '#f5f5f5',
+			  resolution: "provinces",
+			  legend: 'none'
+			};
+
+			var chart = new google.visualization.GeoChart(document.getElementById('geochart-colors'));
+			chart.draw(data, options);
+		}
+		</script>
+</html>

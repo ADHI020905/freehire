@@ -632,6 +632,15 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["hrmanager"] = NewHRManager(NewLongTimeoutClient())
 	}
+	// Tenstreet: US trucking carriers' Pulse pages, board = numeric company id, hydrating each
+	// new posting from its page. Posting pages run to ~1.8 MB and some stall for 30 s or more,
+	// so the adapter rides the long-timeout transport, paced at the rate measured as refused
+	// nothing (see tenstreetRequestInterval).
+	if c == nil {
+		registry["tenstreet"] = NewTenstreet(nil)
+	} else {
+		registry["tenstreet"] = NewTenstreet(pacedHTMLGetter(NewLongTimeoutClient(), tenstreetRequestInterval, tenstreetRequestBurst))
+	}
 	// HerKey's posting resource answers in 4-15 s, close enough to the standard 15 s timeout
 	// that a share of every run would time out, so it rides the long-timeout transport, paced
 	// (see herkeyRequestInterval).

@@ -156,6 +156,12 @@ func TestRecognize(t *testing.T) {
 		{"hrmanager job-portal API", "https://api.hr-manager.net/JobPortal.svc/kimdemo/PositionList/rss/?protype=RecruitmentProject&incads=true", "hrmanager", "kimdemo", "https://api.hr-manager.net/JobPortal.svc/kimdemo", true},
 		{"hrmanager job-portal API lower-case path", "https://api.hr-manager.net/jobportal.svc/energinet/positionlist/json/", "hrmanager", "energinet", "https://api.hr-manager.net/JobPortal.svc/energinet", true},
 		{"hrmanager API without a customer", "https://api.hr-manager.net/JobPortal.svc/", "", "", "", false},
+		// Tenstreet: the board is the carrier's numeric company_id, named by its profile and
+		// by every posting; both collapse to the profile, which is the listing.
+		{"tenstreet posting", "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=123622&company_id=774&portal_user_id=1", "tenstreet", "774", "https://pulse.tenstreet.com/share_app_index.php?company_id=774", true},
+		{"tenstreet carrier profile", "https://pulse.tenstreet.com/share_app_index.php?company_id=2337095", "tenstreet", "2337095", "https://pulse.tenstreet.com/share_app_index.php?company_id=2337095", true},
+		{"tenstreet non-numeric company is not a board", "https://pulse.tenstreet.com/share_app_index.php?company_id=acme", "", "", "", false},
+		{"tenstreet link without a company", "https://pulse.tenstreet.com/share_app_show_active_jobs.php?active_job_id=123622", "", "", "", false},
 
 		// querypair — ADP Workforce Now: cid names the tenant, ccId the career centre inside it,
 		// and the adapter needs both, so the board is the pair. The canonical collapses to the
