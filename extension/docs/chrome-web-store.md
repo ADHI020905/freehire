@@ -119,15 +119,22 @@ It's a no-op until three secrets exist on the repo. One-time setup:
 1. [Google Cloud Console](https://console.cloud.google.com/) → new (or existing)
    project → **APIs & Services → Library** → enable the **Chrome Web Store API**.
 2. **APIs & Services → Credentials** → **Create credentials → OAuth client ID**
-   → Application type **Desktop app**. Note the client id and client secret.
+   → Application type **Desktop app** — NOT "Chrome Extension": that type has no
+   client secret and cannot mint a refresh token. Download the JSON from the
+   creation dialog; it is the only place the secret is shown in full.
 3. Get a refresh token once, from a machine with a browser (this is the only
-   interactive step): run
-   ```
-   npx --yes chrome-webstore-upload-cli@3 refresh-token \
-     --client-id <CLIENT_ID> --client-secret <CLIENT_SECRET>
-   ```
-   sign in with the **same Google account that owns the Developer Dashboard
-   item**, and copy the refresh token it prints.
+   interactive step). `chrome-webstore-upload-cli@3` no longer has a
+   `refresh-token` command — run without one it exits 0 and prints nothing — so
+   use the installed-app OAuth flow directly: open
+   `https://accounts.google.com/o/oauth2/v2/auth` with the client id, a
+   `http://127.0.0.1:<port>` redirect, `response_type=code`,
+   `scope=https://www.googleapis.com/auth/chromewebstore`, `access_type=offline`
+   and `prompt=consent`; sign in with the **same Google account that owns the
+   Developer Dashboard item**; exchange the returned code at
+   `https://oauth2.googleapis.com/token` (`grant_type=authorization_code`) and
+   keep the `refresh_token` from the response. A refresh token stops working
+   when it is revoked or the account's password changes, and the publish step
+   then fails with `invalid_grant` — mint a new one the same way.
 4. Add three repo secrets (Settings → Secrets and variables → Actions):
    `CHROME_WEBSTORE_CLIENT_ID`, `CHROME_WEBSTORE_CLIENT_SECRET`,
    `CHROME_WEBSTORE_REFRESH_TOKEN`.
@@ -136,6 +143,16 @@ It's a no-op until three secrets exist on the repo. One-time setup:
 as the published item's id (`ijfaechijopdlikalojadpojmpilplnj`, from the
 dashboard URL), which is **not** the same id `wxt.config.ts`'s pinned dev key
 produces locally.
+
+The store refuses to PUBLISH (the upload still lands as a draft) until the
+item's **Privacy practices** tab in the dashboard is filled in — the publish
+step fails with `Publish condition not met`. The answers are in the Privacy
+practices section above.
+
+Re-running a failed publish job does nothing on its own: the store step is
+gated on the GitHub Release being newly created, and the re-run finds it
+already there. Delete the release (`gh release delete extension-v<version>
+--yes --cleanup-tag`) before re-running.
 
 Submitting a build this way still enters Google's normal manual review queue —
 `<all_urls>` guarantees that regardless of who uploads it. Automation removes
