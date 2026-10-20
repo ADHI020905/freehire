@@ -18,23 +18,9 @@ func applitrackWrite(markup string) string {
 // through, so every one of them arrives escaped.
 func applitrackEscape(markup string) string { return strings.ReplaceAll(markup, "'", `\'`) }
 
-// applitrackMenuBody is the unfiltered listing: the district's own category menu and no postings.
-// Its vocabulary is the shape the live fleet publishes — one plainly technical name, one plainly
-// not, and two of the look-alikes the allowlist exists to turn away (Maine's word for a
-// paraprofessional, and a teaching subject).
-var applitrackMenuBody = "var VacanciesAreOnThisPage = false\n" +
-	applitrackWrite(`<div id='AppliTrackSearchAdvancedContainer'>`+
-		`<select name='AppliTrackSearchCategory' id='AppliTrackSearchCategory'>`+
-		`<option style='color:#666;'>Select Category</option>`+
-		`<option value='{id:"Food Service",vals:[""]}'>Food Service</option>`+
-		`<option value='{id:"Ed Tech",vals:[""]}'>Ed Tech</option>`+
-		`<option value='{id:"Career and Technical Education",vals:[""]}'>Career and Technical Education</option>`+
-		`<option value='{id:"Technology",vals:["Network/Server Support"]}'>Technology</option>`+
-		`</select></div>`)
-
-// applitrackTechListingBody is the Technology category's slice. Posting 950 is listed twice, as a
+// applitrackListingBody is a board's "All Vacancies" listing. Posting 950 is listed twice, as a
 // consortium lists one requisition once per participating district; both rows carry the one id.
-var applitrackTechListingBody = "var VacanciesAreOnThisPage = true\n" +
+var applitrackListingBody = "var VacanciesAreOnThisPage = true\n" +
 	applitrackWrite(`<div id='AppliTrackListContent'><table class='AppliTrackPostingTable'>`+
 		`<thead><tr><th>Description</th><th>Posted On</th></tr></thead><tbody>`+
 		applitrackRow("739", "Network Engineer", "Central Office")+
@@ -107,15 +93,13 @@ var applitrackDetail950 = applitrackWrite(`<div id='AppliTrackListContent'></div
 
 func applitrackFake() *routedHTTP {
 	// Contains-matching, so the detail routes (whose URLs carry "AppliTrackJobId=") precede the
-	// listing ones, and the category slice precedes the unfiltered menu it is a longer form of.
-	// Nothing routes the categories the allowlist rejects: a request for one is a test failure.
+	// listing. Only the "All Vacancies" listing is routed: any other listing request fails.
 	return (&routedHTTP{}).
 		route("AppliTrackJobId=739", applitrackDetail739).
 		route("AppliTrackJobId=812", applitrackDetail812).
 		route("AppliTrackJobId=900", applitrackDetail900).
 		route("AppliTrackJobId=950", applitrackDetail950).
-		route("category=Technology", applitrackTechListingBody).
-		route("Output.asp?AppliTrackLayoutMode=condensed", applitrackMenuBody)
+		route("all=1", applitrackListingBody)
 }
 
 func applitrackEntry() CompanyEntry {
@@ -141,7 +125,7 @@ func TestAppliTrackWritten(t *testing.T) {
 		{`no writes here`, "", true},
 		// A call that runs off the end of the body is a response that was cut short. What it
 		// carried parses, which is exactly why the caller must be told rather than left to walk
-		// half a category and take it for the whole.
+		// half a listing and take it for the whole.
 		{`document.write('<td>half a r`, "<td>half a r", false},
 	}
 	for _, c := range cases {
@@ -155,12 +139,10 @@ func TestAppliTrackWritten(t *testing.T) {
 
 func TestAppliTrackTruncatedResponseFailsBoard(t *testing.T) {
 	// The markup before the cut parses and the rows before it read fine, so a crawl that
-	// accepted it would take an incomplete category for a complete one — and on a
+	// accepted it would take an incomplete listing for a complete one — and on a
 	// company-swept provider that closes every posting past the cut.
-	cut := applitrackTechListingBody[:len(applitrackTechListingBody)/2]
-	fake := (&routedHTTP{}).
-		route("category=Technology", cut).
-		route("Output.asp?AppliTrackLayoutMode=condensed", applitrackMenuBody)
+	cut := applitrackListingBody[:len(applitrackListingBody)/2]
+	fake := (&routedHTTP{}).route("all=1", cut)
 	_, err := NewAppliTrack(fake).Fetch(context.Background(), applitrackEntry())
 	if err == nil {
 		t.Fatal("Fetch: got nil error, want the board to fail rather than under-list")
@@ -274,10 +256,10 @@ func TestAppliTrackFetchNewSkipsSeenDetail(t *testing.T) {
 		t.Fatalf("got %d jobs, want 4 (every listed posting is reported; the seen ones need no "+
 			"page of their own, so nothing about them can be skipped)", len(jobs))
 	}
-	// The category menu, the one technology category's listing, and the single unseen posting's
-	// page — the three seen postings must cost no detail fetch.
-	if fake.calls != 3 {
-		t.Errorf("made %d requests, want 3 (menu, technology listing, one detail)", fake.calls)
+	// The board's listing and the single unseen posting's page — the three seen postings must
+	// cost no detail fetch.
+	if fake.calls != 2 {
+		t.Errorf("made %d requests, want 2 (listing, one detail)", fake.calls)
 	}
 	for _, j := range jobs {
 		if j.ExternalID == "739" {
@@ -301,53 +283,14 @@ func TestAppliTrackFetchNewSkipsSeenDetail(t *testing.T) {
 	}
 }
 
-func TestAppliTrackCrawlsOnlyTheTechnologyCategories(t *testing.T) {
-	// The load-bearing decision: a district's board is almost all teaching and school-support
-	// work that freehire's non-technical gate does not turn away, so the crawl reads only the
-	// categories that district files IT work under. The menu here carries three it must not
-	// read, two of them K-12 look-alikes, and the fake routes none of them — a request for one
-	// errors, which fails the board rather than passing quietly.
-	menu := parseHTML(t, applitrackMarkup(t, applitrackMenuBody))
-	if got := applitrackTechnologyCategories(menu); len(got) != 1 || got[0] != "Technology" {
-		t.Fatalf("applitrackTechnologyCategories = %q, want [Technology] — \"Ed Tech\" is Maine's "+
-			"word for a paraprofessional and \"Career and Technical Education\" is a teaching subject",
-			got)
-	}
-	jobs, err := NewAppliTrack(applitrackFake()).Fetch(context.Background(), applitrackEntry())
-	if err != nil {
-		t.Fatalf("Fetch: %v", err)
-	}
-	if len(jobs) != 2 {
-		t.Fatalf("got %d jobs, want the technology category's two hydratable postings", len(jobs))
-	}
-}
-
 func TestAppliTrackListingCollapsesRepeatedPostings(t *testing.T) {
 	// A statewide consortium lists one requisition once per participating district, and every
 	// one of those rows carries the same AppliTrackJobId with one posting page behind it. They
 	// are one posting, so the walk keeps the first row and drops the rest.
-	root := parseHTML(t, applitrackMarkup(t, applitrackTechListingBody))
+	root := parseHTML(t, applitrackMarkup(t, applitrackListingBody))
 	postings := applitrackListing(root)
 	if len(postings) != 4 {
 		t.Fatalf("got %d postings from 5 rows, want 4 (the repeated row is the same requisition)",
 			len(postings))
-	}
-}
-
-func TestAppliTrackBoardWithNoTechnologyCategoryYieldsNothing(t *testing.T) {
-	// The intended answer, not a failure: the district has no IT opening filed as such, and the
-	// crawl costs the one menu request that established it.
-	menu := applitrackWrite(`<select id='AppliTrackSearchCategory'>` +
-		`<option value='{id:"Food Service",vals:[""]}'>Food Service</option></select>`)
-	fake := (&routedHTTP{}).route("Output.asp?AppliTrackLayoutMode=condensed", menu)
-	jobs, err := NewAppliTrack(fake).Fetch(context.Background(), applitrackEntry())
-	if err != nil {
-		t.Fatalf("Fetch: %v", err)
-	}
-	if len(jobs) != 0 {
-		t.Errorf("got %d jobs, want none", len(jobs))
-	}
-	if fake.calls != 1 {
-		t.Errorf("made %d requests, want 1 (the menu alone settles it)", fake.calls)
 	}
 }

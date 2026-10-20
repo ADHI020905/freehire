@@ -10,24 +10,27 @@ import (
 	"strings"
 )
 
-// infojobs adapts infojobs.net, Spain's largest job board. Boardless and multi-company: the IT
-// category listing (/ofertas-trabajo/informatica-telecomunicaciones) is paged and each posting
-// carries its own employer, so it stays in the source facet and takes the company from the offer.
+// infojobs adapts infojobs.net, Spain's largest job board. Boardless and multi-company: the
+// whole-site listing (/ofertas-trabajo) is paged and each posting carries its own employer, so it
+// stays in the source facet and takes the company from the offer.
 // The pages are a server-rendered React app that embeds its data as a `window.__INITIAL_PROPS__`
 // blob; the listing blob already carries every field EXCEPT the full description (the list holds a
 // truncated teaser), so — like justjoin — the full body comes from a per-offer detail fetch run
-// only for postings the catalogue does not already have (FetchNew).
+// only for postings the catalogue does not already have (FetchNew). Measured 2026-10-20, the
+// detail pages answer a GeeTest bot challenge from both a laptop and the prod host, so every new
+// offer currently lands with the list teaser.
 type infojobs struct {
 	http TextGetter
 }
 
 const (
-	// infojobsCategory is the IT category slug; its listing is the whole IT firehose (~2.6k offers).
-	infojobsCategory = "informatica-telecomunicaciones"
-	infojobsListURL  = "https://www.infojobs.net/ofertas-trabajo/%s?page=%d"
+	// infojobsListURL is the whole-site listing. It used to be the IT category's
+	// (/ofertas-trabajo/informatica-telecomunicaciones), back when the catalogue was IT-only;
+	// by 2026-10-20 that page answered a GeeTest bot challenge instead of the listing.
+	infojobsListURL = "https://www.infojobs.net/ofertas-trabajo?page=%d"
 	// infojobsMaxPages caps pagination as a backstop; the overview.totalElements count is the
-	// primary stop.
-	infojobsMaxPages = 200
+	// primary stop. Measured 2026-10-20: 63.6k offers at 22 a page is ~2.9k pages, ~0.5 s each.
+	infojobsMaxPages = 4000
 )
 
 // NewInfoJobs builds the infojobs.net adapter over the given HTTP client.
@@ -117,13 +120,13 @@ func (s infojobs) FetchNew(ctx context.Context, _ CompanyEntry, seen func(extern
 	}), nil
 }
 
-// crawl pages the IT category listing and returns every raw offer — the shared list walk behind
+// crawl pages the whole-site listing and returns every raw offer — the shared list walk behind
 // Fetch and FetchNew. It stops at the last page (an empty page or once the whole catalogue is
 // collected), capped by infojobsMaxPages.
 func (s infojobs) crawl(ctx context.Context) ([]infojobsOffer, error) {
 	var offers []infojobsOffer
 	for page := 1; page <= infojobsMaxPages; page++ {
-		text, err := s.http.GetText(ctx, fmt.Sprintf(infojobsListURL, infojobsCategory, page))
+		text, err := s.http.GetText(ctx, fmt.Sprintf(infojobsListURL, page))
 		if err != nil {
 			if page == 1 {
 				return nil, fmt.Errorf("infojobs: listing page %d: %w", page, err)

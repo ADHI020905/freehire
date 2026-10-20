@@ -21,29 +21,13 @@ import (
 // belongs to board "saskatoon". The segment is case-insensitive (Saskatoon, SASKATOON and
 // saskatoon all answer the same board), which the board-file dedup already folds on.
 //
-// # This adapter crawls the district's technology categories, never the whole board
+// # This adapter crawls the whole board
 //
-// That is the load-bearing decision here, and it is not a preference. A school district's ATS is
-// almost entirely teaching and school-support work, and freehire's non-technical gate does not
-// hold against that vocabulary: it was written against tech-company boards and has no term for
-// K-12 classified staff. Measured with the repo's own classify.ConfirmedNonTech over all 86,033
-// postings the 2,387 candidate boards were live-listing on 2026-09-02, it turned away 45.5% and
-// KEPT 46,855 — crossing guards, lunchroom supervisors, bus monitors, paraeducators, lifeguards,
-// assistant football coaches — while classify.IsTech recognised 45 titles in the whole fleet.
-// A full crawl would therefore have added tens of thousands of school-support postings to an IT
-// catalogue to gain a few dozen technical ones.
-//
-// AppliTrack has a server-side facet that answers this: every district publishes its own category
-// menu and "?category=<name>" filters the listing to it. Restricted to the categories a district
-// files IT work under (applitrackTechnology), the same fleet listed 360 postings — computer
-// technicians, network and systems administrators, help desk, a cybersecurity analyst — of which
-// the non-technical gate turned away 12 (3.3%), and every one of those correctly (a technology
-// TEACHER, a custodian, a support paraprofessional). So the crawl is one cheap menu request per
-// board plus one listing per technology category, and a district's non-technical postings never
-// travel and never cost a detail fetch.
-//
-// The categories are the DISTRICT'S OWN words, not a platform vocabulary, so the allowlist is
-// curated and its exclusions are argued where it is defined.
+// A school district's ATS is almost entirely teaching and school-support work. It used to be
+// crawled through an allowlist of the district's technology categories only, back when the
+// catalogue was IT-only; the catalogue is broader now, and the pipeline's own dictionaries decide
+// what a posting is. So the crawl reads the site's own "All Vacancies" listing ("?all=1"): one
+// request per board, measured 2026-10-20 at 8-130 postings and 0.9-1.6 s on three live boards.
 //
 // Traps, all verified live against the platform:
 //
@@ -53,9 +37,8 @@ import (
 //     all. So both halves of a crawl are read as raw text, unescaped, and only then parsed
 //     (applitrackPage). Output.asp is what this adapter asks for: view.asp merely re-emits it
 //     inside a <script>, so reading the shell would mean digging the same payload back out.
-//   - The unfiltered listing renders the CATEGORY MENU and no postings, which is why it is what
-//     the crawl opens with. "?all=1" is the site's own "All Vacancies" link and is what would
-//     list a whole board; nothing here asks for it. No listing paginates in any form.
+//   - The unfiltered listing renders the CATEGORY MENU and no postings. "?all=1" is the site's own
+//     "All Vacancies" link and is what lists a whole board. No listing paginates in any form.
 //     "AppliTrackLayoutMode=condensed" is what keeps a response to its rows: the detailed layout
 //     inlines every posting's BODY (737 KB for 14 postings on one board), and an unrecognised
 //     layout value is not rejected — it silently serves the detailed one, so a typo there buys
@@ -87,19 +70,15 @@ import (
 //     place: a Pennsylvania programme's acronym "(PATTAN)" reads as Pattan, India. There is
 //     nothing better to feed it — no page anywhere on the platform names the district's town —
 //     and dropping the field would lose the one thing a candidate needs to place the job.
-//   - A steady-state crawl is small and stays small: one menu request per board, one listing per
-//     technology category, and a detail request only for a posting the catalogue has not seen.
-//     The 12 postings a run the non-technical gate turns away are re-hydrated every crawl —
-//     a rejected posting is never stored, so it is never `seen` — and at that size the waste
-//     does not need bounding.
+//   - A steady-state crawl is small and stays small: one listing request per board and a detail
+//     request only for a posting the catalogue has not seen.
 type applitrack struct {
 	http applitrackHTTP
 }
 
-// applitrackHTTP is the transport this adapter needs. Every page of a crawl — the category menu,
-// a category's listing, a posting — is read as RAW TEXT rather than through the DOM path: what
-// the platform serves is JavaScript, and the markup only exists once its document.write
-// arguments have been unescaped.
+// applitrackHTTP is the transport this adapter needs. Every page of a crawl — the board's listing
+// and a posting — is read as RAW TEXT rather than through the DOM path: what the platform serves
+// is JavaScript, and the markup only exists once its document.write arguments have been unescaped.
 type applitrackHTTP interface{ TextGetter }
 
 // NewAppliTrack builds the AppliTrack adapter over the given HTTP client.
@@ -151,35 +130,13 @@ func (s applitrack) FetchNew(ctx context.Context, e CompanyEntry, seen func(exte
 	}), nil
 }
 
-// list reads the board's own category vocabulary and then the postings of the categories that
-// district files its technical work under — never the whole board (see the header).
-//
-// A category that cannot be fetched fails the WHOLE board rather than yielding what the others
-// held. The categories are independent slices, not pages of one walk, and this provider is swept
-// per company: returning the survivors would read as a shrunken board and close the failed
-// slice's postings. Almost every board has exactly one technology category anyway, so the
-// partial this refuses is rarely even reachable.
+// list reads the board's whole listing (see the header).
 func (s applitrack) list(ctx context.Context, e CompanyEntry) ([]applitrackPosting, error) {
-	menu, err := s.page(ctx, applitrackMenuURL(e.Board))
+	root, err := s.page(ctx, applitrackAllURL(e.Board))
 	if err != nil {
-		return nil, fmt.Errorf("applitrack: categories %s: %w", e.Board, err)
+		return nil, fmt.Errorf("applitrack: listing %s: %w", e.Board, err)
 	}
-	var out []applitrackPosting
-	listed := map[string]bool{}
-	for _, category := range applitrackTechnologyCategories(menu) {
-		root, err := s.page(ctx, applitrackCategoryURL(e.Board, category))
-		if err != nil {
-			return nil, fmt.Errorf("applitrack: listing %s category %q: %w", e.Board, category, err)
-		}
-		for _, p := range applitrackListing(root) {
-			if listed[p.id] {
-				continue // a posting filed under two technology categories is still one posting
-			}
-			listed[p.id] = true
-			out = append(out, p)
-		}
-	}
-	return out, nil
+	return applitrackListing(root), nil
 }
 
 // detail fetches one posting page and returns the listing row's job with everything that page
@@ -234,17 +191,9 @@ func applitrackDir(board string) string {
 	return fmt.Sprintf("%s/%s/onlineapp/jobpostings/", applitrackBaseURL, url.PathEscape(board))
 }
 
-// applitrackMenuURL is the unfiltered listing, which renders the board's category menu and no
-// postings at all — the cheapest response that states the district's own vocabulary.
-func applitrackMenuURL(board string) string {
-	return applitrackDir(board) + "Output.asp?AppliTrackLayoutMode=condensed"
-}
-
-// applitrackCategoryURL is one category's slice of a board. The filter is applied by the site,
-// so a district's non-technical postings never travel and never cost a detail fetch.
-func applitrackCategoryURL(board, category string) string {
-	return applitrackDir(board) + "Output.asp?AppliTrackLayoutMode=condensed&category=" +
-		url.QueryEscape(category)
+// applitrackAllURL is the board's "All Vacancies" listing — every posting the district carries.
+func applitrackAllURL(board string) string {
+	return applitrackDir(board) + "Output.asp?AppliTrackLayoutMode=condensed&all=1"
 }
 
 // applitrackDetailURL is the payload endpoint one posting's page is built from.
@@ -293,7 +242,7 @@ const applitrackWriteCall = "document.write('"
 //
 // complete reports whether every call it read was terminated. A call that runs off the end of
 // the body is a response that was cut short, and the markup before the cut PARSES: the walk
-// would read the rows that did arrive and the crawl would take an incomplete category for a
+// would read the rows that did arrive and the crawl would take an incomplete listing for a
 // complete one, which on a company-swept provider closes every posting past the cut. There is no
 // other symptom to read — GetText caps a body at maxTextBody without saying so, and an origin
 // that stops mid-response looks the same — so the caller refuses the page.
@@ -329,87 +278,12 @@ func applitrackWritten(body string) (markup string, complete bool) {
 // posting is linked from OUTSIDE the platform as "AppliTrackJobId=6536_37241", where the suffix
 // selects which member district's page to land on — and the endpoint ignores it: both spellings
 // answer the identical posting, "JobID: 6536" (confirmed live). Keying on the whole token would
-// store one requisition once per district that links it. No board's own listing emits the
-// composite form: across the 263 committed boards' technology slices, all 367 linked ids are
-// plain digits.
+// store one requisition once per district that links it.
 var applitrackJobIDPattern = regexp.MustCompile(`(?i)AppliTrackJobId(?:=|%3D)(\d+)`)
 
 // applitrackJobID extracts the native posting id from a posting link, or "" when it carries none.
 func applitrackJobID(href string) string {
 	return firstSubmatch(applitrackJobIDPattern, href)
-}
-
-// applitrackTechnology is the set of category names a district files its IT work under, matched
-// case-insensitively against the district's OWN vocabulary — AppliTrack has no shared one, so
-// this is a curated list and not a rule. It was drawn from the 4,260 distinct category names the
-// 2,387 candidate boards published, and every entry was read live before it went in.
-//
-// What is NOT here matters as much as what is, because school vocabulary is full of look-alikes
-// and each of these was checked against its live postings: "Ed Tech" and "Educational
-// Technician" are Maine's words for a classroom paraprofessional; "Career and Technical
-// Education", "Technology Education" and "Digital Learning" are teaching subjects and
-// instructional coaching; "Media Services" and "Library/Media" are the school librarian;
-// "Technical" and "Technical Assistant" were dental assistants, voter registration and
-// library aides; and "Professional/Technical" is a bargaining unit that holds a network
-// engineer and a diesel mechanic side by side. A mixed category is excluded rather than
-// admitted, because nothing downstream can separate it — see the header.
-var applitrackTechnology = map[string]bool{
-	"technology":                          true,
-	"information technology":              true,
-	"information technology (it)":         true,
-	"informationtechnology":               true,
-	"classified - information technology": true,
-	"it department":                       true,
-	"information services":                true,
-	"technology & information services":   true,
-	"technology and information systems":  true,
-	"technology services":                 true,
-	"technology support - district":       true,
-	"technology postions":                 true, // the district's own spelling
-	"technology/data services":            true,
-	"technology - non licensed":           true,
-	"technology-certificated":             true,
-	"support staff - technology":          true,
-	"support and tech":                    true,
-	"3 - central office technology":       true,
-	"computer & network":                  true,
-	"data processing":                     true,
-}
-
-// AppliTrackTechnologyCategory reports whether an AppliTrack category name is one a district
-// files its IT work under. It is exported for cmd/harvest-boards, which must validate a
-// candidate board on the SAME slice the crawl reads — a district with a full board and no
-// technology category is not a board worth committing — and one copy of a curated list is the
-// only way the two answers cannot drift apart.
-func AppliTrackTechnologyCategory(name string) bool {
-	return applitrackTechnology[strings.ToLower(strings.TrimSpace(name))]
-}
-
-// applitrackCategoryID captures a category's name out of a menu option. The option's value is a
-// JavaScript object literal the site's own search script reads — {id:"…",vals:[…]} — and the id
-// is the string the listing's "category=" filter takes.
-var applitrackCategoryID = regexp.MustCompile(`^\{id:"([^"]*)"`)
-
-// applitrackTechnologyCategories returns the technology categories a board publishes, in the
-// order its own menu lists them. A board that names none yields nothing to crawl, which is the
-// intended answer and not a failure: the district has no IT opening filed as such.
-func applitrackTechnologyCategories(root *html.Node) []string {
-	menu := firstByID(root, "AppliTrackSearchCategory")
-	if menu == nil {
-		return nil
-	}
-	var out []string
-	walk(menu, func(n *html.Node) bool {
-		if n.Type != html.ElementNode || n.Data != "option" {
-			return true
-		}
-		name := firstSubmatch(applitrackCategoryID, Attr(n, "value"))
-		if name != "" && AppliTrackTechnologyCategory(name) {
-			out = append(out, name)
-		}
-		return true
-	})
-	return out
 }
 
 // applitrackListing reads the listing's posting rows in first-seen order. A row renders its title

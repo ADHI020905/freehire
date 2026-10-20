@@ -37,7 +37,7 @@ var infojobsPageRE = regexp.MustCompile(`[?&]page=(\d+)`)
 
 func (f *infojobsHTTP) GetText(_ context.Context, url string) (string, error) {
 	f.got = append(f.got, url)
-	if strings.Contains(url, "/ofertas-trabajo/") {
+	if strings.HasPrefix(url, "https://www.infojobs.net/ofertas-trabajo?") {
 		if f.failList {
 			return "", errors.New("infojobsHTTP: list boom")
 		}
@@ -157,7 +157,7 @@ func TestInfojobsFetchListOnly(t *testing.T) {
 	}
 	// No detail URL should have been requested.
 	for _, u := range http.got {
-		if !strings.Contains(u, "/ofertas-trabajo/") {
+		if !strings.HasPrefix(u, "https://www.infojobs.net/ofertas-trabajo?") {
 			t.Fatalf("unexpected non-listing request: %q", u)
 		}
 	}
