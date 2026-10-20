@@ -99,6 +99,7 @@ func newServer(r Reader, origin string) *mcp.Server {
 		&mcp.ServerOptions{Instructions: serverInstructions, CompletionHandler: completePromptArgument})
 
 	addPrompts(server)
+	addWidget(server)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:  toolSearchJobs,
@@ -107,6 +108,7 @@ func newServer(r Reader, origin string) *mcp.Server {
 			"about which jobs are open — by technology, seniority, location, pay or employer. " +
 			"Returns a short preview of each posting.",
 		Annotations: readOnly(),
+		Meta:        rendersInWidget(),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in SearchInput) (*mcp.CallToolResult, SearchJobsResult, error) {
 		return toolResult(r.SearchJobs(ctx, in))
 	})
@@ -119,6 +121,7 @@ func newServer(r Reader, origin string) *mcp.Server {
 			"applications, and whether the posting still looks live — when it was last seen " +
 			"open, a reality class, and any observed signs that it is not being filled.",
 		Annotations: readOnly(),
+		Meta:        rendersInWidget(),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in JobDetailInput) (*mcp.CallToolResult, JobResult, error) {
 		return toolResult(r.JobDetail(ctx, in.Slug))
 	})

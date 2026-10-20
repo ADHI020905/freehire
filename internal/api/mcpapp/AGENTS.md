@@ -124,6 +124,37 @@ person types — the vocabulary itself, never a copy. A free-text argument (`sta
 `postings`) offers nothing: a client replaces the whole field with what it picks, so a
 suggestion for one word of "Go and Kubernetes" would erase the rest.
 
+## The widget
+
+`search_jobs` and `get_job` render in an MCP Apps widget (`widget.go`, `widget/jobs.html`):
+one self-contained page an MCP Apps host — ChatGPT, Claude — draws the result in as cards,
+instead of the model retelling it as prose. The tools' contracts are untouched; a client
+that ignores `_meta.ui` sees exactly what it saw before.
+
+- **It is hand-written HTML, not a `web/` build, on purpose** — see
+  `openspec/changes/chatgpt-app-widgets/design.md`. If it ever grows forms, sign-in or its
+  own requests, that is the point to move it.
+- **The URI is the page's hash.** Hosts cache by URI; editing the file changes it. Never
+  hard-code the URI anywhere else.
+- **Wire data lives only in `result`, `job` and `req`** inside the page.
+  `TestTheWidgetReadsOnlyFieldsTheWireShapeHas` greps those names and checks every field
+  against `wire.go`, so a renamed field fails the build instead of rendering as nothing.
+  Reading wire data through any other name blinds it.
+- **Text only, no requests.** `TestTheWidgetCannotInjectMarkupOrMakeRequests` bans
+  `innerHTML` and friends and every network API; the CSP admits only
+  `https://logo.freehire.me` images. A URL is used only when it is `https:`.
+- **Only a tool whose result the page can draw may name it** — a host draws the widget for
+  every tool that does.
+- **The handshake's field names are the specification's** (`appInfo`, not `clientInfo`),
+  and a test holds them. The reference `AppBridge` accepts the wrong one without complaint,
+  so a manual check cannot catch it.
+- **Checking it by eye**: bundle the official host, `AppBridge` from
+  `@modelcontextprotocol/ext-apps/app-bridge`, feed it real `tools/call` results from
+  production, and drive it in a real browser (`agent-browser`). Connect the bridge BEFORE
+  setting the iframe's `srcdoc` — the page's `ui/initialize` is its first act, and a bridge
+  connected after load never hears it. Headless Chrome's `--virtual-time-budget` drops the
+  iframe's `postMessage` traffic and renders an empty frame; do not use it.
+
 ## Descriptions say what a tool returns, never which tool to call
 
 Anthropic's directory policy rules out tool descriptions that instruct the model about other
