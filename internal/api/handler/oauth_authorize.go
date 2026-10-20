@@ -76,12 +76,17 @@ func (h *authHandlers) OAuthAuthorize(c *fiber.Ctx) error {
 		return err
 	}
 
-	if _, err := requireUserID(c); err != nil {
+	userID, err := requireUserID(c)
+	if err != nil {
 		return c.Redirect(h.oauthSignInURL(params), fiber.StatusFound)
+	}
+	user, err := h.queries.GetUserByID(c.Context(), userID)
+	if err != nil {
+		return fmt.Errorf("read the account behind the oauth consent of user %d: %w", userID, err)
 	}
 
 	c.Type("html")
-	return c.SendString(oauthConsentPage(client.ClientName, params))
+	return c.SendString(oauthConsentPage(client.ClientName, user.Email, h.frontendOrigin, params))
 }
 
 // OAuthAuthorizeSubmit acts on the consent decision. On approval it mints a
@@ -186,31 +191,31 @@ func redirectDestination(redirectURI string) string {
 	}
 }
 
-// oauthConsentPage is a minimal, dependency-free HTML form — same reasoning as
-// extension_connect.go's consentPage: this is a one-screen, server-rendered
-// surface, not a reason to round-trip through the SPA build.
-func oauthConsentPage(clientName string, params authorizeParams) string {
-	return fmt.Sprintf(`<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Connect %s</title></head>
-<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem">
-  <h1>Connect %s to your freehire account</h1>
-  <p>Access will be sent to <strong>%s</strong>.</p>
-  <p>%s will be able to search jobs and manage your tracked applications on your behalf.</p>
-  <p>The app chose its own name; freehire has not verified it. Allow only if you started this connection yourself.</p>
-  <form method="post" action="/api/v1/oauth/authorize">
-    <input type="hidden" name="client_id" value="%s">
-    <input type="hidden" name="redirect_uri" value="%s">
-    <input type="hidden" name="state" value="%s">
-    <input type="hidden" name="code_challenge" value="%s">
-    <input type="hidden" name="code_challenge_method" value="%s">
-    <button type="submit" name="decision" value="allow">Allow</button>
-    <button type="submit" name="decision" value="deny">Deny</button>
-  </form>
-</body>
-</html>`,
-		html.EscapeString(clientName), html.EscapeString(clientName),
-		html.EscapeString(redirectDestination(params.RedirectURI)), html.EscapeString(clientName),
-		html.EscapeString(params.ClientID), html.EscapeString(params.RedirectURI), html.EscapeString(params.State),
-		html.EscapeString(params.CodeChallenge), html.EscapeString(params.CodeChallengeMethod))
+// oauthConsentPage is the approval screen for every OAuth client — an AI app
+// (ChatGPT, Claude) or a CLI on a loopback port. The caution names the redirect
+// host beside the self-chosen client name, because the host is what a phishing
+// registration cannot fake.
+func oauthConsentPage(clientName, email, origin string, params authorizeParams) string {
+	name := html.EscapeString(clientName)
+	return renderConsentScreen(consentScreen{
+		Title:    "Connect " + clientName + " to freehire",
+		SignedIn: email,
+		Allows: []string{
+			"Search jobs and read job details.",
+			"Read your profile, CV and saved jobs.",
+			"Save jobs, track applications and edit your CV on your behalf.",
+		},
+		Caution: "Access will be sent to <strong>" + html.EscapeString(redirectDestination(params.RedirectURI)) + "</strong>. " +
+			name + " chose its own name; freehire has not verified it. Allow only if you started this connection yourself.",
+		Action: "/api/v1/oauth/authorize",
+		Hidden: [][2]string{
+			{"client_id", params.ClientID},
+			{"redirect_uri", params.RedirectURI},
+			{"state", params.State},
+			{"code_challenge", params.CodeChallenge},
+			{"code_challenge_method", params.CodeChallengeMethod},
+		},
+		Decline: "deny",
+		Origin:  origin,
+	})
 }

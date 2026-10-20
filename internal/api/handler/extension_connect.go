@@ -82,7 +82,8 @@ func (h *authHandlers) ExtensionConnect(c *fiber.Ctx) error {
 	if err := validateExtensionRedirect(redirectURI, h.extensionRedirectAllowlist); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid redirect_uri")
 	}
-	if _, err := requireUserID(c); err != nil {
+	userID, err := requireUserID(c)
+	if err != nil {
 		// `via=web` marks a request the web app sent back after signing the visitor in.
 		// It is the loop stop: without it, a session the browsing profile has but this
 		// window cannot see would bounce between the two forever.
@@ -92,8 +93,12 @@ func (h *authHandlers) ExtensionConnect(c *fiber.Ctx) error {
 		}
 		return c.Redirect(h.signInURL(redirectURI, state), fiber.StatusFound)
 	}
+	user, err := h.queries.GetUserByID(c.Context(), userID)
+	if err != nil {
+		return fmt.Errorf("read the account behind the extension connect of user %d: %w", userID, err)
+	}
 	c.Type("html")
-	return c.SendString(consentPage(redirectURI, state))
+	return c.SendString(consentPage(redirectURI, state, user.Email, h.frontendOrigin))
 }
 
 // ExtensionConnectSubmit acts on the consent decision. On approval it issues a
@@ -164,23 +169,21 @@ func noSessionPage(origin string) string {
 </html>`, html.EscapeString(home), html.EscapeString(home))
 }
 
-// consentPage is the minimal server-rendered approval screen. The redirect and
-// state ride hidden fields back to the POST; both are HTML-escaped into attribute
-// values to keep them inert.
-func consentPage(redirectURI, state string) string {
-	return fmt.Sprintf(`<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Connect the freehire extension</title></head>
-<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem">
-  <h1>Connect the freehire extension</h1>
-  <p>Allow the freehire browser extension to access your account? It will act as
-     you — reading your profile, CV, and saved jobs.</p>
-  <form method="post" action="/api/v1/auth/extension/connect">
-    <input type="hidden" name="redirect_uri" value="%s">
-    <input type="hidden" name="state" value="%s">
-    <button type="submit" name="decision" value="allow">Allow</button>
-    <button type="submit" name="decision" value="cancel">Cancel</button>
-  </form>
-</body>
-</html>`, html.EscapeString(redirectURI), html.EscapeString(state))
+// consentPage is the browser extension's approval screen. The redirect and state
+// ride hidden fields back to the POST, escaped into attribute values by the shared
+// renderer.
+func consentPage(redirectURI, state, email, origin string) string {
+	return renderConsentScreen(consentScreen{
+		Title:    "Connect the freehire extension",
+		SignedIn: email,
+		Allows: []string{
+			"Read your profile, CV and saved jobs.",
+			"Save jobs and track applications from the pages you browse.",
+		},
+		Caution: "The extension acts as you. Allow only if you pressed <strong>Sign in with freehire</strong> in it yourself.",
+		Action:  "/api/v1/auth/extension/connect",
+		Hidden:  [][2]string{{"redirect_uri", redirectURI}, {"state", state}},
+		Decline: "cancel",
+		Origin:  origin,
+	})
 }
