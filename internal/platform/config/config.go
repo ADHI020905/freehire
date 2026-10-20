@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -21,6 +22,16 @@ type Settings struct {
 	MetricsPort    string
 	DatabaseURL    string
 	FrontendOrigin string
+
+	// PublicAnonLimits selects the anonymous public-read budgets: "" keeps each route's
+	// previous per-minute budget, "strict" applies the shared 120/min + 2,000/day per IP
+	// (openspec/changes/commercial-api-paid-keys). Any other value fails Validate — a typo
+	// here would otherwise look exactly like a deliberate "keep the old limits".
+	PublicAnonLimits string
+	// VerifiedBotSecret is the value a Cloudflare Transform Rule puts in X-FH-Verified-Bot for
+	// a request Cloudflare verified as a known bot; such a request skips the anonymous
+	// public-read budgets. Empty disables the exemption.
+	VerifiedBotSecret string
 
 	// JWT settings for the auth surface. JWTSecret has no default: it is read
 	// as-is and the server fails fast when it is empty (see cmd/server). Only
@@ -409,6 +420,8 @@ func Load() Settings {
 		MetricsPort:           os.Getenv("METRICS_PORT"),
 		DatabaseURL:           env("DATABASE_URL", "postgres://hire:hire@localhost:5432/hire?sslmode=disable"),
 		FrontendOrigin:        env("FRONTEND_ORIGIN", "http://localhost:5173"),
+		PublicAnonLimits:      strings.TrimSpace(os.Getenv("PUBLIC_ANON_LIMITS")),
+		VerifiedBotSecret:     strings.TrimSpace(os.Getenv("VERIFIED_BOT_SECRET")),
 		JWTSecret:             os.Getenv("JWT_SECRET"),
 		JWTTTL:                envDuration("JWT_TTL", 30*24*time.Hour),
 		CookieSecure:          envBool("COOKIE_SECURE", false),
@@ -513,6 +526,9 @@ func Load() Settings {
 	return s
 }
 
+// StrictAnonLimits reports PUBLIC_ANON_LIMITS=strict, the one value besides empty it accepts.
+func (s Settings) StrictAnonLimits() bool { return s.PublicAnonLimits == "strict" }
+
 // Validate checks that the configuration values are safe to boot the auth surface with.
 // The JWT secret check runs in every environment, not just production: HS256 security
 // rests entirely on secret entropy, so a short secret is brute-forceable offline against
@@ -523,6 +539,9 @@ func (s Settings) Validate() error {
 	}
 	if strings.HasPrefix(s.FrontendOrigin, "https://") && !s.CookieSecure {
 		return errors.New("COOKIE_SECURE must be true when using HTTPS origin")
+	}
+	if s.PublicAnonLimits != "" && !s.StrictAnonLimits() {
+		return fmt.Errorf("PUBLIC_ANON_LIMITS must be empty or \"strict\", got %q", s.PublicAnonLimits)
 	}
 	if len(s.JWTSecret) < 32 {
 		return errors.New("JWT_SECRET is required and must be at least 32 bytes")

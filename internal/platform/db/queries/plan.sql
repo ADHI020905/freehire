@@ -25,9 +25,14 @@ WHERE id = $1;
 -- migrations 0135 and 0141 — so clearing a column here says "Stripe confers nothing", never
 -- "this account is not Pro". The account may hold a store subscription or a manual grant,
 -- and before 0135 this write would have revoked either without a trace.
+--
+-- The API product's two columns (migration 0184) ride the same statement: they come from the
+-- same re-read of the same customer, and two writes would let a reader see one half of it.
 UPDATE users
 SET pro_until_stripe = sqlc.narg(pro_until),
-    ultra_until_stripe = sqlc.narg(ultra_until)
+    ultra_until_stripe = sqlc.narg(ultra_until),
+    api_until_stripe = sqlc.narg(api_until),
+    api_data_until_stripe = sqlc.narg(api_data_until)
 WHERE id = sqlc.arg(id);
 
 -- name: SetRevenueCatEntitlement :exec

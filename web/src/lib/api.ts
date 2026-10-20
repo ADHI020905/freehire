@@ -68,6 +68,7 @@ import type {
   UserJob,
   VoteResult,
   ApiKey,
+  ApiPlan,
   CreatedApiKey,
   OAuthGrant,
   WebhookConfig,
@@ -1693,6 +1694,11 @@ export function createApi(
   // calls ride the session cookie); the plaintext token is returned once, by
   // createApiKey, and never again.
 
+  /** The caller's API product tier and the rate its full-scope keys get (cookie-only). */
+  async function getApiPlan(): Promise<ApiPlan> {
+    return requestData<ApiPlan>('/api/v1/me/api-plan');
+  }
+
   /** The current user's API keys (metadata only — no secret). */
   async function listApiKeys(): Promise<ApiKey[]> {
     return requestData<ApiKey[]>('/api/v1/me/api-keys');
@@ -3180,6 +3186,7 @@ export function createApi(
     markNotificationRead,
     markAllNotificationsRead,
     listApiKeys,
+    getApiPlan,
     createApiKey,
     revokeApiKey,
     listOAuthGrants,

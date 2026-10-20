@@ -52,7 +52,7 @@ func newCompanyFeedbackHandlers(svc *companyfeedback.Service) *companyFeedbackHa
 func (h *companyFeedbackHandlers) registerPublic(api fiber.Router, mw middleware) {
 	// Only pseudonymous persona handles are ever exposed, never a user id, so feedback is
 	// browsable without signing in.
-	api.Get("/companies/:slug/feedback", publicReadLimiter(mw.throttler), h.ListFeedback)
+	api.Get("/companies/:slug/feedback", publicReadLimiter(mw.public), h.ListFeedback)
 }
 
 func (h *companyFeedbackHandlers) register(api fiber.Router, mw middleware) {

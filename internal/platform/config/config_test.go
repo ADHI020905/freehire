@@ -617,3 +617,12 @@ func TestSettings_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestSettingsValidatePublicAnonLimits(t *testing.T) {
+	for value, wantErr := range map[string]bool{"": false, "strict": false, "Strict": true, "on": true} {
+		s := Settings{JWTSecret: strings.Repeat("x", 32), PublicAnonLimits: value}
+		if err := s.Validate(); (err != nil) != wantErr {
+			t.Errorf("PUBLIC_ANON_LIMITS=%q: Validate()=%v, want error %v", value, err, wantErr)
+		}
+	}
+}

@@ -14,7 +14,7 @@ import type { PlansMatrix, PublicPrice } from '$lib/types';
 import Page from './+page.svelte';
 import type { PageData } from './$types';
 
-const price = (tier: 'pro' | 'ultra', id: string): PublicPrice => ({
+const price = (tier: PublicPrice['tier'], id: string): PublicPrice => ({
   id,
   tier,
   interval: 'month',
@@ -30,6 +30,7 @@ const plans: PlansMatrix = {
   prices: [price('pro', 'price_pro'), price('ultra', 'price_ultra')],
   features: [],
   enforced: [],
+  api_limits: { anonymous_per_minute: 120, anonymous_per_day: 2000, api_per_minute: 1200, data_per_minute: 6000 },
 };
 
 // Typed by hand rather than as `PageData`, which declares `plans` as `null`: the loader's
@@ -37,8 +38,8 @@ const plans: PlansMatrix = {
 // `$types`, and the page only ever reaches it through `plans?.`. A populated matrix is
 // what production renders, so that is what the spec renders, and the mismatch is narrowed
 // to this one boundary instead of being spread across four calls.
-function renderPricing() {
-  return render(Page, { props: { data: { user: null, locale: 'en', plans, promo: '' } as unknown as PageData } });
+function renderPricing(matrix: PlansMatrix = plans) {
+  return render(Page, { props: { data: { user: null, locale: 'en', plans: matrix, promo: '' } as unknown as PageData } });
 }
 
 /** Stands in for the edge, answering `/geo/region` with one country. */
@@ -93,5 +94,27 @@ describe('/pricing — the local-card warning', () => {
     renderPricing();
     await screen.findByText('Upgrade to Pro', { exact: false }).catch(() => null);
     expect(screen.queryByText(WARNING)).toBeNull();
+  });
+});
+
+describe('/pricing — the API plans', () => {
+  it('lists both API plans with the limits the server enforces', async () => {
+    edgePlaces(null);
+    renderPricing({
+      ...plans,
+      prices: [...plans.prices, price('api', 'price_api'), price('api_data', 'price_data')],
+    });
+    expect(await screen.findByRole('heading', { name: 'API', level: 3 })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Data', level: 3 })).toBeTruthy();
+    expect(screen.getByText('1,200 requests a minute, no daily cap')).toBeTruthy();
+    expect(screen.getByText('6,000 requests a minute, no daily cap')).toBeTruthy();
+    expect(screen.getByText(/up to 120 requests a minute/)).toBeTruthy();
+  });
+
+  it('shows no API section when the product is not sold', async () => {
+    edgePlaces(null);
+    renderPricing();
+    await Promise.resolve();
+    expect(screen.queryByRole('heading', { name: 'API', level: 2 })).toBeNull();
   });
 });

@@ -93,7 +93,7 @@ export interface PublicPrice {
   default: boolean;
   /** Which plan this price buys. Derived on the server from the same lists that decide what
    *  a subscription confers, so a column can never offer another plan's price. */
-  tier: 'pro' | 'ultra';
+  tier: 'pro' | 'ultra' | 'api' | 'api_data';
 }
 
 /** Where a buyer goes to pay, and which offer was applied on the way
@@ -144,6 +144,24 @@ export interface PlansMatrix {
   features: { feature: string; free: PlanTierAllowance; pro: PlanTierAllowance; ultra: PlanTierAllowance }[];
   prices: PublicPrice[];
   enforced: string[];
+  /** What the API product's plans allow on the public read API, read from the same
+   *  constants the rate limiter enforces. `anonymous_per_day` is 0 while there is no daily
+   *  cap for callers without a key. */
+  api_limits: {
+    anonymous_per_minute: number;
+    anonymous_per_day: number;
+    api_per_minute: number;
+    data_per_minute: number;
+  };
+}
+
+/** The caller's API product tier (`GET /api/v1/me/api-plan`). An empty `tier` means the
+ *  account does not hold the product; `per_minute` is the rate its full-scope keys get on
+ *  the public read API. */
+export interface ApiPlan {
+  tier: '' | 'api' | 'api_data';
+  per_minute: number;
+  until?: string;
 }
 
 /** One charge as the receipt list shows it (`GET /api/v1/billing/subscription`).

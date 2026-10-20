@@ -50,6 +50,18 @@ Fiber HTTP handlers: feature handler structs, route registration, auth surface, 
   lookup — which answers 503 on failure — ahead of the throttle on the hottest endpoints
   in the product. Every `KeyByUserOrIP` limiter that remains (photo, promo, jd-resolve,
   match analysis, mail recall, …) mounts its gate first.
+- **The one caller a public read tells apart is a paid API key, and `public_gate.go` does it
+  itself.** `publicReadLimiter`/`agentSearchLimiter`/`chatAgentLimiter` all go through one
+  gate: trusted peer or the Cloudflare verified-bot secret passes; a full-scope key of an
+  account holding the API product is budgeted per ACCOUNT at its tier's rate; everyone else
+  is anonymous (per-route budgets, or the shared 120/min + 2,000/day under
+  `PUBLIC_ANON_LIMITS=strict`). The key is looked up only when one is presented, only when
+  it has a minted key's shape, through a cache fake keys cannot evict, under a per-IP lookup
+  budget and a timeout — and any failure serves the request as anonymous rather than 503.
+  An embed key never gets the paid rate: it is published inside other sites by design. The
+  ChatGPT MCP surfaces (`chatAgentLimiter`) stay on the agent-search budget under strict,
+  because OpenAI's shared egress addresses would turn a per-IP daily cap into a cap on the
+  channel.
 - Services shared across features (résumé store, profile, plan, CV store/renderer,
   conversation store, match analyzer, contribution, moderation, the LLM spend resolver)
   are built once in `Register` and passed to each constructor; single-feature services are

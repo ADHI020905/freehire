@@ -1,6 +1,7 @@
 <script lang="ts">
   import { messages } from '$lib/components/ApiKeysView.messages';
   import ApiKeysView from '$lib/components/ApiKeysView.svelte';
+  import ApiPlanPanel from '$lib/components/ApiPlanPanel.svelte';
   import ConnectedDevicesView from '$lib/components/ConnectedDevicesView.svelte';
   import { locale } from '$lib/i18n/currentLocale.svelte';
   import { t } from '$lib/i18n/t';
@@ -18,5 +19,6 @@
      both are credentials an account owner manages from one place. -->
 <div class="flex max-w-3xl flex-col gap-10">
   <ApiKeysView />
+  <ApiPlanPanel />
   <ConnectedDevicesView />
 </div>

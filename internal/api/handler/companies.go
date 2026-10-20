@@ -36,7 +36,7 @@ func newCompaniesHandlers(queries *db.Queries, companySearch companySearcher) *c
 }
 
 func (h *companiesHandlers) register(api fiber.Router, mw middleware) {
-	readLimit := publicReadLimiter(mw.throttler)
+	readLimit := publicReadLimiter(mw.public)
 	api.Get("/companies", readLimit, h.ListCompanies)
 	api.Get("/companies/subindustries", readLimit, h.CompanySubindustries)
 	api.Get("/companies/:slug", readLimit, mw.optional, h.GetCompany)

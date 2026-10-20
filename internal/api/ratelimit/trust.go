@@ -42,8 +42,8 @@ var trustedNets = func() []*net.IPNet {
 	return nets
 }()
 
-// trustedPeer reports whether the request comes from a peer we do not rate-limit.
-func trustedPeer(c *fiber.Ctx) bool {
+// TrustedPeer reports whether the request comes from a peer we do not rate-limit.
+func TrustedPeer(c *fiber.Ctx) bool {
 	return trusted(c.IP(), c.Context().RemoteIP())
 }
 

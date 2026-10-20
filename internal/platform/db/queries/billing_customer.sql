@@ -60,9 +60,13 @@ WHERE stripe_customer_id = sqlc.arg(stripe_customer_id)::text;
 -- Predicating on the Pro column alone would leave an Ultra subscriber whose renewal webhook
 -- was lost outside the window forever — they hold no Pro entitlement at all, so there is
 -- nothing there to fall due.
+-- The API product's columns (0184) are here for the same reason: an API subscriber holds no
+-- Pro or Ultra entitlement at all.
 SELECT id, stripe_customer_id, pro_until_stripe, ultra_until_stripe
 FROM users
 WHERE stripe_customer_id IS NOT NULL
   AND ((pro_until_stripe >= sqlc.arg(from_time) AND pro_until_stripe < sqlc.arg(to_time))
-       OR (ultra_until_stripe >= sqlc.arg(from_time) AND ultra_until_stripe < sqlc.arg(to_time)))
+       OR (ultra_until_stripe >= sqlc.arg(from_time) AND ultra_until_stripe < sqlc.arg(to_time))
+       OR (api_until_stripe >= sqlc.arg(from_time) AND api_until_stripe < sqlc.arg(to_time))
+       OR (api_data_until_stripe >= sqlc.arg(from_time) AND api_data_until_stripe < sqlc.arg(to_time)))
 LIMIT sqlc.arg(max_rows);

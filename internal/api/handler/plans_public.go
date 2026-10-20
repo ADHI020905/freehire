@@ -15,12 +15,32 @@ import (
 // It is PUBLIC and unauthenticated, because a pricing page that requires an account cannot
 // do the one job a pricing page has.
 type plansHandlers struct {
-	plans   plan.Config
-	billing *billing.Service
+	plans     plan.Config
+	billing   *billing.Service
+	apiLimits apiLimitsView
 }
 
-func newPlansHandlers(cfg plan.Config, svc *billing.Service) *plansHandlers {
-	return &plansHandlers{plans: cfg, billing: svc}
+func newPlansHandlers(cfg plan.Config, svc *billing.Service, publicAnonStrict bool) *plansHandlers {
+	return &plansHandlers{plans: cfg, billing: svc, apiLimits: apiLimitsFor(publicAnonStrict)}
+}
+
+// apiLimitsView is what the API product's tiers allow, read from the SAME constants the
+// public-read gate enforces (public_gate.go) for the reason tierView gives. The anonymous
+// figures are the ones in force: before PUBLIC_ANON_LIMITS=strict they are the read route's
+// old per-minute budget and no daily cap (AnonymousPerDay 0).
+type apiLimitsView struct {
+	AnonymousPerMinute int `json:"anonymous_per_minute"`
+	AnonymousPerDay    int `json:"anonymous_per_day"`
+	APIPerMinute       int `json:"api_per_minute"`
+	DataPerMinute      int `json:"data_per_minute"`
+}
+
+func apiLimitsFor(strict bool) apiLimitsView {
+	v := apiLimitsView{AnonymousPerMinute: publicReadsPerMinute, APIPerMinute: paidAPIPerMinute, DataPerMinute: paidDataPerMinute}
+	if strict {
+		v.AnonymousPerMinute, v.AnonymousPerDay = anonPerMinute, anonPerDay
+	}
+	return v
 }
 
 func (h *plansHandlers) register(api fiber.Router) {
@@ -59,6 +79,8 @@ type plansResponse struct {
 	// is on this is empty, and a page that claimed otherwise would be selling a limit nobody
 	// meets.
 	Enforced []string `json:"enforced"`
+	// APILimits is what the API product's plans allow, beside their prices in Prices.
+	APILimits apiLimitsView `json:"api_limits"`
 }
 
 // GetPlans returns what each plan allows and what Pro costs.
@@ -69,8 +91,9 @@ type plansResponse struct {
 // promise on a pricing page is one a customer can hold us to.
 func (h *plansHandlers) GetPlans(c *fiber.Ctx) error {
 	out := plansResponse{
-		Features: make([]planFeatureView, 0, len(plan.AllFeatures())),
-		Enforced: []string{},
+		Features:  make([]planFeatureView, 0, len(plan.AllFeatures())),
+		Enforced:  []string{},
+		APILimits: h.apiLimits,
 	}
 	for _, f := range plan.AllFeatures() {
 		out.Features = append(out.Features, planFeatureView{

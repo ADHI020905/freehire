@@ -47,6 +47,9 @@ type ojcpHandlers struct {
 	// signer signs the manifest and publishes the key that verifies it. Nil means this
 	// deployment has no signing key: the manifest goes out unsigned and no key set exists.
 	signer *ojcp.Signer
+	// anonStrict is PUBLIC_ANON_LIMITS=strict: the anonymous budget on these routes then
+	// carries a daily cap, which the manifest's per-second field cannot state (see manifest).
+	anonStrict bool
 	// embedder turns an agent's query into a vector for its opt-in semantic search. Nil
 	// means no embedding backend is configured, and every request that asks for semantic
 	// search is answered keyword-only and told so.
@@ -92,7 +95,7 @@ func (h *ojcpHandlers) register(api fiber.Router, mw middleware) {
 	// Public and unauthenticated, like the other job reads. The rate limit is the same
 	// agent-search one: these calls cost what /agent/jobs/search costs, and the manifest
 	// declares that figure — a limit declared and not enforced breaks a MUST in the spec.
-	limit := ojcpRateLimited(agentSearchLimiter(mw.throttler))
+	limit := ojcpRateLimited(agentSearchLimiter(mw.public))
 	api.Post("/ojcp/v1/search", limit, h.OJCPSearchJobs)
 	api.Get("/ojcp/v1/jobs/:slug", limit, h.OJCPJobDetail)
 	api.Get("/ojcp/v1/employers/:slug", limit, h.OJCPEmployerContext)
@@ -149,9 +152,21 @@ func (h *ojcpHandlers) manifest() ojcp.Manifest {
 		// before the bucket empties. The error is deliberately in the safe direction: an agent
 		// pacing at the declared figure never meets a 429, which is what the declaration is
 		// for. Declaring the burst instead would invite a rate we refuse.
-		AnonymousRPS:   agentSearchPerMinute / 60,
+		AnonymousRPS:   h.declaredAnonymousRPS(),
 		ApplyPathTypes: []string{"ats_direct", "external_redirect"},
 	})
+}
+
+// declaredAnonymousRPS is the per-second figure the manifest may honestly declare, or 0 to
+// declare none. Under strict the anonymous budget is 120 a minute AND 2,000 a day: the
+// sustained rate a day allows rounds to zero, and declaring the minute's 2/s would invite a
+// pace the daily cap refuses after a quarter of an hour — breaking the MUST in the other
+// direction. Declaring nothing is the one statement that stays true.
+func (h *ojcpHandlers) declaredAnonymousRPS() int {
+	if h.anonStrict {
+		return 0
+	}
+	return agentSearchPerMinute / 60
 }
 
 // OJCPSearchJobs answers `search_jobs`.

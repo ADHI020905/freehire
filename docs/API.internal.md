@@ -10,6 +10,7 @@ Base URL: `https://freehire.me/api/v1`
 - [Response envelope](#response-envelope)
 - [Pagination](#pagination)
 - [Errors](#errors)
+- [Rate limits and API plans](#rate-limits-and-api-plans)
 - [Authentication model](#authentication-model)
 - [External vs internal endpoints](#external-vs-internal-endpoints)
 - [What is not here](#what-is-not-here)
@@ -68,6 +69,12 @@ It applies whichever store answers the endpoint, and it is not the same thing as
 ## Errors
 
 Errors use standard HTTP status codes: 400 (bad request / invalid value), 401 (missing or invalid credentials), 403 (authenticated but not allowed, e.g. a non-moderator), 404 (no such job, company, or owned resource), and 503 (search temporarily unavailable). The body is always `{ "error": ... }`.
+
+## Rate limits and API plans
+
+The public read endpoints answer without a key, limited per address — for personal and non-commercial use. Showing the postings in a product you offer to others needs an API plan. `GET /plans` reports the figures in force as `api_limits`; every response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset`, and a refusal is `429` with `Retry-After`.
+
+An account holding an [API plan](https://freehire.me/pricing#api) sends one of its full-access keys as `Authorization: Bearer <token>`. Its budget is then per account, shared by all of its keys, with no daily cap — and the plan licenses the data for use in your own product, under the [data licence](https://freehire.me/terms#data-licence). A key of an account without a plan is limited like no key at all.
 
 ## Authentication model
 

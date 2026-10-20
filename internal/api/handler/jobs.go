@@ -53,7 +53,7 @@ func (h *jobsHandlers) register(api fiber.Router, mw middleware) {
 	// would void the limit rather than narrow it: /jobs returns the same
 	// catalogue as /jobs/search, so an unbounded one is simply the door a
 	// throttled caller walks through instead.
-	readLimit := publicReadLimiter(mw.throttler)
+	readLimit := publicReadLimiter(mw.public)
 	api.Get("/jobs", readLimit, h.ListJobs)
 	// Static route registered before /jobs/:slug so it isn't captured as a slug.
 	api.Get("/jobs/find", readLimit, h.FindJob)

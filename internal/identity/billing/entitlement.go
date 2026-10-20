@@ -92,9 +92,15 @@ func proUntilFrom(sub subscriber, proPrices []string) time.Time {
 type entitlement struct {
 	Pro   time.Time
 	Ultra time.Time
+	// API and Data are the API product's two tiers. Only Stripe sells them; every other
+	// provider leaves them zero, and stores nothing for them.
+	API  time.Time
+	Data time.Time
 }
 
-// entitlementFrom resolves every tier from ONE re-read of the subscriber.
+// entitlementFrom resolves every tier of both products — Pro/Ultra and the API product's
+// API/Data — from ONE re-read of the subscriber. (proUntilFrom is the "furthest entitling
+// period end" reduction; it serves every list, not only Pro's.)
 //
 // Which tier a subscription confers is decided by which configured price list its price
 // appears in, reusing the same filter rather than a second copy of it. That is also why an
@@ -105,11 +111,26 @@ type entitlement struct {
 // A price could in principle appear in both lists, which would make one subscription confer
 // both tiers. That is a configuration mistake rather than a case to encode, and it fails
 // safe: the account resolves to ultra, which is the better of the two.
-func entitlementFrom(sub subscriber, proPrices, ultraPrices []string) entitlement {
+func entitlementFrom(sub subscriber, cfg Config) entitlement {
 	return entitlement{
-		Pro:   proUntilFrom(sub, proPrices),
-		Ultra: proUntilFrom(sub, ultraPrices),
+		Pro:   proUntilFrom(sub, cfg.Prices),
+		Ultra: proUntilFrom(sub, cfg.UltraPrices),
+		API:   proUntilFrom(sub, cfg.APIPrices),
+		Data:  proUntilFrom(sub, cfg.APIDataPrices),
 	}
+}
+
+// checkoutFamily is the pair of price lists decideCheckoutTarget must choose within for a
+// requested price: the API product's when the price is one of its own, Pro/Ultra otherwise.
+//
+// Without it the API product would be one more price to "upgrade in place" to, and a Pro
+// subscriber buying API access would have their Pro subscription changed into it — losing
+// the plan they pay for to buy something beside it.
+func (c Config) checkoutFamily(priceID string) (a, b []string) {
+	if slices.Contains(c.APIPrices, priceID) || slices.Contains(c.APIDataPrices, priceID) {
+		return c.APIPrices, c.APIDataPrices
+	}
+	return c.Prices, c.UltraPrices
 }
 
 // billedSubscription is the subscription a subscriber's own billing section describes: the

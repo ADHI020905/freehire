@@ -29,8 +29,8 @@ func TestLimiterE2E(t *testing.T) {
 	th := ratelimit.NewRedisThrottler(client)
 
 	app := fiber.New(fiber.Config{ProxyHeader: fiber.HeaderXForwardedFor})
-	app.Get("/cheap", publicReadLimiter(th), func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
-	app.Get("/agent", agentSearchLimiter(th), func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
+	app.Get("/cheap", publicReadLimiter(newPublicGate(th, nil, publicGateConfig{})), func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
+	app.Get("/agent", agentSearchLimiter(newPublicGate(th, nil, publicGateConfig{})), func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusOK) })
 
 	hit := func(path, peer string) (int, string, string) {
 		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, path, nil)

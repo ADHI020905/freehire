@@ -39,6 +39,23 @@ WHERE token_hash = $1
   AND (expires_at IS NULL OR expires_at > now())
 RETURNING user_id, scope;
 
+-- name: ResolveAPIKeyTier :one
+-- Resolve a presented token to its owner, the key's scope and how far the owner's API
+-- subscription reaches, for the public-read rate limiter. Read-only on purpose: unlike
+-- AuthenticateAPIKey it does NOT touch last_used_at, because it runs on the hottest reads on
+-- the site and its answer is cached. No row means unknown, revoked or expired.
+SELECT k.user_id, k.scope, u.api_until_stripe, u.api_data_until_stripe
+FROM api_keys k
+JOIN users u ON u.id = k.user_id
+WHERE k.token_hash = $1
+  AND (k.expires_at IS NULL OR k.expires_at > now());
+
+-- name: GetUserAPIEntitlement :one
+-- How far the account's API product subscriptions reach, for its own key-management page.
+SELECT api_until_stripe, api_data_until_stripe
+FROM users
+WHERE id = $1;
+
 -- name: DeleteAPIKey :execrows
 -- Revoke (delete) a key, scoped to its owner so a user can only delete their own.
 -- Returns the affected row count: 0 means the key does not exist or is not the

@@ -2,6 +2,7 @@ package billing
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"net/url"
 	"slices"
@@ -25,7 +26,8 @@ type PublicPrice struct {
 	Interval string `json:"interval"`
 	// Default marks the price a new subscriber is sold unless they choose otherwise.
 	Default bool `json:"default"`
-	// Tier is which plan this price buys — "pro" or "ultra". It is derived from which
+	// Tier is which plan this price buys — "pro" or "ultra", or "api"/"api_data" for the
+	// API product (see APITier). It is derived from which
 	// configured list the id appears in, which is the same thing that decides what a
 	// subscription confers, so a page can never offer a price under the wrong heading.
 	//
@@ -126,17 +128,32 @@ func (s *Service) PublicPrices(ctx context.Context) []PublicPrice {
 
 // fetchPrices reads every configured price from the provider.
 //
-// All or nothing. A partial list is worse than none, because a page showing one of two
-// plans looks complete — so a single failure discards what was already read.
+// All or nothing PER PRODUCT. A partial list is worse than none, because a page showing one
+// of two plans looks complete — so a single failure discards what was already read of that
+// product. The API product is read apart: it is a different thing to buy, and a mistyped API
+// price id must not take the Pro and Ultra prices off the page with it.
 func (s *Service) fetchPrices(ctx context.Context) ([]PublicPrice, error) {
-	out := make([]PublicPrice, 0, len(s.cfg.Prices)+len(s.cfg.UltraPrices))
-	for _, list := range []struct {
-		tier string
-		ids  []string
-	}{
-		{tierPro, s.cfg.Prices},
-		{tierUltra, s.cfg.UltraPrices},
-	} {
+	out, err := s.readTiers(ctx, []priceTier{{tierPro, s.cfg.Prices}, {tierUltra, s.cfg.UltraPrices}})
+	if err != nil {
+		return nil, err
+	}
+	api, err := s.readTiers(ctx, []priceTier{{string(APITierAPI), s.cfg.APIPrices}, {string(APITierData), s.cfg.APIDataPrices}})
+	if err != nil {
+		log.Printf("billing: reading the API product's prices: %v (omitting them)", err)
+		return out, nil
+	}
+	return append(out, api...), nil
+}
+
+type priceTier struct {
+	tier string
+	ids  []string
+}
+
+// readTiers reads one product's prices, failing as a whole on the first failure.
+func (s *Service) readTiers(ctx context.Context, tiers []priceTier) ([]PublicPrice, error) {
+	var out []PublicPrice
+	for _, list := range tiers {
 		for i, id := range list.ids {
 			p, err := s.client.price(ctx, id)
 			if err != nil {
@@ -177,5 +194,6 @@ func (c *client) price(ctx context.Context, id string) (PublicPrice, error) {
 // a session, because the price arrives from the browser and a caller who could name any
 // price could name one costing nothing.
 func (c Config) Sells(priceID string) bool {
-	return slices.Contains(c.Prices, priceID) || slices.Contains(c.UltraPrices, priceID)
+	return slices.Contains(c.Prices, priceID) || slices.Contains(c.UltraPrices, priceID) ||
+		slices.Contains(c.APIPrices, priceID) || slices.Contains(c.APIDataPrices, priceID)
 }

@@ -1442,7 +1442,9 @@ type User struct {
 	// When the one-time welcome email for this account's first paying tier was sent. NULL until sent; never cleared once set, so a later renewal or resubscription is not re-welcomed.
 	ProWelcomeSentAt pgtype.Timestamptz `json:"pro_welcome_sent_at"`
 	// When the one-time "you ran into today's limit" nudge was sent. NULL until sent; never cleared once set.
-	LimitNudgeSentAt pgtype.Timestamptz `json:"limit_nudge_sent_at"`
+	LimitNudgeSentAt   pgtype.Timestamptz `json:"limit_nudge_sent_at"`
+	ApiUntilStripe     pgtype.Timestamptz `json:"api_until_stripe"`
+	ApiDataUntilStripe pgtype.Timestamptz `json:"api_data_until_stripe"`
 }
 
 type UserEmailCode struct {

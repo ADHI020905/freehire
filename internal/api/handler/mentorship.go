@@ -79,7 +79,7 @@ func (h *mentorshipHandlers) register(api fiber.Router, mw middleware) {
 // Anyone may browse mentors and see when they are free. Booking is not public, and that
 // split is the product: a directory behind a login sells nothing.
 func (h *mentorshipHandlers) registerPublic(api fiber.Router, mw middleware) {
-	readLimit := publicReadLimiter(mw.throttler)
+	readLimit := publicReadLimiter(mw.public)
 	slotLimit := ratelimit.Middleware(mw.throttler,
 		ratelimit.KeyByIP("mentorslots"), slotReadsPerMinute, time.Minute)
 

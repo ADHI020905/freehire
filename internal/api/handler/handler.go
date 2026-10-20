@@ -190,6 +190,9 @@ type middleware struct {
 	// handler's own register method (mail recall, photo upload, JD resolve, match
 	// analysis) — the same shared instance outboundFetch and the auth routes use.
 	throttler ratelimit.Throttler
+	// public is the rate limiter of every public read route (public_gate.go), mounted through
+	// publicReadLimiter / agentSearchLimiter.
+	public *publicGate
 }
 
 // pageParamsBounded reads and clamps the shared limit/offset pagination query params, with
@@ -330,8 +333,12 @@ type Config struct {
 	// caller — today the catalogue-scale snapshot (internal/ingest/catalogstats). Optional:
 	// nil degrades the figures it backs to their approximations, exactly as an
 	// unreachable backend does.
-	Cache               cache.Cache
-	FrontendOrigin      string
+	Cache          cache.Cache
+	FrontendOrigin string
+	// PublicAnonStrict and VerifiedBotSecret configure the public-read gate (public_gate.go):
+	// the strict anonymous budgets, and the Cloudflare verified-bot exemption.
+	PublicAnonStrict    bool
+	VerifiedBotSecret   string
 	JWTSecret           string
 	JWTTTL              time.Duration
 	CookieSecure        bool
@@ -628,7 +635,7 @@ func Register(app *fiber.App, cfg Config) {
 	// here rather than passed to a constructor that already takes ten arguments.
 	authH.withInvites(promoSvc)
 	// Public: a pricing page that needs an account cannot do a pricing page's job.
-	plansH := newPlansHandlers(cfg.Plan, billingSvc)
+	plansH := newPlansHandlers(cfg.Plan, billingSvc, cfg.PublicAnonStrict)
 	matchH := newMatchHandlers(queries, profileSvc, resumeStore, matchAnalyzer, plans)
 	// The CV store is shared: the CV surface owns the write path, referrals render from it
 	// and autofill reads the base CV's contact header out of it. AGENTS.md puts shared
@@ -711,6 +718,7 @@ func Register(app *fiber.App, cfg Config) {
 	// same catalogue, or the two answers drift.
 	ojcpH := newOJCPHandlers(jobSearch, queries, cfg.FrontendOrigin, atsapply.SubmittableProviders())
 	ojcpH.signer = cfg.OJCPSigner
+	ojcpH.anonStrict = cfg.PublicAnonStrict
 	// Assigned only when set: a nil *search.QueryEmbedder in the interface field would be
 	// a non-nil interface, and the handler's "no backend" check would never fire.
 	if cfg.QueryEmbedder != nil {
@@ -943,6 +951,11 @@ func Register(app *fiber.App, cfg Config) {
 		paidAI:         paidAIGate(entitlementOf(plans)),
 		outboundFetch:  contributionLimiter(cfg.Throttler),
 		throttler:      cfg.Throttler,
+		public: newPublicGate(cfg.Throttler, queries, publicGateConfig{
+			Strict:     cfg.PublicAnonStrict,
+			BotSecret:  cfg.VerifiedBotSecret,
+			PricingURL: strings.TrimRight(cfg.FrontendOrigin, "/") + "/pricing#api",
+		}),
 	}
 
 	// The email preference centre. Its three public routes are unauthenticated on

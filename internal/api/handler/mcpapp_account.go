@@ -28,7 +28,7 @@ func mountMCPAccount(api fiber.Router, mw middleware, assistants *assistantHandl
 	// Fiber middleware, ahead of the adapted raw http.Handler, so an
 	// unexpected failure authenticating the token (not merely an unknown one)
 	// reaches Sentry the normal way — see mcpAccountAuthenticate.
-	api.All("/mcp/account", agentSearchLimiter(mw.throttler), mcpAccountAuthenticate(assistants, frontendOrigin), adaptor.HTTPHandler(mcpapp.AccountHandler(tools, frontendOrigin)))
+	api.All("/mcp/account", chatAgentLimiter(mw.public), mcpAccountAuthenticate(assistants, frontendOrigin), adaptor.HTTPHandler(mcpapp.AccountHandler(tools, frontendOrigin)))
 }
 
 // mcpAccountTools is the in-app assistant's discovery and tracking tools, less

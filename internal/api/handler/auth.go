@@ -134,6 +134,7 @@ func (h *authHandlers) register(api fiber.Router, mw middleware) {
 	meGroup.Post("/password", mw.cookie, recent, h.ChangePassword)
 	meGroup.Post("/api-keys", mw.cookie, recent, h.CreateAPIKey)
 	meGroup.Get("/api-keys", mw.cookie, h.ListAPIKeys)
+	meGroup.Get("/api-plan", mw.cookie, h.GetAPIPlan)
 	meGroup.Delete("/api-keys/:id", mw.cookie, recent, h.RevokeAPIKey)
 	// MCP OAuth "Connected devices": list is a plain read (same gating as
 	// ListAPIKeys); revoke is recent-auth-gated, same reasoning as RevokeAPIKey.

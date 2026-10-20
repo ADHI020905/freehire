@@ -9,6 +9,7 @@
   import { ProviderIcon } from '$lib/ui';
   import type { PlanTierAllowance, PublicPrice } from '$lib/types';
   import type { PageData } from './$types';
+  import ApiPlans from './ApiPlans.svelte';
 
   const { data }: { data: PageData } = $props();
 
@@ -432,10 +433,14 @@
     {/if}
   </div>
 
+  {#if plans}
+    <ApiPlans prices={plans.prices} limits={plans.api_limits} />
+  {/if}
+
   <!-- Said plainly rather than buried: what a subscription does and does not commit anyone
        to is the question people actually hesitate on. -->
   <p class="text-center text-sm text-muted-foreground">
-    Cancel any time — you keep Pro until the end of the period you have paid for. Nothing you
+    Cancel any time — you keep your plan until the end of the period you have paid for. Nothing you
     have created is ever withdrawn when a plan lapses. Not what you expected? Email us within 14
     days and we'll refund it, no questions asked.
   </p>

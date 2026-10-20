@@ -121,6 +121,17 @@ func TestManifestDeclaresTheLimitTheRoutesEnforce(t *testing.T) {
 	}
 }
 
+// Under strict the anonymous budget includes a DAILY cap, which no per-second figure can
+// state honestly: the sustained rate it allows rounds to zero, and declaring the minute's
+// rate would invite traffic the day refuses. So nothing is declared rather than a lie.
+func TestManifestDeclaresNoRateUnderStrict(t *testing.T) {
+	h := newOJCPHandlers(&fakeSearcher{}, fakeOJCPStore{}, "https://freehire.me", nil)
+	h.anonStrict = true
+	if limits := h.manifest().RateLimits; limits != nil {
+		t.Fatalf("rate_limits = %+v under strict, want none declared", limits)
+	}
+}
+
 func TestEveryErrorCodeHasAnHTTPStatus(t *testing.T) {
 	// Walks the codes this package may emit, from ojcp's own list rather than a copy written
 	// here — a hand-written list would only prove somebody typed the same five twice.

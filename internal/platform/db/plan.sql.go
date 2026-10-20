@@ -615,14 +615,18 @@ func (q *Queries) SetRevenueCatEntitlement(ctx context.Context, arg SetRevenueCa
 const setStripeEntitlement = `-- name: SetStripeEntitlement :exec
 UPDATE users
 SET pro_until_stripe = $1,
-    ultra_until_stripe = $2
-WHERE id = $3
+    ultra_until_stripe = $2,
+    api_until_stripe = $3,
+    api_data_until_stripe = $4
+WHERE id = $5
 `
 
 type SetStripeEntitlementParams struct {
-	ProUntil   pgtype.Timestamptz `json:"pro_until"`
-	UltraUntil pgtype.Timestamptz `json:"ultra_until"`
-	ID         int64              `json:"id"`
+	ProUntil     pgtype.Timestamptz `json:"pro_until"`
+	UltraUntil   pgtype.Timestamptz `json:"ultra_until"`
+	ApiUntil     pgtype.Timestamptz `json:"api_until"`
+	ApiDataUntil pgtype.Timestamptz `json:"api_data_until"`
+	ID           int64              `json:"id"`
 }
 
 // How far the WEB subscription reaches, FOR EVERY TIER, from Stripe's current view of the
@@ -639,8 +643,17 @@ type SetStripeEntitlementParams struct {
 // migrations 0135 and 0141 — so clearing a column here says "Stripe confers nothing", never
 // "this account is not Pro". The account may hold a store subscription or a manual grant,
 // and before 0135 this write would have revoked either without a trace.
+//
+// The API product's two columns (migration 0184) ride the same statement: they come from the
+// same re-read of the same customer, and two writes would let a reader see one half of it.
 func (q *Queries) SetStripeEntitlement(ctx context.Context, arg SetStripeEntitlementParams) error {
-	_, err := q.db.Exec(ctx, setStripeEntitlement, arg.ProUntil, arg.UltraUntil, arg.ID)
+	_, err := q.db.Exec(ctx, setStripeEntitlement,
+		arg.ProUntil,
+		arg.UltraUntil,
+		arg.ApiUntil,
+		arg.ApiDataUntil,
+		arg.ID,
+	)
 	return err
 }
 

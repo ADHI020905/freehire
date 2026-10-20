@@ -37,6 +37,14 @@ answer 404, and its worker exits without opening a connection.
   what it once said, which is the cancellation path — RevenueCat writes NULL to the Ultra
   column on every pass precisely because no such product exists yet.
 
+- **The API product is a separate PRODUCT, not a third and fourth tier.** `APIPrices` /
+  `APIDataPrices` confer `api_until_stripe` / `api_data_until_stripe` (migration 0184) from the
+  same re-read and the same `SetStripeEntitlement`, and grant no plan tier. Checkout chooses
+  within the requested price's product (`Config.checkoutFamily`): the upgrade-in-place rule
+  would otherwise turn a Pro subscriber's API purchase into the loss of Pro. The billing
+  section and `moreThanOneEntitling` stay Pro/Ultra-only. The API prices are read apart on
+  the pricing page, so a mistyped API price id omits them alone.
+
 - **Which tier a subscription confers is which configured price list its price is in.** No
   price id ships in the source, and a deployment naming no Ultra prices resolves nobody to
   ultra while pro and free behave exactly as before. Not metadata on the provider's price:

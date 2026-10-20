@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/identity/auth"
+	"github.com/strelov1/freehire/internal/identity/billing"
 	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/platform/pgconv"
 )
@@ -185,4 +186,39 @@ func (h *authHandlers) RevokeAPIKey(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "key not found")
 	}
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// apiPlanResponse is the account's API product tier as its key-management page shows it:
+// which tier, the per-minute rate its full-scope keys get on public reads, and until when.
+// An account without the product has an empty tier and no rate.
+type apiPlanResponse struct {
+	Tier      billing.APITier `json:"tier"`
+	PerMinute int             `json:"per_minute"`
+	Until     *time.Time      `json:"until,omitempty"`
+}
+
+// GetAPIPlan reports the caller's API product tier. Cookie-only, like the rest of key
+// management.
+func (h *authHandlers) GetAPIPlan(c *fiber.Ctx) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+	row, err := h.queries.GetUserAPIEntitlement(c.Context(), userID)
+	if err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{"data": apiPlanFrom(row.ApiUntilStripe.Time, row.ApiDataUntilStripe.Time, time.Now())})
+}
+
+func apiPlanFrom(apiUntil, dataUntil, now time.Time) apiPlanResponse {
+	tier := billing.APITierOf(apiUntil, dataUntil, now)
+	out := apiPlanResponse{Tier: tier, PerMinute: paidPerMinute(tier)}
+	switch tier {
+	case billing.APITierData:
+		out.Until = &dataUntil
+	case billing.APITierAPI:
+		out.Until = &apiUntil
+	}
+	return out
 }

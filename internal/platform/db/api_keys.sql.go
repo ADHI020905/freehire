@@ -120,6 +120,25 @@ func (q *Queries) DeleteAPIKey(ctx context.Context, arg DeleteAPIKeyParams) (int
 	return result.RowsAffected(), nil
 }
 
+const getUserAPIEntitlement = `-- name: GetUserAPIEntitlement :one
+SELECT api_until_stripe, api_data_until_stripe
+FROM users
+WHERE id = $1
+`
+
+type GetUserAPIEntitlementRow struct {
+	ApiUntilStripe     pgtype.Timestamptz `json:"api_until_stripe"`
+	ApiDataUntilStripe pgtype.Timestamptz `json:"api_data_until_stripe"`
+}
+
+// How far the account's API product subscriptions reach, for its own key-management page.
+func (q *Queries) GetUserAPIEntitlement(ctx context.Context, id int64) (GetUserAPIEntitlementRow, error) {
+	row := q.db.QueryRow(ctx, getUserAPIEntitlement, id)
+	var i GetUserAPIEntitlementRow
+	err := row.Scan(&i.ApiUntilStripe, &i.ApiDataUntilStripe)
+	return i, err
+}
+
 const listAPIKeysByUser = `-- name: ListAPIKeysByUser :many
 SELECT id, name, token_prefix, scope, created_at, last_used_at, expires_at
 FROM api_keys
@@ -165,4 +184,35 @@ func (q *Queries) ListAPIKeysByUser(ctx context.Context, userID int64) ([]ListAP
 		return nil, err
 	}
 	return items, nil
+}
+
+const resolveAPIKeyTier = `-- name: ResolveAPIKeyTier :one
+SELECT k.user_id, k.scope, u.api_until_stripe, u.api_data_until_stripe
+FROM api_keys k
+JOIN users u ON u.id = k.user_id
+WHERE k.token_hash = $1
+  AND (k.expires_at IS NULL OR k.expires_at > now())
+`
+
+type ResolveAPIKeyTierRow struct {
+	UserID             int64              `json:"user_id"`
+	Scope              string             `json:"scope"`
+	ApiUntilStripe     pgtype.Timestamptz `json:"api_until_stripe"`
+	ApiDataUntilStripe pgtype.Timestamptz `json:"api_data_until_stripe"`
+}
+
+// Resolve a presented token to its owner, the key's scope and how far the owner's API
+// subscription reaches, for the public-read rate limiter. Read-only on purpose: unlike
+// AuthenticateAPIKey it does NOT touch last_used_at, because it runs on the hottest reads on
+// the site and its answer is cached. No row means unknown, revoked or expired.
+func (q *Queries) ResolveAPIKeyTier(ctx context.Context, tokenHash string) (ResolveAPIKeyTierRow, error) {
+	row := q.db.QueryRow(ctx, resolveAPIKeyTier, tokenHash)
+	var i ResolveAPIKeyTierRow
+	err := row.Scan(
+		&i.UserID,
+		&i.Scope,
+		&i.ApiUntilStripe,
+		&i.ApiDataUntilStripe,
+	)
+	return i, err
 }

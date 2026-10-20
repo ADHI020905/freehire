@@ -58,40 +58,41 @@ const (
 	talentCatalogPerMinute = 120
 )
 
-// All three below are keyed by IP, and deliberately: on a PUBLIC read there is no
-// authenticated caller to key by.
+// A signed-in COOKIE caller is budgeted by IP, deliberately. Fiber runs a route's handlers in
+// registration order, and every public read registers its limiter BEFORE the optional-auth
+// gate (jobs.go, companies.go, search.go) or without a gate at all — moving the gate in front
+// would put a database lookup ahead of throttling on the hottest reads on the site, against a
+// host where crawlers are most of the traffic, and OptionalAuth answers 503 when a key lookup
+// fails. Fifty colleagues behind one office NAT share one budget.
 //
-// They used to ask for user-or-IP and say so, and the branch was dead. Fiber runs a
-// route's handlers in registration order, and every public read registers its limiter
-// BEFORE the optional-auth gate (jobs.go, companies.go, search.go) or without a gate at
-// all (geo.go, suggest.go) — there is no group-level auth, handler.go builds /api/v1 with
-// no .Use. So `auth.UserID` read a local nothing had written yet and the key was always
-// the IP form. Fifty signed-in colleagues behind one office NAT already shared one budget;
-// the comment claiming otherwise was the only thing that changed.
+// The one caller told apart is a PAID API key (public_gate.go), and only because the gate
+// resolves it itself: only when a key is presented, through a cache, falling back to the
+// anonymous budget on any failure. Nothing else about the caller is known when the limiter
+// runs.
 //
-// Moving the gate in front would have fixed three of the ten routes and put a database
-// lookup ahead of throttling on the hottest reads on the site — OptionalAuth answers 503
-// when a Bearer-key lookup fails, so it is not free — against a host where crawlers are
-// most of the traffic. Deleting the unreachable branch is the smaller answer, and the
-// allowance was never per-user in production anyway.
-//
-// The tests below mount the gate FIRST, so an authenticated caller really is
-// authenticated when the limiter runs. That is what makes them a guard: they fail if
-// anyone reintroduces a user-keyed budget here, whatever the ordering. A second guard
-// drives these routes exactly as `register` mounts them, which is what the tests that
-// missed the defect could not do — they mounted the key function on a bare app, where the
-// handler order under test is the test's own. See internal/api/handler/AGENTS.md for the
-// rule this settled on.
+// The tests mount the gate FIRST, so an authenticated cookie caller really is authenticated
+// when the limiter runs: they fail if anyone reintroduces a user-keyed budget here. A second
+// guard drives these routes exactly as `register` mounts them. See
+// internal/api/handler/AGENTS.md for the rule.
 
-// publicReadLimiter throttles the cheap public reads as one shared budget.
-func publicReadLimiter(throttler ratelimit.Throttler) fiber.Handler {
-	return ratelimit.Middleware(throttler, ratelimit.KeyByIP("publicread"), publicReadsPerMinute, time.Minute)
+// publicReadLimiter throttles the cheap public reads. Which budget a caller draws on — a paid
+// key's, a verified bot's exemption, or the anonymous one — is the gate's decision
+// (public_gate.go); this names the route class.
+func publicReadLimiter(g *publicGate) fiber.Handler {
+	return g.limiter(publicReadBudget)
 }
 
-// agentSearchLimiter throttles the full-description search on its own budget, so
-// exhausting it leaves the ordinary search endpoints serving.
-func agentSearchLimiter(throttler ratelimit.Throttler) fiber.Handler {
-	return ratelimit.Middleware(throttler, ratelimit.KeyByIP("agentsearch"), agentSearchPerMinute, time.Minute)
+// agentSearchLimiter throttles the full-description search. Before PUBLIC_ANON_LIMITS=strict
+// its anonymous budget is its own, so exhausting it leaves the ordinary search endpoints
+// serving; under strict the two share the anonymous budgets (see public_gate.go).
+func agentSearchLimiter(g *publicGate) fiber.Handler {
+	return g.limiter(agentSearchBudget)
+}
+
+// chatAgentLimiter is agentSearchLimiter for the ChatGPT app's MCP surfaces, which keep the
+// agent-search budget for anonymous callers even under strict (see chatAgentBudget).
+func chatAgentLimiter(g *publicGate) fiber.Handler {
+	return g.limiter(chatAgentBudget)
 }
 
 // suggestLimiter throttles the search box's completions on their own budget, so a

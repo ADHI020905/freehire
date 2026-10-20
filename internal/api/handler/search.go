@@ -64,11 +64,11 @@ const searchRecordTimeout = 5 * time.Second
 func (h *searchHandlers) register(api fiber.Router, mw middleware) {
 	// Literal routes are registered before the /jobs/:slug param route (see
 	// Register) so they are not read as slugs.
-	readLimit := publicReadLimiter(mw.throttler)
+	readLimit := publicReadLimiter(mw.public)
 	api.Get("/jobs/search", readLimit, mw.optional, h.SearchJobs)
 	// Agent search: same query as /jobs/search, but always full descriptions in a
 	// selectable format for programmatic consumers. Public, like the other reads.
-	api.Get("/agent/jobs/search", agentSearchLimiter(mw.throttler), h.AgentSearchJobs)
+	api.Get("/agent/jobs/search", agentSearchLimiter(mw.public), h.AgentSearchJobs)
 	api.Get("/jobs/facets", readLimit, h.JobFacets)
 	api.Get("/jobs/:slug/similar", readLimit, h.SimilarJobs)
 }

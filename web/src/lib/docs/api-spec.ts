@@ -125,6 +125,23 @@ export const OVERVIEW: Overview[] = [
     ],
   },
   {
+    title: 'Rate limits and API plans',
+    paragraphs: [
+      'The public read endpoints answer without a key, limited per address — for ' +
+        'personal and non-commercial use. Showing the postings in a product you offer ' +
+        'to others needs an API plan. `GET ' +
+        '/plans` reports the figures in force as `api_limits`; every response carries ' +
+        '`X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset`, and a ' +
+        'refusal is `429` with `Retry-After`.',
+      'An account holding an [API plan](https://freehire.me/pricing#api) sends one of ' +
+        'its full-access keys as `Authorization: Bearer <token>`. Its budget is then ' +
+        'per account, shared by all of its keys, with no daily cap — and the plan ' +
+        'licenses the data for use in your own product, under the ' +
+        '[data licence](https://freehire.me/terms#data-licence). A key of an account ' +
+        'without a plan is limited like no key at all.',
+    ],
+  },
+  {
     title: 'Authentication model',
     paragraphs: [
       'Browser clients authenticate with an `HttpOnly` session cookie set on ' +

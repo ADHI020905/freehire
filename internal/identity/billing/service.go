@@ -357,7 +357,10 @@ func (s *Service) CheckoutURL(ctx context.Context, userID int64, priceID string,
 		if err != nil {
 			return "", Discount{}, fmt.Errorf("billing: reading the subscriptions of user %d: %w", userID, err)
 		}
-		target := decideCheckoutTarget(current, priceID, s.cfg.Prices, s.cfg.UltraPrices)
+		// Within the requested price's own product: an API purchase must never change a
+		// Pro/Ultra subscription in place, nor the reverse (see Config.checkoutFamily).
+		familyA, familyB := s.cfg.checkoutFamily(priceID)
+		target := decideCheckoutTarget(current, priceID, familyA, familyB)
 		switch {
 		case target.AlreadyOnPrice:
 			// ReturnURL, deliberately not SuccessURL: nothing was bought. Marking this a

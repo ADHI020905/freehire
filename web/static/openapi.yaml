@@ -5,7 +5,10 @@ info:
   description: |
     Public, read-only freehire API: search IT jobs, read the live filter
     vocabulary, inspect job and company details, and find similar jobs. Every
-    operation here is unauthenticated. The authenticated tracking surface
+    operation here answers without a key; an API plan's key only raises the rate
+    limit. Keyless use is for personal and non-commercial use — showing the
+    postings in a product you offer to others needs an API plan (see the
+    [data licence](https://freehire.me/terms#data-licence)). The authenticated tracking surface
     (saved jobs, application stages, CV tooling) is deliberately excluded — this
     schema is the integration contract for search, and is also what the freehire
     custom GPT imports as an Action.
@@ -50,8 +53,8 @@ info:
 
     ## Rate limits
 
-    These endpoints need no key, which is not the same as being free. Two
-    per-caller budgets apply, split by what a request costs to serve:
+    These endpoints need no key, which is not the same as being free. Without a
+    key, two per-address budgets apply, split by what a request costs to serve:
 
     * **600 requests per minute** across the ordinary reads — `searchJobs`,
       `getJobFacets`, `getJob`, `getSimilarJobs`, `searchCompanies`,
@@ -59,6 +62,20 @@ info:
     * **300 requests per minute** for `agentSearchJobs` alone, on its own
       budget, because it rehydrates every result's full description. Exhausting
       it does not touch the budget above.
+
+    These keyless budgets are being lowered to **120 requests per minute and
+    2,000 per day per address**, shared by all of the endpoints above. `GET
+    /plans` reports the figures in force (`api_limits`).
+
+    ### API plans
+
+    For more, send the full-access key of an account holding an
+    [API plan](https://freehire.me/pricing#api) as `Authorization: Bearer
+    fhk_…`. The budget is then per account rather than per address, shared by
+    all of its keys, with no daily cap: **1,200 requests per minute** on API,
+    **6,000** on Data. A plan also licenses the data for use in your own product
+    — see the [data licence](https://freehire.me/terms#data-licence). A key of
+    an account without a plan is limited like no key at all.
 
     Every response carries where you stand, so you never have to discover the
     ceiling by hitting it:
@@ -128,7 +145,10 @@ info:
     so it is ignored and reported.
 servers:
   - url: https://freehire.me/api/v1
-security: []
+# Every endpoint here also answers without a key; a key only selects the API plan's budget.
+security:
+  - {}
+  - bearerAuth: []
 tags:
   - name: Jobs
     description: Public job search, facets, details, and similar jobs.
@@ -913,6 +933,13 @@ paths:
         default:
           $ref: "#/components/responses/Error"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        A full-access API key (`fhk_…`) from https://freehire.me/my/api-keys. Optional:
+        it raises the rate limit to the account's API plan and changes nothing else.
   responses:
     Error:
       description: Error response.

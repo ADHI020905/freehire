@@ -59,7 +59,7 @@ type Throttler interface {
 // over loopback and would otherwise spend one shared budget for the whole site.
 func Middleware(throttler Throttler, keyFunc func(c *fiber.Ctx) string, limit int, window time.Duration) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if trustedPeer(c) {
+		if TrustedPeer(c) {
 			return c.Next()
 		}
 		return checkAndRespond(c, throttler, keyFunc(c), limit, window)
@@ -84,31 +84,61 @@ func MiddlewareIgnoringTrustedPeers(throttler Throttler, keyFunc func(c *fiber.C
 // the Throttler for one key and either continue or answer 429, identically either way. Only
 // whether the trusted-peer exemption runs FIRST differs between the two callers.
 func checkAndRespond(c *fiber.Ctx, throttler Throttler, key string, limit int, window time.Duration) error {
-	if throttler == nil {
-		return c.Next()
+	if err := Enforce(c, throttler, key, limit, window); err != nil {
+		return err
 	}
+	return c.Next()
+}
 
+// Enforce is one budget check WITHOUT continuing the chain: nil means the request may
+// proceed, a 429 error means it may not. It is for a caller that must run more than one
+// check, or choose between budgets, inside a single handler — calling another Middleware
+// from inside a handler would run c.Next() and skip whatever that caller meant to check
+// next. Fail-open, headers and the Retry-After rule are exactly Middleware's.
+//
+// It does NOT apply the trusted-peer exemption; a caller that wants it asks TrustedPeer first.
+func Enforce(c *fiber.Ctx, throttler Throttler, key string, limit int, window time.Duration) error {
+	d, ok := Check(c, throttler, key, limit, window)
+	if !ok {
+		return nil
+	}
+	return Apply(c, d, key, window)
+}
+
+// Check asks the Throttler about one key and touches nothing on the response. ok is false when
+// no decision was made — no backend, or a backend error or timeout, which is logged — and the
+// caller must then treat the request as allowed, the fail-open every limiter here shares.
+//
+// Check and Apply are Enforce in two halves, for a caller that must see several decisions
+// before choosing which one the response reports.
+func Check(c *fiber.Ctx, throttler Throttler, key string, limit int, window time.Duration) (Decision, bool) {
+	if throttler == nil {
+		return Decision{}, false
+	}
 	ctx, cancel := context.WithTimeout(c.Context(), allowTimeout)
 	defer cancel()
-
-	decision, err := throttler.Allow(ctx, key, limit, window)
+	d, err := throttler.Allow(ctx, key, limit, window)
 	if err != nil {
 		log.Printf("ratelimit: Allow error for key %q: %v (failing open)", key, err)
-		return c.Next()
+		return Decision{}, false
 	}
+	return d, true
+}
 
-	setBudgetHeaders(c, decision)
-	if decision.Allowed {
-		return c.Next()
+// Apply reports a decision on the response: its budget headers always, and when it refuses, a
+// Retry-After and the 429 to return.
+func Apply(c *fiber.Ctx, d Decision, key string, window time.Duration) error {
+	setBudgetHeaders(c, d)
+	if d.Allowed {
+		return nil
 	}
-
 	// Retry-After is whole seconds (RFC 9110 delta-seconds), rounded UP and
 	// floored at one: every way of losing the fraction tells a compliant
 	// client to retry early, into a denial it was just given. 1.7s must read
 	// as "2", and 200ms as "1", never "0".
-	c.Set("Retry-After", wholeSecondsAtLeastOne(decision.RetryAfter))
+	c.Set("Retry-After", wholeSecondsAtLeastOne(d.RetryAfter))
 	log.Printf("ratelimit: refused key %q on %s (limit %d/%v, ua=%q)",
-		key, c.Path(), limit, window, c.Get(fiber.HeaderUserAgent))
+		key, c.Path(), d.Limit, window, c.Get(fiber.HeaderUserAgent))
 	return fiber.NewError(fiber.StatusTooManyRequests, "too many requests, please try again later")
 }
 

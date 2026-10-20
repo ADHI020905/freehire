@@ -97,16 +97,18 @@ func (p *stripeProvider) reach(ctx context.Context, userID int64) (entitlement, 
 	if err != nil {
 		return entitlement{}, err
 	}
-	return entitlementFrom(sub, p.cfg.Prices, p.cfg.UltraPrices), nil
+	return entitlementFrom(sub, p.cfg), nil
 }
 
 // store writes both of Stripe's source columns in one statement — see the query's own note
 // on why not two.
 func (p *stripeProvider) store(ctx context.Context, userID int64, ent entitlement) error {
 	return p.q.SetStripeEntitlement(ctx, db.SetStripeEntitlementParams{
-		ProUntil:   nullable(ent.Pro),
-		UltraUntil: nullable(ent.Ultra),
-		ID:         userID,
+		ProUntil:     nullable(ent.Pro),
+		UltraUntil:   nullable(ent.Ultra),
+		ApiUntil:     nullable(ent.API),
+		ApiDataUntil: nullable(ent.Data),
+		ID:           userID,
 	})
 }
 

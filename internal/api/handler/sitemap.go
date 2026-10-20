@@ -82,7 +82,7 @@ func newSitemapHandlers(jobs, companies sitemapLister, freshJobs freshSitemapLis
 // A real crawler is unaffected: it fetches a sitemap chunk at a time, minutes apart, and
 // 600/min is three orders of magnitude above that.
 func (h *sitemapHandlers) register(api fiber.Router, mw middleware) {
-	readLimit := publicReadLimiter(mw.throttler)
+	readLimit := publicReadLimiter(mw.public)
 	api.Get("/jobs/sitemap", readLimit, h.JobSitemap)
 	api.Get("/jobs/sitemap/fresh", readLimit, h.FreshJobSitemap)
 	api.Get("/jobs/sitemap/boundaries", readLimit, h.JobSitemapBoundaries)

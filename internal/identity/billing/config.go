@@ -44,6 +44,12 @@ type Config struct {
 	// definition in the provider's dashboard, where nothing in this repository can test it
 	// and one mis-click silently upgrades everybody.
 	UltraPrices []string
+	// APIPrices and APIDataPrices are the price identifiers of the API product's two tiers
+	// (API and Data). A separate PRODUCT from Pro/Ultra, not a third and fourth tier of it:
+	// holding API access confers no plan, and checkout never changes a subscription of one
+	// product into the other — see Config.checkoutFamily. Unset sells no API access.
+	APIPrices     []string
+	APIDataPrices []string
 	// SiteURL is where a customer comes back to after paying or after managing their
 	// subscription. Empty disables checkout: there would be nowhere to return them to.
 	//
@@ -64,6 +70,8 @@ func ConfigFromEnv() Config {
 		WebhookSecret: strings.TrimSpace(os.Getenv("STRIPE_WEBHOOK_SECRET")),
 		Prices:        priceList(os.Getenv("STRIPE_PRICE_IDS")),
 		UltraPrices:   priceList(os.Getenv("STRIPE_ULTRA_PRICE_IDS")),
+		APIPrices:     priceList(os.Getenv("STRIPE_API_PRICE_IDS")),
+		APIDataPrices: priceList(os.Getenv("STRIPE_API_DATA_PRICE_IDS")),
 		SiteURL:       strings.TrimRight(strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN")), "/"),
 	}
 }

@@ -50,7 +50,9 @@ SELECT id, stripe_customer_id, pro_until_stripe, ultra_until_stripe
 FROM users
 WHERE stripe_customer_id IS NOT NULL
   AND ((pro_until_stripe >= $1 AND pro_until_stripe < $2)
-       OR (ultra_until_stripe >= $1 AND ultra_until_stripe < $2))
+       OR (ultra_until_stripe >= $1 AND ultra_until_stripe < $2)
+       OR (api_until_stripe >= $1 AND api_until_stripe < $2)
+       OR (api_data_until_stripe >= $1 AND api_data_until_stripe < $2))
 LIMIT $3
 `
 
@@ -85,6 +87,8 @@ type ListSubscribersNearProExpiryStripeRow struct {
 // Predicating on the Pro column alone would leave an Ultra subscriber whose renewal webhook
 // was lost outside the window forever — they hold no Pro entitlement at all, so there is
 // nothing there to fall due.
+// The API product's columns (0184) are here for the same reason: an API subscriber holds no
+// Pro or Ultra entitlement at all.
 func (q *Queries) ListSubscribersNearProExpiryStripe(ctx context.Context, arg ListSubscribersNearProExpiryStripeParams) ([]ListSubscribersNearProExpiryStripeRow, error) {
 	rows, err := q.db.Query(ctx, listSubscribersNearProExpiryStripe, arg.FromTime, arg.ToTime, arg.MaxRows)
 	if err != nil {
