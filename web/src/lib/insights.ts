@@ -41,16 +41,26 @@ export interface CoveredCategory {
   openCount: number;
 }
 
+/** Whether a category can have an /insights page at all: named by the vocabulary, and
+ *  not `other` — a real value, but not a role anybody hires for, so "Other jobs" is a
+ *  page with nothing to say. Anything else the API refuses as a scope with a 400, which
+ *  a page load turns into a 500.
+ *
+ *  An own-key check, not `in`: a URL segment is caller-chosen, and `toString` is `in`
+ *  every object. Not `Object.hasOwn` either — the lint rule bars it for Safari <15.4. */
+function isInsightsCategory(category: string): boolean {
+  return category !== 'other' && Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, category);
+}
+
 /** Derive the published category set from the global roles ranking: a category is
  *  covered when its total open-count across seniorities clears MIN_CATEGORY_OPEN.
- *  `other`, blanks, and any value the vocabulary no longer names are excluded — the
- *  ranking counts stored postings, so a retired category outlives its retirement there,
- *  and the API answers it with a 400 that a page load turns into a 500. Sorted by
- *  demand, so the hub lists the biggest categories first. */
+ *  Only an `isInsightsCategory` value counts — the ranking counts stored postings, so a
+ *  retired category outlives its retirement there. Sorted by demand, so the hub lists
+ *  the biggest categories first. */
 export function coveredCategories(roles: InsightRole[]): CoveredCategory[] {
   const totals = new Map<string, number>();
   for (const r of roles) {
-    if (r.category === 'other' || !Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, r.category)) continue;
+    if (!isInsightsCategory(r.category)) continue;
     totals.set(r.category, (totals.get(r.category) ?? 0) + r.open_count);
   }
   return [...totals.entries()]
@@ -80,13 +90,9 @@ function isSeniority(seniority: string): boolean {
  *  SvelteKit load turns into a 500, so a mistyped URL must be refused before it is
  *  asked about. And the job page links here from any posting carrying both facets,
  *  knowing nothing about how busy the role is — a coverage requirement here would send
- *  a real posting's real role to a 404.
- *
- *  `other` is excluded: it is a real vocabulary value and not a role anybody hires for,
- *  so "Other jobs" is a page with nothing to say. `coveredCategories` drops it for the
- *  same reason. */
+ *  a real posting's real role to a 404. */
 export function roleAddressExists(category: string, seniority: string): boolean {
-  return category !== 'other' && category in CATEGORY_LABELS && isSeniority(seniority);
+  return isInsightsCategory(category) && isSeniority(seniority);
 }
 
 /** Whether a role deserves its own leaf page: a real address carrying enough open

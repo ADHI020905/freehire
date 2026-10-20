@@ -167,6 +167,13 @@ describe('roleQualifies / rankedQualifyingRoles', () => {
     expect(roleAddressExists('qa', 'lead')).toBe(true);
   });
 
+  it('does not mistake an inherited object key for a category', () => {
+    // A URL segment is caller-chosen, and `toString` passed an `in` check — the API then
+    // refused it with a 400 that the page load turned into a 500.
+    expect(roleAddressExists('toString', 'senior')).toBe(false);
+    expect(roleAddressExists('constructor', 'senior')).toBe(false);
+  });
+
   it('asks about the role handed to it, not about its rank in the list', () => {
     // The gate list is capped at 200 by the endpoint while production carries ~349 roles
     // over the floor. A role absent from the ranking must still qualify on its own
