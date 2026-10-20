@@ -244,6 +244,13 @@ func TestRecognize(t *testing.T) {
 		{"hrmdirect upper-case host folds", "https://500DegreesStudio.HRMDirect.com/employment/job-opening.php?req=1", "hrmdirect", "500degreesstudio", "https://500DegreesStudio.HRMDirect.com", true},
 		{"hrmdirect apply host is the platform's, not a board", "https://apply.hrmdirect.com/resumes/click2apply.php?req=1", "", "", "", false},
 		{"hrmdirect bare apex no tenant", "https://hrmdirect.com/", "", "", "", false},
+		// ApplicantStack: the board is the tenant subdomain, folded to lower case — the same
+		// tenant is linked as both "SmartAutoCare" and "smartautocare".
+		{"applicantstack posting", "https://ozarkhealth.applicantstack.com/x/detail/a23rqqe2fctl", "applicantstack", "ozarkhealth", "https://ozarkhealth.applicantstack.com", true},
+		{"applicantstack listing", "https://ama-consult.applicantstack.com/x/openings", "applicantstack", "ama-consult", "https://ama-consult.applicantstack.com", true},
+		{"applicantstack upper-case tenant folds", "https://SmartAutoCare.applicantstack.com/x/detail/a2g5b5u0kq8i", "applicantstack", "smartautocare", "https://SmartAutoCare.applicantstack.com", true},
+		{"applicantstack marketing host is not a tenant", "https://www.applicantstack.com/job-not-found/", "", "", "", false},
+		{"applicantstack asset host is not a tenant", "https://public.applicantstack.com/userdata/gis/logo.jpg", "", "", "", false},
 		{"potok vacancy", "https://oteko.potok.io/open/jobs/1431267", "potok", "oteko", "https://oteko.potok.io", true},
 		{"potok listing", "https://domrf.potok.io/open/jobs/", "potok", "domrf", "https://domrf.potok.io", true},
 		{"potok platform host is not a tenant", "https://app.potok.io/open/jobs/1", "", "", "", false},

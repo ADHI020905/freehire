@@ -397,6 +397,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   wuzzuf: 'WUZZUF',
   hrmanager: 'HR-Manager',
   gethired: 'GetHired',
+  applicantstack: 'ApplicantStack',
 };
 
 /** Display label for a source slug (e.g. smartrecruiters → "SmartRecruiters"),

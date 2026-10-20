@@ -85,6 +85,28 @@ func TestFromURL(t *testing.T) {
 			url:      "https://golden-corral-careers.careerplug.com/jobs/1334156?utm_source=Role",
 			provider: "careerplug", board: "golden-corral-careers", ok: true,
 		},
+		// ApplicantStack: board is the tenant subdomain, lower-cased.
+		{
+			name:     "applicantstack",
+			url:      "https://mainenilesassociationofspecialrecreation.applicantstack.com/x/detail/a2pwbm9kwu0s",
+			provider: "applicantstack", board: "mainenilesassociationofspecialrecreation", ok: true,
+		},
+		{
+			name:     "applicantstack hyphenated tenant",
+			url:      "https://ama-consult.applicantstack.com/x/detail/a261jevmq30q",
+			provider: "applicantstack", board: "ama-consult", ok: true,
+		},
+		{
+			name:     "applicantstack mixed-case tenant",
+			url:      "https://SmartAutoCare.applicantstack.com/x/detail/a2g5b5u0kq8i",
+			provider: "applicantstack", board: "smartautocare", ok: true,
+		},
+		{
+			// A tenant on its own domain names no board the URL can reveal.
+			name: "applicantstack on a custom domain",
+			url:  "https://careers.millerfabricationsolutions.com/x/detail/plant-manager-pine-creek",
+			ok:   false,
+		},
 		{
 			name:     "paycom",
 			url:      "https://www.paycomonline.net/v4/ats/web.php/portal/3b4555a93baac45919556b5f901f7b83/jobs/383852?utm_source=Role",

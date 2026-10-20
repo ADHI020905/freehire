@@ -208,6 +208,9 @@ func All(c HTTPClient) map[string]Source {
 		NewCareerPlug(c),
 		NewHRMDirect(c),
 		NewAppliTrack(c),
+		// Paced per board to robots.txt's Crawl-delay (each tenant is its own host); see
+		// applicantstack.go.
+		NewApplicantStack(c),
 		NewPaycom(c),
 		NewPaycor(c),
 		NewLuxoft(c),

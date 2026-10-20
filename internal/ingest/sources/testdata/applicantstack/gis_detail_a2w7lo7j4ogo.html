@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>General Application - GIS Field Services</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+		<!---------------- jQuery ------------------------->
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/ui-lightness/jquery-ui.css" />
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="https://www2.applicantstack.com/links/jquery.multifile.js?links_version=20260730"></script>
+
+		<!---------------- Content ------------------------>
+	<script type="text/javascript" src="https://www2.applicantstack.com/links/content.js?links_version=20260730"></script>
+	<link type="text/css" rel="stylesheet" href="https://www2.applicantstack.com/links/content.css?links_version=20260730" />
+
+
+		<!---------------- Bootstrap ---------------------->
+		<script type="text/javascript" src="https://www2.applicantstack.com/links/bootstrap/all/js/bootstrap.js"></script>
+		<link rel="stylesheet" type="text/css" href="https://www2.applicantstack.com/links/bootstrap/all/css/bootstrap.css" />
+		<link rel="stylesheet" type="text/css" href="https://www2.applicantstack.com/links/bootstrap/all/css/bootstrap-theme.css" />
+
+		<!---------------- Chosen ------------------------->
+		<script type="text/javascript" src="https://www2.applicantstack.com/links/chosen/chosen.jquery.min.js" class="as_mobile_skip"></script>
+		<link rel="stylesheet" type="text/css" href="https://www2.applicantstack.com/links/chosen/chosen.css" class="as_mobile_skip" />
+
+		<style>
+			.chosen-container ul, .chosen-container ol {
+				margin: 0 !important;
+				padding-left: 0 !important;
+			}
+		</style>
+
+		<!---------------- Social ------------------------->
+		<meta property="og:url" 		content="">
+		<meta property="og:title" 		content="GIS Field Services - General Application">
+		<meta property="og:image" 		content="https://gis.applicantstack.com/userdata/gis/GIS_Logo_full-color_4color.png">
+		<meta property="og:description"	content="General Application at GIS Field Services">
+		<meta property="og:site_name" 	content="GIS Field Services - General Application">
+		<meta property="og:locale" 		content="en_US">
+
+		<!---------------- Events ------------------------->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" integrity="sha256-yMjaV542P+q1RnH6XByCPDfUFhmOafWbeLPmqKh11zo=" crossorigin="anonymous" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js" integrity="sha256-1hjUhpc44NwiNg8OwMu2QzJXhD8kcj+sJA3aCQZoUjg=" crossorigin="anonymous"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js" integrity="sha256-5YmaxAwMjIpMrVlK84Y/+NjCpKnFYa8bWWBbUHSBGfU=" crossorigin="anonymous"></script>
+
+		<!---------------- Feedback ------------------------>
+		<script type="text/javascript" src="https://www2.applicantstack.com/links/portal-star-ratings_20180728.js?links_version=20260730"></script>
+
+		<!---------------- Custom Fonts ------------------>
+		<script src="https://use.fontawesome.com/1b720e7dea.js"></script> 		<!-- font awesome 4 -->
+		<script src="https://kit.fontawesome.com/c7a7660fe9.js"></script>		<!-- font awesome 5 -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+
+		<style>
+
+			@font-face {
+				font-family: 'Helvetica-Light';
+				src: url('https://gis.applicantstack.com/userdata/gis/HelveticaLTStd-Light.eot');
+				src: url('https://gis.applicantstack.com/userdata/gis/HelveticaLTStd-Light.eot?#iefix') format('embedded-opentype'),
+					 url('https://gis.applicantstack.com/userdata/gis/HelveticaLTStd-Light.svg#HelveticaLTStd-Light') format('svg'),
+					 url('https://gis.applicantstack.com/userdata/gis/HelveticaLTStd-Light.ttf') format('truetype'),
+					 url('https://gis.applicantstack.com/userdata/gis/HelveticaLTStd-Light.woff') format('woff'),
+					 url('https://gis.applicantstack.com/userdata/gis/HelveticaLTStd-Light.woff2') format('woff2');
+				font-weight: normal;
+				font-style: normal;
+			}
+
+			@font-face {
+				font-family: 'Avenir-Light';
+				src: url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Light.eot');
+				src: url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Light.eot?#iefix') format('embedded-opentype'),
+					 url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Light.svg#AvenirLTStd-Light') format('svg'),
+					 url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Light.ttf') format('truetype'),
+					 url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Light.woff') format('woff'),
+				     url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Light.woff2') format('woff2');
+				font-weight: normal;
+				font-style: normal;
+			}
+
+			@font-face {
+				font-family: 'Avenir-Heavy';
+				src: url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Heavy.eot');
+				src: url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Heavy.eot?#iefix') format('embedded-opentype'),
+					 url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Heavy.svg#AvenirLTStd-Heavy') format('svg'),
+					 url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Heavy.ttf') format('truetype'),
+					 url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Heavy.woff') format('woff'),
+				     url('https://gis.applicantstack.com/userdata/gis/AvenirLTStd-Heavy.woff2') format('woff2');
+				font-weight: normal;
+				font-style: normal;
+			}
+		</style>
+
+		 
+		<!---------------- mmenu ------------------------->
+		<link type="text/css" href="https://www2.applicantstack.com/userdata/johntesttwo/jquery.mmenu.all.css" rel="stylesheet" />
+		<script type="text/javascript" src="https://www2.applicantstack.com/userdata/johntesttwo/jquery.mmenu.all.js"></script>
+		<script type="text/javascript">
+			jQuery(document).ready(function ($) {
+				$("#menu").mmenu({
+					"extensions": ["pagedim-black"],
+					navbar: {
+						title: "GIS Field Services"
+					},
+					offCanvas: {
+						position: "right",
+					}
+				});
+			});
+		</script>
+
+		<!---------------- Main --------------------------->
+		<style>
+			* {
+				-webkit-box-sizing: border-box;
+				-moz-box-sizing: border-box;
+				box-sizing: border-box;
+			}
+
+			html {
+				-ms-text-size-adjust: 100%;
+				-webkit-text-size-adjust: 100%;
+				-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+				overflow-y: scroll;
+			}
+
+			#customjbs a img {
+				border: none;
+			}
+
+			#customjbs #outside {
+				text-align: left;
+				position: relative;
+			}
+
+			#customjbs .page {
+				background: #fff;
+			}
+
+			body, html {
+				padding: 0;
+				margin: 0;
+				color:#3b3a3a;
+				font-size:15px;
+				line-height:24px;
+				font-family: 'Helvetica-Light';
+			}
+
+			header {
+				display: flex;
+				justify-content: center;
+			}
+					
+			.top-1 {
+				height: 132.6px;
+				width: 100%;
+				max-width: 1200px;
+				padding: 0px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+			}	
+
+			.top-1-left {
+				height: 100%;
+				width: 30%;
+                display: flex;
+                align-items: center;
+			}
+
+			.logo {
+				width: 120px;
+				margin: 0;
+			}
+
+			.top-1-left-heading {
+				letter-spacing: 1.15px;
+				color: #1e2d3b;
+				font-size: 23px;
+				font-weight: 400;
+				line-height: 23px;
+				padding: 0;
+				margin: 2px 0 0 0;
+				font-family: 'Avenir-Heavy';
+			}
+
+			.top-1-left-subheading {
+				letter-spacing:1.15px;
+				color:#1e2d3b;
+				font-size:23px;
+				font-weight:300;
+				line-height:23px;
+				padding:0;
+				margin:0;
+				font-family: 'Avenir-Light';
+			}
+
+			.top-1-left a {
+				text-decoration: none;
+			}
+
+			#asmyaccount {
+				padding: 20px 0 0 0;
+			}
+
+			#customjbs #contentouter {
+				background: #fff;
+				max-width: 950px;
+				margin:0 auto;
+				padding:40px 10px 0;			
+			}
+
+			#customjbs #asbreadcrumbs a {
+				font-family: inherit;
+				color:#ff9900;
+				text-decoration: underline!important;
+			}
+
+			#customjbs #ascontainer { /*includes opening instructions*/
+				height: 100%;
+				margin: 0;
+				background:#fff;
+			}
+
+				#customjbs #ascontainer a {
+					color: rgb(0, 10, 40);
+					text-decoration: none;
+				}
+
+					#customjbs #ascontainer a:hover {
+						text-decoration: underline;
+					}
+
+			#customjbs #ascontent {
+				font-family: inherit;
+				color: inherit;
+				font-weight: inherit;
+				font-size: inherit;
+				line-height: inherit;
+				padding: 0 0 0 0;
+				margin: 0;
+			}
+
+				#customjbs #ascontent a {
+					color: rgb(0, 10, 40);
+					text-decoration: none;
+				}
+
+					#customjbs #ascontent a:hover {
+						text-decoration: underline;
+					}
+
+			#customjbs .openings_instructions {
+				margin: 0;
+			}
+
+			footer {
+				padding: 0px 30px 80px;
+				background-repeat: no-repeat;
+				background-position:right;
+                border-top: 1px solid rgb(185, 185, 185);
+                margin-top: 20px;
+				display: flex;
+				justify-content: center;
+			}
+
+            .footer-logo {
+                width: 120px;
+                background-image: url(https://gis.applicantstack.com/userdata/gis/GIS_Logo_full-color_4color.png);
+                margin-bottom: 20px;
+                margin-top: 40px;
+            }
+
+            .bottom-0 {
+                display: flex;
+                margin-bottom: 30px;
+            }
+
+            .bottom-0-left {
+                width: 28.3%;
+                display: flex;
+                flex-direction: column;
+                align-items: start;
+                border-right: 1px solid rgb(185, 185, 185);
+            }
+
+            .bottom-0-right {
+                padding-top: 60px;
+                width: 75%;
+                display: flex;
+            }
+
+            .bottom-0-right h4 {
+                font-family: "Nunito Sans", sans-serif;
+                font-size: 15px;
+                line-height: 22.5px;
+                font-weight: 700;
+                color: #033D63;
+                margin: 0;
+                margin-bottom: 15px;
+            }
+
+            .bottom-0-column-1 p, .bottom-0-column-2 p {
+                font-family: "Nunito Sans", sans-serif;
+                font-size: 15px;
+                line-height: 22.5px;
+                font-weight: 400;
+                color: #373B46;
+                margin: 0;
+            }
+
+            .bottom-0-column-1 a, .bottom-0-column-2 a {
+                font-family: "Nunito Sans", sans-serif;
+                font-size: 15px;
+                line-height: 22.5px;
+                font-weight: 700;
+                color: #373B46;
+                margin: 0;
+                text-decoration: none;
+            }
+
+            .bottom-0-column-1 a:hover, .bottom-0-column-2 a:hover {
+                color: #B5121B;
+            }
+
+            .bottom-0-column-1 {
+                padding-left: 40px;
+                width: 23.75vw;
+            }
+
+            .bottom-0-column-2 {
+                padding-left: 80px;
+                width: 23.75vw;
+            }
+
+            .bottom-0-column-3 {
+                display: flex;
+                flex-direction: column;
+                padding-left: 50px;
+				width: 13vw;
+            }
+
+            .bottom-0-column-3 a {
+                font-family: "Nunito Sans", sans-serif;
+                font-size: 15px;
+                line-height: 22.5px;
+                font-weight: 400;
+                color: #373B46;
+                margin: 0;
+                text-decoration: none;
+                margin-bottom: 10px;
+            }
+
+            .bottom-0-column-3 a:hover {
+                color: #B5121B;
+            }
+
+            .bottom-1 {
+                display: flex;
+                justify-content: center;
+            }
+
+            .bottom-1 p {
+                width: 40%;
+                text-align: center;
+                margin: 0;
+                display: flex;
+                align-items: end;
+                justify-content: center;
+
+                font-family: "Nunito Sans", sans-serif;
+                font-size: 15px;
+                line-height: 22.5px;
+                font-weight: 400;
+                color: #373B46;
+            }
+
+            .socials a {
+                text-decoration: none;
+            }
+
+            .socials {
+                display: flex;
+            }
+
+            .bottom-1 i {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 5px;
+                font-size: 22px;
+            }
+
+
+
+			#footer-wrapper {
+				width: 100%;
+				max-width: 1200px;
+				padding: 0px 40px;
+				display: flex;
+				flex-direction: column;
+			}
+
+            .fa-facebook {
+                background-color: #1778f2 !important;
+            }
+
+            .fa-linkedin {
+                background-color: #0d66c2 !important;
+            }
+			
+		</style>
+
+		<!---------------- Form Elements ------------------>
+		<style>
+			/*******main openings table*******/
+			#customjbs .displaytable {
+				margin: 12px 0 6px 0;
+				padding: 10px;
+				background:#f6f6f6;
+			}
+
+				#customjbs .displaytable th {
+					background: rgb(0, 10, 40);
+					color: #eee !important;
+					border-radius: 0;
+					border: none;
+					cursor: pointer;
+					font-size:inherit;
+					font-weight:400;
+					line-height:inherit;
+					text-align: left;
+					font-family: "Nunito Sans", sans-serif;
+				}
+
+				#customjbs .displaytable tr:nth-child(even) {
+					background-color: #f9f9f9;
+				}
+
+				#customjbs .displaytable td {
+					padding: 6px;
+					text-align: left;
+					font-weight: normal;
+				}
+
+				#customjbs .displaytable a {
+					color: #0063a7;
+					text-decoration: none;
+				}
+
+			/*other tables and titles*/
+			#customjbs .formtable div.sectionhead,
+			#customjbs .sectionhead,
+			#customjbs .infobox,
+			#customjbs .title,
+			#customjbs .qtable_h1 {
+					border-radius: 0;
+					border: none;
+					cursor: pointer;
+					font-size:inherit;
+					line-height:inherit;
+					text-align: left;
+					background: rgb(0, 10, 40);
+					color: #eee !important;
+					font-family: "Nunito Sans", sans-serif;
+			}
+
+			/*******branding*******/
+			#customjbs #asbranding {
+				text-align: right;
+				display: block;
+				padding: 40px 0;
+				margin-top: 0px;
+			}
+
+				#customjbs #asbranding img {
+					border: 0;
+				}
+
+			/*******breadcrumbs*******/
+			#customjbs #asbreadcrumbs {
+				margin: 0;
+				line-height: 1.5em!important;
+			}
+
+				#customjbs #asbreadcrumbs a {
+					margin: 12px 0 6px 0;
+					padding: 5px 0px;
+					border: 0;
+					text-decoration: none;
+					font-weight: normal;
+				}
+
+					#customjbs #asbreadcrumbs a:hover {
+						text-decoration: inherit;
+					}
+
+			/*******titles*******/
+			#customjbs #contenttitle {
+				color: #1e2d3b;
+				/* font-size:48px; */
+				font-size:55px;
+				/* line-height:48px; */
+				line-height: 55px;
+				margin: 10px 0 20px;
+				font-weight: 400;
+				font-family: "Nunito Sans", sans-serif;
+				text-align: left;
+			}
+
+			/*******buttons*******/
+			#customjbs .buttons a,
+			#customjbs .buttons button {
+				font-family: inherit!important;
+				line-height: inherit!important;
+				font-size: inherit;
+				font-weight: 700;
+				box-shadow: none;
+				color: #1E2D3B!important;
+				cursor: pointer;
+				text-align: center;
+				text-decoration: none!important;
+				white-space: nowrap;
+    			padding: 15px;
+				border: 0;
+				background: #c0d2e5;
+			    border-radius: 0;
+				margin:0; 
+margin-right: 0.5em
+			}
+
+				#customjbs .buttons button:hover,
+				#customjbs .buttons a:hover {
+					color: #fff!important;
+					background: rgb(0, 10, 40);
+				}
+
+			/*******pagination*******/
+			#customjbs .tablepager {
+				font-size: smaller;
+				font-style: italic;
+				text-align: right;
+			}
+
+			/*******error messages*******/
+			#customjbs .errormsg {
+				background-color: transparent;
+				padding: 4px 8px;
+				margin-bottom: 10px;
+				text-align: center;
+				font-weight: bold;
+				color: red;
+			}
+
+				#customjbs .errormsg li {
+					padding-bottom: 3px;
+					color: black;
+					font-weight: normal;
+				}
+
+		</style>
+
+		<!---------------- Navigation --------------------->
+		<style>
+			/*first we hide the hamburger menu*/
+			#customjbs .onmobile {
+				display: none;
+			}
+
+				#customjbs #main-menu-toggle {
+					font-size: 14.4px;
+					font-weight: 900;
+					line-height: 21.6px;
+					text-decoration: none;
+					z-index: 999;
+					transition: all .2s ease-in-out;
+					padding: 0;
+					line-height: 70px;
+					font-weight: 500;
+				}
+
+			/*then place the container*/
+			#customjbs #desktop-menu {
+				padding: 0px 0px 0 0;
+				margin: 0;
+			}
+
+				/*hide the dropdowns by default*/
+				#customjbs #desktop-menu ul ul {
+					display: none;
+				}
+
+				/*but display the dropdowns on hover*/
+				#customjbs #desktop-menu ul li:hover > ul {
+					display: block;
+				}
+
+				/*top level styling*/
+				#customjbs #desktop-menu ul {
+					padding: 0;
+					margin: 0;
+					list-style: none;
+					display: block;
+				}
+
+					#customjbs #desktop-menu ul:after {
+						content: "";
+						clear: both;
+						display: block;
+					}
+
+					/*styling of top level list items*/
+					#customjbs #desktop-menu ul li {
+						position: relative;
+						list-style: none;
+						text-align: left;
+						padding: 0 0 0 0;
+						margin: 0;
+						float: left;
+                        margin: 0px 16px;
+					}
+
+						/*styling of top level list items on hover*/
+						#customjbs #desktop-menu ul li:hover {
+						}
+
+						/*styling of normal top level links*/
+						#customjbs #desktop-menu ul li a {
+							font-family: "Nunito Sans", sans-serif;
+                            font-size: 15px;
+                            line-height: 85px;
+                            font-weight: 600;
+                            color: #727272;
+                            text-decoration: none;
+                            text-transform: uppercase;
+						}
+
+						/*and then styling of normal top level link on hover*/
+						#customjbs #desktop-menu ul li:hover > a {
+							color:#033D63;
+						}
+
+					/*okay, on to the dropdowns*/
+
+					/*styling of first level dropdown*/
+					#customjbs #desktop-menu ul ul {
+						height: auto;
+						left: 0px;
+						position: absolute;
+						top: 63px;
+						transition: opacity 0.5s cubic-bezier(0.65,0.05,0.36,1),visibility 0.5s cubic-bezier(0.65,0.05,0.36,1);
+						z-index: 10000;
+						min-width: 220px;
+						text-align: left;
+						border-radius: 0;
+						padding: 20px 0;
+						box-shadow: 0 0 6px rgba(0,0,0,0.5);
+						background: #fff;
+						width: 240px;
+						border-top: 3px solid #7c7c7c;
+						box-shadow: 0 2px 5px rgba(0,0,0,.1);
+					}
+
+						/*and styling of the list items for first level dropdown */
+						#customjbs #desktop-menu ul ul li {
+							margin: 0;
+							float: none;
+							background: none;
+							display: block;
+							padding: 0;
+							height: auto;
+							padding: 0 20px;
+							text-align: left;
+							vertical-align: top;
+							width: auto;
+						}
+
+							/*... how they display on hover*/
+							#customjbs #desktop-menu ul ul li:hover {
+							}
+
+							/*the first level of drop down links*/
+							#customjbs #desktop-menu ul ul li a {
+								background: none;
+								display: block;
+								text-decoration: none;
+								letter-spacing: 0;
+								font-weight:600;
+								color: #FFFFFF;
+								padding: 0 10px;
+								font-family: 'Open Sans', sans-serif;
+								font-size:14px;
+							    line-height: 36px;
+								text-align: center;
+								}
+
+								/*... how they display on hover*/
+								#customjbs #desktop-menu ul ul li a:hover {
+									/* opacity: .7; */
+									background-color: rgba(0,0,0,.03);
+								}
+
+		</style>
+
+		<!---------------- Off Canvas Menu ---------------->
+		<style>
+			.mm-listview {
+				z-index: 99;
+			}
+
+			/* list item dividers */
+			.mm-menu .mm-listview, .mm-navbar {
+				border-color: #fff;
+			}
+
+			.mm-menu .mm-listview > li .mm-next:after, .mm-menu .mm-btn:after, .mm-menu .mm-btn:before {
+				border-color: #1e2d3b !important;
+			}
+
+			.mm-menu .mm-listview > li .mm-next:after, .mm-menu .mm-btn:after, .mm-menu .mm-btn:before {
+				color: #1e2d3b !important;
+				border-color: #1e2d3b !important;
+			}
+
+			/* main background */
+			.mm-panels, .mm-panels > .mm-panel {
+				background-color: #fff;
+				/*background: url(https://www2.applicantstack.com/userdata/hawkeye360/footer_bg.jpg);*/
+			}
+
+			/* main link text color */
+			.mm-listview > li > a, .mm-listview > li > span {
+				font-weight: normal;
+				color: #1e2d3b !important;
+				text-decoration: none;
+			}
+
+			/* Header text  */
+			.mm-menu .mm-navbar a, .mm-menu .mm-navbar > * {
+				color: rgb(0, 10, 40);
+				font-size: large;
+			}
+		</style>
+
+		<!---------------- Filters ------------------------>
+		<style>
+			.filter_header {
+				color: #3d5975;
+				font-family: inherit;
+				font-size: larger;
+				line-height: larger;
+				margin-bottom: 0;
+				font-weight:600;
+			}
+
+			.job_filter, .filter_button {
+				height: 65px!important;
+				margin-top: 0.25em !important;
+			}
+
+			#customjbs #filters_wrapper {
+				background: #f7f7f7!important;
+				padding: 20px 10px !important;
+				margin: 20px 0;
+				border-radius: 0;
+				border: none;
+		}
+
+			#filters_wrapper input, #filters_wrapper select, #filters_wrapper .chosen-choices .default {
+				line-height: 1em;
+				border-radius: 0!important;
+			}
+
+			.filter_button {
+				padding-top: 30px !important;
+			}
+
+			#filters_wrapper input, #filters_wrapper select, #filters_wrapper .chosen-choices .default {
+				line-height: 1em;
+				border-radius: 0!important;
+				background: white;
+			}
+
+
+		</style>
+
+		<!---------------- Extras  ------------------------>
+		<style>
+
+			.fa-angle-down {
+				vertical-align: middle;
+			}
+
+			.qtable_h1 {
+				font-weight: normal;
+			}
+
+			.fa-facebook, .fa-linkedin {
+				font-family: "Font Awesome 5 Brands";
+				font-weight: 400;
+				font-size: 14px;
+				background: black;
+				height: 30px;
+				color: #fff;
+				line-height: 30px;
+				text-align: center;
+				border-radius: 50px;
+				width: 30px;
+			}
+
+		</style>
+
+
+		<!---------------- Breakpoints -------------------->
+		<style>
+
+		/* 	For Reference
+
+			42mm		Apple Watch
+			218px 		Moto 360 Watch
+			360px 		Galaxy S3, Galaxy S4, S5, S6 and Note 3, Google Pixel,Google Pixel XL,HTC One
+			480px		Windows Phone, iPhone 4 and 4S
+			568px		iPhone 5, 5S, 5C and 5SE
+			601px		Nexus 7
+			667px		iPhone 6, 6S, 7 and 8
+			736px		iPhone 6+, 7+ and 8+
+			800px		Kindle Fire HD 7"
+			812px		iPhone X
+			1024px		iPad 1, 2, Mini and Air, iPad 3, 4 and Pro 9.7"
+			1112px		iPad Pro 10.5"
+			1366px		iPad Pro 12.9"
+			1280px		Galaxy Tab 2
+			1280px		Galaxy Tab S
+			1200px		Kindle Fire HD 8.9"
+			1536px		Nexus 9
+
+		*/
+
+			@media all and (max-width : 1000px) {
+				#customjbs #main-menu-toggle {
+					color: #656565;
+					text-decoration: none;
+					z-index: 999;
+					transition: all .2s ease-in-out;
+					display: inline-block;
+					font-weight: 400;
+					vertical-align: top;
+					line-height: 85px;
+					font-size: 18px;
+				}		
+
+				#desktop-menu {
+					display: none;
+				}
+
+				.top-1 {
+					padding: 0px 50px;
+				}
+
+				
+
+				
+
+				
+
+			}
+
+			@media all and (max-width : 750px) {
+				.bottom-0 {
+					flex-direction: column;
+				}
+
+				.logo {
+					width: 84.62px;
+					height: 65px;
+				}
+				
+				footer {
+					padding-left: 0;
+				}
+				
+
+				.bottom-0-left {
+					border: none;
+					padding: 0;
+					margin-left: 30px;
+				}
+
+				.bottom-0-column-1 {
+					width: 100%;
+					margin-bottom: 75px;
+					padding: 0;
+				}
+
+				
+
+				
+
+				.bottom-0-column-2 {
+					width: 100%;
+					margin-bottom: 75px;
+					padding-left: 40px;
+				}
+
+				.bottom-0-column-3 {
+					width: 100%;
+					padding-left: 60px;
+				}
+
+				.bottom-0-right {
+					flex-direction: column;
+					width: 100%;
+				}
+
+				.bottom-1 {
+					flex-direction: column;
+					align-items: center;
+					justify-content: space-between;
+					height: 200px;
+				}
+			}
+
+			@media all and (max-width : 785px) {
+			}
+
+			@media all and (max-width : 785px) {
+			}
+
+			@media all and (max-width : 550px) {
+			}
+
+
+		</style>
+
+		<!---------------- Print Style Sheet -------------->
+		<style type="text/css" media="print">
+			#contentouter {
+				border: 0;
+			}
+
+			#outside {
+				border: 0;
+			}
+
+			body {
+				background-color: white;
+			}
+		</style>
+	<style>
+		#asbreadcrumbs {
+			min-height: 16px;
+		}
+		.openings_instructions, .search_results_instructions {
+			margin: 20px 0;
+		}
+		.filter_button {
+			margin-top: 20px !important;
+			padding-top: 10px !important;
+		}
+		.toggle_mobile_filters {
+			display: none;
+		}
+		.displaytable td {
+			background-color: transparent;
+		}
+		.displaytable tr {
+			background-color: #fff;
+		}
+        #filters_wrapper input, #filters_wrapper select, #filters_wrapper .chosen-choices .default {
+	     	padding: 5px !important;
+    		width: 95% !important;
+    		border-radius: 4px !important;
+	    	border: 1px solid #e8e8e8 !important;
+    		line-height: normal;
+			background: #FFF;
+        }
+		#customjbs #filters_wrapper {
+			padding: 20px;
+		}	
+		#filters_wrapper {
+			background-color: #f0f1f2 !important;
+		}		
+	</style>
+
+<!-- SC-14341 Datepicker fixes Begin -->
+<style>
+
+.form-control {
+	border: 1px solid #767676;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+        font-size: inherit;
+        border-radius: 2px;
+        color: #303030;
+}
+
+.form-control:focus {
+	border:2px solid #101010;
+	outline: 0;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+.ui-datepicker .ui-datepicker-title select {
+	color: #666;
+}
+.ui-datepicker {
+	background: #f0f0f0;
+	border: 1px solid #ccc;
+	font-family: Arial, sans-serif;
+}
+
+/* Header styling */
+.ui-datepicker-header {
+	background: rgb(0, 10, 40); /* replace with sectionhead background_color */
+	color: #fff;
+	padding: 10px;
+}
+
+/* Day cells styling */
+.ui-datepicker td {
+	padding: 1px;
+	text-align: center;
+}
+.ui-widget-header {
+	border: none;
+}
+.ui-state-default, .ui-widget-content .ui-state-default {
+	border: none;
+	background: none;
+	font-weight: bold;
+	color: #1c94c4;
+}
+.ui-state-active {
+	border:1px solid #1c94c4 !important;
+	background-color:#fff !important;
+}
+/* Highlight today's date */
+.ui-datepicker .ui-datepicker-today a { 
+	background: #E0E0E0;
+	color: #000;
+}
+
+/* Hover effect on days */
+.ui-datepicker-calendar .ui-state-hover {
+	cursor: pointer;
+}
+.ui-datepicker .ui-datepicker-prev-hover,
+.ui-datepicker .ui-datepicker-next-hover {
+	border: 1px solid transparent;
+	background: transparent;
+	font-weight: bold;
+	color: #e0556b;	
+}
+
+.ui-state-hover .ui-icon {
+    background-image: url("https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/ui-lightness/images/ui-icons_ffffff_256x240.png");
+}
+
+</style>
+<!-- SC-14341 Datepicker fixes End -->
+	<link rel="stylesheet" type="text/css" href="/links/bs5-compat.css?v=1791306329?links_version=20260730" />
+<link href="/links/openings.css" rel="stylesheet" type="text/css" /><script src="/links/openings.js" type="text/javascript"></script>
+</head>
+	<body id="customjbs">
+		<div id="wrapper">
+			<div id="outside">
+				<div class="page">
+
+					<header>
+						<div class="top-1">
+							<div class="top-1-left">
+								<a href="https://www.gisfieldservices.com/"><img class="logo" src="https://gis.applicantstack.com/userdata/gis/GIS_Logo_full-color_4color.png"></a>
+							</div>
+							<a href="#menu" class="onmobile" id="main-menu-toggle">&#9776;</a>
+							<nav id="desktop-menu">
+								<ul>
+									<li><a href="https://www.gisfieldservices.com/about-us/">About Us</a></li>
+                                    <li><a href="https://www.gisfieldservices.com/blog/">Blog</a></li>
+									<li><a href="https://gis.applicantstack.com/x/openings">Jobs</a></li>
+									<li><a href="https://www.gisfieldservices.com/contact-us/">Contact</a></li>
+								</ul>
+							</nav>
+						</div>
+					</header>
+
+					<main id="contentouter">
+						<div id="ascontainer">
+							<div id="ascontent">
+								<div id="asbreadcrumbs"></div>
+								<script>
+	// Load jQuery if not defined or less than version 1.9.1 (required by bootstrap)
+	var jquery_is_loaded = true;
+	if (typeof jQuery === 'undefined') {
+		jquery_is_loaded = false;
+	}
+	else{
+		var jquery_version = jQuery.fn.jquery.split(' ')[0].split('.');
+		if ((jquery_version[0] < 2 && jquery_version[1] < 9) || (jquery_version[0] == 1 && jquery_version[1] == 9 && jquery_version[2] < 1)) {
+			jquery_is_loaded = false;
+		}
+	}
+	if(!jquery_is_loaded){
+		load_script('https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js');
+	}
+	
+	// Load bootstrap if not loaded
+	if (typeof bootstrap === 'undefined'){
+		load_script('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js');
+		load_link('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
+		load_link('/links/bs5-compat.css');
+	}
+	
+	function load_script(src){
+		var h = document.getElementsByTagName('head')[0];
+		var e = document.createElement('script');
+		e.src = src;
+		h.appendChild(e);
+	}
+	function load_link(href){
+		var h = document.getElementsByTagName('head')[0];
+		var e = document.createElement('link');
+		e.rel = 'stylesheet';
+		e.type = 'text/css';
+		e.href = href;
+		h.appendChild(e);
+	}
+</script><style>
+.ext-stacked-radios .inputradio-wrap{display:block;margin-bottom:4px;max-width:100%;box-sizing:border-box;white-space:normal!important;}
+.ext-stacked-radios input.inputradio{display:inline-block;}
+.ext-stacked-radios input[type="date"]{display:block !important;clear:both;}
+.ext-stacked-radios .mc-options-wrap{display:flex;flex-wrap:wrap;gap:6px 16px;max-width:100%;align-items:flex-start;}
+.ext-stacked-radios .mc-options-wrap>.inputradio-wrap{display:inline-block;margin-bottom:0;}
+</style><div class="ext-stacked-radios"><div id="asmyaccount" style="float:right; text-align:right; white-space: nowrap"><a href="https://gis.applicantstack.com/x/myaccount">My Account</a></div><script type="application/ld+json">
+{"@context":"http:\/\/schema.org\/","@type":"JobPosting","datePosted":"2024-02-21T07:44:21-06:00","description":"<p><span style=\"font-size:18px;\"><u><strong>Mortgage Field Inspector (1099&nbsp;Independent&nbsp;Contractor)<\/strong><\/u><\/span><\/p>\n\n<p>Flexible Schedule | Part-Time or Full-Time | Weekly Pay&nbsp;<\/p>\n\n<p>GIS Field Services, Inc. has been in the mortgage field inspection industry for over 20 years and is&nbsp;based out of&nbsp;Dallas, TX. Please visit our website to learn more about us and the industry.<span style=\"color:#2980b9;\">&nbsp;<\/span><a href=\"http:\/\/www.gisfieldservices.com\/\" target=\"_blank\" rel=\"noreferrer noopener\"><span style=\"color:#2980b9;\">www.gisfieldservices.com<\/span><\/a><span style=\"color:#2980b9;\">.<\/span>&nbsp;&nbsp;<\/p>\n\n<p>We are&nbsp;seeking&nbsp;reliable and detail-oriented&nbsp;Independent Mortgage Field Inspectors&nbsp;to perform property inspections on behalf of mortgage companies. No licensing or certifications are&nbsp;required, and prior experience is a plus\u2014but not necessary.&nbsp;<\/p>\n\n<p>This is&nbsp;a great opportunity&nbsp;for self-motivated individuals who enjoy working independently, traveling locally, and managing their own schedule.&nbsp;Inspections may include exterior occupancy checks, and occasional interior vacant or damage inspections.<\/p>\n\n<p><img alt=\"Shape\" src=\"data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC\" \/>&nbsp;<\/p>\n\n<table align=\"center\" border=\"2\" cellpadding=\"8\" cellspacing=\"1\" dir=\"ltr\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td><strong>&nbsp;Job Title:<\/strong><\/td>\n\t\t\t<td>Mortgage Occupancy Field Inspector<\/td>\n\t\t<\/tr>\n\t\t<tr>\n\t\t\t<td><strong>&nbsp;County&nbsp;Coverage:&nbsp;<\/strong><\/td>\n\t\t\t<td>General Application<\/td>\n\t\t<\/tr>\n\t<\/tbody>\n<\/table>\n\n<p><br \/>\n<span style=\"font-size:16px;\"><strong>Your role as a Mortgage Field Inspector&nbsp;<\/strong><\/span><\/p>\n\n<p>Conduct property inspections for existing mortgage&nbsp;loans&nbsp;<\/p>\n\n<p>Determine&nbsp;occupancy status (occupied or vacant)&nbsp;<br \/>\nPhotograph and document property condition&nbsp;<\/p>\n\n<p>Deliver door notices and verify utility&nbsp;status&nbsp;<\/p>\n\n<p>Complete reports using a mobile app (InspectorADE)&nbsp;<\/p>\n\n<p>Communicate regularly with the&nbsp;Inspection&nbsp;Relations&nbsp;Coordinator&nbsp;<\/p>\n\n<p><img alt=\"Shape\" src=\"data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC\" \/>&nbsp;<\/p>\n\n<p><span style=\"font-size:16px;\"><strong>What We Offer&nbsp;<\/strong><\/span><\/p>\n\n<p>Flexible schedule \u2014 work during daylight hours&nbsp;<\/p>\n\n<p>Part-time or full-time based on your availability&nbsp;and&nbsp;territory F<br \/>\nlat rate per inspection (earning potential typically $20+\/hour depending on volume)&nbsp;<br \/>\nWeekly pay via direct deposit&nbsp;<\/p>\n\n<p>Work independently in your assigned&nbsp;territory&nbsp;<\/p>\n\n<p><img alt=\"Shape\" src=\"data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC\" \/><\/p>\n\n<p><span style=\"font-size:16px;\"><strong>Requirements for the role&nbsp;<\/strong><\/span><\/p>\n\n<p>Valid&nbsp;driver\u2019s&nbsp;license&nbsp;<\/p>\n\n<p>Reliable vehicle&nbsp;covered by auto insurance to travel&nbsp;within your&nbsp;territory.&nbsp;<\/p>\n\n<p>Smartphone (iPhone or Android)&nbsp;<\/p>\n\n<p>Computer with internet access&nbsp;<\/p>\n\n<p>Printer and basic office supplies&nbsp;<\/p>\n\n<p>Ability to obtain a Shield ID (Aspen Grove ABC#)&nbsp;If onboarding&nbsp;with GIS, we will provide&nbsp;you with&nbsp;the link to obtain your Shield ID&nbsp;<\/p>\n\n<p>HUD\/Inspector&nbsp;keys&nbsp;(set of 11)&nbsp;If onboarded with GIS, we will provide a link with a discount code to obtain your HUD\/Inspector&nbsp;Keys&nbsp;<\/p>\n\n<p>Volt&nbsp;stick&nbsp;<\/p>\n\n<p>Strong time management,&nbsp;attention to detail, and communication skills&nbsp;<\/p>\n\n<p><img alt=\"Shape\" src=\"data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC\" \/>&nbsp;<\/p>\n\n<p><span style=\"font-size:16px;\"><strong>Important Details&nbsp;<\/strong><\/span><\/p>\n\n<p>This is a&nbsp;1099 independent contractor&nbsp;position.&nbsp;<\/p>\n\n<p>No mileage or expense reimbursement&nbsp;<\/p>\n\n<p>Earnings depend on your availability, territory, and&nbsp;workload.&nbsp;<\/p>\n\n<p>Must be comfortable inspecting occupied, vacant, and rural&nbsp;properties.&nbsp;<\/p>\n","hiringOrganization":{"@type":"Organization","name":"GIS Field Services","logo":"http:\/\/public.applicantstack.com\/userdata\/gis\/jobboard_google_Logo_-_Email_Signature.jpg"},"identifier":{"@type":"PropertyValue","name":"GIS Field Services","value":"a2w7lo7j4ogo"},"jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressCountry":null}},"title":null}
+</script><div id="asbreadcrumbs"><a href="https://gis.applicantstack.com/x/openings">Job Openings</a> &gt;&gt; General Application</div><div id="contenttitle" style="clear:both">General Application</div><div class="sectionhead">Summary</div><table class="formtable"><tr><th>Title:</th><td class="noinput">General Application</td></tr><tr><th>ID:</th><td class="noinput">General Application</td></tr><tr><th>Campaign Start Date:</th><td class="noinput">09/04/2020</td></tr><tr><th>State:</th><td class="noinput">N/A</td></tr><tr><th>Job Type:</th><td class="noinput">N/A</td></tr><tr><th>County - Territory:</th><td class="noinput">General Application</td></tr></table><div class="toggle_detail"><a href="javascript:void(0)">More about this job ></a></div><div class="sectionhead description_head">Description</div><div class="listing_description"><p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{111}" paraid="2027698566"><span style="font-size:18px;"><u><strong>Mortgage Field Inspector (1099&nbsp;Independent&nbsp;Contractor)</strong></u></span></p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{123}" paraid="865578997">Flexible Schedule | Part-Time or Full-Time | Weekly Pay&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{129}" paraid="1893054926">GIS Field Services, Inc. has been in the mortgage field inspection industry for over 20 years and is&nbsp;based out of&nbsp;Dallas, TX. Please visit our website to learn more about us and the industry.<span style="color:#2980b9;">&nbsp;</span><span style="color:#2980b9;">www.gisfieldservices.com</span><span style="color:#2980b9;">.</span>&nbsp;&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{151}" paraid="1564877208">We are&nbsp;seeking&nbsp;reliable and detail-oriented&nbsp;Independent Mortgage Field Inspectors&nbsp;to perform property inspections on behalf of mortgage companies. No licensing or certifications are&nbsp;required, and prior experience is a plus&mdash;but not necessary.&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{173}" paraid="1719905029">This is&nbsp;a great opportunity&nbsp;for self-motivated individuals who enjoy working independently, traveling locally, and managing their own schedule.&nbsp;Inspections may include exterior occupancy checks, and occasional interior vacant or damage inspections.</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{187}" paraid="1682227391"><img alt="Shape" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC" unselectable="on" />&nbsp;</p>
+
+<table align="center" border="2" cellpadding="8" cellspacing="1" dir="ltr">
+	<tbody>
+		<tr>
+			<td><strong>&nbsp;Job Title:</strong></td>
+			<td>Mortgage Occupancy Field Inspector</td>
+		</tr>
+		<tr>
+			<td><strong>&nbsp;County&nbsp;Coverage:&nbsp;</strong></td>
+			<td>General Application</td>
+		</tr>
+	</tbody>
+</table>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{192}" paraid="1017333949"><br />
+<span style="font-size:16px;"><strong>Your role as a Mortgage Field Inspector&nbsp;</strong></span></p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{198}" paraid="1596603640">Conduct property inspections for existing mortgage&nbsp;loans&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{206}" paraid="1920068807">Determine&nbsp;occupancy status (occupied or vacant)&nbsp;<br />
+Photograph and document property condition&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{218}" paraid="1575649921">Deliver door notices and verify utility&nbsp;status&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{226}" paraid="144539957">Complete reports using a mobile app (InspectorADE)&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{236}" paraid="494045382">Communicate regularly with the&nbsp;Inspection&nbsp;Relations&nbsp;Coordinator&nbsp;</p>
+
+<p paraeid="{e6ac4994-e538-43ab-8d30-8d19b9b2135d}{254}" paraid="1307961459"><img alt="Shape" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC" unselectable="on" />&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{14}" paraid="1172983632"><span style="font-size:16px;"><strong>What We Offer&nbsp;</strong></span></p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{20}" paraid="1223789107">Flexible schedule &mdash; work during daylight hours&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{26}" paraid="1968157714">Part-time or full-time based on your availability&nbsp;and&nbsp;territory F<br />
+lat rate per inspection (earning potential typically $20+/hour depending on volume)&nbsp;<br />
+Weekly pay via direct deposit&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{40}" paraid="230426064">Work independently in your assigned&nbsp;territory&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{60}" paraid="941603169"><img alt="Shape" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC" unselectable="on" /></p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{65}" paraid="873958423"><span style="font-size:16px;"><strong>Requirements for the role&nbsp;</strong></span></p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{71}" paraid="1467967000">Valid&nbsp;driver&rsquo;s&nbsp;license&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{81}" paraid="107355554">Reliable vehicle&nbsp;covered by auto insurance to travel&nbsp;within your&nbsp;territory.&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{97}" paraid="378243603">Smartphone (iPhone or Android)&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{103}" paraid="37532557">Computer with internet access&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{109}" paraid="1841358844">Printer and basic office supplies&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{115}" paraid="479239807">Ability to obtain a Shield ID (Aspen Grove ABC#)&nbsp;If onboarding&nbsp;with GIS, we will provide&nbsp;you with&nbsp;the link to obtain your Shield ID&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{135}" paraid="21626445">HUD/Inspector&nbsp;keys&nbsp;(set of 11)&nbsp;If onboarded with GIS, we will provide a link with a discount code to obtain your HUD/Inspector&nbsp;Keys&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{149}" paraid="1809260079">Volt&nbsp;stick&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{157}" paraid="1064769413">Strong time management,&nbsp;attention to detail, and communication skills&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{169}" paraid="1456345004"><img alt="Shape" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC" unselectable="on" />&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{174}" paraid="977021140"><span style="font-size:16px;"><strong>Important Details&nbsp;</strong></span></p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{180}" paraid="821502901">This is a&nbsp;1099 independent contractor&nbsp;position.&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{190}" paraid="337753770">No mileage or expense reimbursement&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{196}" paraid="1818844778">Earnings depend on your availability, territory, and&nbsp;workload.&nbsp;</p>
+
+<p paraeid="{985ce69d-28c9-49d2-b362-303af346506d}{204}" paraid="559410525">Must be comfortable inspecting occupied, vacant, and rural&nbsp;properties.&nbsp;</p>
+</div><div style="text-align:center; margin-top:20px"><div class="buttons"><a href="https://gis.applicantstack.com/x/apply/a2w7lo7j4ogo" class="equal-width-button">Apply Now</a><div class='refer-friend-spacer'>&nbsp;</div><div style='margin-top:10px'><a href="https://gis.applicantstack.com/x/refer/a2w7lo7j4ogo" class="equal-width-button">Refer to a Friend</a></div></div></div><style>.buttons a, .buttons button{font-size:120%;}</style><div style="text-align:center; margin-top:20px" class="as_mobile_skip"><p>Alternatively, you can apply to this job using your profile from Indeed by clicking the button below:</p><div class="">
+<span class="indeed-apply-widget"
+	data-indeed-apply-apiToken="REDACTED"
+	data-indeed-apply-jobId="a2w7lo7j4ogo"
+	data-indeed-apply-jobCompanyName="GIS Field Services"
+	data-indeed-apply-jobTitle="General Application"
+	data-indeed-apply-jobUrl="https://gis.applicantstack.com/x/detail/a2w7lo7j4ogo"
+	data-indeed-apply-name="firstlastname"
+	data-indeed-apply-postUrl="https://public.applicantstack.com/api/integration/indeed/apply"
+	data-indeed-apply-jobMeta="%5B%5D"
+	data-indeed-apply-questions="https://public.applicantstack.com/api/integration/indeed/questions?job=a2w7lo7j4ogo&time=1792510493"
+	data-indeed-apply-resume="required"
+	data-indeed-apply-coverletter="required"
+	></span></div>
+<script>(function(d, s, id) {
+var js, iajs = d.getElementsByTagName(s)[0];
+if (d.getElementById(id)){return;}
+js = d.createElement(s); js.id = id;js.async = true;
+js.src = "https://apply.indeed.com/indeedapply/static/scripts/app/bootstrap.js";
+iajs.parentNode.insertBefore(js, iajs);
+}(document, 'script', 'indeed-apply-js'));
+</script><br>					</div></div><script>
+(function(){
+	function fix(root){
+		if(!root)return;
+		root.querySelectorAll("input.inputradio").forEach(function(inp){
+			var wrap=inp.closest(".inputradio-wrap")||inp.closest("span");
+			if(!wrap||!root.contains(wrap))return;
+			if(wrap.closest(".mc-options-wrap")){
+				wrap.style.whiteSpace="normal";
+				wrap.style.maxWidth="100%";
+				wrap.style.boxSizing="border-box";
+			}else{
+				wrap.style.display="block";
+				wrap.style.whiteSpace="normal";
+				wrap.style.maxWidth="100%";
+				wrap.style.boxSizing="border-box";
+			}
+			inp.style.display="inline-block";
+			inp.style.marginBottom="0";
+			var n=wrap.nextSibling;
+			while(n&&n.nodeType===3){
+				var t=n.textContent.replace(/\u00a0/g," ").trim();
+				if(t===""){
+					var d=n;n=n.nextSibling;d.parentNode.removeChild(d);
+				}else{
+					break;
+				}
+			}
+		});
+		root.querySelectorAll("input[type=\"date\"]").forEach(function(inp){
+			var p=inp.previousElementSibling;
+			while(p){if(p.tagName==="LABEL"){p.style.display="block";p.style.width="100%";break;}p=p.previousElementSibling;}
+		});
+	}
+	function run(){fix(document.querySelector(".ext-stacked-radios"));}
+	if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run);}else{run();}
+})();
+</script>
+							</div>
+						</div>
+					</main>
+
+					<footer>
+						<div id="footer-wrapper">
+							<div class="bottom-0">
+								<div class="bottom-0-left">
+									<a href="https://www.gisfieldservices.com/"><img class="footer-logo" src="https://gis.applicantstack.com/userdata/gis/GIS_Logo_full-color_4color.png"></a>
+									<p>P | 972-497-2058</p>
+								</div>
+								<div class="bottom-0-right">
+									<div class="bottom-0-column-1">
+										<h4>Inspectors</h4>
+										<p>If you are interested in becoming an inspector please contact us at <a href="mailto:recruiting@gisfieldservices.com">recruiting@gisfieldservices.com</a> or apply to one of our Job Postings.</p>
+									</div>
+									<div class="bottom-0-column-2">
+										<h4>Clients</h4>
+										<p>If you are interested in becoming a client please contact us at <a href="mailto:info@gisfieldservices.com">info@gisfieldservices.com.</a></p>
+									</div>
+									<div class="bottom-0-column-3">
+										<h4>Useful Links</h4>
+										<a href="https://www.gisfieldservices.com/blog/">Blog</a>
+										<a href="https://www.gisfieldservices.com/terms-and-conditions-of-use/">Terms & Conditions</a>
+										<a href="https://www.gisfieldservices.com/privacy-policy">Privacy Policy</a>
+									</div>
+								</div>
+								
+							</div>
+							<div class="bottom-1">
+								<p>© 2024 by GIS Field Services, LLC</p>
+								<div class="socials">
+									<a href="https://www.facebook.com/GISfieldservices"><i class="fab fa-facebook"></i></a>
+									<a href="https://www.linkedin.com/company/gis-field-services/"><i class="fab fa-linkedin"></i></a>
+								</div>
+								<p>6060 N Central Expy, Suite 500, Dallas, TX 75206</p>
+							</div>
+						</div>
+					</footer>
+				
+				</div>
+
+				<nav id="menu">
+					<ul class="listview-icons mm-listview">
+                        <li><a href="https://www.gisfieldservices.com/about-us/">About Us</a></li>
+                        <li><a href="https://www.gisfieldservices.com/blog/">Blog</a></li>
+						<li><a href="https://gis.applicantstack.com/x/openings">Jobs</a></li>
+						<li><a href="https://www.gisfieldservices.com/contact-us/">Contact</a></li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+	</body>
+	</html>

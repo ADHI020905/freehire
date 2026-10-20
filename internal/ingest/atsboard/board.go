@@ -223,6 +223,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"applicantpro.com", "applicantpro", modeSubdomain},
 	{"isolvedhire.com", "isolvedhire", modeSubdomain},
 	{"careerplug.com", "careerplug", modeSubdomain},
+	// ApplicantStack: <tenant>.applicantstack.com/x/detail/<id>. The vendor's own www/www2/public
+	// hosts share the apex, so they are listed in platformLabelsByApex.
+	{"applicantstack.com", "applicantstack", modeSubdomain},
 	{"csod.com", "cornerstone", modeSubdomain},
 	{"enlizt.me", "enlizt", modeSubdomain},
 	{"hurma.work", "hurma", modeSubdomain},
@@ -959,6 +962,9 @@ var platformLabelsByApex = map[string][]string{
 	"eploy":          {"www"}, // www.eploy.com is the vendor's marketing site
 	"hiringroom.com": {"www", "ve", "api-ve", "contacto-comercial"},
 	"easyapply.co":   {"www"}, // www.easyapply.co 404s; every tenant is a bare label
+	// www is the vendor's marketing site (an unknown tenant redirects to its "job-not-found"
+	// page); www2 and public serve the shared assets and logos every tenant page links.
+	"applicantstack.com": {"www", "www2", "public"},
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —
