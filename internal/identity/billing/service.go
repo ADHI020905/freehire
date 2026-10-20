@@ -332,6 +332,13 @@ func (s *Service) CheckoutURL(ctx context.Context, userID int64, priceID string,
 		return "", Discount{}, fmt.Errorf("%w: price %q is not offered", ErrNoCheckout, priceID)
 	}
 
+	// Promo codes and invite discounts are a consumer offer for Pro and Ultra. The API product
+	// is sold to businesses at a flat price, so whatever discount the account holds stays with
+	// its plan purchases and never reaches an API checkout.
+	if s.cfg.isAPIPrice(priceID) {
+		discount = Discount{}
+	}
+
 	// An existing customer is reused so a second purchase cannot create a second customer for
 	// one person — which would leave two subscriptions nobody sums. A failure to even read
 	// the binding is refused rather than silently treated as "no customer": a transient DB

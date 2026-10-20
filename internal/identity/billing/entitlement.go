@@ -127,10 +127,15 @@ func entitlementFrom(sub subscriber, cfg Config) entitlement {
 // subscriber buying API access would have their Pro subscription changed into it — losing
 // the plan they pay for to buy something beside it.
 func (c Config) checkoutFamily(priceID string) (a, b []string) {
-	if slices.Contains(c.APIPrices, priceID) || slices.Contains(c.APIDataPrices, priceID) {
+	if c.isAPIPrice(priceID) {
 		return c.APIPrices, c.APIDataPrices
 	}
 	return c.Prices, c.UltraPrices
+}
+
+// isAPIPrice reports whether a price belongs to the API product rather than to the plans.
+func (c Config) isAPIPrice(priceID string) bool {
+	return slices.Contains(c.APIPrices, priceID) || slices.Contains(c.APIDataPrices, priceID)
 }
 
 // billedSubscription is the subscription a subscriber's own billing section describes: the

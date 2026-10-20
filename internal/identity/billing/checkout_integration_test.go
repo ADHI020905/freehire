@@ -202,3 +202,35 @@ func TestCheckoutURLRefusesToGuessOnAnAmbiguousSubscription(t *testing.T) {
 		t.Fatal("an item was updated despite the ambiguity")
 	}
 }
+
+// TestCheckoutURLAppliesNoDiscountToTheAPIProduct: promo codes and invite discounts are a
+// consumer offer for Pro and Ultra. The API product is sold to businesses at a flat price, so
+// an account's held discount must not reach its checkout — no coupon is minted, and the
+// applied discount reported back is none.
+func TestCheckoutURLAppliesNoDiscountToTheAPIProduct(t *testing.T) {
+	router := &checkoutRouter{
+		subscriptions: func(w http.ResponseWriter, _ *http.Request) {
+			_, _ = w.Write([]byte(`{"data":[]}`))
+		},
+	}
+	s, pool := newTieredService(t, router.handler())
+	s.cfg.APIPrices = []string{apiPrice}
+	ctx := context.Background()
+
+	userID := insertUser(t, pool, "api-with-promo@example.com")
+	bindCustomer(t, pool, userID, "cus_api_promo")
+
+	url, applied, err := s.CheckoutURL(ctx, userID, apiPrice, Discount{PercentOff: 90, Label: "promo", Key: "k9"})
+	if err != nil {
+		t.Fatalf("CheckoutURL: %v", err)
+	}
+	if !router.checkoutCalled || url == "" {
+		t.Fatal("no Checkout Session was opened for the API price")
+	}
+	if router.couponCalled {
+		t.Fatal("a coupon was minted for an API purchase — the account's discount reached the API product")
+	}
+	if applied != (Discount{}) {
+		t.Fatalf("applied discount = %+v, want none", applied)
+	}
+}
