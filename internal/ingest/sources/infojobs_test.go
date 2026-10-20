@@ -23,12 +23,10 @@ func ijPage(t *testing.T, innerJSON string) string {
 	return `<html><head><script>window.__INITIAL_PROPS__ = JSON.parse(` + string(lit) + `);</script></head><body></body></html>`
 }
 
-// infojobsHTTP is a route-aware test TextGetter: listing pages keyed by ?page=N, detail pages by
-// full URL.
+// infojobsHTTP is a test TextGetter serving listing pages keyed by ?page=N; any other request
+// fails, so a detail fetch is a test failure.
 type infojobsHTTP struct {
 	listPages map[int]string
-	details   map[string]string
-	detailErr map[string]bool
 	failList  bool
 	got       []string
 }
@@ -50,31 +48,22 @@ func (f *infojobsHTTP) GetText(_ context.Context, url string) (string, error) {
 		}
 		return `<html>window.__INITIAL_PROPS__ = JSON.parse("{\"offers\":[]}");</html>`, nil
 	}
-	if f.detailErr[url] {
-		return "", errors.New("infojobsHTTP: detail boom")
-	}
-	if body, ok := f.details[url]; ok {
-		return body, nil
-	}
-	return "", errors.New("infojobsHTTP: no detail")
+	return "", errors.New("infojobsHTTP: unexpected request " + url)
 }
 
-func TestInfojobsFetchNewHydrates(t *testing.T) {
+func TestInfojobsFetchNewRefreshesSeenAndKeepsTeaser(t *testing.T) {
 	// Two offers on page 1; totalElements=2 stops pagination after one page. Offer B's teaser
 	// carries a description with an embedded quote and a `");` sequence to exercise the decoder.
 	list := `{"overview":{"totalElements":2},"offers":[
 	  {"code":"AAA","title":"Backend Engineer","companyName":"Acme","city":"Madrid",
 	   "publishedAt":"2026-07-12T08:00:00Z","teleworking":"Presencial","link":"//www.infojobs.net/madrid/backend/of-iAAA?applicationOrigin=search"},
 	  {"code":"BBB","title":"Data Scientist","companyName":"Beta","city":"Barcelona",
+	   "description":"Teaser body. He said \"hi\"); and more text.",
 	   "publishedAt":"2026-07-11T09:00:00Z","teleworking":"Solo teletrabajo","link":"//www.infojobs.net/barcelona/data/of-iBBB?applicationOrigin=search"}
 	]}`
-	detailBBB := `{"offer":{"description":"Full body. He said \"hi\"); and more text."}}`
-	http := &infojobsHTTP{
-		listPages: map[int]string{1: ijPage(t, list)},
-		details:   map[string]string{"https://www.infojobs.net/barcelona/data/of-iBBB": ijPage(t, detailBBB)},
-	}
+	http := &infojobsHTTP{listPages: map[int]string{1: ijPage(t, list)}}
 
-	// AAA already ingested → seen; BBB new → hydrated.
+	// AAA already ingested → seen; BBB new → its teaser, with no detail request.
 	seen := func(id string) bool { return id == "AAA" }
 	jobs, err := infojobs{http: http}.FetchNew(context.Background(), CompanyEntry{}, seen)
 	if err != nil {
@@ -107,35 +96,11 @@ func TestInfojobsFetchNewHydrates(t *testing.T) {
 	if bbb.WorkMode != "remote" || !bbb.Remote {
 		t.Fatalf("Solo teletrabajo should be remote: mode=%q remote=%v", bbb.WorkMode, bbb.Remote)
 	}
-	if !strings.Contains(bbb.Description, "Full body") || !strings.Contains(bbb.Description, "more text") {
-		t.Fatalf("BBB should carry the full hydrated body: %q", bbb.Description)
+	if !strings.Contains(bbb.Description, "Teaser body") || !strings.Contains(bbb.Description, "more text") {
+		t.Fatalf("BBB should carry the listing teaser: %q", bbb.Description)
 	}
 	if bbb.PostedAt == nil {
 		t.Fatalf("BBB posted_at not parsed")
-	}
-}
-
-// A failed detail falls back to the listing teaser, never dropping the offer.
-func TestInfojobsDetailFailureKeepsTeaser(t *testing.T) {
-	list := `{"overview":{"totalElements":1},"offers":[
-	  {"code":"X","title":"Dev","companyName":"Co","city":"Vigo","teleworking":"Híbrido",
-	   "description":"Teaser body.","link":"//www.infojobs.net/vigo/dev/of-iX?x=1"}]}`
-	http := &infojobsHTTP{
-		listPages: map[int]string{1: ijPage(t, list)},
-		detailErr: map[string]bool{"https://www.infojobs.net/vigo/dev/of-iX": true},
-	}
-	jobs, err := infojobs{http: http}.FetchNew(context.Background(), CompanyEntry{}, func(string) bool { return false })
-	if err != nil {
-		t.Fatalf("FetchNew: %v", err)
-	}
-	if len(jobs) != 1 {
-		t.Fatalf("want 1 job, got %d", len(jobs))
-	}
-	if jobs[0].WorkMode != "hybrid" {
-		t.Fatalf("Híbrido should be hybrid, got %q", jobs[0].WorkMode)
-	}
-	if !strings.Contains(jobs[0].Description, "Teaser body") {
-		t.Fatalf("should fall back to the teaser: %q", jobs[0].Description)
 	}
 }
 
@@ -174,13 +139,26 @@ func TestInfojobsListFailure(t *testing.T) {
 // The double-encoded __INITIAL_PROPS__ decodes even when the payload contains escaped quotes and
 // a `");` sequence that would defeat a lazy regex.
 func TestInfojobsDecodeProps(t *testing.T) {
-	inner := `{"offer":{"description":"a \"quote\" then ); and \"end\");"}}`
+	inner := `{"offers":[{"description":"a \"quote\" then ); and \"end\");"}]}`
 	page := ijPage(t, inner)
-	var props infojobsDetailProps
+	var props infojobsListProps
 	if err := infojobsDecodeProps(page, &props); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if props.Offer.Description != `a "quote" then ); and "end");` {
-		t.Fatalf("decoded description mismatch: %q", props.Offer.Description)
+	if len(props.Offers) != 1 || props.Offers[0].Description != `a "quote" then ); and "end");` {
+		t.Fatalf("decoded offers mismatch: %+v", props.Offers)
+	}
+}
+
+func TestInfojobsWorkMode(t *testing.T) {
+	for label, want := range map[string]string{
+		"Solo teletrabajo": "remote",
+		"Híbrido":          "hybrid",
+		"Presencial":       "onsite",
+		"":                 "",
+	} {
+		if got := infojobsWorkMode(label); got != want {
+			t.Errorf("infojobsWorkMode(%q) = %q, want %q", label, got, want)
+		}
 	}
 }

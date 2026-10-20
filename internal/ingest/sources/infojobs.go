@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 )
@@ -14,11 +13,14 @@ import (
 // whole-site listing (/ofertas-trabajo) is paged and each posting carries its own employer, so it
 // stays in the source facet and takes the company from the offer.
 // The pages are a server-rendered React app that embeds its data as a `window.__INITIAL_PROPS__`
-// blob; the listing blob already carries every field EXCEPT the full description (the list holds a
-// truncated teaser), so — like justjoin — the full body comes from a per-offer detail fetch run
-// only for postings the catalogue does not already have (FetchNew). Measured 2026-10-20, the
-// detail pages answer a GeeTest bot challenge from both a laptop and the prod host, so every new
-// offer currently lands with the list teaser.
+// blob; the listing blob carries every field EXCEPT the full description (the list holds a
+// truncated teaser). The full body lives on the offer's own page, and that page is not read:
+// measured 2026-10-20 it answers a GeeTest bot challenge from a laptop, the prod host and the
+// proxy alike, so a detail request costs one shared-proxy round trip per new offer (~63k on the
+// first crawl) and yields nothing. Every offer therefore lands with its teaser.
+//
+// The crawler host's own IP is refused outright (405 on every page since 2026-10-08), which is why
+// infojobs is in proxiedProviders.
 type infojobs struct {
 	http TextGetter
 }
@@ -65,59 +67,28 @@ type infojobsOffer struct {
 	Description string `json:"description"`
 }
 
-// infojobsDetailProps is the subset of a detail page's __INITIAL_PROPS__ we read: the offer's full
-// description, which the listing truncates.
-type infojobsDetailProps struct {
-	Offer struct {
-		Description string `json:"description"`
-	} `json:"offer"`
+// Fetch is the crawl for callers that supply no seen set; FetchNew is the path ingest uses.
+func (s infojobs) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
+	return s.FetchNew(ctx, e, func(string) bool { return false })
 }
 
-// Fetch is the list-only crawl (truncated teaser description): the fallback for callers that do
-// not drive hydration. FetchNew is the hydrating path used by ingest.
-func (s infojobs) Fetch(ctx context.Context, _ CompanyEntry) ([]Job, error) {
+// FetchNew pages the listing and reports a seen offer as a liveness refresh only, so a
+// stored row is not re-upserted (and its facets re-derived) on every crawl.
+func (s infojobs) FetchNew(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
 	offers, err := s.crawl(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var jobs []Job
 	for _, o := range offers {
-		if job, ok := o.toJob(); ok {
-			jobs = append(jobs, job)
+		job, ok := o.toJob()
+		if !ok {
+			continue
 		}
+		job.SeenRefresh = seen(o.Code)
+		jobs = append(jobs, job)
 	}
 	return jobs, nil
-}
-
-// FetchNew is the hydrating crawl: it pages the same listing, but fetches a posting's full
-// description only for an offer the catalogue does not already have (seen reports whether the
-// offer code is ingested). A seen offer refreshes liveness only (no detail request); an unseen
-// offer is hydrated with its detail body; a single detail failure is isolated (logged, falling
-// back to the list teaser so the offer is still ingested).
-func (s infojobs) FetchNew(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
-	offers, err := s.crawl(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return fetchDetails(offers, defaultDetailWorkers, func(o infojobsOffer) (Job, bool) {
-		base, ok := o.toJob()
-		if !ok {
-			return Job{}, false
-		}
-		if seen(o.Code) {
-			// Already ingested: refresh liveness only, never re-upsert content (that would
-			// replace the full hydrated body with the list teaser and re-derive facets).
-			base.SeenRefresh = true
-			return base, true
-		}
-		body, ok := s.detail(ctx, base.URL)
-		if !ok {
-			log.Printf("infojobs: detail %q failed; ingesting list teaser", base.URL)
-			return base, true
-		}
-		base.Description = sanitizeHTML(body)
-		return base, true
-	}), nil
 }
 
 // crawl pages the whole-site listing and returns every raw offer — the shared list walk behind
@@ -149,23 +120,6 @@ func (s infojobs) crawl(ctx context.Context) ([]infojobsOffer, error) {
 		}
 	}
 	return offers, nil
-}
-
-// detail fetches an offer's detail page and returns its full description, ok=false on a failed
-// request or a page with no parseable body — so the caller falls back to the list teaser.
-func (s infojobs) detail(ctx context.Context, jobURL string) (string, bool) {
-	text, err := s.http.GetText(ctx, jobURL)
-	if err != nil {
-		return "", false
-	}
-	var props infojobsDetailProps
-	if err := infojobsDecodeProps(text, &props); err != nil {
-		return "", false
-	}
-	if strings.TrimSpace(props.Offer.Description) == "" {
-		return "", false
-	}
-	return props.Offer.Description, true
 }
 
 // infojobsPropsMarker matches the `window.__INITIAL_PROPS__ = JSON.parse(` assignment; the JSON
