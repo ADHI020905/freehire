@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 
@@ -16,16 +17,27 @@ import (
 // stays in the source facet and takes the company from the offer.
 // The pages are a server-rendered React app that embeds its data as a `window.__INITIAL_PROPS__`
 // blob; the listing blob carries every field EXCEPT the full description (the list holds a
-// truncated teaser). The full body lives on the offer's own page, and that page is not read:
-// measured 2026-10-20 it answers a GeeTest bot challenge from a laptop, the prod host and the
-// proxy alike, so a detail request costs one shared-proxy round trip per new offer (~63k on the
-// first crawl) and yields nothing. Every offer therefore lands with its teaser.
+// truncated teaser), so — like justjoin — the full body comes from a per-offer detail fetch run
+// only for offers the catalogue does not already have (FetchNew).
 //
-// The crawler host's own IP is refused outright (405 on every page since 2026-10-08), which is why
-// infojobs is in proxiedProviders.
+// Every page sits behind a GeeTest bot challenge for a plain client: the crawl host's IP is
+// refused outright (405 since 2026-10-08) and the proxy is challenged from the sixth listing
+// page. Through the Scrapling tier's browser over the proxy, listing and offer pages alike are
+// served (measured 2026-10-20: 20 of 20 listing pages, 5 of 5 offer pages with full bodies), so
+// production crawls it there (scraplingtier.go).
 type infojobs struct {
 	http TextGetter
+	// maxNewPerRun bounds how many new offers one run hydrates; non-positive takes
+	// infojobsMaxNewPerRun. Anything past it is deferred — not yielded, so not stored — and
+	// offered again by a later run.
+	maxNewPerRun int
 }
+
+// infojobsMaxNewPerRun is the default hydration budget. An offer page is a browser navigation
+// of ~7 s through the Scrapling tier, three in flight, so 1 000 is ~40 minutes on top of the
+// ~2 h listing walk; the ~64k-offer backlog the first runs face drains over days rather than
+// pushing one run past its timeout.
+const infojobsMaxNewPerRun = 1000
 
 const (
 	// infojobsListURL is the whole-site listing. It used to be the IT category's
@@ -38,7 +50,7 @@ const (
 )
 
 // NewInfoJobs builds the infojobs.net adapter over the given HTTP client.
-func NewInfoJobs(c TextGetter) Source { return infojobs{http: c} }
+func NewInfoJobs(c TextGetter) Source { return infojobs{http: c, maxNewPerRun: infojobsMaxNewPerRun} }
 
 func (infojobs) Provider() string { return "infojobs" }
 
@@ -55,6 +67,14 @@ type infojobsListProps struct {
 	} `json:"overview"`
 }
 
+// infojobsDetailProps is the subset of an offer page's __INITIAL_PROPS__ we read: the full
+// description, which the listing truncates.
+type infojobsDetailProps struct {
+	Offer struct {
+		Description string `json:"description"`
+	} `json:"offer"`
+}
+
 // infojobsOffer is one listing offer. Description here is a truncated teaser (the full body lives
 // on the detail page); Link is a protocol-relative URL with a tracking query. Teleworking is the
 // structured work-mode label.
@@ -69,28 +89,86 @@ type infojobsOffer struct {
 	Description string `json:"description"`
 }
 
-// Fetch is the crawl for callers that supply no seen set; FetchNew is the path ingest uses.
-func (s infojobs) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
-	return s.FetchNew(ctx, e, func(string) bool { return false })
-}
-
-// FetchNew pages the listing and reports a seen offer as a liveness refresh only, so a
-// stored row is not re-upserted (and its facets re-derived) on every crawl.
-func (s infojobs) FetchNew(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
+// Fetch is the list-only crawl (teaser descriptions) for callers that drive no hydration.
+// FetchNew is the path ingest uses.
+func (s infojobs) Fetch(ctx context.Context, _ CompanyEntry) ([]Job, error) {
 	offers, err := s.crawl(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var jobs []Job
 	for _, o := range offers {
+		if job, ok := o.toJob(); ok {
+			jobs = append(jobs, job)
+		}
+	}
+	return jobs, nil
+}
+
+// FetchNew pages the listing and hydrates only what the catalogue lacks. A seen offer is a
+// liveness refresh only, with no request of its own; a new one is yielded with its full body,
+// up to maxNewPerRun of them. A new offer past the budget, or whose page fails, is deferred
+// rather than stored with its teaser: a stored row is seen, and would never get its body.
+func (s infojobs) FetchNew(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
+	offers, err := s.crawl(ctx)
+	if err != nil {
+		return nil, err
+	}
+	budget := s.maxNewPerRun
+	if budget <= 0 {
+		budget = infojobsMaxNewPerRun
+	}
+	var jobs []Job
+	var fresh []Job
+	deferred := 0
+	for _, o := range offers {
 		job, ok := o.toJob()
 		if !ok {
 			continue
 		}
-		job.SeenRefresh = seen(o.Code)
-		jobs = append(jobs, job)
+		if seen(o.Code) {
+			job.SeenRefresh = true
+			jobs = append(jobs, job)
+			continue
+		}
+		if len(fresh) >= budget {
+			deferred++
+			continue
+		}
+		fresh = append(fresh, job)
 	}
-	return jobs, nil
+	if deferred > 0 {
+		log.Printf("infojobs: hydration budget %d reached; %d new offers deferred to a later run", budget, deferred)
+	}
+	hydrated := fetchDetails(fresh, infojobsListWorkers, func(j Job) (Job, bool) {
+		body, ok := s.detail(ctx, j.URL)
+		if !ok {
+			return Job{}, false
+		}
+		j.Description = sanitizeHTML(body)
+		return j, true
+	})
+	if failed := len(fresh) - len(hydrated); failed > 0 {
+		log.Printf("infojobs: %d of %d new offers' pages failed; deferred to a later run", failed, len(fresh))
+	}
+	return append(jobs, hydrated...), nil
+}
+
+// detail fetches an offer page and returns its full description, ok=false on a failed request
+// or a page with no parseable body (the bot challenge among them).
+func (s infojobs) detail(ctx context.Context, jobURL string) (string, bool) {
+	text, err := s.http.GetText(ctx, jobURL)
+	if err != nil {
+		return "", false
+	}
+	var props infojobsDetailProps
+	if err := infojobsDecodeProps(text, &props); err != nil {
+		return "", false
+	}
+	if strings.TrimSpace(props.Offer.Description) == "" {
+		return "", false
+	}
+	return props.Offer.Description, true
 }
 
 // infojobsListWorkers bounds how many listing pages are in flight at once. Through the

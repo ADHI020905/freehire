@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,10 +26,11 @@ func ijPage(t *testing.T, innerJSON string) string {
 	return `<html><head><script>window.__INITIAL_PROPS__ = JSON.parse(` + string(lit) + `);</script></head><body></body></html>`
 }
 
-// infojobsHTTP is a test TextGetter serving listing pages keyed by ?page=N; any other request
-// fails, so a detail fetch is a test failure.
+// infojobsHTTP is a test TextGetter serving listing pages keyed by ?page=N and offer pages by
+// full URL; anything else fails.
 type infojobsHTTP struct {
 	listPages map[int]string
+	details   map[string]string
 	failList  bool
 	delay     time.Duration
 
@@ -63,59 +65,98 @@ func (f *infojobsHTTP) GetText(_ context.Context, url string) (string, error) {
 		}
 		return `<html>window.__INITIAL_PROPS__ = JSON.parse("{\"offers\":[]}");</html>`, nil
 	}
+	if body, ok := f.details[url]; ok {
+		return body, nil
+	}
 	return "", errors.New("infojobsHTTP: unexpected request " + url)
 }
 
-func TestInfojobsFetchNewRefreshesSeenAndKeepsTeaser(t *testing.T) {
-	// Two offers on page 1; totalElements=2 stops pagination after one page. Offer B's teaser
-	// carries a description with an embedded quote and a `");` sequence to exercise the decoder.
+func TestInfojobsFetchNewRefreshesSeenAndHydratesNew(t *testing.T) {
+	// Two offers on page 1; totalElements=2 stops pagination after one page. Offer B's body
+	// carries an embedded quote and a `");` sequence to exercise the decoder.
 	list := `{"overview":{"totalElements":2},"offers":[
 	  {"code":"AAA","title":"Backend Engineer","companyName":"Acme","city":"Madrid",
 	   "publishedAt":"2026-07-12T08:00:00Z","teleworking":"Presencial","link":"//www.infojobs.net/madrid/backend/of-iAAA?applicationOrigin=search"},
-	  {"code":"BBB","title":"Data Scientist","companyName":"Beta","city":"Barcelona",
-	   "description":"Teaser body. He said \"hi\"); and more text.",
+	  {"code":"BBB","title":"Data Scientist","companyName":"Beta","city":"Barcelona","description":"Teaser.",
 	   "publishedAt":"2026-07-11T09:00:00Z","teleworking":"Solo teletrabajo","link":"//www.infojobs.net/barcelona/data/of-iBBB?applicationOrigin=search"}
 	]}`
-	http := &infojobsHTTP{listPages: map[int]string{1: ijPage(t, list)}}
+	http := &infojobsHTTP{
+		listPages: map[int]string{1: ijPage(t, list)},
+		details: map[string]string{
+			"https://www.infojobs.net/barcelona/data/of-iBBB": ijPage(t, `{"offer":{"description":"Full body. He said \"hi\"); and more text."}}`),
+		},
+	}
 
-	// AAA already ingested → seen; BBB new → its teaser, with no detail request.
-	seen := func(id string) bool { return id == "AAA" }
-	jobs, err := infojobs{http: http}.FetchNew(context.Background(), CompanyEntry{}, seen)
+	// AAA already ingested → seen, no detail request; BBB new → hydrated.
+	jobs, err := infojobs{http: http}.FetchNew(context.Background(), CompanyEntry{}, func(id string) bool { return id == "AAA" })
 	if err != nil {
 		t.Fatalf("FetchNew: %v", err)
 	}
-	if len(jobs) != 2 {
-		t.Fatalf("want 2 jobs, got %d: %+v", len(jobs), jobs)
-	}
-
 	byID := map[string]Job{}
 	for _, j := range jobs {
 		byID[j.ExternalID] = j
 	}
+	aaa, bbb := byID["AAA"], byID["BBB"]
+	if !aaa.SeenRefresh || aaa.URL != "https://www.infojobs.net/madrid/backend/of-iAAA" || aaa.WorkMode != "onsite" {
+		t.Errorf("AAA = %+v, want a liveness refresh with the cleaned URL and onsite", aaa)
+	}
+	if bbb.SeenRefresh || !strings.Contains(bbb.Description, "Full body") || !strings.Contains(bbb.Description, "more text") {
+		t.Errorf("BBB = %+v, want the hydrated body", bbb)
+	}
+	if bbb.WorkMode != "remote" || !bbb.Remote || bbb.PostedAt == nil {
+		t.Errorf("BBB fields = %+v, want remote and a posted date", bbb)
+	}
+	for _, u := range http.got {
+		if strings.Contains(u, "of-iAAA") {
+			t.Error("a seen offer must not cost a detail request")
+		}
+	}
+}
 
-	aaa := byID["AAA"]
-	if !aaa.SeenRefresh {
-		t.Fatalf("seen offer AAA should be a liveness refresh: %+v", aaa)
+// A new offer whose page fails is deferred, not stored with its teaser: a stored row is seen
+// and would never get its body.
+func TestInfojobsDetailFailureDefersTheOffer(t *testing.T) {
+	http := &infojobsHTTP{listPages: map[int]string{1: ijListPage(t, 2, "A", "B")}, details: map[string]string{
+		"https://www.infojobs.net/x/of-iA": ijPage(t, `{"offer":{"description":"Body A."}}`),
+		"https://www.infojobs.net/x/of-iB": `<html>No podemos identificar tu navegador</html>`,
+	}}
+	jobs, err := infojobs{http: http}.FetchNew(context.Background(), CompanyEntry{}, func(string) bool { return false })
+	if err != nil {
+		t.Fatal(err)
 	}
-	if aaa.URL != "https://www.infojobs.net/madrid/backend/of-iAAA" {
-		t.Fatalf("AAA url (query must be stripped, scheme restored): %q", aaa.URL)
+	if len(jobs) != 1 || jobs[0].ExternalID != "A" || !strings.Contains(jobs[0].Description, "Body A") {
+		t.Errorf("jobs = %+v, want only A, hydrated", jobs)
 	}
-	if aaa.WorkMode != "onsite" {
-		t.Fatalf("Presencial should be onsite, got %q", aaa.WorkMode)
-	}
+}
 
-	bbb := byID["BBB"]
-	if bbb.SeenRefresh {
-		t.Fatalf("new offer BBB must not be a seen-refresh")
+// A run hydrates at most maxNewPerRun new offers; the rest are deferred — not yielded, so not
+// stored — and offered again next run, while every seen offer is still refreshed.
+func TestInfojobsHydrationBudgetDefersTheRest(t *testing.T) {
+	details := map[string]string{}
+	for _, c := range []string{"A", "B", "C", "D"} {
+		details["https://www.infojobs.net/x/of-i"+c] = ijPage(t, `{"offer":{"description":"Body `+c+`."}}`)
 	}
-	if bbb.WorkMode != "remote" || !bbb.Remote {
-		t.Fatalf("Solo teletrabajo should be remote: mode=%q remote=%v", bbb.WorkMode, bbb.Remote)
+	http := &infojobsHTTP{listPages: map[int]string{1: ijListPage(t, 5, "S", "A", "B", "C", "D")}, details: details}
+	jobs, err := infojobs{http: http, maxNewPerRun: 2}.FetchNew(context.Background(), CompanyEntry{}, func(id string) bool { return id == "S" })
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(bbb.Description, "Teaser body") || !strings.Contains(bbb.Description, "more text") {
-		t.Fatalf("BBB should carry the listing teaser: %q", bbb.Description)
+	var got []string
+	for _, j := range jobs {
+		got = append(got, j.ExternalID)
 	}
-	if bbb.PostedAt == nil {
-		t.Fatalf("BBB posted_at not parsed")
+	sort.Strings(got)
+	if strings.Join(got, "") != "ABS" {
+		t.Errorf("jobs = %v, want the seen S plus the first two new offers", got)
+	}
+	detailCalls := 0
+	for _, u := range http.got {
+		if strings.Contains(u, "/x/of-i") {
+			detailCalls++
+		}
+	}
+	if detailCalls != 2 {
+		t.Errorf("detail requests = %d, want 2 (the budget)", detailCalls)
 	}
 }
 

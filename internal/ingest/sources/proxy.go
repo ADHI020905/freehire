@@ -83,9 +83,9 @@ var proxiedProviders = map[string]func(HTTPClient) Source{
 		return NewVagas(pacedHTMLGetter(c, vagasRequestInterval, vagasRequestBurst))
 	},
 	// infojobs.net refuses the crawler host's IP outright (405 on every page, with or without a
-	// browser User-Agent, since 2026-10-08) while the fsn host and the proxy are served. A full
-	// crawl is ~2.9k listing pages of ~1.26 MB, ~1.8 s each through the proxy, so its
-	// ingest_schedule row runs it every 12h under a 2h timeout rather than the default cadence.
+	// browser User-Agent, since 2026-10-08). Through the proxy a plain client is challenged from
+	// the sixth listing page, so this is only the FALLBACK: production crawls it through the
+	// Scrapling tier's browser over the proxy (scraplingtier.go), which overrides this entry.
 	"infojobs": func(c HTTPClient) Source { return NewInfoJobs(c) },
 	// enlizt.me hard-blocks the prod datacenter IP (403 on the board listing even with a
 	// browser User-Agent, so it is IP reputation, not a bot tell), while the residential
