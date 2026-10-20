@@ -719,6 +719,15 @@ Source ingest: the provider registry and its adapters, entry validation, the per
 - **Workable's widget has no workplace field.** `telecommuting` is the only arrangement signal on `/api/v1/widget/accounts/<board>`; the `workplace` enum (`hybrid`/`on_site`/`remote`) exists only on the v3 jobs list, which pages ten postings per request — not worth a request per ten postings on every board. A non-telecommuting posting is left to the description.
 - **A Greenhouse restriction stated only in an application question is out of reach.** Kard's "We are a fully remote company hiring in the US, Canada, Argentina, or Brazil only" is the label of a form question, absent from `content`; reading it would cost a `?questions=true` request per posting, which the apply-form rule above forbids.
 
+**HigherMe traps** (`higherme`, live-verified 2026-10-20):
+
+- **The board is a BRAND id, and a posting link does not carry it.** `app.higherme.com/jobs/<id>` names a posting; the brand behind it is only in the posting's record (`api.higherme.com/classic/jobs/<id>?includes=location.brand` → `relations.location.relations.brand.id`). The brand's own career page, `app.higherme.com/careers/<brand>`, is the one URL that names a board, so it is the only shape `atsboard` recognises. A seed built from apply links resolves each posting to its brand first.
+- **An unknown filter key answers with the WHOLE platform** (~31.5k postings) instead of an error: `filters[company.id]` is silently ignored. `filters[brand.id]` is honoured — an unknown brand answers an empty listing — but the adapter still checks every posting's brand against the board and fails the crawl on a mismatch, because the other reading files tens of thousands of postings under one employer.
+- **The brand is the board, not the per-posting company.** A brand can span several franchisee accounts, and the account name is an internal label ("Dunkin' | THG Patterson, LLC"), so postings carry the configured company. The platform's own JSON-LD names that account label as `hiringOrganization`; it is not used.
+- **No posting date.** The listing carries only `updated_at`, and the posting page's `date_posted` is the same re-stamped value (a posting created in 2021 read as posted two days ago), so `PostedAt` is nil.
+- **Salary has no currency field.** The platform's own posting page derives it from the location's country (USD for US, CAD otherwise) and the period from `type` (`hourly` → hour, anything else → year); the adapter does the same, for US and CA locations only.
+- **`limit` is clamped to 100**, and the API sits behind an AWS load-balancer WAF with a rate-based rule that 403s the whole IP — tripped by ~70 requests in about six minutes during the spike. The adapter is paced (`highermeRequestInterval`).
+
 ## Limitations
 - The ingest sweep has a trade-off: a missed run can leave an orphan open until a future reconcile; the change window is sized wide enough to absorb a skipped cron.
 - Self-closing sources: a missed `removed` event from the feed can leave a vacancy open until the next reindex.

@@ -1,0 +1,942 @@
+{
+ "data": [
+  {
+   "id": "607afbaf44f91",
+   "attributes": {
+    "title": "Server",
+    "full_time": true,
+    "part_time": true,
+    "about": "<p>Modern American Eatery... welcome to CAMP in Greenville, SC! </p><p>We are now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. The chef-driven restaurant will offer Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar. Table 301 is proud of the company culture it’s built over the past 20+ years.</p>",
+    "summary": "<p>Camp, is seeking enthusiastic <strong>server </strong>candidates to join our team!</p><p><br></p><p>Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!</p><p><br></p><p>Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.</p><p><br></p><p>Table 301 offers excellent benefits including:</p><ul><li><strong>Competitive Wages</strong></li><li><strong>Health Benefits</strong>&nbsp;(including medical and optional dental and vision)</li><li><strong>Matching 401k Program</strong></li><li><strong>Paid Time Off</strong></li><li><strong>35% dining discount</strong></li><li><strong>Financial Planning Education</strong></li><li><strong>Employee Assistance Programs</strong></li><li>And more…</li></ul>",
+    "summary_no_html": "Camp, is seeking enthusiastic server candidates to join our team!   Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!   Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.   Table 301 offers excellent benefits including: Competitive WagesHealth Benefits (including medical and optional dental and vision)Matching 401k ProgramPaid Time Off35% dining discountFinancial Planning EducationEmployee Assistance ProgramsAnd more…",
+    "requirements": [
+     "Team player",
+     "Reliable and responsible",
+     "Intermediate to advanced knowledge, and comprehension on beer, wine, and spirits preferred",
+     "Minimum 2 years of experience in a high volume environment",
+     "Minimum 2 years of experience in a fine dining environment",
+     "Must have flexibility and availability to work a combination of am, pm, and weekend shifts",
+     "ServSafe Certification preferred",
+     "Great interpersonal skills",
+     "Team player with a \"Go-Giver\" attitude"
+    ],
+    "salary": {
+     "min": null,
+     "max": null,
+     "type": "hourly"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-20T07:16:09+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "607afd6ed39c1",
+   "attributes": {
+    "title": "Bartender",
+    "full_time": true,
+    "part_time": true,
+    "about": "<p>Modern American Eatery.</p><p>Camp, in Greenville, SC is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. The chef-driven restaurant offers Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar. Table 301 is proud of the company culture it’s built over the past 20+ years.</p>",
+    "summary": "<p>Camp, is seeking enthusiastic <strong>bartender </strong>candidates to join our team!</p><p><br></p><p>Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!</p><p><br></p><p>Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.</p><p><br></p><p>Table 301 offers excellent benefits including:</p><ul><li><strong>Competitive Wages</strong></li><li><strong>Health Benefits</strong>&nbsp;(including medical and optional dental and vision)</li><li><strong>Matching 401k Program</strong></li><li><strong>Paid Time Off</strong></li><li><strong>35% dining discount</strong></li><li><strong>Financial Planning Education</strong></li><li><strong>Employee Assistance Programs</strong></li><li>And more…</li></ul>",
+    "summary_no_html": "Camp, is seeking enthusiastic bartender candidates to join our team!   Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!   Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.   Table 301 offers excellent benefits including: Competitive WagesHealth Benefits (including medical and optional dental and vision)Matching 401k ProgramPaid Time Off35% dining discountFinancial Planning EducationEmployee Assistance ProgramsAnd more…",
+    "requirements": [
+     "Minimum 1 year of experience in bartending",
+     "Minimum 1 year of experience in fine dining/high volume environment",
+     "Positive attitude",
+     "Flexibility and availability to work nights and weekends",
+     "Must be reliable and responsible",
+     "Team player with a \"Go-Giver\" attitude",
+     "Works well in high volume/high stress environments",
+     "Great interpersonal skills"
+    ],
+    "salary": {
+     "min": null,
+     "max": null,
+     "type": "hourly"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-17T06:35:23+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "607afe6ff239b",
+   "attributes": {
+    "title": "Host",
+    "full_time": true,
+    "part_time": true,
+    "about": "<p>Modern American Eatery.</p><p><span style=\"color: black;\">A new restaurant is coming to downtown Greenville, SC! Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service to open its newest venture located in Camperdown Plaza. The chef-driven restaurant will offer Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar. Table 301 is proud of the company culture it’s built over the past 20+ years. </span></p>",
+    "summary": "<p>Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic <strong>host </strong>candidates to join our team!</p><p>&nbsp;</p><p>Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!</p><p>&nbsp;</p><p>Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.</p><p>&nbsp;</p><p>Table 301 offers excellent benefits including:</p><ul><li><strong>Competitive Wages</strong></li><li><strong>Health Benefits</strong>&nbsp;(including medical and optional dental and vision)</li><li><strong>Matching 401k Program</strong></li><li><strong>Paid Time Off</strong></li><li><strong>35% dining discount</strong></li><li><strong>Financial Planning Education</strong></li><li><strong>Employee Assistance Programs</strong></li><li>And more…</li></ul>",
+    "summary_no_html": "Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic host candidates to join our team!   Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!   Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.   Table 301 offers excellent benefits including: Competitive WagesHealth Benefits (including medical and optional dental and vision)Matching 401k ProgramPaid Time Off35% dining discountFinancial Planning EducationEmployee Assistance ProgramsAnd more…",
+    "requirements": [
+     "Excellent communication skills (oral, and written)",
+     "Strong organizational skills and ability to multi-task",
+     "Must be a team player, and work well with others",
+     "Positive attitude",
+     "Maintain punctual attendance",
+     "Reliable",
+     "Must have availability to work AM/PM and weekend shifts",
+     "Comply with a dress code that prohibits displaying tattoos, and unnatural hair colors, such as blue or pink",
+     "Piercings are limited to earrings only. No facial piercings please."
+    ],
+    "salary": {
+     "min": null,
+     "max": null,
+     "type": "hourly"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-17T01:03:30+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "607aff1be9251",
+   "attributes": {
+    "title": "Food Runner",
+    "full_time": true,
+    "part_time": true,
+    "about": "<p>Modern American Eatery.</p><p><span style=\"color: black;\">A new restaurant is coming to downtown Greenville, SC! Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service to open its newest venture located in Camperdown Plaza. The chef-driven restaurant will offer Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar. Table 301 is proud of the company culture it’s built over the past 20+ years.</span></p>",
+    "summary": "<p>Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic <strong>food runner </strong>candidates to join our team!</p><p>&nbsp;</p><p>Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!</p><p>&nbsp;</p><p>Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.</p><p>&nbsp;</p><p>Table 301 offers excellent benefits including:</p><ul><li><strong>Competitive Wages</strong></li><li><strong>Health Benefits</strong>&nbsp;(including medical and optional dental and vision)</li><li><strong>Matching 401k Program</strong></li><li><strong>Paid Time Off</strong></li><li><strong>35% dining discount</strong></li><li><strong>Financial Planning Education</strong></li><li><strong>Employee Assistance Programs</strong></li><li>And more…</li></ul>",
+    "summary_no_html": "Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic food runner candidates to join our team!   Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!   Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.   Table 301 offers excellent benefits including: Competitive WagesHealth Benefits (including medical and optional dental and vision)Matching 401k ProgramPaid Time Off35% dining discountFinancial Planning EducationEmployee Assistance ProgramsAnd more…",
+    "requirements": [],
+    "salary": {
+     "min": null,
+     "max": null,
+     "type": "hourly"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-18T07:10:10+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "607b00126446d",
+   "attributes": {
+    "title": "Line Cook",
+    "full_time": true,
+    "part_time": true,
+    "about": "<p>Modern American Eatery.</p><p><span style=\"color: black;\">A new restaurant is coming to downtown Greenville, SC! Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service to open its newest venture located in Camperdown Plaza. The chef-driven restaurant will offer Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar. Table 301 is proud of the company culture it’s built over the past 20+ years.</span></p>",
+    "summary": "<p>Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic <strong>line cook </strong>candidates to join our team!</p><p>&nbsp;</p><p>Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!</p><p>&nbsp;</p><p>Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.</p><p><br></p><p><strong>Objective:</strong> To prepare all hot/cold food items. Be responsible for consistency and quality production and ensure all food is served according to specification.</p><p><br></p><p><strong>Responsibilities include:</strong></p><ul><li>Maintain kitchen sanitation in accordance with health department guidelines</li><li>Insure station is set for service.</li><li>Required to learn all menu items produced by assigned station.</li><li>Perform work assignments to meet proper quantities within a necessary time frame.</li><li>Refrigeration and serving of cold food.</li><li>Production of orders.</li><li>Maintain safe food handling procedures at all times</li></ul><p>&nbsp;</p><p>Table 301 offers excellent benefits including:</p><ul><li><strong>Competitive Wages</strong></li><li><strong>Health Benefits</strong>&nbsp;(including medical and optional dental and vision)</li><li><strong>Matching 401k Program</strong></li><li><strong>Paid Time Off</strong></li><li>3<strong>5% dining discount</strong></li><li><strong>Financial Planning Education</strong></li><li><strong>Employee Assistance Programs</strong></li><li>And more…</li></ul>",
+    "summary_no_html": "Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic line cook candidates to join our team!   Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!   Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.   Objective: To prepare all hot/cold food items. Be responsible for consistency and quality production and ensure all food is served according to specification.   Responsibilities include: Maintain kitchen sanitation in accordance with health department guidelinesInsure station is set for service.Required to learn all menu items produced by assigned station.Perform work assignments to meet proper quantities within a necessary time frame.Refrigeration and serving of cold food.Production of orders.Maintain safe food handling procedures at all times  Table 301 offers excellent benefits including: Competitive WagesHealth Benefits (including medical and optional dental and vision)Matching 401k ProgramPaid Time Off35% dining discountFinancial Planning EducationEmployee Assistance ProgramsAnd more…",
+    "requirements": [
+     "Display basic knife skills",
+     "Minimum of 1 year experience in fast paced, culinary environment",
+     "Ability to multi-task",
+     "Must be able to stand for 8+ hours per day",
+     "Team player",
+     "Positive attitude",
+     "Must have availability to work weekend, AM & PM shifts"
+    ],
+    "salary": {
+     "min": null,
+     "max": null,
+     "type": "hourly"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-19T16:21:26+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "607b00d34131b",
+   "attributes": {
+    "title": "Dishwasher",
+    "full_time": true,
+    "part_time": true,
+    "about": "<p>Modern American Eatery.</p><p><span style=\"color: black;\">A new restaurant is coming to downtown Greenville, SC! Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service to open its newest venture located in Camperdown Plaza. The chef-driven restaurant will offer Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar. Table 301 is proud of the company culture it’s built over the past 20+ years.</span></p>",
+    "summary": "<p>Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic <strong>dishwasher </strong>candidates to join our team!</p><p>&nbsp;</p><p>Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!</p><p>&nbsp;</p><p>Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.</p><p>&nbsp;</p><p>Table 301 offers excellent benefits including:</p><ul><li><strong>Competitive Wages</strong></li><li><strong>Health Benefits</strong>&nbsp;(including medical and optional dental and vision)</li><li><strong>Matching 401k Program</strong></li><li><strong>Paid Time Off</strong></li><li><strong>35% dining discount</strong></li><li><strong>Financial Planning Education</strong></li><li><strong>Employee Assistance Programs</strong></li><li>And more…</li></ul>",
+    "summary_no_html": "Table 301 restaurant groups newest restaurant, Camp, is seeking enthusiastic dishwasher candidates to join our team!   Are you interested in working in the hospitality industry? Do you enjoy building relationships, and getting to know people? We have just the right place for you!   Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. Table 301 restaurants are great places to dine partly because they are great places to work. We work hard. We focus all of our energies on delighting our guests, and we have fun doing it. Over the past 20+ years, we’ve built a company culture we’re proud of and would love to add more people to our team who are as committed to hospitality as we are.   Table 301 offers excellent benefits including: Competitive WagesHealth Benefits (including medical and optional dental and vision)Matching 401k ProgramPaid Time Off35% dining discountFinancial Planning EducationEmployee Assistance ProgramsAnd more…",
+    "requirements": [
+     "Flexible work schedule with ability to work am, pm shifts, as well as weekends",
+     "Must have reliable mode of transportation",
+     "Punctual",
+     "Task oriented",
+     "Team player",
+     "Hard worker"
+    ],
+    "salary": {
+     "min": 10,
+     "max": 15,
+     "type": "hourly"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-16T07:16:02+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "6632a68d3ffb5",
+   "attributes": {
+    "title": "Restaurant Manager",
+    "full_time": true,
+    "part_time": false,
+    "about": "<p>Modern American Eatery.</p><p>A new restaurant is coming to downtown Greenville, SC! Table 301 is now hiring hospitable, outgoing and passionate individuals who are dedicated to guest service. The chef-driven restaurant will offer Modern American fare in a cool, comfortable and lively setting with outdoor patio service and a rooftop bar.</p>",
+    "summary": "<p><strong>Table 301 is Seeking a Restaurant Manager for our Leadership Team!</strong></p><p><br></p><p>Table 301 Restaurant Group is currently accepting applications for senior level management positions in Greenville SC. Table 301 is a locally owned group of restaurants dedicated to the highest standards of hospitality, featuring multiple diverse concepts with exciting growth plans.</p><p><br></p><p>Applicants should have a minimum of 3 year’s experience in a leadership role while possessing exceptional interpersonal skills and the ability to thrive in a high volume environment. The ideal candidate also possesses a passion for wine as well as the credentials and ability to function in a leadership/Sommelier role. If you are intensely passionate about delivering an exceptional guest experience please forward your resume for consideration. We're looking for someone who loves the restaurant industry, and is truly committed to exceeding guest expectations. Whether you're building on your successful management experience, or you're eager to put new management skills into practice, consider this opportunity for merit-based growth within the stability of an established company. Please apply today!</p><p><br></p><p><strong>POSITION SUMMARY:</strong></p><ul><li>Responsible for the overall operations of a single restaurant.</li><li>Work with the leadership team to create strategic plans aimed at growing the business through excellent operational execution and sales growth.</li></ul><p><br></p><p><strong>ESSENTIAL FUNCTIONS: </strong>(Including but not limited to)</p><ul><li>Participation in the interview process as well as the hiring, training, development and retention of qualified associates.</li><li>Facilitation and involvement in the scheduling, conducting, and documentation of employee performance reviews according to standard operating procedure.</li><li>Identifying, training and developing key associates for growth, advancement and promotion in an effort to foster a team-building moral.</li><li>Promote teamwork among co-workers and employees.</li><li>Uphold applicable policies and requirements of employment laws.</li><li>Become proficient in all job functions of both front and back of house employees.</li><li>Possess a thorough understanding of the Table 301 Employee Handbook, employee benefits, Law of Value, and company philosophies.</li><li>Complete projects as assigned in a timely manner.</li><li>Resolve guest complaints and problems effectively and courteously by responding with empathy, professionalism and patience.</li><li>Perform a pre-shift line up to ensure team readiness.</li><li>Work with kitchen to ensure timely and accurate ticket times.</li><li>Maintain food quality standards including consistency and presentation.</li><li>Identify and communicate inventory and equipment needs to ordering manager.</li><li>Communicate repair and maintenance needs to appropriate repair source.</li><li>Management of inventory and procurement.</li><li>Maintain a clean and orderly work area.</li><li>Communicate cordially, effectively and clearly with all associates, managers, partners and guests.</li><li>Perform calmly and effectively in an extremely busy and sometimes stressful work environment.</li><li>Availability to work a flexible schedule including weekends and holidays.</li></ul><p><br></p><p>We offer competitive compensation including medical, dental, and vision benefits, 401K with matching contributions, dining discounts at all Table 301 restaurants, paid time off, bonus structure</p>",
+    "summary_no_html": "Table 301 is Seeking a Restaurant Manager for our Leadership Team!   Table 301 Restaurant Group is currently accepting applications for senior level management positions in Greenville SC. Table 301 is a locally owned group of restaurants dedicated to the highest standards of hospitality, featuring multiple diverse concepts with exciting growth plans.   Applicants should have a minimum of 3 year’s experience in a leadership role while possessing exceptional interpersonal skills and the ability to thrive in a high volume environment. The ideal candidate also possesses a passion for wine as well as the credentials and ability to function in a leadership/Sommelier role. If you are intensely passionate about delivering an exceptional guest experience please forward your resume for consideration. We're looking for someone who loves the restaurant industry, and is truly committed to exceeding guest expectations. Whether you're building on your successful management experience, or you're eager to put new management skills into practice, consider this opportunity for merit-based growth within the stability of an established company. Please apply today!   POSITION SUMMARY: Responsible for the overall operations of a single restaurant.Work with the leadership team to create strategic plans aimed at growing the business through excellent operational execution and sales growth.  ESSENTIAL FUNCTIONS: (Including but not limited to) Participation in the interview process as well as the hiring, training, development and retention of qualified associates.Facilitation and involvement in the scheduling, conducting, and documentation of employee performance reviews according to standard operating procedure.Identifying, training and developing key associates for growth, advancement and promotion in an effort to foster a team-building moral.Promote teamwork among co-workers and employees.Uphold applicable policies and requirements of employment laws.Become proficient in all job functions of both front and back of house employees.Possess a thorough understanding of the Table 301 Employee Handbook, employee benefits, Law of Value, and company philosophies.Complete projects as assigned in a timely manner.Resolve guest complaints and problems effectively and courteously by responding with empathy, professionalism and patience.Perform a pre-shift line up to ensure team readiness.Work with kitchen to ensure timely and accurate ticket times.Maintain food quality standards including consistency and presentation.Identify and communicate inventory and equipment needs to ordering manager.Communicate repair and maintenance needs to appropriate repair source.Management of inventory and procurement.Maintain a clean and orderly work area.Communicate cordially, effectively and clearly with all associates, managers, partners and guests.Perform calmly and effectively in an extremely busy and sometimes stressful work environment.Availability to work a flexible schedule including weekends and holidays.  We offer competitive compensation including medical, dental, and vision benefits, 401K with matching contributions, dining discounts at all Table 301 restaurants, paid time off, bonus structure",
+    "requirements": [
+     "Full-service Restaurant Manager experience in a fast paced, high-volume environment",
+     "Ability to lead, mentor and develop a diverse group of associates",
+     "Commitment to exceptional guest service experiences",
+     "Ability to work in well in a team environment while exercising strong organizational skills"
+    ],
+    "salary": {
+     "min": 45000,
+     "max": 60000,
+     "type": "annual"
+    },
+    "status": "published",
+    "hide_job_from_search_engines": false,
+    "updated_at": "2026-10-15T17:18:09+00:00"
+   },
+   "relations": {
+    "location": {
+     "id": "6078985786d16",
+     "attributes": {
+      "nickname": "Camp",
+      "image_url": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+      "logo_url": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+      "street": "2 East Broad Street",
+      "city": "Greenville",
+      "zipcode": "29601",
+      "latitude": 34.84758,
+      "longitude": -82.40043,
+      "state": {
+       "name": "South Carolina",
+       "short": "SC"
+      },
+      "country": {
+       "name": "United States",
+       "short": "US"
+      },
+      "formatted": "2 East Broad Street, Greenville, SC 29601, US",
+      "branding_assets": {
+       "id": 27686,
+       "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+       "alt_logo": null,
+       "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+       "mobile_banner": null,
+       "primary_color": null,
+       "secondary_color": null
+      }
+     },
+     "relations": {
+      "brand": {
+       "id": "6078977d8dfec",
+       "attributes": {
+        "name": "Camp",
+        "about": "Modern American Eatery. ",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Brand",
+         "foreign_id": 1636,
+         "key": "job_auto_expire",
+         "value": null
+        },
+        "searchable": true,
+        "industry_key": "restaurant",
+        "branding_assets": {
+         "id": 1617,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": []
+      },
+      "company": {
+       "id": "6078967476b03",
+       "attributes": {
+        "real_id": 2412,
+        "name": "Camp - Table 301",
+        "legal_name": "Camperdown Restaurants, LLC",
+        "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+        "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+        "type": "customer_active",
+        "usage": "ats",
+        "talent_pool": false,
+        "ein": "852097831",
+        "primary_color": null,
+        "secondary_color": null,
+        "job_auto_expire": {
+         "foreign_type": "Higherme\\Eloquent\\Models\\Company",
+         "foreign_id": 2412,
+         "key": "job_auto_expire",
+         "value": "{\"mode\":\"disabled\",\"value\":null}"
+        },
+        "branding_assets": {
+         "id": 14813,
+         "logo": "https://cdn1.higherme.com/image.store/186188e4-bbb9-41fa-aa7f-edf8538499fa.jpeg",
+         "alt_logo": null,
+         "banner": "https://cdn1.higherme.com/image.store/3725424e-f8ab-4b71-ab3c-a26fe287fcf5.jpeg",
+         "mobile_banner": null,
+         "primary_color": null,
+         "secondary_color": null
+        }
+       },
+       "relations": {
+        "preferences": [
+         {
+          "id": 6713152,
+          "key": "application_archive_days",
+          "value": "30",
+          "secondary_value": null
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ ],
+ "links": {
+  "first": "https://api.higherme.com/classic/jobs?page=1",
+  "last": "https://api.higherme.com/classic/jobs?page=1",
+  "prev": null,
+  "next": null
+ },
+ "meta": {
+  "current_page": 1,
+  "from": 1,
+  "last_page": 1,
+  "links": [
+   {
+    "url": null,
+    "label": "&laquo; Previous",
+    "page": null,
+    "active": false
+   },
+   {
+    "url": "https://api.higherme.com/classic/jobs?page=1",
+    "label": "1",
+    "page": 1,
+    "active": true
+   },
+   {
+    "url": null,
+    "label": "Next &raquo;",
+    "page": null,
+    "active": false
+   }
+  ],
+  "path": "https://api.higherme.com/classic/jobs",
+  "per_page": 100,
+  "to": 7,
+  "total": 7
+ }
+}

@@ -186,6 +186,8 @@ func All(c HTTPClient) map[string]Source {
 		NewTalentAdore(c),
 		NewLoxo(c),
 		NewHireology(c),
+		// Rate-paced: api.higherme.com 403s an IP over a per-window budget (see pacer.go).
+		NewHigherMe(pacedHigherMeGetter(c)),
 		NewIsolvedHire(c),
 		NewApplicantPro(c),
 		NewPaylocity(c),

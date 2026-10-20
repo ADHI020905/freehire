@@ -486,6 +486,13 @@ func TestRecognize(t *testing.T) {
 		{"idealtraits non-numeric key is not a board", "https://app.idealtraits.com/Acme/YWJj/careers", "", "", "", false},
 		{"idealtraits key that is not base64", "https://app.idealtraits.com/Acme/not*base64/careers", "", "", "", false},
 		{"idealtraits bare host", "https://app.idealtraits.com/", "", "", "", false},
+		// HigherMe: only the brand career page names a board; a posting link (/jobs/<id>) names a
+		// posting id, which is not a brand and must not be read as one.
+		{"higherme brand career page", "https://app.higherme.com/careers/6078977d8dfec", "higherme", "6078977d8dfec", "https://app.higherme.com/careers/6078977d8dfec", true},
+		{"higherme career page with query", "https://app.higherme.com/careers/6243d6f880266?utm_source=x#top", "higherme", "6243d6f880266", "https://app.higherme.com/careers/6243d6f880266", true},
+		{"higherme posting link names no brand", "https://app.higherme.com/jobs/607aff1be9251", "", "", "", false},
+		{"higherme bare careers has no board", "https://app.higherme.com/careers", "", "", "", false},
+		{"higherme sign-in carries no board", "https://app.higherme.com/login", "", "", "", false},
 
 		{"unknown host", "https://example.com/careers/1", "", "", "", false},
 		{"not http", "ftp://acme.recruitee.com", "", "", "", false},

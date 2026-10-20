@@ -352,6 +352,29 @@ func TestFromURL(t *testing.T) {
 			url:  "https://app.idealtraits.com/career/Al-Bourdeau-Insurance-Agency/370429CPG",
 			ok:   false,
 		},
+		// HigherMe: the board is the brand id on its career page. An apply link names only a
+		// posting id (these three are real apply links); the brand behind it lives in the
+		// posting's API record, so the URL alone has no board to give.
+		{
+			name:     "higherme brand career page",
+			url:      "https://app.higherme.com/careers/6078977d8dfec",
+			provider: "higherme", board: "6078977d8dfec", ok: true,
+		},
+		{
+			name: "higherme apply link names a posting, not a brand",
+			url:  "https://app.higherme.com/jobs/607aff1be9251",
+			ok:   false,
+		},
+		{
+			name: "higherme apply link 2",
+			url:  "https://app.higherme.com/jobs/691b96a8e5001",
+			ok:   false,
+		},
+		{
+			name: "higherme apply link 3",
+			url:  "https://app.higherme.com/jobs/6acfccec3d0b8",
+			ok:   false,
+		},
 		{
 			name: "unknown host",
 			url:  "https://www.caci.com/careers/123",

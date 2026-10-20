@@ -369,6 +369,11 @@ var atsBoards = []struct{ host, source, mode string }{
 	// allowedFirstSegments) — app.dover.com is Dover's whole product SPA, not a dedicated
 	// boards host, so a deny-list mode would mint a board out of every unrelated page it serves.
 	{"app.dover.com", "dover", modeAllowedFirstSegment},
+	// HigherMe: app.higherme.com is the whole product too (sign-in, the employer console, the
+	// candidate profile), and its posting URL /jobs/<id> names a POSTING, not a brand — the
+	// brand behind a posting is only in the posting's API record. Only the brand's career page,
+	// /careers/<brand>, names the board.
+	{"app.higherme.com", "higherme", modeAllowedFirstSegment},
 
 	// --- tenanthost: board = the whole host, one label under a shared domain ---
 	// Feishu Hire's customer careers sites (internal/ingest/sources/feishujobs.go accepts exactly
@@ -589,8 +594,15 @@ var noBoardFirstSegments = map[string][]string{
 // in this list is declined outright rather than skipped to reach a tenant. Dover's job board and
 // apply pages are the only two path shapes this covers; every other app.dover.com page (the
 // dashboard, /crm, /docs/api, sign-in) leads with something else and is correctly declined.
-var allowedFirstSegments = map[string][]string{
-	"app.dover.com": {"apply", "jobs"},
+//
+// listing is the leading segment of the board's own listing page, which the canonical collapses
+// to, so a posting link and the listing map to one board.
+var allowedFirstSegments = map[string]struct {
+	segments []string
+	listing  string
+}{
+	"app.dover.com":    {segments: []string{"apply", "jobs"}, listing: "jobs"},
+	"app.higherme.com": {segments: []string{"careers"}, listing: "careers"},
 }
 
 var reservedSegments = map[string][]string{
@@ -822,15 +834,16 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 		// Any other leading segment — or a leading segment with nothing behind it — carries no
 		// board and is declined, rather than being read as a tenant the way the deny-list path
 		// mode would.
+		allowed := allowedFirstSegments[apex]
 		segs := strings.Split(strings.Trim(u.Path, "/"), "/")
-		if len(segs) < 2 || segs[0] == "" || segs[1] == "" || !slices.Contains(allowedFirstSegments[apex], segs[0]) {
+		if len(segs) < 2 || segs[0] == "" || segs[1] == "" || !slices.Contains(allowed.segments, segs[0]) {
 			return "", "", "", false
 		}
 		board = segs[1]
 		u.RawQuery, u.Fragment = "", ""
 		// The canonical collapses to the board's own listing page, so an apply link and the
 		// listing itself map to one board — the same collapse every other mode makes.
-		u.Path = "/jobs/" + board
+		u.Path = "/" + allowed.listing + "/" + board
 		return src, board, u.String(), true
 
 	case modeTenantHost:

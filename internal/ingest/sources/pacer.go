@@ -720,3 +720,24 @@ func limitedFriendWorkGetter(c JSONGetter) JSONGetter {
 		sem: make(chan struct{}, friendworkMaxInFlight),
 	}
 }
+
+// api.higherme.com sits behind an AWS load-balancer WAF with a rate-based rule that answers the
+// whole IP 403 once tripped. The 2026-10-20 spike tripped it after roughly 70 requests in about
+// six minutes (resolving postings one by one), and the block lifted within a few minutes of
+// going quiet — the shape of a per-window request budget, whose exact size is unmeasured. A
+// board is one request (two for an empty one), so a gentle pace costs little: a few hundred
+// brands crawl in well under an hour at one request every three seconds, ~100 per five minutes
+// at most, with the shared client's retries spending the headroom below the observed trip.
+const (
+	highermeRequestInterval = 3 * time.Second
+	highermeRequestBurst    = 1
+)
+
+// pacedHigherMeGetter wraps a getter with a fresh limiter shared across one registry build, so
+// every board's listing pages and brand lookups in a run compete for the same token bucket.
+func pacedHigherMeGetter(c JSONGetter) JSONGetter {
+	return rateLimitedJSONGetter{
+		inner:   c,
+		limiter: rate.NewLimiter(rate.Every(highermeRequestInterval), highermeRequestBurst),
+	}
+}
