@@ -413,6 +413,33 @@ func TestRecognize(t *testing.T) {
 		{"dover bare apply has no board", "https://app.dover.com/apply", "", "", "", false},
 		{"dover bare jobs has no board", "https://app.dover.com/jobs", "", "", "", false},
 
+		// tenanthost: the whole host, one label under the platform's shared domain. Every
+		// recognised URL here is a real apply link from an external harvest.
+		{"feishu tenant posting", "https://aibee.jobs.feishu.cn/index/position/7696734978956233023/detail", "feishujobs", "aibee.jobs.feishu.cn", "https://aibee.jobs.feishu.cn", true},
+		{"feishu tenant posting under a site code", "https://poizon.jobs.feishu.cn/089488/position/7682629034660104490/detail", "feishujobs", "poizon.jobs.feishu.cn", "https://poizon.jobs.feishu.cn", true},
+		{"feishu bare shared domain has no board", "https://jobs.feishu.cn/", "", "", "", false},
+		{"feishu nested host is not a tenant", "https://a.b.jobs.feishu.cn/index", "", "", "", false},
+		{"successfactors sap-hosted site", "https://mhh.jobs.hr.cloud.sap/job/Hannover-Duales-Studium-Business-Economics-%28wdm%29-NI-30625/1373094055/", "successfactors", "mhh.jobs.hr.cloud.sap", "https://mhh.jobs.hr.cloud.sap", true},
+		{"successfactors legacy career section is not derivable", "https://career55.sapsf.eu/career?career_ns=job_listing&company=pressglass&career_job_req_id=1395&lang=pl_PL", "", "", "", false},
+		{"phenom phenompro posting", "https://qualtrics.phenompro.com/us/en/job/8274275/State-and-Local-Government-Sales-Manager", "phenom", "qualtrics.phenompro.com", "https://qualtrics.phenompro.com", true},
+		{"phenom phenompeople.net posting", "https://acadiamigration.phenompeople.net/us/en/job/110212/Substance-Use-Counselor-TCADC-CADC", "phenom", "acadiamigration.phenompeople.net", "https://acadiamigration.phenompeople.net", true},
+		{"phenom phenompeople.com posting without a locale", "https://lifetime.phenompeople.com/job/R-174914", "phenom", "lifetime.phenompeople.com", "https://lifetime.phenompeople.com", true},
+		// Phenom serves its CDN from the same domains; a career page links there on every load.
+		{"phenom cdn asset is not a board", "https://cdn.phenompeople.com/CareerConnectResources/pp/QUALUS/images/logo.png", "", "", "", false},
+		{"phenom vendor site is not a board", "https://www.phenompeople.com/", "", "", "", false},
+		{"phenom custom domain is not derivable", "https://careers.clearchoice.com/us/en/job/P-100864/Lead-Prosthodontist", "", "", "", false},
+
+		// keyedsegment: Workstream's 8-hex employer id after /j/; an employer slug is not the board.
+		{"workstream posting", "https://www.workstream.us/j/062be02e/baskin-robbins/los-angeles-21909/crew-member-2-eadf20a0?locale=en&referer_source=Applicant", "workstream", "062be02e", "https://www.workstream.us/j/062be02e", true},
+		{"workstream employer root", "https://www.workstream.us/j/965a796b", "workstream", "965a796b", "https://www.workstream.us/j/965a796b", true},
+		{"workstream employer slug is not the board", "https://www.workstream.us/j/finecasual", "", "", "", false},
+		{"workstream marketing page has no board", "https://www.workstream.us/pricing", "", "", "", false},
+
+		// Posting-only links: the board these adapters crawl is not in the URL at all.
+		{"gusto posting carries no board", "https://jobs.gusto.com/postings/quality-it-solutions-corp-full-stack-developer-9c8d3a4c-f831-4f68-b552-43124cab8591", "", "", "", false},
+		{"schoolspring posting carries no board", "https://www.schoolspring.com/jobdetail?jobId=5954920", "", "", "", false},
+		{"edjoin posting carries no board", "https://www.edjoin.org/Home/JobPosting/2285802", "", "", "", false},
+
 		{"unknown host", "https://example.com/careers/1", "", "", "", false},
 		{"not http", "ftp://acme.recruitee.com", "", "", "", false},
 		{"garbage", "not a url", "", "", "", false},
@@ -493,9 +520,10 @@ func TestRecognizeMapsHostsToTheIngestProviderName(t *testing.T) {
 	}
 }
 
-// TestQueryModeRowsAreConfigured guards the two modes whose rows are not self-contained: a query
-// entry needs a second row in queryBoards naming the parameter, and a querypair entry a row in
-// queryPairBoards naming both. Without it the host matches and then declines every link on it —
+// TestQueryModeRowsAreConfigured guards the modes whose rows are not self-contained: a query
+// entry needs a second row in queryBoards naming the parameter, a querypair entry a row in
+// queryPairBoards naming both, and a keyedsegment entry a row in keyedSegmentBoards naming the key
+// and the board shape. Without it the host matches and then declines every link on it —
 // a platform that looks supported and recognises nothing. The rest of the table keeps the
 // "one row plus one test case" promise on its own.
 func TestQueryModeRowsAreConfigured(t *testing.T) {
@@ -512,6 +540,11 @@ func TestQueryModeRowsAreConfigured(t *testing.T) {
 				q.firstPattern == nil || q.secondPattern == nil {
 				t.Errorf("atsBoards entry %q (%s) is %s mode but queryPairBoards has no complete entry for it",
 					a.host, a.source, modeQueryPair)
+			}
+		case modeKeyedSegment:
+			if k, ok := keyedSegmentBoards[a.host]; !ok || k.key == "" || k.boardPattern == nil {
+				t.Errorf("atsBoards entry %q (%s) is %s mode but keyedSegmentBoards has no complete entry for it",
+					a.host, a.source, modeKeyedSegment)
 			}
 		}
 	}

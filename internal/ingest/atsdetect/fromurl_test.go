@@ -212,6 +212,44 @@ func TestFromURL(t *testing.T) {
 			url:  "https://www.comeet.com/pricing/plans/x",
 			ok:   false,
 		},
+		// Apply links from an external harvest, through the shared table: each board below was
+		// crawled live through its adapter and yielded postings.
+		{
+			name:     "workstream employer id",
+			url:      "https://www.workstream.us/j/3a856bab/culvers/eureka-77683/porter-b645d3a7?locale=en&referer_source=Applicant",
+			provider: "workstream", board: "3a856bab", ok: true,
+		},
+		{
+			name:     "feishu tenant host",
+			url:      "https://bcn95a8dacj3.jobs.feishu.cn/campus/position/7695239842557020425/detail",
+			provider: "feishujobs", board: "bcn95a8dacj3.jobs.feishu.cn", ok: true,
+		},
+		{
+			name:     "successfactors sap-hosted site",
+			url:      "https://mhh.jobs.hr.cloud.sap/job/Hannover-Duales-Studium-Business-Economics-%28wdm%29-NI-30625/1373094055/",
+			provider: "successfactors", board: "mhh.jobs.hr.cloud.sap", ok: true,
+		},
+		{
+			name:     "phenom vendor-hosted site",
+			url:      "https://siemens.phenompro.com/global/en/job/R-31293/Nuclear-Pharmacist-training-provided-Birmingham-AL",
+			provider: "phenom", board: "siemens.phenompro.com", ok: true,
+		},
+		{
+			name:     "eploy vendor-hosted site",
+			url:      "https://hadfabltdweb.eploy.net/vacancies/2/project-manager.html",
+			provider: "eploy", board: "hadfabltdweb.eploy.net", ok: true,
+		},
+		// Harvested shapes that do not carry the board the adapter crawls: a posting id only
+		// (gusto, schoolspring, edjoin), a product the adapter does not read (Taleo Business
+		// Edition, the legacy SuccessFactors career section), or a custom domain with no
+		// signature that is the platform's alone (eploy, phenom).
+		{name: "gusto posting", url: "https://jobs.gusto.com/postings/wayback-burgers-back-and-front-of-house-team-memeber-52646664-c1a9-4098-9f14-d5119eaf9ff3"},
+		{name: "schoolspring posting", url: "https://www.schoolspring.com/jobdetail?jobId=5962033"},
+		{name: "edjoin posting", url: "https://www.edjoin.org/Home/JobPosting/2284252"},
+		{name: "taleo business edition requisition", url: "https://phg.tbe.taleo.net/phg04/ats/careers/requisition.jsp?org=FDI&cws=41&rid=613"},
+		{name: "successfactors legacy career section", url: "https://career10.successfactors.com/career?career_ns=job_listing&company=ptmetrodat&career_job_req_id=39731"},
+		{name: "eploy custom domain", url: "https://careers.simplyhealth.co.uk/vacancies/3094/financial-planning--analysis-partner.html"},
+		{name: "phenom custom domain", url: "https://jobs.kwiktrip.com/us/en/job/231967/Customer-Food-Service-Overnight"},
 		{
 			name: "unknown host",
 			url:  "https://www.caci.com/careers/123",

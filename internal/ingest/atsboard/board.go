@@ -111,6 +111,21 @@ const (
 	// unrecognized leading segment as a tenant (the ordinary path mode) would mint a board out of
 	// "/pricing" or "/login". Any first segment not on the allow list is declined outright.
 	modeAllowedFirstSegment = "allowedfirstsegment"
+	// tenanthost: board = the whole host, recognised only when it sits exactly ONE label under the
+	// platform's shared domain (<tenant>.jobs.feishu.cn, <tenant>.phenompro.com). The adapter
+	// addresses a tenant by its full careers host, like host mode's, but the shared domain here
+	// is the host's suffix rather than a label in its middle, which host mode's match cannot
+	// express. A deeper host is declined rather than read: nothing says it is a tenant. When
+	// tenantHostPostingSegments names a path segment for the apex, a URL must carry it — for a
+	// vendor that serves its own machinery (a CDN, an API) from the same domain its tenants live
+	// on, which a career page links to on every load.
+	modeTenantHost = "tenanthost"
+	// keyedsegment: board = the segment right after a fixed key segment, and only when it has the
+	// platform's board-id shape (keyedSegmentBoards). Workstream addresses an employer at
+	// /j/<8-hex>/…, but the same /j/ also takes the employer's SLUG, which 301-redirects onto the
+	// hex — a slug is a spelling of the board, not the id the adapter namespaces postings by, so
+	// reading it would file the employer under a board no crawl stores.
+	modeKeyedSegment = "keyedsegment"
 )
 
 // atsBoards lists the supported multi-tenant ATS: a host (exact or subdomain-suffix match) →
@@ -326,6 +341,49 @@ var atsBoards = []struct{ host, source, mode string }{
 	// allowedFirstSegments) — app.dover.com is Dover's whole product SPA, not a dedicated
 	// boards host, so a deny-list mode would mint a board out of every unrelated page it serves.
 	{"app.dover.com", "dover", modeAllowedFirstSegment},
+
+	// --- tenanthost: board = the whole host, one label under a shared domain ---
+	// Feishu Hire's customer careers sites (internal/ingest/sources/feishujobs.go accepts exactly
+	// <tenant>.jobs.feishu.cn). ByteDance's own jobs.bytedance.com is a single host, not a tenant
+	// space, and is left out.
+	{"jobs.feishu.cn", "feishujobs", modeTenantHost},
+	// SuccessFactors career sites SAP hosts on its own domain; the adapter reads
+	// https://<board>/job_sitemap.xml. Sites on an employer's own domain stay underivable, and so
+	// does the legacy careerNN.sapsf.* "career?company=<id>" section, which serves no sitemap.
+	{"jobs.hr.cloud.sap", "successfactors", modeTenantHost},
+	// Phenom career sites on the vendor's own domains — each answers the /widgets API the adapter
+	// calls, verified live. A site on the employer's own domain (careers.cisco.com) is not
+	// derivable from its URL; boardresolve identifies those from the page.
+	{"phenompro.com", "phenom", modeTenantHost},
+	{"phenompeople.net", "phenom", modeTenantHost},
+	{"phenompeople.com", "phenom", modeTenantHost},
+
+	// --- keyedsegment: board = the shaped segment after a fixed key segment ---
+	{"workstream.us", "workstream", modeKeyedSegment},
+}
+
+// tenantHostPostingSegments names, per modeTenantHost apex, a path segment a URL must carry to be
+// read as a tenant's. Phenom serves its CDN and assets from subdomains of the same domains its
+// tenants live on (cdn.phenompeople.com is on every Phenom career page, custom-domain ones
+// included), and boardresolve feeds every URL a careers page carries through Recognize — so
+// without this, any Phenom-hosted page would resolve to the vendor's CDN as a board. A posting
+// URL always has a "job" segment (/us/en/job/<id>/<slug>, /job/<id>); a career-site home does
+// not, and is left unrecognised rather than guessed.
+var tenantHostPostingSegments = map[string]string{
+	"phenompro.com":    "job",
+	"phenompeople.net": "job",
+	"phenompeople.com": "job",
+}
+
+// keyedSegmentBoards holds, per modeKeyedSegment host entry, the key segment the board follows
+// and the shape the board must have.
+var keyedSegmentBoards = map[string]struct {
+	key          string
+	boardPattern *regexp.Regexp
+}{
+	// Workstream's employer id: the eight lower-case hex characters every canonical career-site
+	// URL opens with (internal/ingest/sources/workstream.go).
+	"workstream.us": {key: "j", boardPattern: regexp.MustCompile(`^[0-9a-f]{8}$`)},
 }
 
 // queryBoards holds, per matched host entry in modeQuery, the query parameter that names the
@@ -726,6 +784,31 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 		// The canonical collapses to the board's own listing page, so an apply link and the
 		// listing itself map to one board — the same collapse every other mode makes.
 		u.Path = "/jobs/" + board
+		return src, board, u.String(), true
+
+	case modeTenantHost:
+		if platformHost(host, apex) || subdomainLabel(host, apex) == "" {
+			return "", "", "", false // vendor host, bare apex, or deeper than one tenant label
+		}
+		if seg := tenantHostPostingSegments[apex]; seg != "" &&
+			!slices.Contains(strings.Split(strings.Trim(u.Path, "/"), "/"), seg) {
+			return "", "", "", false
+		}
+		u.RawQuery, u.Fragment, u.Path = "", "", ""
+		return src, host, u.String(), true
+
+	case modeKeyedSegment:
+		k, configured := keyedSegmentBoards[apex]
+		if !configured || k.boardPattern == nil {
+			return "", "", "", false
+		}
+		segs := strings.Split(strings.Trim(u.Path, "/"), "/")
+		if len(segs) < 2 || segs[0] != k.key || !k.boardPattern.MatchString(segs[1]) {
+			return "", "", "", false
+		}
+		board = segs[1]
+		u.RawQuery, u.Fragment = "", ""
+		u.Path = "/" + k.key + "/" + board
 		return src, board, u.String(), true
 
 	case modePath, modePathNumeric:

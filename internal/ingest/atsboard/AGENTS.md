@@ -35,7 +35,13 @@ nothing but the URL. No network, no database.
   tenant), `hostpath` (host + first path segment, for Workday), `hostcareers`
   (`<host>/<tenant>` from `<host>/ta/<tenant>.careers`, for UKG Ready, whose host selects the
   environment its tenant lives in), `hosttenantboard` (`<host>/<tenant>/<guid>`, for UKG Pro
-  Recruiting — a different product from UKG Ready, on different hosts).
+  Recruiting — a different product from UKG Ready, on different hosts), `tenanthost` (the
+  whole host, exactly one label under a shared domain — Feishu's `<tenant>.jobs.feishu.cn`,
+  SAP-hosted SuccessFactors, Phenom's own domains; `tenantHostPostingSegments` makes Phenom
+  URLs carry a `job` segment, because the vendor's CDN lives on the same domains and
+  boardresolve feeds every URL a career page carries through `Recognize`), `keyedsegment` (the
+  segment after a fixed key, only in the platform's id shape — Workstream's `/j/<8-hex>`, whose
+  `/j/<slug>` spelling is a redirect, not the board; `keyedSegmentBoards` is its second row).
 - **The mode must match how the ingest adapter addresses the board**, not how the URL reads. The
   board string is copied verbatim into the `boards` catalog and into the `external_id`
   namespace, so a truncated one is a board that 404s every crawl: Huntflow's adapter fetches
