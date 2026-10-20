@@ -1,0 +1,261 @@
+import asyncio
+
+import pytest
+
+from pool import PoolBusy, PoolClosed, SessionPool
+
+
+class FakeSession:
+    def __init__(self, key, n):
+        self.key, self.n, self.closed = key, n, False
+
+    async def close(self):
+        self.closed = True
+
+
+class Factory:
+    def __init__(self):
+        self.made = []
+
+    async def __call__(self, key):
+        s = FakeSession(key, len(self.made))
+        self.made.append(s)
+        return s
+
+
+class Clock:
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+
+def run(coro):
+    return asyncio.run(coro)
+
+
+def test_sequential_uses_on_one_key_reuse_the_session():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=3, idle_ttl=60)
+
+    async def go():
+        a = await pool.run(("ex.com", None), lambda s: _ret(s))
+        b = await pool.run(("ex.com", None), lambda s: _ret(s))
+        return a, b
+
+    a, b = run(go())
+    assert a is b and len(f.made) == 1
+
+
+def test_different_keys_get_different_sessions():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=3, idle_ttl=60)
+
+    async def go():
+        a = await pool.run(("ex.com", None), lambda s: _ret(s))
+        b = await pool.run(("ex.com", "http://proxy"), lambda s: _ret(s))
+        return a, b
+
+    a, b = run(go())
+    assert a is not b and len(f.made) == 2
+
+
+def test_concurrent_uses_of_one_key_open_parallel_sessions_under_the_cap():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=60)
+    peak = {"now": 0, "max": 0}
+
+    async def work(s):
+        peak["now"] += 1
+        peak["max"] = max(peak["max"], peak["now"])
+        await asyncio.sleep(0.01)
+        peak["now"] -= 1
+        return s
+
+    async def go():
+        return await asyncio.gather(*(pool.run(("ex.com", None), work) for _ in range(5)))
+
+    run(go())
+    assert len(f.made) == 2  # never past the cap
+    assert peak["max"] == 2
+
+
+def test_cap_reached_evicts_an_idle_session_of_another_key():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=1, idle_ttl=60)
+
+    async def go():
+        await pool.run(("a.com", None), lambda s: _ret(s))
+        await pool.run(("b.com", None), lambda s: _ret(s))
+
+    run(go())
+    assert len(f.made) == 2
+    assert f.made[0].closed and not f.made[1].closed
+
+
+def test_cap_reached_with_all_busy_waits_for_a_release():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=1, idle_ttl=60)
+    order = []
+
+    async def slow(s):
+        order.append("a-start")
+        await asyncio.sleep(0.02)
+        order.append("a-end")
+        return s
+
+    async def fast(s):
+        order.append("b")
+        return s
+
+    async def go():
+        t = asyncio.create_task(pool.run(("a.com", None), slow))
+        await asyncio.sleep(0.005)
+        await pool.run(("b.com", None), fast)
+        await t
+
+    run(go())
+    assert order == ["a-start", "a-end", "b"]
+    assert len(f.made) == 2
+
+
+def test_a_failing_use_discards_its_session():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=60)
+
+    async def boom(s):
+        raise RuntimeError("page crashed")
+
+    async def go():
+        with pytest.raises(RuntimeError):
+            await pool.run(("ex.com", None), boom)
+        return await pool.run(("ex.com", None), lambda s: _ret(s))
+
+    s = run(go())
+    assert f.made[0].closed and s is f.made[1]
+
+
+def test_reap_closes_sessions_idle_past_the_ttl():
+    f = Factory()
+    clock = Clock()
+    pool = SessionPool(f, max_sessions=3, idle_ttl=60, clock=clock)
+
+    async def go():
+        await pool.run(("a.com", None), lambda s: _ret(s))
+        clock.t = 30
+        await pool.run(("b.com", None), lambda s: _ret(s))
+        clock.t = 75  # a idle 75s, b idle 45s
+        await pool.reap()
+
+    run(go())
+    assert f.made[0].closed and not f.made[1].closed
+    assert pool.size() == 1
+
+
+def test_a_failing_factory_frees_its_reserved_slot():
+    calls = {"n": 0}
+
+    async def flaky(key):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("chrome failed to start")
+        return FakeSession(key, calls["n"])
+
+    pool = SessionPool(flaky, max_sessions=1, idle_ttl=60)
+
+    async def go():
+        with pytest.raises(RuntimeError):
+            await pool.run(("ex.com", None), lambda s: _ret(s))
+        return await pool.run(("ex.com", None), lambda s: _ret(s))
+
+    assert run(go()).n == 2
+
+
+def test_close_all_closes_every_session():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=3, idle_ttl=60)
+
+    async def go():
+        await pool.run(("a.com", None), lambda s: _ret(s))
+        await pool.run(("b.com", None), lambda s: _ret(s))
+        await pool.close_all()
+
+    run(go())
+    assert all(s.closed for s in f.made) and pool.size() == 0
+
+
+async def _ret(s):
+    return s
+
+
+def test_waiting_past_the_acquire_timeout_gives_up():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=1, idle_ttl=60, acquire_timeout=0.02)
+
+    async def hold(s):
+        await asyncio.sleep(0.2)
+        return s
+
+    async def go():
+        t = asyncio.create_task(pool.run(("a.com", None), hold))
+        await asyncio.sleep(0.005)
+        with pytest.raises(PoolBusy):
+            await pool.run(("b.com", None), lambda s: _ret(s))
+        await t
+
+    run(go())
+
+
+def test_cancelled_request_does_not_leak_a_slot():
+
+    class SlowClose(FakeSession):
+        async def close(self):
+            await asyncio.sleep(0.05)
+            self.closed = True
+
+    made = []
+
+    async def factory(key):
+        s = SlowClose(key, len(made))
+        made.append(s)
+        return s
+
+    pool = SessionPool(factory, max_sessions=1, idle_ttl=60)
+
+    async def go():
+        await pool.run(("a.com", None), lambda s: _ret(s))
+        # b evicts a's idle session; cancel b while that slow close is in flight
+        t = asyncio.create_task(pool.run(("b.com", None), lambda s: _ret(s)))
+        await asyncio.sleep(0.01)
+        t.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await t
+        # the one slot must still be usable
+        return await asyncio.wait_for(pool.run(("c.com", None), lambda s: _ret(s)), 1)
+
+    s = run(go())
+    assert s.key == ("c.com", None)
+
+
+def test_close_all_also_closes_a_session_still_opening():
+
+    made = []
+
+    async def slow_factory(key):
+        await asyncio.sleep(0.05)
+        s = FakeSession(key, len(made))
+        made.append(s)
+        return s
+
+    pool = SessionPool(slow_factory, max_sessions=2, idle_ttl=60)
+
+    async def go():
+        t = asyncio.create_task(pool.run(("a.com", None), lambda s: _ret(s)))
+        await asyncio.sleep(0.01)
+        await pool.close_all()
+        with pytest.raises(PoolClosed):
+            await t
+
+    run(go())
+    assert made and all(s.closed for s in made) and pool.size() == 0

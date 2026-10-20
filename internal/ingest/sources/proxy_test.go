@@ -46,7 +46,7 @@ func TestApplyProxyEgressRewiresProxiedProviderOnly(t *testing.T) {
 }
 
 // hh's detail pages are captcha-walled through the proxy (DDoS-Guard) while working fine on the
-// direct IP; detail hydration moved to the Firecrawl tier instead (firecrawltier.go), so hh no
+// direct IP; detail hydration moved to the Scrapling tier instead (scraplingtier.go), so hh no
 // longer belongs in proxiedProviders at all — not even for listing, which was measured working
 // directly.
 func TestApplyProxyEgressLeavesHHOnTheDirectClient(t *testing.T) {

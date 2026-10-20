@@ -1,0 +1,6 @@
+# What the tests need outside the Scrapling image. starlette matches the version the pinned
+# image ships; httpx is starlette's TestClient transport. Scrapling itself is not needed: the
+# tests fake both fetchers.
+starlette==1.9.0
+httpx==0.28.1
+pytest==8.4.2

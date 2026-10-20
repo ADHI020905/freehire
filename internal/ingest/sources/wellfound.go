@@ -18,10 +18,9 @@ import (
 // (measured) and Wellfound's own role taxonomy already picks a workable technical slice for
 // free.
 //
-// Wellfound's listing pages sit behind a Cloudflare JavaScript challenge that neither a direct
-// request nor this repository's own proxied headless-browser tier can pass (measured live); the
-// hosted Firecrawl tier does pass it, so in production this adapter is wired through
-// firecrawlProviders (firecrawltier.go) exactly like bayt/gulftalent. Each page is server-rendered
+// Wellfound's listing pages answer 403 to a plain request, direct or proxied (measured live); the
+// Scrapling tier's impersonating fetcher over the proxy is served (2026-10-20), so in production
+// this adapter is wired through scraplingProviders (scraplingtier.go) like bayt/gulftalent. Each page is server-rendered
 // by Next.js and embeds a `<script id="__NEXT_DATA__">` tag whose JSON body is
 // props.pageProps.apolloState.data — a normalized Apollo GraphQL cache. A JobListingSearchResult
 // entry carries every scalar field this adapter needs directly EXCEPT the hiring company, which
@@ -38,7 +37,7 @@ type wellfound struct {
 	http HTMLGetter
 }
 
-// NewWellfound builds the Wellfound adapter over the given HTTP client (the hosted Firecrawl
+// NewWellfound builds the Wellfound adapter over the given HTTP client (the Scrapling tier's
 // client in production).
 func NewWellfound(c HTMLGetter) Source { return wellfound{http: c} }
 

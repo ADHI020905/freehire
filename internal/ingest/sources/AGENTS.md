@@ -804,38 +804,40 @@ There is deliberately no threshold: "some candidates, none read" is the whole si
 many consecutive failures matter is `board_health`'s question. No candidates at all still
 succeeds — a quiet source is not a broken one.
 
-## The hosted tier (last resort, and it costs money)
+## The Scrapling tier (the sources no plain client reaches)
 
-`firecrawlProviders` (firecrawltier.go) is the third transport, for providers that refuse
-**every** address this repository can obtain. `bayt` and `gulftalent` are `403` from the prod
-datacenter IP *and* `403` through `SOURCES_PROXY_URL`; the browser tier does not help either,
-because the refusal comes before any challenge is offered.
+`scraplingProviders` (scraplingtier.go) sends a provider's requests through
+[services/scrapling-fetch](../../../services/scrapling-fetch/README.md) on the crawl host, over
+[internal/platform/scraplingfetch](../../platform/scraplingfetch/AGENTS.md). Each row names a
+mode — `http` (one request with Chrome's TLS fingerprint, ~0.2-2 s) or `browser` (a stealth
+Chromium navigation that solves Cloudflare challenges, ~5-9 s once the first page on a host has
+paid ~110 s for the challenge) — and whether it egresses through the proxy the service holds.
+Every row is the cheapest route the 2026-10-20 spike measured to pass;
+[the design](../../../docs/superpowers/specs/2026-10-20-scrapling-fetch-design.md) has the
+per-source, per-mode table, including the sources it did NOT rescue (echojobs, neogov, dodo).
 
-Reach for it only after the other two are ruled out — it is the only tier billed per page.
-Before adding a provider, measure what is behind the wall: `bayt`'s own IT category passed
-**0 of 33** titles through `classify.IsTech`, and `gulftalent`'s postings **5 of 400**. See
-[internal/platform/firecrawl/AGENTS.md](../../platform/firecrawl/AGENTS.md) for the full
-numbers and the three bounds that keep it from spending by accident.
+It replaced the hosted Firecrawl tier, which carried bayt, gulftalent, wellfound, wantapply's
+sitemap and hh's detail pages at a credit per page and ran out of credits in 2026-10.
 
-**`ApplyFirecrawlEgress` must run LAST**, and `cmd/ingest` does. `gulftalent` is in
-`proxiedFingerprintProviders` too, so both write the same registry entry — here the override is
-*wanted* (that transport is measured as refused, this one as served), so it is ordered and
-pinned by a test instead of being the silent last-write-wins the browser tier's disjointness
-test exists to prevent. Without a key the override does not happen and `gulftalent` keeps the
-fingerprint transport exactly as before.
+**Measure what is behind the wall before adding a provider**: `bayt`'s IT category passed
+**0 of 33** titles through `classify.IsTech` and `gulftalent`'s postings **5 of 400**
+(2026-09-07). A browser page is not free — ~1-1.7 GB per live session on the crawl host.
 
-Neither adapter changed: `baytHTTP` is `HTMLGetter` and `gulftalentHTTP` is `XMLGetter` +
-`HTMLGetter`, and a test asserts the hosted client satisfies both. What is wrong with these
-providers is the address a request leaves from, not how the response is read.
+**`ApplyScraplingEgress` must run LAST**, and `cmd/ingest` does. `gulftalent` is in
+`proxiedFingerprintProviders` and `infojobs` in `proxiedProviders`, so both tiers write the same
+registry entry — the override is *wanted* (those transports are measured as refused, this one as
+served), so it is ordered instead of being the silent last-write-wins the browser tier's
+disjointness test exists to prevent. Without `SCRAPLING_FETCH_URL` the override does not happen
+and each keeps its earlier transport — which is also the rollback.
 
-**`hh` is a different shape: only detail hydration is hosted, not the whole crawl** (like
-`wantapply`, whose sitemap enumeration is hosted while the pages it lists stay free). hh's
-listing (`hh.ru/search/vacancy`) works fine on the plain direct IP — measured 2026-09-08 — while
-its detail pages (`hh.ru/vacancy/<id>`) redirect through the proxy to an interactive DDoS-Guard
-image CAPTCHA (`/account/captcha`) that no transport this repository controls can solve. So `hh`
-is removed from `proxiedProviders` entirely (proxy.go) and its `firecrawlProviders` build
-function hands `NewHHWithDetailGetter` a fresh, always-unproxied `NewClient()` for listing and
-the hosted client for detail — deliberately NOT the `direct` parameter `ApplyFirecrawlEgress`
-passes in, since that value is the PROXIED client whenever `SOURCES_PROXY_URL` is set for any
-other provider (eightfold, djinni, 2gis, …), which would put hh's listing right back on the
-proxy this exists to stop using.
+No adapter changed: the tier is a `*Client` whose transport forwards to the service, so every
+getter, the retries and the body cap are the same code every other provider uses.
+
+**Some providers send only PART of a crawl through it.** `wantapply` reads only the .com sitemap
+there (~2 755 vacancies against the free .cy mirror's ~605) and every page on the free client.
+`startupjobs` sends only its Cloudflare-challenged site pages; its sitemap CDN and Algolia index
+stay plain. `hh` sends only detail hydration: its listing works on the plain direct IP while its
+detail pages redirect through the proxy to a DDoS-Guard captcha, so its build hands
+`NewHHWithDetailGetter` a fresh, always-unproxied `NewClient()` for listing — deliberately NOT the
+`direct` parameter, which is the PROXIED client whenever `SOURCES_PROXY_URL` is set for any
+other provider.

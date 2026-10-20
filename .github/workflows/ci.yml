@@ -161,6 +161,28 @@ jobs:
   # Every relative Markdown link, because this repository navigates by document and a
   # rename breaks one silently. Needs no dependencies — git and node — so it is its own
   # job rather than a step tacked onto one that installs a package tree.
+  scrapling-fetch:
+    # services/scrapling-fetch: the self-hosted fetch tier on host2. Its tests fake both
+    # Scrapling fetchers, so they run on plain Python without a browser.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/scrapling-fetch
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install -r requirements-test.txt
+
+      - name: Test
+        run: python -m pytest -q
+
   docs:
     runs-on: ubuntu-latest
     steps:

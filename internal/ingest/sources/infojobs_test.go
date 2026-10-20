@@ -7,7 +7,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 // ijPage wraps an inner __INITIAL_PROPS__ JSON document in the exact double-encoding the real
@@ -28,13 +30,26 @@ func ijPage(t *testing.T, innerJSON string) string {
 type infojobsHTTP struct {
 	listPages map[int]string
 	failList  bool
-	got       []string
+	delay     time.Duration
+
+	mu       sync.Mutex
+	got      []string
+	inFlight int
+	peak     int
 }
 
 var infojobsPageRE = regexp.MustCompile(`[?&]page=(\d+)`)
 
 func (f *infojobsHTTP) GetText(_ context.Context, url string) (string, error) {
+	f.mu.Lock()
 	f.got = append(f.got, url)
+	f.inFlight++
+	if f.inFlight > f.peak {
+		f.peak = f.inFlight
+	}
+	f.mu.Unlock()
+	defer func() { f.mu.Lock(); f.inFlight--; f.mu.Unlock() }()
+	time.Sleep(f.delay)
 	if strings.HasPrefix(url, "https://www.infojobs.net/ofertas-trabajo?") {
 		if f.failList {
 			return "", errors.New("infojobsHTTP: list boom")
@@ -175,5 +190,65 @@ func TestInfojobsLaterPageFailureFailsCrawl(t *testing.T) {
 	}}
 	if _, err := (infojobs{http: http}).Fetch(context.Background(), CompanyEntry{}); err == nil {
 		t.Fatal("want an error when a later listing page fails, got a partial list")
+	}
+}
+
+func ijListPage(t *testing.T, total int, codes ...string) string {
+	t.Helper()
+	var offers []string
+	for _, c := range codes {
+		offers = append(offers, `{"code":"`+c+`","title":"T","companyName":"Co","link":"//www.infojobs.net/x/of-i`+c+`"}`)
+	}
+	return ijPage(t, `{"overview":{"totalElements":`+strconv.Itoa(total)+`},"offers":[`+strings.Join(offers, ",")+`]}`)
+}
+
+// The listing is thousands of pages and each one is a browser navigation of several seconds,
+// so pages after the first are fetched concurrently — bounded, in page order, with offers that
+// shifted between pages while the crawl ran counted once.
+func TestInfojobsCrawlFetchesPagesConcurrentlyInOrder(t *testing.T) {
+	http := &infojobsHTTP{delay: 20 * time.Millisecond, listPages: map[int]string{
+		1: ijListPage(t, 9, "A", "B"),
+		2: ijListPage(t, 9, "C", "D"),
+		3: ijListPage(t, 9, "D", "E"), // D shifted down a page mid-crawl
+		4: ijListPage(t, 9, "F", "G"),
+		5: ijListPage(t, 9, "H", "I"),
+	}}
+	offers, err := infojobs{http: http}.crawl(context.Background())
+	if err != nil {
+		t.Fatalf("crawl: %v", err)
+	}
+	var codes []string
+	for _, o := range offers {
+		codes = append(codes, o.Code)
+	}
+	if got := strings.Join(codes, ""); got != "ABCDEFGHI" {
+		t.Errorf("offers = %s, want ABCDEFGHI (page order, D once)", got)
+	}
+	if len(http.got) != 5 {
+		t.Errorf("fetched %d pages, want 5 (ceil(9/2))", len(http.got))
+	}
+	if http.peak < 2 || http.peak > infojobsListWorkers {
+		t.Errorf("peak concurrency = %d, want between 2 and %d", http.peak, infojobsListWorkers)
+	}
+}
+
+func TestInfojobsCrawlFailsWhenAnyLaterPageFails(t *testing.T) {
+	http := &infojobsHTTP{listPages: map[int]string{
+		1: ijListPage(t, 6, "A", "B"),
+		2: ijListPage(t, 6, "C", "D"),
+		3: `<html>No podemos identificar tu navegador</html>`,
+	}}
+	if _, err := (infojobs{http: http}).crawl(context.Background()); err == nil {
+		t.Fatal("want the crawl to fail when one page is the bot challenge")
+	}
+}
+
+func TestInfojobsCrawlRefusesAListingPastTheCeiling(t *testing.T) {
+	http := &infojobsHTTP{listPages: map[int]string{1: ijListPage(t, 2*(infojobsMaxPages+1), "A", "B")}}
+	if _, err := (infojobs{http: http}).crawl(context.Background()); err == nil {
+		t.Fatal("want an error for a listing longer than the page ceiling")
+	}
+	if len(http.got) != 1 {
+		t.Errorf("fetched %d pages, want only the first before refusing", len(http.got))
 	}
 }

@@ -364,10 +364,10 @@ func All(c HTTPClient) map[string]Source {
 		NewRemotive(c),
 		NewRemotedotcom(c),
 		// wellfound needs no fingerprint-spoofing transport of its own (unlike bayt/gulftalent
-		// below) — its pages sit behind a full Cloudflare JS challenge that only the hosted
-		// Firecrawl tier can pass, wired in firecrawlProviders. Without that credential this
-		// entry still exists (classification/dedup must know about it) but every crawl attempt
-		// simply 403s on the challenge response, the same shape bayt/gulftalent already have.
+		// below) — its pages refuse every plain request, and the Scrapling tier serves them,
+		// wired in scraplingProviders. Without SCRAPLING_FETCH_URL this entry still exists
+		// (classification/dedup must know about it) but every crawl attempt simply 403s, the
+		// same shape bayt/gulftalent already have.
 		NewWellfound(c),
 		NewRemotli(c),
 		NewLandingJobs(c),

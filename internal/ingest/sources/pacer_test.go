@@ -104,8 +104,8 @@ func TestConcurrencyLimitedHTMLGetter_CancelledContextShortCircuits(t *testing.T
 	}
 }
 
-// Wellfound's requests all go through the hosted Firecrawl client, and pacing the request
-// START rate alone (rateLimitedHTMLGetter) was not enough live: crawling 11 role-slice boards
+// Wellfound's requests went through the hosted Firecrawl client when this was found (they now
+// go through the Scrapling tier over a shared proxy IP), and pacing the request START rate alone (rateLimitedHTMLGetter) was not enough live: crawling 11 role-slice boards
 // concurrently still hit "vendor rate limit did not lift after 4 attempts" on 10 of 11 boards
 // within ~3 minutes on 2026-09-14, even paced at one new request every 2 seconds — because a
 // slow in-flight request (Firecrawl bypassing Wellfound's Cloudflare challenge takes several
@@ -122,8 +122,8 @@ func TestLimitedWellfoundGetter_SharesOneInFlightCap(t *testing.T) {
 		t.Errorf("cap = %d, want wellfoundMaxInFlight (%d)", got, wellfoundMaxInFlight)
 	}
 	if wellfoundMaxInFlight != 1 {
-		t.Errorf("wellfoundMaxInFlight = %d, want 1 — Firecrawl's own account-level ceiling is shared "+
-			"with bayt/gulftalent/hh and unmeasured, so this run's share of it must stay minimal",
+		t.Errorf("wellfoundMaxInFlight = %d, want 1 — the proxy's exit IP is shared and the edge's "+
+			"limit unmeasured, so this run's share of it must stay minimal until a run measures it",
 			wellfoundMaxInFlight)
 	}
 }

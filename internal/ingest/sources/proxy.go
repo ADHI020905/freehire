@@ -250,13 +250,14 @@ func ClientFor(provider string) (*Client, error) {
 // bayt is absent, and gulftalent's entry here is now its FALLBACK rather than its live
 // transport. Both are 403 from the prod datacenter IP AND 403 through SOURCES_PROXY_URL,
 // whose exit their edge classifies as datacenter too — no fingerprint helps, because the
-// refusal precedes any handshake we could disguise, and the browser tier does not help
-// either, because no challenge is ever offered to solve.
+// refusal precedes any handshake we could disguise. The chromedp browser tier did not help
+// either (2026-09): what it was shown was a refusal, not a challenge.
 //
-// What answered it was an address we do not own: see firecrawlProviders (firecrawltier.go),
-// which serves both and is applied after this, deliberately overriding gulftalent's entry
-// below. Without FIRECRAWL_API_KEY that override does not happen and gulftalent keeps the
-// fingerprint transport exactly as before — refused, but unchanged.
+// What answers both is the Scrapling tier's browser, which solves the challenge their edge does
+// offer to a real browser: see scraplingProviders (scraplingtier.go), applied after this and
+// deliberately overriding gulftalent's entry below. Without SCRAPLING_FETCH_URL that override
+// does not happen and gulftalent keeps the fingerprint transport exactly as before — refused,
+// but unchanged.
 //
 // Nothing is waiting for a residential pool any more: wantedkr was the last entry that
 // wanted one, and it was retired on 2026-09-07 rather than kept as a permanently failing

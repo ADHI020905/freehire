@@ -660,11 +660,11 @@ func pacedIdealTraitsGetter(c idealtraitsHTTP) idealtraitsHTTP {
 	}
 }
 
-// Wellfound's requests go through the hosted Firecrawl tier, so the ceiling being throttled
-// against is Firecrawl's own account-level limit, not the target site's edge — and, unlike
-// every rate-based pace in this file, it is shared across every OTHER firecrawl-tier
-// provider's requests too (bayt, gulftalent, hh), which this adapter's own limiter cannot see.
+// Wellfound's requests go through the Scrapling tier over the proxy — one shared exit IP that
+// the other proxied providers use too, against an edge whose own limit nobody has measured.
 //
+// The cap dates from the hosted Firecrawl tier, which carried wellfound until 2026-10, and the
+// incident that set it is the reason it stays until a run through the new tier says otherwise.
 // Found live 2026-09-14, twice. First: crawling wellfound's 11 role-slice boards in one ingest
 // run unbounded, 4 boards failed with "vendor rate limit did not lift after 4 attempts" within
 // three minutes. The first fix paced the request START rate (one every 2s, rateLimitedHTMLGetter)
@@ -677,8 +677,8 @@ func pacedIdealTraitsGetter(c idealtraitsHTTP) idealtraitsHTTP {
 // successful partial crawl, per this adapter's own "a later page failure discards the whole
 // board" rule — a real, not hypothetical, cost, twice over.
 //
-// One in flight is deliberately the most conservative cap available, since the true account-wide
-// ceiling is unknown and shared with providers this file cannot coordinate with; tune upward
+// One in flight is deliberately the most conservative cap available, since the true ceiling is
+// unknown and the exit IP is shared with providers this file cannot coordinate with; tune upward
 // only from observed convergence, the same discipline every other cap in this file follows.
 const wellfoundMaxInFlight = 1
 

@@ -654,13 +654,6 @@ func TestWellfoundRegisteredAndFilterable(t *testing.T) {
 	}
 }
 
-func TestWellfoundInFirecrawlProviders(t *testing.T) {
-	if _, ok := firecrawlProviders["wellfound"]; !ok {
-		t.Error("wellfound must be in firecrawlProviders — its pages are behind a Cloudflare " +
-			"challenge no other transport this repository has can pass")
-	}
-}
-
 func TestWellfound_Fetch_ALaterUnparseablePageIsALoudFailure(t *testing.T) {
 	url1 := wellfoundPageURL("software-engineer", 1)
 	url2 := wellfoundPageURL("software-engineer", 2)

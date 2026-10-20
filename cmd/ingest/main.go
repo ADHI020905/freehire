@@ -112,10 +112,10 @@ func run() int {
 		return 1
 	}
 	defer closeBrowser()
-	// LAST, and the order is load-bearing: the hosted tier deliberately takes gulftalent off
-	// the fingerprint transport, which ApplyProxyEgress above wired. See ApplyFirecrawlEgress.
-	// A no-op without FIRECRAWL_API_KEY, so this cannot spend anything on an ordinary run.
-	if err := sources.ApplyFirecrawlEgress(registry); err != nil {
+	// LAST, and the order is load-bearing: the Scrapling tier deliberately takes its providers
+	// off the proxy and fingerprint transports wired above. See ApplyScraplingEgress.
+	// A no-op without SCRAPLING_FETCH_URL, which is also the rollback.
+	if err := sources.ApplyScraplingEgress(registry); err != nil {
 		log.Printf("config: %v", err)
 		return 1
 	}
