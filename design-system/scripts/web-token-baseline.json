@@ -14,7 +14,7 @@
   "web/src/lib/components/ATSReportView.svelte": 4,
   "web/src/lib/components/BoardColumn.svelte": 1,
   "web/src/lib/components/ChatGptView.svelte": 10,
-  "web/src/lib/components/CliView.svelte": 7,
+  "web/src/lib/components/CliView.svelte": 4,
   "web/src/lib/components/community/DiscussionIndex.svelte": 5,
   "web/src/lib/components/community/DiscussionNewTopic.svelte": 6,
   "web/src/lib/components/community/DiscussionThread.svelte": 7,
