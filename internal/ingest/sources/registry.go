@@ -665,6 +665,16 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["paradox"] = NewParadox(pacedParadoxGetter(NewLongTimeoutClient()))
 	}
+	// HireClick serves its pages uncompressed at ~80-160 KB/s per connection while they weigh
+	// 1-3 MB (the tenant logo inlined as base64, plus an ASP.NET view state), so a board page
+	// measured 13-40s and a posting page ~11s — past the standard 15s timeout, the HumanBit
+	// case again. Every request is also held under one in-flight cap (limitedHireClick): the
+	// origin is one small pipe that degraded under a default-fan-out crawl. See hireclick.go.
+	if c == nil {
+		registry["hireclick"] = NewHireClick(nil)
+	} else {
+		registry["hireclick"] = NewHireClick(limitedHireClick(NewLongTimeoutClient()))
+	}
 	// HerKey's posting resource answers in 4-15 s, close enough to the standard 15 s timeout
 	// that a share of every run would time out, so it rides the long-timeout transport, paced
 	// (see herkeyRequestInterval).

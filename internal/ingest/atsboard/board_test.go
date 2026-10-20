@@ -283,6 +283,11 @@ func TestRecognize(t *testing.T) {
 		{"applicantstack upper-case tenant folds", "https://SmartAutoCare.applicantstack.com/x/detail/a2g5b5u0kq8i", "applicantstack", "smartautocare", "https://SmartAutoCare.applicantstack.com", true},
 		{"applicantstack marketing host is not a tenant", "https://www.applicantstack.com/job-not-found/", "", "", "", false},
 		{"applicantstack asset host is not a tenant", "https://public.applicantstack.com/userdata/gis/logo.jpg", "", "", "", false},
+		// HireClick: the board is the tenant subdomain; the vendor's marketing hosts are not.
+		{"hireclick posting", "https://senca.hireclick.com/jb/family-development-associate-nebraska-city/view/264587", "hireclick", "senca", "https://senca.hireclick.com", true},
+		{"hireclick job board", "https://williamsnd.hireclick.com/jobboard/jobboard.aspx", "hireclick", "williamsnd", "https://williamsnd.hireclick.com", true},
+		{"hireclick marketing host is not a tenant", "https://employers.hireclick.com/", "", "", "", false},
+		{"hireclick www host is not a tenant", "https://www.hireclick.com/", "", "", "", false},
 		{"potok vacancy", "https://oteko.potok.io/open/jobs/1431267", "potok", "oteko", "https://oteko.potok.io", true},
 		{"potok listing", "https://domrf.potok.io/open/jobs/", "potok", "domrf", "https://domrf.potok.io", true},
 		{"potok platform host is not a tenant", "https://app.potok.io/open/jobs/1", "", "", "", false},
@@ -558,6 +563,7 @@ func TestVacancyAndListingSameBoard(t *testing.T) {
 		// host (HiringThing) and subdomain (HRM Direct): a posting and the board root
 		{"https://4mindsai.hiringthing.com/job/12345/senior-engineer", "https://4mindsai.hiringthing.com/"},
 		{"https://123loadboard.hrmdirect.com/employment/job-opening.php?req=3456&req_loc=1029", "https://123loadboard.hrmdirect.com/employment/job-openings.php?search=true"},
+		{"https://senca.hireclick.com/jb/family-development-associate-nebraska-city/view/264587", "https://senca.hireclick.com/jobboard/jobboard.aspx"},
 		// path (Gusto): a paged listing and the bare board
 		{"https://jobs.gusto.com/boards/100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90?page=3", "https://jobs.gusto.com/boards/100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90"},
 	}
@@ -685,6 +691,9 @@ func TestRecognizeReturnsTheBoardTheBoardFileStores(t *testing.T) {
 		// hrmdirect: the tenant subdomain alone.
 		{"hrmdirect 123Loadboard", "https://123loadboard.hrmdirect.com/employment/job-opening.php?req=1&req_loc=2", "hrmdirect", "123loadboard"},
 		{"hrmdirect 1A Auto", "https://1aautoinc.hrmdirect.com/employment/job-openings.php?search=true", "hrmdirect", "1aautoinc"},
+
+		// hireclick: the tenant subdomain alone.
+		{"hireclick Southwest Truck & RV", "https://southwesttruckandrv.hireclick.com/jb/professional-diesel-technician-phoenix-az/view/267596", "hireclick", "southwesttruckandrv"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

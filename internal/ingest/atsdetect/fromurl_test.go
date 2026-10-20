@@ -107,6 +107,22 @@ func TestFromURL(t *testing.T) {
 			url:  "https://careers.millerfabricationsolutions.com/x/detail/plant-manager-pine-creek",
 			ok:   false,
 		},
+		// HireClick: the board is the tenant subdomain; the slug before /view/<id> is decorative.
+		{
+			name:     "hireclick",
+			url:      "https://blacktiecomponents.hireclick.com/jb/logistics-specialist-driver/view/268119",
+			provider: "hireclick", board: "blacktiecomponents", ok: true,
+		},
+		{
+			name:     "hireclick long slug",
+			url:      "https://peninsulatotalcarcare.hireclick.com/jb/skilled-automotive-technician-b-level-production-technician-80-000-110-000-2k-sign-on-cash-5-yr-exp-req/view/263568",
+			provider: "hireclick", board: "peninsulatotalcarcare", ok: true,
+		},
+		{
+			name:     "hireclick vendor marketing host",
+			url:      "https://employers.hireclick.com/",
+			provider: "", board: "", ok: false,
+		},
 		{
 			name:     "paycom",
 			url:      "https://www.paycomonline.net/v4/ats/web.php/portal/3b4555a93baac45919556b5f901f7b83/jobs/383852?utm_source=Role",

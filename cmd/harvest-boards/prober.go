@@ -825,6 +825,7 @@ var probers = map[string]prober{
 	"hiringthing":     hiringthingProber{},
 	"hrmdirect":       hrmdirectProber{},
 	"idealtraits":     idealtraitsProber{},
+	"hireclick":       hireclickProber{client: sources.NewLongTimeoutClient()},
 	"paycom":          paycomProber{},
 	"paycor":          paycorProber{},
 	"tenstreet":       tenstreetProber{},

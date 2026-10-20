@@ -283,6 +283,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	// application forms live on the platform's own apply.hrmdirect.com — see this apex's entry
 	// in platformLabelsByApex, without which every apply link on the platform names a board.
 	{"hrmdirect.com", "hrmdirect", modeSubdomain},
+	// HireClick: <tenant>.hireclick.com/jb/<slug>/view/<id>; the adapter fetches the tenant's
+	// job board at <board>.hireclick.com. The vendor's own hosts are in platformLabelsByApex.
+	{"hireclick.com", "hireclick", modeSubdomain},
 	// HiringRoom: one <tenant>.hiringroom.com portal per employer; the board is the label. The
 	// vendor's own hosts (marketing, the Venezuelan instance and its API, a sales form) are in
 	// platformLabelsByApex.
@@ -1074,6 +1077,9 @@ var platformLabelsByApex = map[string][]string{
 	// www is the vendor's marketing site (an unknown tenant redirects to its "job-not-found"
 	// page); www2 and public serve the shared assets and logos every tenant page links.
 	"applicantstack.com": {"www", "www2", "public"},
+	// www.hireclick.com redirects to employers.hireclick.com, the vendor's marketing site —
+	// which is also where an unknown tenant label lands.
+	"hireclick.com": {"www", "employers"},
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —

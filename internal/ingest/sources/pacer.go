@@ -765,3 +765,57 @@ func pacedAppOneGetter(c JSONGetter) JSONGetter {
 		limiter: rate.NewLimiter(rate.Every(apponeRequestInterval), apponeRequestBurst),
 	}
 }
+
+// HireClick serves every tenant from one origin, and its pages are 1-3 MB delivered at
+// ~80-160 KB/s per connection, so concurrent downloads split one small pipe rather than add to
+// it. On 2026-10-20 a test crawl of five boards at the default fan-out (eight posting pages at
+// once) timed out on most of one board's pages, and within minutes the origin was taking 35-90s
+// to serve its 442-byte robots.txt and refusing connections from a second network as well. Two
+// in flight across the whole run — board pages, job lists and posting pages alike — is the
+// conservative cap; tune upward only from observed convergence.
+const hireclickMaxInFlight = 2
+
+// limitedHireClickGetter bounds every HireClick request in a run under one shared semaphore.
+type limitedHireClickGetter struct {
+	inner hireclickHTTP
+	sem   chan struct{}
+}
+
+// limitedHireClick wraps a client with a fresh semaphore shared across one registry build.
+func limitedHireClick(c hireclickHTTP) hireclickHTTP {
+	return limitedHireClickGetter{inner: c, sem: make(chan struct{}, hireclickMaxInFlight)}
+}
+
+// acquire takes a slot, or reports the context's error when it is cancelled while waiting.
+func (g limitedHireClickGetter) acquire(ctx context.Context) error {
+	select {
+	case g.sem <- struct{}{}:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (g limitedHireClickGetter) GetHTML(ctx context.Context, url string) (*html.Node, error) {
+	if err := g.acquire(ctx); err != nil {
+		return nil, err
+	}
+	defer func() { <-g.sem }()
+	return g.inner.GetHTML(ctx, url)
+}
+
+func (g limitedHireClickGetter) GetHTMLResolved(ctx context.Context, url string) (*html.Node, string, error) {
+	if err := g.acquire(ctx); err != nil {
+		return nil, "", err
+	}
+	defer func() { <-g.sem }()
+	return g.inner.GetHTMLResolved(ctx, url)
+}
+
+func (g limitedHireClickGetter) GetJSON(ctx context.Context, url string, v any) error {
+	if err := g.acquire(ctx); err != nil {
+		return err
+	}
+	defer func() { <-g.sem }()
+	return g.inner.GetJSON(ctx, url, v)
+}

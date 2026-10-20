@@ -374,7 +374,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   // logo proxy is asked for, so a wrong name is a missing logo as well as a wrong label.
   zohorecruit: 'Zoho Recruit', jazzhr: 'JazzHR', adpmyjobs: 'ADP MyJobs',
   applicantpro: 'ApplicantPro', '4dayweek': '4 Day Week',
-  isolvedhire: 'isolved Hire', hrmdirect: 'HRM Direct', catsone: 'CATS',
+  isolvedhire: 'isolved Hire', hrmdirect: 'HRM Direct', hireclick: 'HireClick', catsone: 'CATS',
   alfabank: 'Alfa-Bank', aijobs: 'AI Jobs', remotedotcom: 'Remote.com',
   ptsecurity: 'Positive Technologies', tochka: 'Tochka Bank',
   sber: 'Sber', uzum: 'Uzum', megafon: 'MegaFon', freshteam: 'Freshteam', startupjobs: 'startup.jobs',
