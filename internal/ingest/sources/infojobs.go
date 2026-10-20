@@ -93,33 +93,30 @@ func (s infojobs) FetchNew(ctx context.Context, _ CompanyEntry, seen func(extern
 
 // crawl pages the whole-site listing and returns every raw offer — the shared list walk behind
 // Fetch and FetchNew. It stops at the last page (an empty page or once the whole catalogue is
-// collected), capped by infojobsMaxPages.
+// collected). Any page that fails — a request error, or the bot-challenge page that carries no
+// props blob — fails the whole crawl, as does running out of pages: infojobs is swept, so a
+// partial list would close every offer past the cut. Measured 2026-10-20 through the proxy, the
+// sixth consecutive page was a challenge, and the old "keep what was gathered" rule closed 300.
 func (s infojobs) crawl(ctx context.Context) ([]infojobsOffer, error) {
 	var offers []infojobsOffer
 	for page := 1; page <= infojobsMaxPages; page++ {
 		text, err := s.http.GetText(ctx, fmt.Sprintf(infojobsListURL, page))
 		if err != nil {
-			if page == 1 {
-				return nil, fmt.Errorf("infojobs: listing page %d: %w", page, err)
-			}
-			break // a later page failing ends enumeration with the offers gathered so far
+			return nil, fmt.Errorf("infojobs: listing page %d: %w", page, err)
 		}
 		var props infojobsListProps
 		if err := infojobsDecodeProps(text, &props); err != nil {
-			if page == 1 {
-				return nil, fmt.Errorf("infojobs: listing page %d: %w", page, err)
-			}
-			break
+			return nil, fmt.Errorf("infojobs: listing page %d: %w", page, err)
 		}
 		if len(props.Offers) == 0 {
-			break
+			return offers, nil
 		}
 		offers = append(offers, props.Offers...)
 		if props.Overview.TotalElements > 0 && len(offers) >= props.Overview.TotalElements {
-			break
+			return offers, nil
 		}
 	}
-	return offers, nil
+	return nil, fmt.Errorf("infojobs: reached the %d-page ceiling without reaching the listing's end", infojobsMaxPages)
 }
 
 // infojobsPropsMarker matches the `window.__INITIAL_PROPS__ = JSON.parse(` assignment; the JSON

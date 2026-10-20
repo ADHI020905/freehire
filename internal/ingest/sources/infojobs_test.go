@@ -162,3 +162,18 @@ func TestInfojobsWorkMode(t *testing.T) {
 		}
 	}
 }
+
+// A page that fails after the first — here the bot-challenge page, which carries no props blob —
+// fails the whole crawl rather than returning the offers gathered so far, which the sweep would
+// read as the full listing.
+func TestInfojobsLaterPageFailureFailsCrawl(t *testing.T) {
+	list := `{"overview":{"totalElements":3},"offers":[
+	  {"code":"A","title":"Dev","companyName":"Co","link":"//www.infojobs.net/x/of-iA"}]}`
+	http := &infojobsHTTP{listPages: map[int]string{
+		1: ijPage(t, list),
+		2: `<html><title>InfoJobs</title>No podemos identificar tu navegador</html>`,
+	}}
+	if _, err := (infojobs{http: http}).Fetch(context.Background(), CompanyEntry{}); err == nil {
+		t.Fatal("want an error when a later listing page fails, got a partial list")
+	}
+}
