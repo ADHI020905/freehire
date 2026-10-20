@@ -7,6 +7,11 @@
   const LLMS_TXT = 'https://freehire.me/llms.txt';
   const OPENAPI = 'https://freehire.me/openapi.yaml';
   const GPT_URL = 'https://chatgpt.com/g/g-6a5281b64948819193bf3a1021e075da-freehire';
+  const CLAUDE_CONNECTOR_URL = 'https://claude.ai/directory/freehire';
+  // A third-party, open-source Claude Code job-search framework that ships a
+  // freehire search skill — the ready-made path for someone who wants a whole
+  // agentic workflow rather than wiring the CLI into their own.
+  const AI_JOB_SEARCH_URL = 'https://github.com/MadsLorentzen/ai-job-search';
 
   // The whole point of the page: one block you paste into whatever agent you
   // already have. It leans on two URLs that already exist and are already
@@ -208,6 +213,18 @@ and <span class="text-foreground">`freehire --help`</span> for the commands.</pr
             what the question needs instead of the whole surface — plus a Claude Code plugin that
             brings their slash commands with them.
           </p>
+          <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+            Want a whole agentic workflow instead of building one?
+            <!-- eslint-disable svelte/no-navigation-without-resolve -- absolute GitHub URL, not a SvelteKit route -->
+            <a
+              href={AI_JOB_SEARCH_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-medium text-foreground underline-offset-4 hover:underline">ai-job-search ↗</a
+            ><!-- eslint-enable svelte/no-navigation-without-resolve -->
+            is an open-source Claude Code framework — evaluate postings, tailor CVs, write cover
+            letters, prep interviews — with freehire search already built in.
+          </p>
           <div class="mt-6 flex flex-wrap gap-3">
             <Button href={resolve('/cli')} variant="primary" size="md">CLI reference</Button>
             <Button href={CLI_REPO} target="_blank" rel="noopener noreferrer" variant="outline" size="md">
@@ -242,7 +259,11 @@ freehire search <span class="text-foreground">"golang"</span> --remote --region 
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
       <div class="flex flex-col rounded-xl border border-border p-6 sm:p-7">
         <span class="font-mono text-sm text-muted-foreground">02</span>
-        <h3 class="mt-3 text-lg font-semibold tracking-tight">Claude Desktop, or any MCP host</h3>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight">Claude, or any MCP host</h3>
+        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Using Claude.ai? Add the freehire connector from Claude's directory — no config, nothing to
+          install. For Claude Desktop or another host, run the server yourself:
+        </p>
         <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
           <code class="font-mono text-foreground">freehire-mcp</code> exposes search, market fit,
           tracking and CV tailoring as
@@ -266,6 +287,9 @@ freehire search <span class="text-foreground">"golang"</span> --remote --region 
   }
 }`}</pre>
         <div class="mt-auto flex flex-wrap gap-3 pt-6">
+          <Button href={CLAUDE_CONNECTOR_URL} target="_blank" rel="noopener noreferrer" variant="outline" size="md">
+            Add to Claude ↗
+          </Button>
           <Button href={resolve('/cli') + '#mcp'} variant="outline" size="md">MCP setup</Button>
           <Button href={MCP_REPO} target="_blank" rel="noopener noreferrer" variant="ghost" size="md">
             Source ↗
