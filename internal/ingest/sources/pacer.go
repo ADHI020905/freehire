@@ -741,3 +741,27 @@ func pacedHigherMeGetter(c JSONGetter) JSONGetter {
 		limiter: rate.NewLimiter(rate.Every(highermeRequestInterval), highermeRequestBurst),
 	}
 }
+
+// apponeRequestInterval paces every AppOne request of a run — the portal listings on
+// jobs.appone.com and the posting details on apply.appone.com sit behind one Azure Front Door
+// edge that turns a fast client away with a bare 403, not a 429, so the shared client's
+// per-host hold never engages. Measured 2026-10-20 from one IP: ~100 requests back to back
+// degraded within a minute to 38 refusals in 40, for pooled and single-use connections alike,
+// and recovered after a pause. At one request a second a 100-posting portal and its details
+// read cleanly, but refusals came back in bursts a few minutes in — and did so at one request
+// every two seconds too (0-14 per 20 over seven minutes), so no pace measured removes them;
+// this one keeps them rare enough for the adapter's retry and the next run to absorb (see the
+// appone section of AGENTS.md). Tune downward while many details come back Unreadable.
+const (
+	apponeRequestInterval = time.Second
+	apponeRequestBurst    = 1
+)
+
+// pacedAppOneGetter wraps a getter with a fresh limiter shared across one registry build, so
+// every AppOne board's listing and detail requests in a run draw from one bucket.
+func pacedAppOneGetter(c JSONGetter) JSONGetter {
+	return rateLimitedJSONGetter{
+		inner:   c,
+		limiter: rate.NewLimiter(rate.Every(apponeRequestInterval), apponeRequestBurst),
+	}
+}

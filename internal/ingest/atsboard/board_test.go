@@ -60,6 +60,14 @@ func TestRecognize(t *testing.T) {
 		{"gusto board listing", "https://jobs.gusto.com/boards/100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90?page=2", "gusto", "100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90", "https://jobs.gusto.com/boards/100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90", true},
 		{"gusto board listing trailing slash", "https://jobs.gusto.com/boards/121g-consulting-llc-f41b3691-0c93-4406-acb7-6b28c2c69601/", "gusto", "121g-consulting-llc-f41b3691-0c93-4406-acb7-6b28c2c69601", "https://jobs.gusto.com/boards/121g-consulting-llc-f41b3691-0c93-4406-acb7-6b28c2c69601", true},
 		{"gusto posting carries the posting uuid, not the board", "https://jobs.gusto.com/postings/grupo-ei-el-paso-warehouse-team-lead-dc55dd36-ff48-49d3-9904-9a2c5746286d", "", "", "", false},
+		// AppOne: the portal slug is the board, verbatim (the adapter fetches it as stored). Its
+		// posting URLs name no portal at all, and the portal SPA's own machinery shares the host.
+		{"appone portal", "https://jobs.appone.com/athomecareagency", "appone", "athomecareagency", "https://jobs.appone.com/athomecareagency", true},
+		{"appone portal keeps its case", "https://jobs.appone.com/QCRP?utm_source=x", "appone", "QCRP", "https://jobs.appone.com/QCRP", true},
+		{"appone posting url names no portal", "https://apply.appone.com/job/6ac801466826443a3bbf043c", "", "", "", false},
+		{"appone portal api is not a board", "https://jobs.appone.com/api/portal/v1/companyjobposts/CRWA", "", "", "", false},
+		{"appone logo is not a board", "https://jobs.appone.com/company-images/logos/8882DEC0E9374B97AB9AF455EAAF5A09.png", "", "", "", false},
+		{"appone bare host", "https://jobs.appone.com/", "", "", "", false},
 		{"gusto bare postings path", "https://jobs.gusto.com/postings", "", "", "", false},
 		{"gusto bare boards path", "https://jobs.gusto.com/boards", "", "", "", false},
 		{"gusto bare host", "https://jobs.gusto.com", "", "", "", false},

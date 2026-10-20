@@ -367,6 +367,14 @@ type seedMapper interface {
 	boardID(seedToken string) string
 }
 
+// seedResolver is seedMapper for a platform whose seed token may name a POSTING rather than a
+// board, so finding the board costs a request: AppOne's apply.appone.com/job/<id> carries no
+// portal, which only the posting's own record names. It returns "" for a token that names no
+// board; resolveCandidates drops those. A prober implements one of the two, never both.
+type seedResolver interface {
+	resolveSeed(ctx context.Context, c httpClient, seedToken string) (string, error)
+}
+
 // dedupKeyer folds a board id into the key used for dedup against existing boards. A
 // provider whose board ids are case-insensitive (Workday, Ashby) implements it to fold case;
 // the rest dedup case-sensitively, so they do not implement it.
@@ -834,6 +842,7 @@ var probers = map[string]prober{
 	"workstream":      workstreamProber{},
 	"harri":           harriProber{},
 	"hcshiring":       hcshiringProber{},
+	"appone":          apponeProber{},
 	// Not an ATS: its boards are the platform's own job categories, enumerated from its
 	// sitemap index rather than seeded. See profession_prober.go.
 	"profession":  newProfessionProber(),

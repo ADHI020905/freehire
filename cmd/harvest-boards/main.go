@@ -227,14 +227,43 @@ func resolveCandidates(ctx context.Context, p prober, c httpClient, seedPath str
 	for i, it := range items {
 		tokens[i] = it.Board
 	}
-	boards := mapSeeds(p, tokens)
+	var boards []string
+	if r, ok := p.(seedResolver); ok {
+		boards = resolveSeeds(ctx, r, c, tokens)
+	} else {
+		boards = mapSeeds(p, tokens)
+	}
 	expected := make(map[string]expectation)
+	var kept []string
 	for i, b := range boards {
+		if b == "" {
+			continue // a seed that names no board on this platform
+		}
+		kept = append(kept, b)
 		if items[i].Company != "" || items[i].ExpectID != "" {
 			expected[b] = expectation{company: items[i].Company, postingID: items[i].ExpectID}
 		}
 	}
-	return boards, expected, nil
+	return kept, expected, nil
+}
+
+// resolveSeeds maps every token through a seedResolver, one at a time over the run's paced
+// client, leaving "" where a token names no board. A failed resolution is logged and skipped
+// like a failed probe: one unreadable posting must not abort the harvest.
+func resolveSeeds(ctx context.Context, r seedResolver, c httpClient, tokens []string) []string {
+	boards := make([]string, len(tokens))
+	failed := 0
+	for i, tok := range tokens {
+		b, err := r.resolveSeed(ctx, c, tok)
+		if err != nil {
+			log.Printf("harvest-boards: resolve seed %s: %v", tok, err)
+			failed++
+			continue
+		}
+		boards[i] = b
+	}
+	log.Printf("harvest-boards: resolved %d seeds, %d failed", len(tokens), failed)
+	return boards
 }
 
 // probeAll probes every candidate concurrently (bounded), returning the live boards as

@@ -192,6 +192,10 @@ var atsBoards = []struct{ host, source, mode string }{
 	// uuid and carries the job's title slug, so it names no board at all — the only link back to
 	// one is the breadcrumb the posting page renders, which is boardresolve's job, not a URL's.
 	{"jobs.gusto.com", "gusto", modePath},
+	// AppOne (Paychex) serves every employer's job portal at jobs.appone.com/<slug>. Its posting
+	// URLs (apply.appone.com/job/<id>) are deliberately absent: they name the posting, never the
+	// portal, which only the posting's own API record carries (internal/ingest/sources/appone.go).
+	{"jobs.appone.com", "appone", modePath},
 
 	// --- pathportal: board = the segment before the posting segment ---
 	{"jobs.smartrecruiters.com", "smartrecruiters", modePathPortal},
@@ -587,6 +591,9 @@ var noBoardFirstSegments = map[string][]string{
 	// ADP MyJobs' own API (/public/staffing/v1/career-site/<board>, which the adapter calls)
 	// shares the host with the career sites; "public" is not a tenant.
 	"myjobs.adp.com": {"public"},
+	// The AppOne portal SPA loads its own API, bundle assets and uploaded logos from the host its
+	// portals live on; none of them is an employer.
+	"jobs.appone.com": {"api", "assets", "company-images"},
 }
 
 // allowedFirstSegments lists, per matched host entry in modeAllowedFirstSegment, the ONLY leading
