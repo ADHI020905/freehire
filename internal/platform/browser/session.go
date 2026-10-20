@@ -15,7 +15,6 @@ import (
 	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/cdproto/fetch"
 	"github.com/chromedp/cdproto/network"
-	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 )
 
@@ -120,7 +119,7 @@ func NewSession(ctx context.Context, proxyURL string, tabs int) (*Session, error
 	}
 	// Start the browser process before opening tabs off it, so a launch failure is reported
 	// here rather than as a confusing error on the first fetch.
-	if err := chromedp.Run(browserCtx); err != nil {
+	if err := chromedp.Do(browserCtx); err != nil {
 		cancel()
 		return nil, fmt.Errorf("browser: launch: %w", err)
 	}
@@ -139,7 +138,7 @@ func NewSession(ctx context.Context, proxyURL string, tabs int) (*Session, error
 
 func newTab(browserCtx context.Context, user, pass string) (*tab, error) {
 	tabCtx, cancelTab := chromedp.NewContext(browserCtx)
-	if err := chromedp.Run(tabCtx); err != nil {
+	if err := chromedp.Do(tabCtx); err != nil {
 		cancelTab()
 		return nil, fmt.Errorf("browser: open tab: %w", err)
 	}
@@ -174,15 +173,16 @@ func newTab(browserCtx context.Context, user, pass string) (*tab, error) {
 // claims a Chrome version this binary is not. A hardcoded string would start lying the day
 // Chrome updates, which for a fingerprint is worse than not setting one.
 func hideHeadlessUserAgent(ctx context.Context) error {
-	var ua string
-	if err := chromedp.Run(ctx, chromedp.Evaluate(`navigator.userAgent`, &ua)); err != nil {
+	ua, err := chromedp.Run(ctx, chromedp.Evaluate[string](`navigator.userAgent`))
+	if err != nil {
 		return fmt.Errorf("browser: read user agent: %w", err)
 	}
 	honest := strings.ReplaceAll(ua, "HeadlessChrome", "Chrome")
 	if honest == ua {
 		return nil // not a headless build; nothing to hide
 	}
-	if err := chromedp.Run(ctx, emulation.SetUserAgentOverride(honest)); err != nil {
+	if _, err := chromedp.Call(ctx, emulation.SetUserAgentOverride,
+		emulation.SetUserAgentOverrideParams{UserAgent: honest}); err != nil {
 		return fmt.Errorf("browser: set user agent: %w", err)
 	}
 	return nil
@@ -190,13 +190,22 @@ func hideHeadlessUserAgent(ctx context.Context) error {
 
 // watchDocuments records the status of every main-document response, which is what clear
 // waits on. Nothing is fetched to find out — the browser is already telling us.
+//
+// The subscription is taken before Network is enabled, so no response can slip between the
+// two, and it ends with the tab's context.
 func (t *tab) watchDocuments() error {
-	chromedp.ListenTarget(t.ctx, func(ev any) {
-		if e, ok := ev.(*network.EventResponseReceived); ok && e.Type == network.ResourceTypeDocument {
-			t.recordDocument(int(e.Response.Status))
+	responses := chromedp.Events(t.ctx, network.ResponseReceived)
+	go func() {
+		for e, err := range responses {
+			if err != nil {
+				return
+			}
+			if e.Type == network.ResourceTypeDocument {
+				t.recordDocument(int(e.Response.Status))
+			}
 		}
-	})
-	if err := chromedp.Run(t.ctx, network.Enable()); err != nil {
+	}()
+	if _, err := chromedp.Call(t.ctx, network.Enable, network.EnableParams{}); err != nil {
 		return fmt.Errorf("browser: enable network events: %w", err)
 	}
 	return nil
@@ -208,22 +217,40 @@ func (t *tab) watchDocuments() error {
 //
 // Enabling Fetch means every request is paused until something continues it, so the handler
 // must answer both events — a paused request that nobody continues hangs the page.
+//
+// Each event type is its own subscription, taken before Fetch is enabled, and each answer
+// goes out on its own goroutine: one slow answer must not hold up the next paused request.
 func enableProxyAuth(ctx context.Context, user, pass string) error {
-	chromedp.ListenTarget(ctx, func(ev any) {
-		switch e := ev.(type) {
-		case *fetch.EventAuthRequired:
+	authRequired := chromedp.Events(ctx, fetch.AuthRequired)
+	paused := chromedp.Events(ctx, fetch.RequestPaused)
+	go func() {
+		for e, err := range authRequired {
+			if err != nil {
+				return
+			}
 			go func() {
-				_ = chromedp.Run(ctx, fetch.ContinueWithAuth(e.RequestID, &fetch.AuthChallengeResponse{
-					Response: fetch.AuthChallengeResponseResponseProvideCredentials,
-					Username: user,
-					Password: pass,
-				}))
+				_, _ = chromedp.Call(ctx, fetch.ContinueWithAuth, fetch.ContinueWithAuthParams{
+					RequestID: e.RequestID,
+					AuthChallengeResponse: &fetch.AuthChallengeResponse{
+						Response: fetch.AuthChallengeResponseResponseProvideCredentials,
+						Username: user,
+						Password: pass,
+					},
+				})
 			}()
-		case *fetch.EventRequestPaused:
-			go func() { _ = chromedp.Run(ctx, fetch.ContinueRequest(e.RequestID)) }()
 		}
-	})
-	if err := chromedp.Run(ctx, fetch.Enable().WithHandleAuthRequests(true)); err != nil {
+	}()
+	go func() {
+		for e, err := range paused {
+			if err != nil {
+				return
+			}
+			go func() {
+				_, _ = chromedp.Call(ctx, fetch.ContinueRequest, fetch.ContinueRequestParams{RequestID: e.RequestID})
+			}()
+		}
+	}()
+	if _, err := chromedp.Call(ctx, fetch.Enable, fetch.EnableParams{HandleAuthRequests: new(true)}); err != nil {
 		return fmt.Errorf("browser: enable proxy auth: %w", err)
 	}
 	return nil
@@ -334,7 +361,7 @@ func (t *tab) visit(ctx context.Context, origin string, force bool) error {
 	navCtx, cancel := t.derive(ctx, clearanceWait+fetchTimeout)
 	defer cancel()
 	t.resetDocuments()
-	if err := chromedp.Run(navCtx, chromedp.Navigate(origin)); err != nil {
+	if err := chromedp.Do(navCtx, chromedp.Navigate(origin)); err != nil {
 		return fmt.Errorf("browser: visit %s: %w", origin, err)
 	}
 
@@ -409,10 +436,10 @@ func (t *tab) fetch(ctx context.Context, rawURL string) (int, []byte, error) {
 	if err != nil {
 		return 0, nil, err
 	}
-	var res fetchResult
-	if err := chromedp.Run(fetchCtx, chromedp.Evaluate(
-		fmt.Sprintf(fetchScript, quoted), &res, awaitPromise,
-	)); err != nil {
+	res, err := chromedp.Run(fetchCtx, chromedp.Evaluate[fetchResult](
+		fmt.Sprintf(fetchScript, quoted), chromedp.EvalAwaitPromise,
+	))
+	if err != nil {
 		return 0, nil, fmt.Errorf("browser: fetch %s: %w", rawURL, err)
 	}
 	if res.Err != "" {
@@ -423,11 +450,6 @@ func (t *tab) fetch(ctx context.Context, rawURL string) (int, []byte, error) {
 		return 0, nil, fmt.Errorf("browser: decode body of %s: %w", rawURL, err)
 	}
 	return res.Status, body, nil
-}
-
-// awaitPromise makes chromedp resolve the async expression rather than hand back a Promise.
-func awaitPromise(p *runtime.EvaluateParams) *runtime.EvaluateParams {
-	return p.WithAwaitPromise(true)
 }
 
 // jsString renders a URL as a JavaScript string literal. The URL is interpolated into a

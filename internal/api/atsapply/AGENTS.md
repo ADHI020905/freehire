@@ -89,14 +89,14 @@ process, called only via `Client.WithBrowserUse`. Scope is deliberately narrow:
   click cannot be withdrawn.
 
   **Addressing is ONE setting, not two.** It decides both which attribute identifies a
-  scanned control and which selects it (`domscan.identify`, `fill.fieldSelector`,
-  `addressing.queryKind`). Splitting them fails silently: every field resolves, the plan
-  calls itself complete, and nothing is found on the page — at the last step, after the
-  model spend and after the candidate approved. A review caught exactly this in the
-  file-upload branch, which had kept a literal `chromedp.ByID`; under Lever's `byName` that
-  becomes `#[name="resume"]`, invalid CSS, on the one field every posting requires.
-  `TestFillOne_EveryActionOnTheSharedSelectorCarriesTheLayoutsQueryKind` reads the source to
-  keep it from coming back.
+  scanned control and which selects it (`domscan.identify`, `fill.fieldSelector`).
+  Splitting them fails silently: every field resolves, the plan calls itself complete, and
+  nothing is found on the page — at the last step, after the model spend and after the
+  candidate approved. A review caught exactly this in the file-upload branch, which had
+  kept a literal by-id lookup; under Lever's `byName` that becomes `#[name="resume"]`,
+  invalid CSS, on the one field every posting requires. Since chromedp v0.21 the lookup is
+  the selector's TYPE: `fieldSelector` returns a `chromedp.CSS`, so a branch can no longer
+  pair the selector with a different lookup — the compiler refuses it.
 
   Widening the live DOM-scan to another provider is a real gap to
   close, not a design decision to defend.

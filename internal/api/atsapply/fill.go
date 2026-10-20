@@ -102,8 +102,8 @@ const challengeVisibleJS = `(() => Array.from(document.querySelectorAll("iframe"
 // reclassifies a failure that already happened, and guessing "captcha" without evidence would
 // hand an ordinary error the captcha's twenty asks.
 func challengeVisible(ctx context.Context) bool {
-	var visible bool
-	if err := chromedp.Run(ctx, chromedp.Evaluate(challengeVisibleJS, &visible)); err != nil {
+	visible, err := chromedp.Run(ctx, chromedp.Evaluate[bool](challengeVisibleJS))
+	if err != nil {
 		return false
 	}
 	return visible
@@ -140,8 +140,8 @@ const formStillPresentJS = `(() => {
 // browser session cannot be faked usefully. The decision this feeds (runFillLoop) is what is
 // unit tested, with this function's result taken as a plain bool parameter.
 func formStillPresent(ctx context.Context, submitSelector string) bool {
-	var present bool
-	if err := chromedp.Run(ctx, chromedp.Evaluate(fmt.Sprintf(formStillPresentJS, submitSelector), &present)); err != nil {
+	present, err := chromedp.Run(ctx, chromedp.Evaluate[bool](fmt.Sprintf(formStillPresentJS, submitSelector)))
+	if err != nil {
 		return false
 	}
 	return present
@@ -257,7 +257,7 @@ func fillAndSubmit(ctx context.Context, jobID int64, plan Plan, layout formLayou
 		return verifySubmission(ctx)
 	}
 
-	if err := chromedp.Run(ctx, chromedp.Click(layout.submitSelector, chromedp.ByQuery)); err != nil {
+	if err := chromedp.Do(ctx, chromedp.Click(chromedp.CSS(layout.submitSelector))); err != nil {
 		return false, fmt.Errorf("click submit: %w", err)
 	}
 
@@ -268,14 +268,12 @@ func fillOne(parent context.Context, f ResolvedField, by addressing) error {
 	ctx, cancel := context.WithTimeout(parent, fillTimeout)
 	defer cancel()
 
-	// sel and kind are ONE decision, taken once here: a `[name=…]` selector handed to a
-	// by-id lookup is silently rewritten to `#[name=…]`, which is invalid CSS and matches
-	// nothing. Every branch below MUST pass `kind` — a review caught the file branch
-	// hard-coding chromedp.ByID, which would have meant no Lever application carrying a
-	// résumé could ever be submitted, on a page where the résumé is required. There is a
-	// test asserting no branch reintroduces a literal query kind.
+	// sel carries its own lookup in its type (chromedp.CSS), so no branch can pair it with a
+	// different one. Under the old untyped API it took a separate query-kind option, and a
+	// review caught the file branch hard-coding a by-id lookup — which rewrites a
+	// `[name=…]` selector to `#[name=…]`, invalid CSS matching nothing, so no Lever
+	// application carrying a résumé could have been submitted.
 	sel := fieldSelector(f.ID, by)
-	kind := by.queryKind()
 
 	switch f.Kind {
 	case "textarea", "text":
@@ -302,10 +300,10 @@ func fillOne(parent context.Context, f ResolvedField, by addressing) error {
 		// unconfirmed or malformed outcome, which is exactly why StatusUnconfirmed
 		// exists as a distinct, non-retried outcome rather than trusting any of this
 		// always worked.
-		return chromedp.Run(ctx,
-			chromedp.Clear(sel, kind),
-			chromedp.SendKeys(sel, f.Value, kind),
-			chromedp.SendKeys(sel, kb.Enter, kind),
+		return chromedp.Do(ctx,
+			chromedp.Clear(sel),
+			chromedp.SendKeys(sel, f.Value),
+			chromedp.SendKeys(sel, kb.Enter),
 		)
 	case "select":
 		// SetValue sets the DOM .value property directly, which a React-controlled
@@ -313,29 +311,29 @@ func fillOne(parent context.Context, f ResolvedField, by addressing) error {
 		// so the framework's state (and the value actually posted on submit) can stay
 		// unset even though the raw DOM value looks right. Dispatching the events a
 		// real interaction would fire is what makes React notice.
-		return chromedp.Run(ctx,
-			chromedp.SetValue(sel, f.Value, kind),
-			chromedp.Evaluate(fmt.Sprintf(dispatchChangeEventsJS, sel), nil),
+		return chromedp.Do(ctx,
+			chromedp.SetValue(sel, f.Value),
+			chromedp.Evaluate[chromedp.Void](fmt.Sprintf(dispatchChangeEventsJS, sel)),
 		)
 	case "checkbox_group":
 		// f.Value is one option's value — resolveOne (resolve.go) never resolves more
 		// than one for a Multi field, since AnswerSource never supplies more than one
 		// candidate value per question today. See resolveOne's doc comment.
 		optSel := fmt.Sprintf(`input[name=%q][value=%q]`, f.ID, f.Value)
-		return chromedp.Run(ctx, chromedp.Click(optSel, chromedp.ByQuery))
+		return chromedp.Do(ctx, chromedp.Click(chromedp.CSS(optSel)))
 	case "file":
 		// The only file field resolveOne ever resolves is the résumé/CV upload
 		// (isResumeField, resolve.go), and only once client.go's attachApprovedResume has
 		// rendered the approved tailored CV and overwritten Value with the temp PDF's
 		// path — never a candidate-authored string, so no further validation of Value
 		// belongs here.
-		return chromedp.Run(ctx, chromedp.SetUploadFiles(sel, []string{f.Value}, kind))
+		return chromedp.Do(ctx, chromedp.SetUploadFiles(sel, []string{f.Value}))
 	default:
 		return fmt.Errorf("no fill strategy for kind %q", f.Kind)
 	}
 }
 
-// fieldSelector resolves a field's identifier to a DOM selector, the way its own platform
+// fieldSelector resolves a field's identifier to a CSS selector, the way its own platform
 // names it. The identifier is whatever the layout addressed the control by (see
 // domscan.identify) — an element id on Greenhouse, a name on Lever.
 //
@@ -345,11 +343,11 @@ func fillOne(parent context.Context, f ResolvedField, by addressing) error {
 //
 // checkbox_group is the exception under either addressing: fillOne selects those by
 // name+value directly, since a group's members share a name rather than an identifier.
-func fieldSelector(id string, by addressing) string {
+func fieldSelector(id string, by addressing) chromedp.CSS {
 	if by == byName {
-		return fmt.Sprintf("[name=%q]", id)
+		return chromedp.CSS(fmt.Sprintf("[name=%q]", id))
 	}
-	return "#" + id
+	return chromedp.CSS("#" + id)
 }
 
 // classifyPollError reports whether a failed poll call should be treated as unconfirmed
@@ -375,8 +373,8 @@ func verifySubmission(parent context.Context) (bool, error) {
 	// computed from the same timeout, which could never be the binding limit — ctx is
 	// derived from it above and cancels first or together.
 	for ctx.Err() == nil {
-		var bodyText string
-		if err := chromedp.Run(ctx, chromedp.Text("body", &bodyText, chromedp.ByQuery)); err != nil {
+		bodyText, err := chromedp.Run(ctx, chromedp.Text(chromedp.CSS("body")))
+		if err != nil {
 			if pollEndedByDeadline(ctx) {
 				return false, nil
 			}

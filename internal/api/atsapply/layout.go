@@ -2,8 +2,6 @@ package atsapply
 
 import (
 	"strings"
-
-	"github.com/chromedp/chromedp"
 )
 
 // addressing is how a platform identifies a control on its own application form — which
@@ -36,7 +34,7 @@ const (
 // cannot be withdrawn, so what drives one is measured.
 type formLayout struct {
 	// formSelector is the element id the application form renders under — the bare id,
-	// no leading '#', because renderedHTML waits on it with chromedp.ByID and the DOM
+	// no leading '#', because renderedHTML waits on it as a chromedp.ID selector and the DOM
 	// scan finds it by id.
 	formSelector string
 	// submitSelector is the CSS selector for the button a PERSON clicks. On Lever that is
@@ -85,17 +83,6 @@ func (l formLayout) applyURL(postingURL string) string {
 var layouts = map[string]formLayout{
 	"greenhouse": {formSelector: "application-form", submitSelector: "#submit_app", addressBy: byID},
 	"lever":      {formSelector: "application-form", submitSelector: "#btn-submit", addressBy: byName, applyPath: "/apply"},
-}
-
-// queryKind is how chromedp must interpret the selector this addressing produces. It lives
-// beside the addressing rather than at the call site so a selector and the lookup that
-// consumes it come from one value: a `[name=…]` selector handed to a by-id lookup finds
-// nothing, and finds it silently.
-func (a addressing) queryKind() chromedp.QueryOption {
-	if a == byName {
-		return chromedp.ByQuery
-	}
-	return chromedp.ByID
 }
 
 // layoutFor returns the platform's page description, or false when this package cannot

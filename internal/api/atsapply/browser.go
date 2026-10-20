@@ -62,7 +62,7 @@ func newBrowserSession(ctx context.Context, allocatorOpts []chromedp.ExecAllocat
 	// Force the browser to actually start now rather than lazily on the first action, so
 	// a launch failure surfaces here instead of inside renderedHTML with a less specific
 	// error.
-	if err := chromedp.Run(browserCtx); err != nil {
+	if err := chromedp.Do(browserCtx); err != nil {
 		cancel()
 		return nil, nil, fmt.Errorf("start browser: %w", err)
 	}
@@ -88,11 +88,13 @@ func newBrowserSession(ctx context.Context, allocatorOpts []chromedp.ExecAllocat
 func renderedHTML(ctx context.Context, url, readySelector string) (string, error) {
 	probeCtx, probeCancel := context.WithTimeout(ctx, pageLoadTimeout)
 	var pageHTML string
-	err := chromedp.Run(probeCtx,
+	err := chromedp.Do(probeCtx,
 		chromedp.Navigate(url),
-		chromedp.WaitVisible(readySelector, chromedp.ByID),
-		chromedp.OuterHTML("html", &pageHTML),
+		chromedp.WaitVisible(chromedp.ID(readySelector)),
 	)
+	if err == nil {
+		pageHTML, err = chromedp.Run(probeCtx, chromedp.OuterHTML("html"))
+	}
 	// Checked before cancel: once a context's Done channel closes for one reason, a later
 	// cancel() call cannot overwrite Err() with a different one (see context.WithTimeout),
 	// so this reliably tells "the probe's own deadline fired" apart from any other failure
@@ -110,8 +112,7 @@ func renderedHTML(ctx context.Context, url, readySelector string) (string, error
 
 	classifyCtx, classifyCancel := context.WithTimeout(ctx, classifyTimeout)
 	defer classifyCancel()
-	var currentHTML string
-	captureErr := chromedp.Run(classifyCtx, chromedp.OuterHTML("html", &currentHTML))
+	currentHTML, captureErr := chromedp.Run(classifyCtx, chromedp.OuterHTML("html"))
 	if captureErr != nil {
 		// Couldn't even capture the page's current state — the original probe error is
 		// more informative than a failure from a follow-up call on a page that may have
