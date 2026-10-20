@@ -239,6 +239,12 @@ func TestRecognize(t *testing.T) {
 		// apply links both name it.
 		{"emply ad", "https://molslinjen.career.emply.com/ad/it-supporter-soges-til-molslinjen-i-ronne/12us1b/da", "emply", "molslinjen", "https://molslinjen.career.emply.com", true},
 		{"emply apply link", "https://oxfam-dk.career.emply.com/apply/paid-content-producer-til-oxfam-danmark/8xnpso#jobdk", "emply", "oxfam-dk", "https://oxfam-dk.career.emply.com", true},
+		// HCS Hiring (symplr): <tenant>.hcshiring.com/jobs/<id>, the board the adapter reads the
+		// tenant's API at. The vendor's other hosts are other products and stay unrecognised.
+		{"hcshiring posting", "https://capricommunities.hcshiring.com/jobs/TugN1ntScEij8OCB6I_Ezw", "hcshiring", "capricommunities", "https://capricommunities.hcshiring.com", true},
+		{"hcshiring posting id with leading underscore", "https://riverviewlodgeal.hcshiring.com/jobs/_YMF6czAe0yKvrkSlh0NqA", "hcshiring", "riverviewlodgeal", "https://riverviewlodgeal.hcshiring.com", true},
+		{"hcshiring portal is another product", "https://valleywise.hctsportals.com/jobs/2237498", "", "", "", false},
+		{"hcshiring position manager is another product", "https://pm.healthcaresource.com/CS/rrh/#/job/2474", "", "", "", false},
 		{"hibob careers subdomain", "https://qogita.careers.hibob.com/jobs/ceb6c947-c906-44d1-a56b-bb33ae5599fa", "hibob", "qogita", "https://qogita.careers.hibob.com", true},
 		{"hibob apply tail collapses to the same board", "https://unique.careers.hibob.com/jobs/f8d9a0bc/apply", "hibob", "unique", "https://unique.careers.hibob.com", true},
 		// HRM Direct: the board is the tenant subdomain. Its APPLICATION forms are served from the

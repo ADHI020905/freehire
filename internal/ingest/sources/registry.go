@@ -237,6 +237,9 @@ func All(c HTTPClient) map[string]Source {
 		// White-labelled ATS: the board is the full careers host, because the same tenant is
 		// served under the vendor's domain and under each reseller's.
 		NewHiringThing(c),
+		// HCS Hiring: symplr's US healthcare career centers, <tenant>.hcshiring.com. A keyless
+		// JSON listing ten rows a page; the body is hydrated per new posting. See hcshiring.go.
+		NewHCSHiring(c),
 		NewEarcu(c),
 		NewPageUp(c),
 		NewNeogov(c),

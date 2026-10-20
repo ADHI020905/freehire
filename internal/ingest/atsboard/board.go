@@ -234,6 +234,10 @@ var atsBoards = []struct{ host, source, mode string }{
 	// ApplicantStack: <tenant>.applicantstack.com/x/detail/<id>. The vendor's own www/www2/public
 	// hosts share the apex, so they are listed in platformLabelsByApex.
 	{"applicantstack.com", "applicantstack", modeSubdomain},
+	// symplr's career centers: <tenant>.hcshiring.com, the host the adapter reads the tenant's
+	// API at. The vendor's other hosts (hctsportals.com, pm.healthcaresource.com) serve
+	// different products that adapter does not read, so they stay unrecognised.
+	{"hcshiring.com", "hcshiring", modeSubdomain},
 	{"csod.com", "cornerstone", modeSubdomain},
 	{"enlizt.me", "enlizt", modeSubdomain},
 	{"hurma.work", "hurma", modeSubdomain},
