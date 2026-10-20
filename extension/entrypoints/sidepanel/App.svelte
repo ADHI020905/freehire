@@ -4,11 +4,11 @@
   import { type RuntimeMessage, type LabelFill, type FramedUpload } from '../../lib/protocol';
   import { TOP_FRAME } from '../../lib/tools/attachCv';
   import { createSession, getSession, SessionNotFound } from '../../lib/assistant/api';
-  import { sendTurn, type Turn } from '../../lib/assistant/client';
+  import { PlanRefused, sendTurn, type Turn } from '../../lib/assistant/client';
   import { initChat, reduceTurnEvent, type ChatState } from '../../lib/assistant/chat';
   import { eventsFromTranscript } from '../../lib/assistant/wire';
   import { recallSession, rememberSession, forgetSession } from '../../lib/assistant/session';
-  import { signIn, signOut, getToken, fetchMe, type HireUser } from '../../lib/auth';
+  import { HIRE_ORIGIN, signIn, signOut, getToken, fetchMe, type HireUser } from '../../lib/auth';
   import {
     freehireSlugFromUrl,
     findJob,
@@ -46,6 +46,9 @@
   let draft = $state('');
   let sending = $state(false);
   let chatError = $state('');
+  // The plan said no (402): shown as a paywall with the upgrade link instead of an
+  // error line, since retrying would only repeat the same refusal.
+  let planRefusal = $state<PlanRefused | null>(null);
   let restoring = $state(false);
 
   // The conversation this panel is holding, and the turn in flight if there is
@@ -386,6 +389,7 @@
     // during `getToken()` queues out via the guard instead of double-dispatching.
     sending = true;
     chatError = '';
+    planRefusal = null;
     const token = await getToken();
     if (!token) {
       sending = false;
@@ -409,6 +413,9 @@
       // client's own abort path.
       if (err instanceof DOMException && err.name === 'AbortError') {
         chat = reduceTurnEvent(chat, { type: 'result', stop_reason: 'cancelled' });
+      } else if (err instanceof PlanRefused) {
+        // The turn never started, so there is no assistant message to close.
+        planRefusal = err;
       } else {
         chatError = err instanceof Error ? err.message : 'Could not reach the agent.';
         // Close the open message. Without this the turn keeps its `streaming`
@@ -438,6 +445,7 @@
     chat = initChat();
     notices = [];
     chatError = '';
+    planRefusal = null;
   }
 
   /** Start over — the Reset button. The old conversation stays on the server — it
@@ -964,6 +972,20 @@
           {/each}
           {#if chatError}
             <div class="message system err">{chatError}</div>
+          {/if}
+          {#if planRefusal}
+            <Alert class="flex flex-col items-start gap-2">
+              <span>{planRefusal.message}</span>
+              {#if planRefusal.upgradeUrl}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  href={`${HIRE_ORIGIN}${planRefusal.upgradeUrl}`}
+                  target="_blank"
+                  rel="noreferrer">Upgrade your plan</Button
+                >
+              {/if}
+            </Alert>
           {/if}
           {#if chat.messages.length === 0}
             <p class="empty">

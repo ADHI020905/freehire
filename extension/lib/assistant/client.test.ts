@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { sendTurn } from './client';
+import { PlanRefused, sendTurn } from './client';
 import type { TurnEvent } from './wire';
 import { must } from '../test-utils';
 
@@ -100,6 +100,37 @@ describe('sendTurn', () => {
     vi.stubGlobal('fetch', async () => ({ ok: false, status: 503, body: null }));
 
     await expect(sendTurn('s1', 'hi', 'tok', () => {}).done).rejects.toThrow();
+  });
+
+  // A 402 is the plan saying no, and the server already wrote the sentence and the
+  // place to upgrade — the panel must get both, not a bare status code.
+  it('rejects with a PlanRefused carrying the server message and upgrade link on 402', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      ok: false,
+      status: 402,
+      body: null,
+      json: async () => ({ error: "Your plan doesn't include assistant messages.", upgrade_url: '/my/plan' }),
+    }));
+
+    const err = await sendTurn('s1', 'hi', 'tok', () => {}).done.catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PlanRefused);
+    expect((err as PlanRefused).message).toBe("Your plan doesn't include assistant messages.");
+    expect((err as PlanRefused).upgradeUrl).toBe('/my/plan');
+  });
+
+  it('still rejects with a PlanRefused when the 402 body is unreadable', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      ok: false,
+      status: 402,
+      body: null,
+      json: async () => {
+        throw new SyntaxError('bad json');
+      },
+    }));
+
+    const err = await sendTurn('s1', 'hi', 'tok', () => {}).done.catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PlanRefused);
+    expect((err as PlanRefused).upgradeUrl).toBeNull();
   });
 
   // One malformed frame must not abandon a turn that is otherwise fine.

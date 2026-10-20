@@ -15,6 +15,23 @@ import type { TurnEvent } from './wire';
 
 const BASE = `${HIRE_ORIGIN}/api/v1/assistant`;
 
+/**
+ * The plan refused the turn (HTTP 402). The server writes the sentence for the
+ * candidate — what their plan lacks or what ran out — and, when there is a bigger
+ * plan to buy, the path to upgrade at; both are carried so the panel can show a
+ * paywall rather than a status code.
+ */
+export class PlanRefused extends Error {
+  /** A path on the hire origin (e.g. `/my/plan`), or null when nothing is for sale. */
+  readonly upgradeUrl: string | null;
+
+  constructor(message: string, upgradeUrl: string | null) {
+    super(message);
+    this.name = 'PlanRefused';
+    this.upgradeUrl = upgradeUrl;
+  }
+}
+
 /** A turn in flight: its completion, and the handle that stops it. */
 export interface Turn {
   done: Promise<void>;
@@ -59,6 +76,9 @@ export function sendTurn(
       }
       throw e;
     }
+    if (res.status === 402) {
+      throw await planRefusal(res);
+    }
     if (!res.ok) {
       throw new Error(`could not send the message (${res.status})`);
     }
@@ -83,6 +103,21 @@ export function sendTurn(
   })();
 
   return { done, cancel: () => controller.abort() };
+}
+
+/** Read a 402's body into a PlanRefused. An unreadable body must still surface as
+ *  the refusal it is, not as a second, unrelated failure. */
+async function planRefusal(res: Response): Promise<PlanRefused> {
+  const fallback = 'Your plan does not include the assistant.';
+  try {
+    const body = await res.json();
+    return new PlanRefused(
+      typeof body?.error === 'string' ? body.error : fallback,
+      typeof body?.upgrade_url === 'string' ? body.upgrade_url : null,
+    );
+  } catch {
+    return new PlanRefused(fallback, null);
+  }
 }
 
 /** Decode one frame's payload. A frame we cannot parse is dropped rather than
