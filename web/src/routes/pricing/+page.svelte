@@ -9,7 +9,7 @@
   import { ProviderIcon } from '$lib/ui';
   import type { PlanTierAllowance, PublicPrice } from '$lib/types';
   import type { PageData } from './$types';
-  import ApiPlans from './ApiPlans.svelte';
+  import ApiPlans from '$lib/components/ApiPlans.svelte';
 
   const { data }: { data: PageData } = $props();
 

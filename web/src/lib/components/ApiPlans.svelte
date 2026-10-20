@@ -123,7 +123,10 @@
       <p class="text-center text-sm text-destructive" role="alert">{error}</p>
     {/if}
     <p class="text-center text-sm text-muted-foreground">
-      Keys live on your <a
+      What the API carries and who it is for is on the <a
+        href={resolve('/jobs-api')}
+        class="font-medium text-foreground underline-offset-4 hover:underline">Jobs API</a
+      > page. Keys live on your <a
         href={resolve('/my/api-keys')}
         class="font-medium text-foreground underline-offset-4 hover:underline">API keys</a
       > page. What you may do with the data is in the

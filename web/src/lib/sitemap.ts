@@ -142,6 +142,8 @@ export const STATIC_PATHS = [
   '/sources',
   '/trends',
   '/docs/api',
+  // The commercial-use landing for the read API: meant to be found by "jobs API" searches.
+  '/jobs-api',
   '/agents',
   '/cli',
   '/chatgpt',

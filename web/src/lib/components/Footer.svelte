@@ -52,6 +52,7 @@
         { label: 'CLI', href: resolve('/cli') },
         { label: 'ChatGPT', href: resolve('/chatgpt') },
         { label: 'API docs', href: resolve('/docs/api') },
+        { label: 'Jobs API', href: resolve('/jobs-api') },
       ],
     },
     {

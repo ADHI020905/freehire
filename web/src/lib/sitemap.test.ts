@@ -22,6 +22,7 @@ describe('sitemap static paths', () => {
       '/open',
       '/trends',
       '/docs/api',
+      '/jobs-api',
       '/agents',
       '/cli',
       '/chatgpt',
