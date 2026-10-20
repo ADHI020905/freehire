@@ -117,7 +117,9 @@
 
   const figures = $derived(
     [
-      figure(scale?.open_jobs, 'postings tracked'),
+      // The de-duplicated count, the one /jobs shows — `open_jobs` counts a posting
+      // once per board carrying it, so it overstates the catalogue a click below opens.
+      figure(scale?.unique_open_jobs, 'unique jobs'),
       figure(scale?.companies, 'companies'),
       figure(scale?.sources, 'sources'),
       figure(scale?.ats_platforms, 'ATS platforms'),

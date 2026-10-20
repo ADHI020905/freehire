@@ -58,14 +58,20 @@ func init() {
 }
 
 // Stats is the subset of a catalogstats.Result a catalogue card needs: the
-// exact open-jobs/companies counts when available, the always-available
-// registry-derived source count, and whether the counts are exact or the
-// degraded estimate.
+// exact unique-jobs/companies/channel counts when available, the raw open-jobs
+// estimate the degraded path falls back to, the always-available
+// registry-derived source count, and whether the counts are exact.
+//
+// The exact card quotes UniqueOpenJobs, not OpenJobs: the raw figure counts a
+// posting once per board that carries it, so it reads ~40% higher than the
+// catalogue a visitor following the card can actually browse.
 type Stats struct {
-	OpenJobs  int64
-	Companies int64
-	Sources   int
-	Exact     bool
+	OpenJobs         int64
+	UniqueOpenJobs   int64
+	Companies        int64
+	Sources          int
+	TelegramChannels int
+	Exact            bool
 }
 
 // RenderCatalogCard renders the 1200x630 catalogue-scale OG card: the freehire
@@ -126,8 +132,10 @@ func RenderCatalogCard(heading, tagline string, stats Stats) ([]byte, error) {
 
 	drawStatStrip(img, numberFace, labelFace, stats)
 
-	footer := "freehire.me"
-	drawText(img, labelFace, colorMuted, width-marginX-textWidth(labelFace, footer), 566, footer)
+	// The domain sits on the wordmark's line, not beside the strip: a four-figure
+	// strip runs to the right margin and the two collided.
+	domain := "freehire.me"
+	drawText(img, labelFace, colorMuted, width-marginX-textWidth(labelFace, domain), 96, domain)
 
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
@@ -143,8 +151,10 @@ type statChip struct {
 }
 
 // chips builds the stat strip for stats. The degraded (non-exact) path omits
-// companies rather than render the zero the snapshot leaves it at, and marks
-// the open-jobs figure as an estimate.
+// the database-only figures rather than render the zeros the snapshot leaves
+// them at, and marks the open-jobs figure as an estimate. On the exact path a
+// zero is still an absent measurement — the unique count is unset when
+// Meilisearch was unreachable at publish time — so it is dropped too.
 func chips(s Stats) []statChip {
 	if !s.Exact {
 		return []statChip{
@@ -152,11 +162,18 @@ func chips(s Stats) []statChip {
 			{value: strconv.Itoa(s.Sources), label: "sources"},
 		}
 	}
-	return []statChip{
-		{value: groupThousands(s.OpenJobs), label: "postings tracked"},
-		{value: groupThousands(s.Companies), label: "companies"},
-		{value: strconv.Itoa(s.Sources), label: "sources"},
+	var out []statChip
+	if s.UniqueOpenJobs > 0 {
+		out = append(out, statChip{value: groupThousands(s.UniqueOpenJobs), label: "unique jobs"})
 	}
+	out = append(out,
+		statChip{value: groupThousands(s.Companies), label: "companies"},
+		statChip{value: strconv.Itoa(s.Sources), label: "sources"},
+	)
+	if s.TelegramChannels > 0 {
+		out = append(out, statChip{value: strconv.Itoa(s.TelegramChannels), label: "Telegram channels"})
+	}
+	return out
 }
 
 func drawStatStrip(img *image.RGBA, numberFace, labelFace font.Face, s Stats) {

@@ -3,6 +3,7 @@ package ogimage
 import (
 	"bytes"
 	"image/png"
+	"slices"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestRenderCatalogCard_ExactStats(t *testing.T) {
 	data, err := RenderCatalogCard(
 		"The open-source search engine for tech jobs",
 		"Millions of openings indexed straight from company career boards.",
-		Stats{OpenJobs: 3_300_658, Companies: 294_282, Sources: 227, Exact: true},
+		Stats{OpenJobs: 5_771_399, UniqueOpenJobs: 3_371_563, Companies: 477_323, Sources: 320, TelegramChannels: 97, Exact: true},
 	)
 	if err != nil {
 		t.Fatalf("RenderCatalogCard: %v", err)
@@ -53,6 +54,43 @@ func TestRenderCatalogCard_WrapsALongHeading(t *testing.T) {
 		t.Fatalf("RenderCatalogCard: %v", err)
 	}
 	decodeCard(t, data)
+}
+
+// The strip quotes the de-duplicated count — the figure /jobs shows — never the raw
+// one, and drops a figure the snapshot could not measure rather than print a zero.
+func TestChips(t *testing.T) {
+	cases := []struct {
+		name  string
+		stats Stats
+		want  []string
+	}{
+		{
+			name:  "exact quotes unique jobs and channels",
+			stats: Stats{OpenJobs: 5_771_399, UniqueOpenJobs: 3_371_563, Companies: 477_323, Sources: 320, TelegramChannels: 97, Exact: true},
+			want:  []string{"3,371,563 unique jobs", "477,323 companies", "320 sources", "97 Telegram channels"},
+		},
+		{
+			name:  "exact drops unmeasured unique count and channels",
+			stats: Stats{OpenJobs: 5_771_399, Companies: 477_323, Sources: 320, Exact: true},
+			want:  []string{"477,323 companies", "320 sources"},
+		},
+		{
+			name:  "degraded marks the estimate",
+			stats: Stats{OpenJobs: 3_150_000, Sources: 227},
+			want:  []string{"~3,150,000 postings tracked, estimated", "227 sources"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got []string
+			for _, c := range chips(tc.stats) {
+				got = append(got, c.value+" "+c.label)
+			}
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("chips = %q, want %q", got, tc.want)
+			}
+		})
+	}
 }
 
 func TestGroupThousands(t *testing.T) {

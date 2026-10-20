@@ -29,14 +29,14 @@ export function buildBrandCard(opts: { stats: BrandStat[] }): string {
 
   return `
 <div style="display:flex;flex-direction:column;justify-content:space-between;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;padding:64px 72px;background:#ffffff;color:#0a0a0a;font-family:Inter">
-  <div style="display:flex;align-items:center;gap:18px">
-    <img src="${MARK_DATA_URI}" style="width:52px;height:52px" />
-    <div style="display:flex;font-size:44px;font-weight:700;letter-spacing:-0.03em">freehire</div>
-  </div>
-  <div style="display:flex;max-width:940px;font-size:64px;font-weight:700;letter-spacing:-0.03em;line-height:1.05">${esc(HEADLINE)}</div>
-  <div style="display:flex;align-items:flex-end;justify-content:space-between">
-    <div style="display:flex;gap:64px">${statStrip}</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;width:${OG_WIDTH - 144}px">
+    <div style="display:flex;align-items:center;gap:18px">
+      <img src="${MARK_DATA_URI}" style="width:52px;height:52px" />
+      <div style="display:flex;font-size:44px;font-weight:700;letter-spacing:-0.03em">freehire</div>
+    </div>
     <div style="display:flex;font-size:22px;color:#a3a3a3">freehire.me</div>
   </div>
+  <div style="display:flex;max-width:940px;font-size:64px;font-weight:700;letter-spacing:-0.03em;line-height:1.05">${esc(HEADLINE)}</div>
+  <div style="display:flex;gap:64px">${statStrip}</div>
 </div>`.trim();
 }

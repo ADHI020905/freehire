@@ -50,10 +50,12 @@ func (h *ogHandlers) render(c *fiber.Ctx, heading, tagline string) error {
 	result := catalogstats.Load(c.Context(), h.cache, h.estimator)
 
 	img, err := ogimage.RenderCatalogCard(heading, tagline, ogimage.Stats{
-		OpenJobs:  result.OpenJobs,
-		Companies: result.Companies,
-		Sources:   result.Sources,
-		Exact:     result.Exact,
+		OpenJobs:         result.OpenJobs,
+		UniqueOpenJobs:   result.UniqueOpenJobs,
+		Companies:        result.Companies,
+		Sources:          result.Sources,
+		TelegramChannels: result.TelegramChannels,
+		Exact:            result.Exact,
 	})
 	if err != nil {
 		return err

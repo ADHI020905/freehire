@@ -13,7 +13,10 @@ export const load: PageServerLoad = async ({ fetch }) => {
     const scale = await serverApi(fetch).catalogScale();
     return {
       stats: {
-        jobs: scale.open_jobs,
+        // The de-duplicated count /jobs shows, not the raw `open_jobs` (every repost
+        // across boards). Zero means Meilisearch was not measured, so null, the same
+        // as companies below.
+        jobs: scale.unique_open_jobs || null,
         // Only the exact snapshot carries a company count; a degraded read reports
         // zero, which is "not measured", not "none". Null instead, so HomeView shows
         // its last-known figure rather than printing "0+ companies".
