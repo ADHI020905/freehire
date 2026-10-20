@@ -229,6 +229,34 @@ func TestSearchJobs_ReportsIgnoredParams(t *testing.T) {
 	}
 }
 
+func TestSearchJobs_ReportsIgnoredValues(t *testing.T) {
+	fake := &fakeSearcher{}
+	app := searchApp(fake)
+
+	// `foo` is no work mode, so the filter narrows to nothing and `total: 0` would
+	// read as an empty market. The filter still receives it — the report describes
+	// the answer, it does not change it.
+	status, body := doGet(t, app, "/jobs/search?work_mode=foo")
+	if status != fiber.StatusOK {
+		t.Fatalf("status = %d, want 200", status)
+	}
+	if fake.got.Filter == nil {
+		t.Error("Filter = nil, want the unknown value still applied")
+	}
+	meta, _ := body["meta"].(map[string]any)
+	values, _ := meta["ignored_values"].(map[string]any)
+	got, _ := values["work_mode"].([]any)
+	if len(got) != 1 || got[0] != "foo" {
+		t.Errorf("meta.ignored_values = %v, want {work_mode: [foo]}", meta["ignored_values"])
+	}
+
+	_, body = doGet(t, app, "/jobs/search?work_mode=remote")
+	meta, _ = body["meta"].(map[string]any)
+	if _, present := meta["ignored_values"]; present {
+		t.Errorf("meta.ignored_values = %v, want the key absent on a clean request", meta["ignored_values"])
+	}
+}
+
 func TestSearchJobs_QFieldsRestrictsSearchableAttributes(t *testing.T) {
 	fake := &fakeSearcher{}
 	app := searchApp(fake)

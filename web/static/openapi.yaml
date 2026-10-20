@@ -143,6 +143,28 @@ info:
     `searchCompanies` checks against its OWN vocabulary: a jobs facet sent there
     (`?seniority=senior`) is a real facet name, but not one company search reads,
     so it is ignored and reported.
+
+    ## An unknown VALUE of a closed facet narrows to nothing, and says so
+
+    Facets with a fixed vocabulary (`work_mode`, `regions`, `seniority`,
+    `category`, `employment_type`, `education_level`, `company_type`,
+    `company_size`, `salary_period`, `relocation`, `english_level`, `role_type`,
+    `ai_archetype`, `domains`, `reality` and the boolean facets) still apply a
+    value outside it — so `?work_mode=foo` answers `total: 0`, which reads
+    exactly like an empty market. `meta.ignored_values` names such values per
+    parameter (the `_exclude` form under its own name):
+
+    ```json
+    "meta": { "total": 0, "limit": 10, "offset": 0,
+              "ignored_values": { "work_mode": ["foo"] } }
+    ```
+
+    Values are compared case-insensitively. Open facets (`skills`, `countries`,
+    `cities`, `company_slug`, `source`, `collections`, `salary_currency`,
+    `posting_language`) are not checked: an unknown value there can be
+    legitimate. Absent on a clean request; capped at ten parameters of ten
+    values each. Reported by `searchJobs`, `agentSearchJobs` and
+    `getJobFacets`.
 servers:
   - url: https://freehire.me/api/v1
 # Every endpoint here also answers without a key; a key only selects the API plan's budget.
@@ -1972,13 +1994,16 @@ components:
           type: object
           additionalProperties: true
           description: |
-            Present ONLY when the request carried a parameter no filter read.
-            A clean request answers `{"data": ...}` with no meta block at all.
+            Present ONLY when the request carried a parameter no filter read,
+            or a closed-facet value outside its vocabulary. A clean request
+            answers `{"data": ...}` with no meta block at all.
           properties:
             ignored_params:
               type: array
               items:
                 $ref: "#/components/schemas/IgnoredParam"
+            ignored_values:
+              $ref: "#/components/schemas/IgnoredValues"
     CompanySummary:
       type: object
       additionalProperties: true
@@ -2148,6 +2173,19 @@ components:
             genuine one.
           items:
             $ref: "#/components/schemas/IgnoredParam"
+        ignored_values:
+          $ref: "#/components/schemas/IgnoredValues"
+    IgnoredValues:
+      type: object
+      description: |
+        Present ONLY when a closed-vocabulary facet (or its `_exclude` form)
+        carried a value outside its vocabulary — keyed by the parameter as sent,
+        each listing the unknown values. The value is still applied, so the
+        filter matches nothing on that axis; this says why the answer is empty.
+      additionalProperties:
+        type: array
+        items:
+          type: string
     IgnoredParam:
       type: object
       required:

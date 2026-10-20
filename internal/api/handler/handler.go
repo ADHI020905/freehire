@@ -289,21 +289,21 @@ func listResponseWithHidden(c *fiber.Ctx, data any, total, hidden int64, limit, 
 }
 
 // listResponseWithIgnored is listResponse plus the query params the filter did
-// not read, omitted entirely when there are none.
+// not read and the facet values outside their closed vocabulary (values: see
+// search.IgnoredValues; nil for an endpoint that builds no job filter), each
+// omitted entirely when there are none.
 //
 // Omitted rather than sent empty: a caller only needs the key when something
 // actually went wrong, and an always-present empty array is a field every reader
 // learns to skip — at which point the one response that does carry a warning
 // gets skipped too.
-func listResponseWithIgnored(c *fiber.Ctx, data any, total int64, limit, offset int, ignored []search.UnknownParam) error {
+func listResponseWithIgnored(c *fiber.Ctx, data any, total int64, limit, offset int, ignored []search.UnknownParam, values map[string][]string) error {
 	meta := fiber.Map{
 		"total":  total,
 		"limit":  limit,
 		"offset": offset,
 	}
-	if len(ignored) > 0 {
-		meta["ignored_params"] = ignored
-	}
+	addIgnored(meta, ignored, values)
 	return c.JSON(fiber.Map{"data": data, "meta": meta})
 }
 
@@ -311,11 +311,30 @@ func listResponseWithIgnored(c *fiber.Ctx, data any, total int64, limit, offset 
 // endpoints: they answer a bare {"data": ...} with no meta at all, so a clean
 // request keeps exactly that shape and the block appears only to carry a
 // warning.
-func dataResponseWithIgnored(c *fiber.Ctx, data any, ignored []search.UnknownParam) error {
-	if len(ignored) == 0 {
+func dataResponseWithIgnored(c *fiber.Ctx, data any, ignored []search.UnknownParam, values map[string][]string) error {
+	meta := fiber.Map{}
+	addIgnored(meta, ignored, values)
+	if len(meta) == 0 {
 		return c.JSON(fiber.Map{"data": data})
 	}
-	return c.JSON(fiber.Map{"data": data, "meta": fiber.Map{"ignored_params": ignored}})
+	return c.JSON(fiber.Map{"data": data, "meta": meta})
+}
+
+// addIgnored writes the two reports into a response meta, each only when it has
+// something to say.
+func addIgnored(meta fiber.Map, ignored []search.UnknownParam, values map[string][]string) {
+	if len(ignored) > 0 {
+		meta["ignored_params"] = ignored
+	}
+	if len(values) > 0 {
+		meta["ignored_values"] = values
+	}
+}
+
+// ignoredJobValues is search.IgnoredValues over this request's query, for the
+// endpoints that build a job filter from it.
+func ignoredJobValues(c *fiber.Ctx) map[string][]string {
+	return search.IgnoredValues(queryValues(c))
 }
 
 // Config is the dependency bundle Register wires onto the app: the DB pool, the

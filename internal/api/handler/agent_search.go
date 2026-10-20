@@ -45,7 +45,7 @@ func (h *searchHandlers) AgentSearchJobs(c *fiber.Ctx) error {
 	}
 
 	ignored := mergedJobSearchIgnored(c, agentSearchParams, dropped)
-	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignored)
+	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignored, ignoredJobValues(c))
 }
 
 // hydrateDescriptions replaces each hit's truncated preview description with the

@@ -190,7 +190,7 @@ func (h *searchHandlers) SearchJobs(c *fiber.Ctx) error {
 	h.attachGhost(c, res.Hits, views)
 
 	ignored := mergedJobSearchIgnored(c, jobSearchParams, dropped)
-	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignored)
+	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignored, ignoredJobValues(c))
 }
 
 // runJobSearch performs the request handling shared by both job-search endpoints:

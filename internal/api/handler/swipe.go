@@ -54,7 +54,7 @@ func (h *trackingHandlers) SwipeDeck(c *fiber.Ctx) error {
 	for i, hit := range res.Hits {
 		views[i] = hit.Job
 	}
-	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignoredParams(c, searchParams))
+	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignoredParams(c, searchParams), ignoredJobValues(c))
 }
 
 // withDeckExclusion adds an `id NOT IN [...]` group to the facet filter so the

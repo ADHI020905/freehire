@@ -100,7 +100,7 @@ func (h *jobsHandlers) ListJobs(c *fiber.Ctx) error {
 	}
 	h.attachGhostToRows(c, jobs, views)
 
-	return listResponseWithIgnored(c, views, total, limit, offset, ignoredListJobsParams(c))
+	return listResponseWithIgnored(c, views, total, limit, offset, ignoredListJobsParams(c), nil)
 }
 
 // listJobsParams are the only query params GET /jobs reads. Its siblings declare

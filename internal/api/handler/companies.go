@@ -215,7 +215,7 @@ func (h *companiesHandlers) ListCompanies(c *fiber.Ctx) error {
 	if h.companySearch != nil && sort != "rating" && isCompanyFilter(search, facets...) {
 		items, total, err := h.companyHitsViaMeili(c.Context(), search, vals, limit, offset)
 		if err == nil {
-			return listResponseWithIgnored(c, items, total, limit, offset, ignoredCompanyParams(c))
+			return listResponseWithIgnored(c, items, total, limit, offset, ignoredCompanyParams(c), nil)
 		}
 		log.Printf("companies: meili search fell back to postgres (q=%q): %v", search, err)
 	}
@@ -278,7 +278,7 @@ func (h *companiesHandlers) ListCompanies(c *fiber.Ctx) error {
 	for i, row := range companies {
 		items[i] = companyListItemFromRow(row)
 	}
-	return listResponseWithIgnored(c, items, total, limit, offset, ignoredCompanyParams(c))
+	return listResponseWithIgnored(c, items, total, limit, offset, ignoredCompanyParams(c), nil)
 }
 
 // isCompanyFilter reports whether a /companies request carries any name search or facet

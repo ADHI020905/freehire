@@ -60,7 +60,7 @@ func (h *talentCatalogHandlers) Facets(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return dataResponseWithIgnored(c, counts, ignoredTalentParams(vals, unreadable))
+	return dataResponseWithIgnored(c, counts, ignoredTalentParams(vals, unreadable), nil)
 }
 
 // List serves one filtered, ordered page of the catalogue.
@@ -73,7 +73,7 @@ func (h *talentCatalogHandlers) List(c *fiber.Ctx) error {
 		return err
 	}
 	return listResponseWithIgnored(c, page.Members, int64(page.Total), q.Limit, q.Offset,
-		ignoredTalentParams(vals, unreadable))
+		ignoredTalentParams(vals, unreadable), nil)
 }
 
 // Get serves one member's card by the handle in their public URL.

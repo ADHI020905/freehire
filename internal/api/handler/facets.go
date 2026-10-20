@@ -311,7 +311,7 @@ func (h *searchHandlers) JobFacets(c *fiber.Ctx) error {
 		return err
 	}
 
-	return dataResponseWithIgnored(c, facetView(res), ignoredParams(c, facetsParams))
+	return dataResponseWithIgnored(c, facetView(res), ignoredParams(c, facetsParams), ignoredJobValues(c))
 }
 
 // facetPayload is the public shape of a facet result: distributions and numeric

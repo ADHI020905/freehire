@@ -42,7 +42,16 @@ reads a precomputed pgvector lookup instead (`internal/search/similarjobs`,
   value with `role_type = "people_manager"` inside the category group, so
   `category=sales&category=management` still means "sales OR people managers", and
   `category_exclude=management` excludes the people managers. Nothing widens, so
-  `meta.ignored_params` has nothing to report.
+  `meta.ignored_params` has nothing to report, and `IgnoredValues` counts it as known.
+- **An unknown value of a closed facet is reported, not dropped** (`query_values.go`,
+  freehire#3280). `work_mode=foo` still reaches the filter and narrows to nothing, so
+  `total: 0` would read as an empty market; `IgnoredValues` names it in
+  `meta.ignored_values` (`{"work_mode": ["foo"]}`, `_exclude` keyed as sent). Only the
+  facets in `closedFacets` are checked, each against its `vocab` list itself — an open
+  facet (`skills`, `countries`, `cities`, …) has no list to check, and a copy here would
+  drift. The comparison is trimmed and case-insensitive so a value the filter could still
+  match is never named. A facet added to `closedFacets` must also be in `StringFacets`; a
+  test holds that.
 - **A job with no posting body never enters the index.** `search.DescriptionMissing`
   (`document.go`) tests the VISIBLE text — `stripToPlainText` — not the raw column, because a
   source that publishes an empty rich-text field serves markup with no words in it
