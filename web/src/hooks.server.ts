@@ -196,4 +196,11 @@ export const handle = sequence(
 );
 
 // Reports uncaught SSR errors to Sentry; inert when init was skipped above.
-export const handleError = Sentry.handleErrorWithSentry();
+// Sentry already declines to capture a 4xx, but its default handler still
+// logged every one's stack — scanners probing for xmlrpc.php and old PWA
+// installs asking for the removed manifest buried the real errors in the
+// journal. A 4xx is the request's fault, not ours, so it is not logged.
+export const handleError = Sentry.handleErrorWithSentry(({ error, status }) => {
+  if (status >= 400 && status < 500) return;
+  console.error((error as Error | undefined)?.stack ?? error);
+});
