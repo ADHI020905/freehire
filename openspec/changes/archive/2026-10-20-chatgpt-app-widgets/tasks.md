@@ -32,4 +32,4 @@
       screenshot light and dark.
 - [x] 4.2 Update `internal/api/mcpapp/AGENTS.md`.
 - [x] 4.3 PR → CI → merge → deploy; probe `resources/read` on production.
-- [ ] 4.4 Owner: check in ChatGPT developer mode, then resubmit the app for review.
+- [x] 4.4 Owner: check in ChatGPT developer mode (done 2026-10-20), then resubmit the app for review.

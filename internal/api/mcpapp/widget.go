@@ -16,7 +16,8 @@ import (
 // It lives beside wire.go rather than in web/ on purpose. It reads exactly the fields those
 // types publish, and a test holds it to them (widget_fields_test.go); a frontend build would
 // also make this binary depend on a JS build, which is a way to ship a stale page with every
-// check green. See openspec/changes/chatgpt-app-widgets/design.md.
+// check green. See openspec/changes/archive/2026-10-20-chatgpt-app-widgets/design.md
+// and the requirements in openspec/specs/chatgpt-app-widgets/spec.md.
 
 //go:embed widget/jobs.html
 var widgetPage []byte
