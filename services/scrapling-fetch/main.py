@@ -5,6 +5,9 @@ SCRAPLING_FETCH_ADDR      host:port to listen on (default 127.0.0.1:8098)
 SCRAPLING_MAX_BROWSERS    live browser sessions at most (default 3)
 SCRAPLING_IDLE_SECONDS    close a session unused this long (default 600)
 SOURCES_PROXY_URL         the proxy `proxy: true` egresses through (optional)
+SCRAPLING_PROXY_ROTATING  a gateway giving a new exit IP per request, for http mode (optional)
+SCRAPLING_PROXY_STICKY    a proxy URL template with {n}, one fixed exit IP per n, for browser
+                          sessions; SCRAPLING_PROXY_STICKY_COUNT says how many (optional)
 """
 
 import asyncio
@@ -13,7 +16,7 @@ import os
 import sys
 
 from app import create_app
-from engines import browser_fetcher, http_fetch, open_stealth_session
+from engines import ProxyConfig, browser_fetcher, http_fetcher, stealth_session_factory
 from pool import SessionPool
 
 MAX_REQUEST_BYTES = 1 << 20  # a crawler's request: a URL, a few headers, a small POST body
@@ -51,16 +54,17 @@ def main() -> None:
     import uvicorn
 
     host, port = listen_address(os.environ.get("SCRAPLING_FETCH_ADDR", ""))
+    proxies = ProxyConfig.from_env(os.environ)
     pool = SessionPool(
-        open_stealth_session,
+        stealth_session_factory(proxies),
         max_sessions=_positive_int("SCRAPLING_MAX_BROWSERS", 3),
         idle_ttl=_positive_int("SCRAPLING_IDLE_SECONDS", 600),
         acquire_timeout=ACQUIRE_TIMEOUT_SECONDS,
     )
     app = create_app(
         token=token,
-        proxy_url=os.environ.get("SOURCES_PROXY_URL", "").strip() or None,
-        http_fetch=http_fetch,
+        proxy_available=proxies.available,
+        http_fetch=http_fetcher(proxies),
         browser_fetch=browser_fetcher(pool),
         max_request_bytes=MAX_REQUEST_BYTES,
         max_response_bytes=MAX_RESPONSE_BYTES,

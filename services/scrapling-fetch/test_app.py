@@ -17,8 +17,8 @@ class Recorder:
         self.result = result or FetchResult(status=200, url="https://ex.com/final", headers={"content-type": "text/html"}, body=b"<html>ok</html>")
         self.error = error
 
-    async def __call__(self, req, proxy_url):
-        self.calls.append((req, proxy_url))
+    async def __call__(self, req):
+        self.calls.append(req)
         if self.error:
             raise self.error
         return self.result
@@ -28,11 +28,11 @@ def public_resolver(host):
     return ["93.184.216.34"]
 
 
-def client(http=None, browser=None, proxy_url="http://user:pw@proxy:1", max_request=1024, max_response=1024, resolve=public_resolver):
+def client(http=None, browser=None, proxy_available=True, max_request=1024, max_response=1024, resolve=public_resolver):
     app = create_app(
         resolve=resolve,
         token=TOKEN,
-        proxy_url=proxy_url,
+        proxy_available=proxy_available,
         http_fetch=http or Recorder(),
         browser_fetch=browser or Recorder(),
         max_request_bytes=max_request,
@@ -76,7 +76,7 @@ def test_invalid_requests_are_400(payload):
 
 def test_proxy_requested_without_one_configured_is_400():
     http = Recorder()
-    r = client(http=http, proxy_url=None).post("/fetch", json={"url": "https://ex.com", "mode": "http", "proxy": True}, headers=AUTH)
+    r = client(http=http, proxy_available=False).post("/fetch", json={"url": "https://ex.com", "mode": "http", "proxy": True}, headers=AUTH)
     assert r.status_code == 400
     assert http.calls == []
 
@@ -98,15 +98,15 @@ def test_http_fetch_passes_request_through_and_returns_upstream_as_data():
     out = r.json()
     assert out["status"] == 403 and out["url"] == "https://ex.com/x" and out["headers"] == {"x": "1"}
     assert base64.b64decode(out["body"]) == b"denied"
-    req, proxy_url = http.calls[0]
+    req = http.calls[0]
     assert req.method == "POST" and req.body == b'{"q":1}' and req.headers == {"Accept": "application/json"}
-    assert proxy_url == "http://user:pw@proxy:1"
+    assert req.proxy is True
 
 
-def test_direct_fetch_gets_no_proxy():
+def test_direct_fetch_asks_for_no_proxy():
     http = Recorder()
     client(http=http).post("/fetch", json={"url": "https://ex.com", "mode": "http"}, headers=AUTH)
-    assert http.calls[0][1] is None
+    assert http.calls[0].proxy is False
 
 
 def test_browser_mode_uses_the_browser_fetcher():

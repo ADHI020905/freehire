@@ -53,6 +53,27 @@ before failing it.
 - **THEN** it waits until one frees, never opening one past the cap, and fails with a 5xx if
   none frees within the queue bound
 
+### Requirement: Proxy rotation
+When `SCRAPLING_PROXY_ROTATING` is set, an `http`-mode request with `proxy: true` SHALL egress
+through it, and a 403 or 429 answer SHALL be retried up to twice more, since each attempt leaves
+from another exit IP. When `SCRAPLING_PROXY_STICKY` and `SCRAPLING_PROXY_STICKY_COUNT` are set,
+each new proxied browser session SHALL take the next fixed exit IP in turn and keep it for its
+life, and a session whose page is refused with 403 or 429 SHALL be retired, the refusal still
+returned to the caller. With neither set, `SOURCES_PROXY_URL` SHALL serve both.
+
+#### Scenario: A flagged exit IP
+- **WHEN** an http request through the rotating proxy is answered 403 and its retry 200
+- **THEN** the caller receives the 200
+
+#### Scenario: A refused browser session
+- **WHEN** a proxied browser page is answered 429
+- **THEN** the caller receives the 429, and the next proxied page on that host opens a new
+  session on another sticky exit IP
+
+#### Scenario: Direct requests are never retried for a refusal
+- **WHEN** an http request without the proxy is answered 403
+- **THEN** it is returned after one attempt
+
 ### Requirement: Service access is local and authenticated
 The service SHALL listen on `127.0.0.1` and SHALL refuse a request without the bearer token
 `SCRAPLING_FETCH_TOKEN` with 401. It SHALL bound the request body and the upstream response

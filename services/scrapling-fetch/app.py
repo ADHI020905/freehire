@@ -17,7 +17,7 @@ import ipaddress
 import json
 import socket
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, List, Optional
+from typing import Awaitable, Callable, List
 from urllib.parse import urlsplit
 
 from starlette.applications import Starlette
@@ -56,8 +56,9 @@ class BadRequest(Exception):
     pass
 
 
-# A fetcher takes the request and the proxy URL to egress through (None for direct).
-Fetcher = Callable[[FetchRequest, Optional[str]], Awaitable[FetchResult]]
+# A fetcher serves one request; which proxy a `proxy: true` request egresses through is the
+# fetcher's own choice (see engines.ProxyConfig).
+Fetcher = Callable[[FetchRequest], Awaitable[FetchResult]]
 # A resolver maps a host name to the addresses it resolves to (blocking; run off the loop).
 Resolver = Callable[[str], List[str]]
 
@@ -119,7 +120,7 @@ def create_app(
     *,
     resolve: Resolver = system_resolver,
     token: str,
-    proxy_url: Optional[str],
+    proxy_available: bool,
     http_fetch: Fetcher,
     browser_fetch: Fetcher,
     max_request_bytes: int,
@@ -141,7 +142,7 @@ def create_app(
             req = parse_request(_json(raw))
         except BadRequest as e:
             return JSONResponse({"error": str(e)}, status_code=400)
-        if req.proxy and not proxy_url:
+        if req.proxy and not proxy_available:
             return JSONResponse({"error": "proxy requested but none is configured"}, status_code=400)
         # Some adapters follow links scraped from the source's own pages, and the fetch runs on
         # the crawl host: a link pointing inside it is refused, the check safehttp makes for
@@ -154,7 +155,7 @@ def create_app(
         if not addrs or any(is_internal(a) for a in addrs):
             return JSONResponse({"error": f"{host} resolves to an internal address"}, status_code=400)
         try:
-            result = await fetchers[req.mode](req, proxy_url if req.proxy else None)
+            result = await fetchers[req.mode](req)
         except FetchError as e:
             return JSONResponse({"error": str(e)}, status_code=502)
         if len(result.body) > max_response_bytes:

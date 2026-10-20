@@ -40,6 +40,18 @@ request waits — for at most 120 s, after which it fails with a 502 rather than
 of a caller that has already given up. A session unused for `SCRAPLING_IDLE_SECONDS` is closed; a session whose page
 raised is discarded.
 
+## Proxy rotation
+
+`http` mode through the proxy goes through the ROTATING gateway: every request leaves from a new
+exit IP, so a source's per-IP rate limit (Wellfound answered 429 to one shared IP) sees each
+request from a different address. A browser session must not rotate — a Cloudflare clearance
+belongs to the exit IP it was solved from — so each new proxied session takes the next STICKY
+exit IP in turn and keeps it for its life. A page a source refuses with 403 or 429 is still
+returned to the caller, but its session is retired, so the next opens on another IP.
+
+With Webshare, the rotating gateway is `http://<user>-rotate:<pass>@p.webshare.io:80` and the
+sticky template `http://<user>-{n}:<pass>@p.webshare.io:80`, one fixed IP per `n`.
+
 ## Configuration
 
 | variable | default | |
@@ -48,7 +60,10 @@ raised is discarded.
 | `SCRAPLING_FETCH_ADDR` | `127.0.0.1:8098` | the crawlers run on the same host |
 | `SCRAPLING_MAX_BROWSERS` | `3` | |
 | `SCRAPLING_IDLE_SECONDS` | `600` | |
-| `SOURCES_PROXY_URL` | — | what `proxy: true` egresses through |
+| `SOURCES_PROXY_URL` | — | the single proxy `proxy: true` egresses through, when the two below are unset |
+| `SCRAPLING_PROXY_ROTATING` | `SOURCES_PROXY_URL` | a gateway handing out a new exit IP per request — what `http` mode uses |
+| `SCRAPLING_PROXY_STICKY` | `SOURCES_PROXY_URL` | a proxy URL template with `{n}`, one fixed exit IP per `n` — what browser sessions use |
+| `SCRAPLING_PROXY_STICKY_COUNT` | — | how many `n` the template has (required with it) |
 
 ## Run
 
