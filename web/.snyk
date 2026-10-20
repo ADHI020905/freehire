@@ -40,3 +40,20 @@ ignore:
           the dependency; either ends this ignore without a code change here.
         expires: 2026-12-20T00:00:00.000Z
         created: 2026-09-20T00:00:00.000Z
+  SNYK-JS-PICOMATCH-21248802:
+    - '*':
+        reason: >-
+          ReDoS in picomatch@4.0.5 (analyzeRepeatedExtglob), reached by an
+          attacker-supplied glob pattern. Every path to it is BUILD or
+          tooling time: vite/tinyglobby, the adapter-node and workbox rollup
+          plugins, svelte-check and typescript-eslint. None of it is in the
+          SSR server bundle or anything the browser loads, and the patterns it
+          matches are statically authored in this repository (our vite and
+          svelte config, the import.meta.glob in blogPosts.ts) — nothing a
+          request carries ever becomes a glob, so the exploitable path does
+          not exist here.
+          No fix is available: Snyk lists no fixed version, and 4.0.7, the
+          latest release, predates the advisory. Revisit when picomatch ships
+          a fixed release; a lockfile refresh then ends this ignore.
+        expires: 2026-11-20T00:00:00.000Z
+        created: 2026-10-20T00:00:00.000Z
