@@ -15,7 +15,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.45.0",
+    "@lucide/svelte": "^1.58.0",
     "flag-icons": "^7.5.0",
     "freehire-design-system": "file:../design-system",
     "svelte": "^5.57.0"
