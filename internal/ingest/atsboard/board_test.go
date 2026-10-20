@@ -183,6 +183,16 @@ func TestRecognize(t *testing.T) {
 		{"adp with neither is not a board", "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html", "", "", "", false},
 		{"adp malformed cid is not a board", "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=acme&ccId=19000101_000001", "", "", "", false},
 		{"adp malformed ccId is not a board", "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=8a680274-0b2e-46cf-b2cc-49bd2ef0c20f&ccId=main", "", "", "", false},
+		// Taleo Business Edition: the board is org + career-site number on any pod host; the pod
+		// is not part of it. Real apply URLs, harvested 2026-10.
+		{"taleobe legacy posting", "https://phf.tbe.taleo.net/phf02/ats/careers/requisition.jsp?org=ADELPHI&cws=43&rid=3413", "taleobe", "ADELPHI:43", "https://phf.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectCws&cws=43&org=ADELPHI", true},
+		{"taleobe v2 apply link", "https://chj.tbe.taleo.net/chj04/ats/careers/v2/applyRequisition?org=VIBRHEAL&cws=44&rid=20313", "taleobe", "VIBRHEAL:44", "https://chj.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectCws&cws=44&org=VIBRHEAL", true},
+		{"taleobe tracking parameter", "http://chj.tbe.taleo.net/chj05/ats/careers/requisition.jsp?org=SUN_PHARMA&cws=1&rid=606&source=Indeed", "taleobe", "SUN_PHARMA:1", "http://chj.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectCws&cws=1&org=SUN_PHARMA", true},
+		{"taleobe lower-case org folds", "https://tre.tbe.taleo.net/tre01/ats/careers/v2/searchResults?org=saintelizabeth&cws=50", "taleobe", "SAINTELIZABETH:50", "https://tre.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectCws&cws=50&org=SAINTELIZABETH", true},
+		{"taleobe dispatcher link", "https://phe.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?org=ICANN&act=redirectCws&cws=37", "taleobe", "ICANN:37", "https://phe.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectCws&cws=37&org=ICANN", true},
+		{"taleobe empty cws is not a board", "https://phe.tbe.taleo.net/phe01/ats/careers/v2/jobSearch?act=redirectCws&org=FREEHOUS&cws=", "", "", "", false},
+		{"taleobe without an org is not a board", "https://phf.tbe.taleo.net/phf02/ats/careers/requisition.jsp?cws=43&rid=3413", "", "", "", false},
+		{"taleo enterprise is a different product", "https://valero.taleo.net/careersection/2/jobdetail.ftl?job=123&org=X&cws=1", "", "", "", false},
 		// myjobs.adp.com is a DIFFERENT ADP product with its own adapter: its slug is an
 		// adpmyjobs board, never an adp one (whose board is the cid:ccId pair).
 		{"adp myjobs career site is adpmyjobs", "https://myjobs.adp.com/stellantisexternalcx/cx/job/5001207766206", "adpmyjobs", "stellantisexternalcx", "https://myjobs.adp.com/stellantisexternalcx/cx/job/5001207766206", true},
@@ -617,7 +627,7 @@ func TestQueryModeRowsAreConfigured(t *testing.T) {
 		case modeQueryPair:
 			q, ok := queryPairBoards[a.host]
 			if !ok || q.first == "" || q.second == "" || q.listingPath == "" ||
-				q.firstPattern == nil || q.secondPattern == nil {
+				q.firstPattern == nil || q.secondPattern == nil || q.foldFirst == nil {
 				t.Errorf("atsBoards entry %q (%s) is %s mode but queryPairBoards has no complete entry for it",
 					a.host, a.source, modeQueryPair)
 			}

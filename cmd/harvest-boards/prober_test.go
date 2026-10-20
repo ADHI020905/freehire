@@ -410,6 +410,16 @@ func TestNamedProbers(t *testing.T) {
 			},
 			live: "acme", wantName: "Acme Inc", empty: "empty",
 		},
+		{
+			// The channel title is "<employer> Job Feed"; the suffix is the platform's, not the name.
+			name: "taleobe",
+			p:    taleobeProber{},
+			getter: fakeGetter{
+				"https://tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectOrg&org=ADELPHI&redirectUrl=https%3A%2F%2Ftbe.taleo.net%2Fats%2Fservlet%2FRss%3Fcws%3D43%26org%3DADELPHI":     `<rss xmlns:taleo="urn:TBERss"><channel><title>Adelphi University Job Feed</title><item><title>Eng</title></item></channel></rss>`,
+				"https://tbe.taleo.net/dispatcher/servlet/DispatcherServlet?act=redirectOrg&org=SIGSOURCE&redirectUrl=https%3A%2F%2Ftbe.taleo.net%2Fats%2Fservlet%2FRss%3Fcws%3D37%26org%3DSIGSOURCE": `<rss><channel><title>Signature Source Job Feed</title></channel></rss>`,
+			},
+			live: "ADELPHI:43", wantName: "Adelphi University", empty: "SIGSOURCE:37",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

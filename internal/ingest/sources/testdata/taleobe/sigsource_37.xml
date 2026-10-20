@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-stylesheet type="text/xsl" href="https://phf.tbe.taleo.net/phf02/ats/rss/taleorssfeed.xsl" ?>
+<?xml-stylesheet type="text/css" href="https://phf.tbe.taleo.net/phf02/ats/rss/taleorssfeed.css" ?>
+<rss xmlns:taleo="urn:TBERss" version="2.0">
+<channel>
+<title>Signature Source Job Feed</title>
+<link>https://phf.tbe.taleo.net/dispatcher/servlet/DispatcherServlet?org=SIGSOURCE&amp;act=redirectCws&amp;cws=37</link>
+<language>en_US</language>
+<ttl>60</ttl>
+</channel>
+</rss>

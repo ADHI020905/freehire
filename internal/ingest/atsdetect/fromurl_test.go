@@ -278,13 +278,12 @@ func TestFromURL(t *testing.T) {
 			provider: "eploy", board: "hadfabltdweb.eploy.net", ok: true,
 		},
 		// Harvested shapes that do not carry the board the adapter crawls: a posting id only
-		// (gusto, schoolspring, edjoin), a product the adapter does not read (Taleo Business
-		// Edition, the legacy SuccessFactors career section), or a custom domain with no
-		// signature that is the platform's alone (eploy, phenom).
+		// (gusto, schoolspring, edjoin), a product the adapter does not read (the legacy
+		// SuccessFactors career section), or a custom domain with no signature that is the
+		// platform's alone (eploy, phenom).
 		{name: "gusto posting", url: "https://jobs.gusto.com/postings/wayback-burgers-back-and-front-of-house-team-memeber-52646664-c1a9-4098-9f14-d5119eaf9ff3"},
 		{name: "schoolspring posting", url: "https://www.schoolspring.com/jobdetail?jobId=5962033"},
 		{name: "edjoin posting", url: "https://www.edjoin.org/Home/JobPosting/2284252"},
-		{name: "taleo business edition requisition", url: "https://phg.tbe.taleo.net/phg04/ats/careers/requisition.jsp?org=FDI&cws=41&rid=613"},
 		{name: "successfactors legacy career section", url: "https://career10.successfactors.com/career?career_ns=job_listing&company=ptmetrodat&career_job_req_id=39731"},
 		{name: "eploy custom domain", url: "https://careers.simplyhealth.co.uk/vacancies/3094/financial-planning--analysis-partner.html"},
 		{name: "phenom custom domain", url: "https://jobs.kwiktrip.com/us/en/job/231967/Customer-Food-Service-Overnight"},
@@ -408,6 +407,29 @@ func TestFromURL(t *testing.T) {
 			name: "mchire is not a paradox instance",
 			url:  "https://www.mchire.com/co/McDonalds2523/Job?job_id=PDX_MC_C8C45FE7-AF20-4638-AC29-65BF8F219B8E_76278",
 			ok:   false,
+		},
+		// Taleo Business Edition: <pod>.tbe.taleo.net, board = "<ORG>:<cws>" from the query, never
+		// the pod. Taleo Enterprise (<tenant>.taleo.net/careersection/<n>) is a different product
+		// and keeps resolving to the "taleo" adapter.
+		{
+			name:     "taleobe legacy posting",
+			url:      "https://tre.tbe.taleo.net/tre01/ats/careers/requisition.jsp?org=SAINTELIZABETH&cws=50&rid=44356",
+			provider: "taleobe", board: "SAINTELIZABETH:50", ok: true,
+		},
+		{
+			name:     "taleobe v2 apply link",
+			url:      "https://phh.tbe.taleo.net/phh03/ats/careers/v2/applyRequisition?org=MILCORP&cws=38&rid=16348",
+			provider: "taleobe", board: "MILCORP:38", ok: true,
+		},
+		{
+			name:     "taleobe requisition on another pod",
+			url:      "https://phg.tbe.taleo.net/phg04/ats/careers/requisition.jsp?org=FDI&cws=41&rid=613",
+			provider: "taleobe", board: "FDI:41", ok: true,
+		},
+		{
+			name:     "taleo enterprise careersection stays taleo",
+			url:      "https://valero.taleo.net/careersection/2/jobdetail.ftl?job=123",
+			provider: "taleo", board: "valero.taleo.net/2", ok: true,
 		},
 		{
 			name: "unknown host",

@@ -99,7 +99,8 @@ const (
 	// both to address a tenant and neither alone identifies one. ADP Workforce Now serves every
 	// career centre from one path under "?cid=<tenant>&ccId=<centre>", and its ingest adapter
 	// takes the board as exactly that pair (internal/ingest/sources/adp.go splits on the colon),
-	// so a single parameter would be a board that 404s every crawl. queryPairBoards names the two
+	// so a single parameter would be a board that 404s every crawl. Taleo Business Edition is the
+	// same shape ("?org=<ORG>&cws=<site>"). queryPairBoards names the two
 	// parameters and the shape each value must have, for the reason modeQuery demands one: on a
 	// board-only host a parameter is a weak signal, and inventing a board is the expensive
 	// direction.
@@ -224,6 +225,10 @@ var atsBoards = []struct{ host, source, mode string }{
 
 	// --- querypair: board = two named query parameters joined by ":" (see queryPairBoards) ---
 	{"workforcenow.adp.com", "adp", modeQueryPair},
+	// Taleo Business Edition, on every pod host (<pod>.tbe.taleo.net). Taleo Enterprise tenants
+	// (<tenant>.taleo.net) are a different product and stay unmatched: this entry only takes
+	// hosts under tbe.taleo.net.
+	{"tbe.taleo.net", "taleobe", modeQueryPair},
 
 	// --- icims: board = bare slug (classic "careers-<slug>" host) or the whole vanity host ---
 	{"icims.com", "icims", modeICIMS},
@@ -495,13 +500,20 @@ var queryBoards = map[string]struct {
 // served from. It is queryBoards one parameter wider, and exists for the same reason: on a host
 // that serves every tenant from one path, only the parameters tell them apart.
 //
-// The board is written "<first>:<second>" because that is how the ingest adapter takes it, not
+// The board is written "<first>:<second>" because that is how the ingest adapters take it, not
 // because the URL reads that way — sources/adp.go cuts the board on the colon into the cid and
 // ccId its API needs, and the catalogue's ~2,800 adp boards are all stored in that form.
+//
+// foldFirst puts the first value in the case the catalogue stores, since both platforms serve
+// either spelling and a link's own casing would otherwise file a crawled board as new. The
+// second value is a number on both and has no case to fold. listingQuery holds any fixed
+// parameters the listing URL needs beyond the two that name the board.
 var queryPairBoards = map[string]struct {
 	first, second, listingPath string
 	firstPattern               *regexp.Regexp
 	secondPattern              *regexp.Regexp
+	foldFirst                  func(string) string
+	listingQuery               url.Values
 }{
 	// ADP Workforce Now: the recruitment page is
 	// /mascsr/default/mdf/recruitment/recruitment.html?cid=<uuid>&ccId=<id>&jobId=<posting>.
@@ -518,6 +530,23 @@ var queryPairBoards = map[string]struct {
 		listingPath:   "/mascsr/default/mdf/recruitment/recruitment.html",
 		firstPattern:  regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`),
 		secondPattern: regexp.MustCompile(`^[0-9][0-9_]*$`),
+		foldFirst:     strings.ToLower,
+	},
+	// Taleo Business Edition: every URL on <pod>.tbe.taleo.net names the employer by its org code
+	// and one of its career sites by number — requisition.jsp?org=<ORG>&cws=<n>&rid=<posting>,
+	// v2/applyRequisition?…, searchResults?… — and sources/taleobe.go takes exactly that pair.
+	// The pod in the path is left out of the board: the dispatcher resolves an org to its pod
+	// from any TBE host, and orgs move between pods. The canonical is therefore the dispatcher's
+	// career-site redirect on the link's own host, which lands on the listing wherever the org
+	// lives now. A link with an empty cws (the platform renders some that way) is declined.
+	"tbe.taleo.net": {
+		first:         "org",
+		second:        "cws",
+		listingPath:   "/dispatcher/servlet/DispatcherServlet",
+		firstPattern:  regexp.MustCompile(`^[A-Z0-9_]+$`),
+		secondPattern: regexp.MustCompile(`^[0-9]+$`),
+		foldFirst:     strings.ToUpper,
+		listingQuery:  url.Values{"act": {"redirectCws"}},
 	},
 }
 
@@ -753,26 +782,28 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 		return src, board, u.String(), true
 
 	case modeQueryPair:
-		// ADP Workforce Now: the board is two parameters, and the canonical is the recruitment
-		// page carrying just those two — so a posting link and a bare career-centre link collapse
-		// to one board. The cid is lower-cased (it is a uuid the platform serves in either case
-		// and adp's catalogue holds lower-case); the ccId is left verbatim, since it is digits and
-		// underscores with no case to fold.
+		// ADP Workforce Now, Taleo Business Edition: the board is two parameters, and the
+		// canonical is the listing carrying just those two — so a posting link and a bare
+		// career-site link collapse to one board.
 		q, configured := queryPairBoards[apex]
-		if !configured || q.firstPattern == nil || q.secondPattern == nil {
+		if !configured || q.firstPattern == nil || q.secondPattern == nil || q.foldFirst == nil {
 			return "", "", "", false
 		}
 		// Each pattern rejects an absent or empty parameter along with a malformed one, so a link
 		// on the host naming only one half is declined rather than turned into a truncated board.
-		first := strings.ToLower(u.Query().Get(q.first))
+		first := q.foldFirst(u.Query().Get(q.first))
 		second := u.Query().Get(q.second)
 		if !q.firstPattern.MatchString(first) || !q.secondPattern.MatchString(second) {
 			return "", "", "", false
 		}
 		board = first + ":" + second
+		query := url.Values{q.first: {first}, q.second: {second}}
+		for k, v := range q.listingQuery {
+			query[k] = v
+		}
 		u.Fragment = ""
 		u.Path = q.listingPath
-		u.RawQuery = url.Values{q.first: {first}, q.second: {second}}.Encode()
+		u.RawQuery = query.Encode()
 		return src, board, u.String(), true
 
 	case modePathLocalePair:

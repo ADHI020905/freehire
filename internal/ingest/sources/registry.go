@@ -271,6 +271,9 @@ func All(c HTTPClient) map[string]Source {
 		NewTrakstar(c),
 		// gethired: board = the tenant subdomain on easyapply.co, one RSS feed per board.
 		NewGetHired(c),
+		// taleobe: Taleo Business Edition — NOT Taleo Enterprise ("taleo" below), board =
+		// "<ORG>:<cws>", one RSS feed per board reached through the platform's dispatcher.
+		NewTaleoBE(c),
 		NewFactorial(c),
 		// gr8people: another vendor served under two marketing domains (gr8people.com and
 		// workgr8.com — see atsboard's matching two rows), board = the tenant's whole host.

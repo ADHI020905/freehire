@@ -638,6 +638,31 @@ func (gethiredProber) probe(ctx context.Context, c httpClient, slug string) (str
 	return strings.TrimSpace(feed.Title), len(feed.Items), nil
 }
 
+// taleobeProber probes a Taleo Business Edition career site ("<ORG>:<cws>") through the same
+// dispatcher-routed RSS request the adapter makes. A non-empty channel is a live board, and the
+// channel title names the employer ("Adelphi University Job Feed"). An unknown org, a
+// deactivated one, or a career-site number the org does not have all redirect to an HTML
+// page, whose decode fails and is skipped like any absent board.
+type taleobeProber struct{}
+
+func (taleobeProber) probe(ctx context.Context, c httpClient, board string) (string, int, error) {
+	feedURL, err := sources.TaleoBEFeedURL(board)
+	if err != nil {
+		return "", 0, nil
+	}
+	var feed struct {
+		Title string     `xml:"channel>title"`
+		Items []struct{} `xml:"channel>item"`
+	}
+	if err := c.GetXML(ctx, feedURL, &feed); err != nil {
+		return "", 0, nil
+	}
+	if len(feed.Items) == 0 {
+		return "", 0, nil
+	}
+	return strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(feed.Title), " Job Feed")), len(feed.Items), nil
+}
+
 // personioProber probes the Personio public XML feed on the .com host (the host the adapter
 // crawls). A non-empty positions list is a live board; a tenant served only on a regional
 // TLD (.de/.es) 404s here and is skipped — correctly, since the adapter could not crawl it
@@ -810,6 +835,7 @@ var probers = map[string]prober{
 	"teamtailor":      teamtailorProber{},
 	"trakstar":        trakstarProber{},
 	"gethired":        gethiredProber{},
+	"taleobe":         taleobeProber{},
 	"personio":        personioProber{},
 	"gem":             gemProber{},
 	"deel":            deelProber{},
