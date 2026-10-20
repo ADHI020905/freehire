@@ -10,15 +10,18 @@
 // It touches only companies whose name is still slug-like AND that have open
 // jobs, resolves a candidate name per board (bounded-concurrent HTTP), and
 // applies it only when it passes the confidence gate (never guessing from the
-// slug). Renames re-key company_slug via normalize.Slug; the derived companies
-// catalogue reconciles through SyncCompaniesFromJobs + DeleteOrphanCompanies.
-// Idempotent — a second run finds nothing slug-like left to fix. Follow with
-// `make reindex` so corrected names reach search.
+// slug). Each name is written to the board it came from before its jobs (see
+// writeRename) — otherwise the board's next crawl puts the slug back. Renames re-key
+// company_slug via normalize.Slug; the derived companies catalogue reconciles through
+// SyncCompaniesFromJobs + DeleteOrphanCompanies. Idempotent — a second run finds
+// nothing slug-like left to fix. Follow with `make reindex` so corrected names reach
+// search.
 package main
 
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"sort"
 	"sync"
@@ -72,12 +75,7 @@ func run() int {
 	}
 
 	applied, failed := applyRenames(ctx, renames, func(ctx context.Context, r rename) (bool, error) {
-		n, err := queries.RenameSlugCompany(ctx, db.RenameSlugCompanyParams{
-			Name:    r.name,
-			NewSlug: normalize.Slug(r.name),
-			OldSlug: r.oldSlug,
-		})
-		return n > 0, err
+		return writeRename(ctx, queries, r)
 	})
 
 	// jobs now carry the resolved names/slugs; re-key the derived catalogue and
@@ -99,7 +97,46 @@ func run() int {
 
 type rename struct {
 	oldSlug string
+	oldName string
 	name    string
+	// source and board locate the boards row the name came from, so the rename can be
+	// written back to it — see writeRename.
+	source string
+	board  string
+}
+
+// renamer is the slice of db.Queries writeRename needs, narrowed so a test can record
+// the order of the two writes.
+type renamer interface {
+	RenameSlugBoardCompany(context.Context, db.RenameSlugBoardCompanyParams) (int64, error)
+	RenameSlugCompany(context.Context, db.RenameSlugCompanyParams) (int64, error)
+}
+
+// writeRename applies one resolved name to the board and then to its jobs, reporting
+// whether any job changed.
+//
+// The board is what makes the rename stick: the adapter copies boards.company onto
+// every posting and the job upsert overwrites jobs.company, so a rename written to jobs
+// alone was undone by the board's next crawl. And the board goes FIRST. Renamed jobs no
+// longer look slug-like, so no later run lists the company again; were the board write
+// to fail after them, the next crawl would restore the slug with nothing left to notice.
+// In this order a failed jobs write heals itself — the crawl carries the name from the
+// board — and a failed board write leaves the company listed for the next run.
+func writeRename(ctx context.Context, q renamer, r rename) (bool, error) {
+	if _, err := q.RenameSlugBoardCompany(ctx, db.RenameSlugBoardCompanyParams{
+		Name:     r.name,
+		Provider: r.source,
+		Board:    r.board,
+		OldName:  r.oldName,
+	}); err != nil {
+		return false, fmt.Errorf("board: %w", err)
+	}
+	n, err := q.RenameSlugCompany(ctx, db.RenameSlugCompanyParams{
+		Name:    r.name,
+		NewSlug: normalize.Slug(r.name),
+		OldSlug: r.oldSlug,
+	})
+	return n > 0, err
 }
 
 // applyRenames writes each rename via write, counting how many actually
@@ -168,7 +205,7 @@ func resolveNames(ctx context.Context, rows []db.ListSlugLikeCompaniesForBackfil
 				stats.rejected++
 				return nil
 			}
-			renames = append(renames, rename{oldSlug: row.Slug, name: name})
+			renames = append(renames, rename{oldSlug: row.Slug, oldName: row.Name, name: name, source: row.Source, board: board})
 			return nil
 		})
 	}

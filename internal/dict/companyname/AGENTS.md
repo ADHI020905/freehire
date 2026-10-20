@@ -7,7 +7,11 @@ becomes the company's name — leaking into the UI label, the public
 `/companies/<slug>` URL, and breaking logo.dev's *name* endpoint (which 404s on a
 squished single token, degrading the logo to a monogram).
 
-Consumed by `cmd/backfill-company-names`.
+Consumed by `cmd/backfill-company-names`, which writes each accepted name to the
+`boards` row first and to `jobs` second. The board is the half that makes it stick: the
+adapter copies `boards.company` onto every posting and the job upsert overwrites
+`jobs.company`, so until the worker wrote the board too, every rename it applied was
+undone by that board's next crawl.
 
 ## Pieces
 

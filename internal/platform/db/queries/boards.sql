@@ -42,6 +42,19 @@ SET company = sqlc.arg(company)
 WHERE provider = sqlc.arg(provider) AND lower(board) = lower(sqlc.arg(board))
   AND region = sqlc.arg(region) AND status IN ('pending', 'active');
 
+-- name: RenameSlugBoardCompany :execrows
+-- Carry a display name cmd/backfill-company-names resolved back to the board it came
+-- from. An adapter copies boards.company onto every posting and the job upsert writes
+-- `company = EXCLUDED.company`, so a rename applied to jobs alone is undone by the
+-- board's next crawl. Every region and status: a paused board that comes back must not
+-- bring the slug with it. Guarded on the slug it replaces, so a name a curator set
+-- (or a board whose row names a different company than its postings — see
+-- boardcatalog/AGENTS.md) is left alone.
+UPDATE boards
+SET company = sqlc.arg(name)
+WHERE provider = sqlc.arg(provider) AND lower(board) = lower(sqlc.arg(board))
+  AND company = sqlc.arg(old_name);
+
 -- name: ListBoardsBySubmitter :many
 -- One user's crowdsourced boards, newest first — half of the "my contributions" list
 -- (board_submissions holds the other half, the unclassified-URL rows).

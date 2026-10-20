@@ -184,6 +184,40 @@ func (q *Queries) ListBoardsBySubmitter(ctx context.Context, submittedBy pgtype.
 	return items, nil
 }
 
+const renameSlugBoardCompany = `-- name: RenameSlugBoardCompany :execrows
+UPDATE boards
+SET company = $1
+WHERE provider = $2 AND lower(board) = lower($3)
+  AND company = $4
+`
+
+type RenameSlugBoardCompanyParams struct {
+	Name     string `json:"name"`
+	Provider string `json:"provider"`
+	Board    string `json:"board"`
+	OldName  string `json:"old_name"`
+}
+
+// Carry a display name cmd/backfill-company-names resolved back to the board it came
+// from. An adapter copies boards.company onto every posting and the job upsert writes
+// `company = EXCLUDED.company`, so a rename applied to jobs alone is undone by the
+// board's next crawl. Every region and status: a paused board that comes back must not
+// bring the slug with it. Guarded on the slug it replaces, so a name a curator set
+// (or a board whose row names a different company than its postings — see
+// boardcatalog/AGENTS.md) is left alone.
+func (q *Queries) RenameSlugBoardCompany(ctx context.Context, arg RenameSlugBoardCompanyParams) (int64, error) {
+	result, err := q.db.Exec(ctx, renameSlugBoardCompany,
+		arg.Name,
+		arg.Provider,
+		arg.Board,
+		arg.OldName,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const retireBoard = `-- name: RetireBoard :execrows
 UPDATE boards
 SET status = 'retired'

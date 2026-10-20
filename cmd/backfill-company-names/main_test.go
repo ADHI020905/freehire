@@ -35,8 +35,9 @@ func TestResolveNames(t *testing.T) {
 
 	renames, stats := resolveNames(context.Background(), rows, registry)
 
-	if len(renames) != 1 || renames[0].oldSlug != "afcb" || renames[0].name != "AFC Bournemouth" {
-		t.Fatalf("renames = %+v, want [{afcb AFC Bournemouth}]", renames)
+	want := rename{oldSlug: "afcb", oldName: "afcb", name: "AFC Bournemouth", source: "pinpoint", board: "afcb"}
+	if len(renames) != 1 || renames[0] != want {
+		t.Fatalf("renames = %+v, want [%+v]", renames, want)
 	}
 	if stats.noSource != 1 {
 		t.Errorf("noSource = %d, want 1", stats.noSource)
@@ -89,5 +90,54 @@ func TestApplyRenames_ContinuesPastAFailure(t *testing.T) {
 	})
 	if len(attempted) != 3 {
 		t.Errorf("attempted %d renames, want 3 (a failing must not stop b, c)", len(attempted))
+	}
+}
+
+// fakeRenamer records the writes writeRename makes, in order, and can fail the board
+// write.
+type fakeRenamer struct {
+	calls    []string
+	boardErr error
+}
+
+func (f *fakeRenamer) RenameSlugBoardCompany(_ context.Context, arg db.RenameSlugBoardCompanyParams) (int64, error) {
+	f.calls = append(f.calls, "board "+arg.Provider+"/"+arg.Board+" "+arg.OldName+"->"+arg.Name)
+	return 1, f.boardErr
+}
+
+func (f *fakeRenamer) RenameSlugCompany(_ context.Context, arg db.RenameSlugCompanyParams) (int64, error) {
+	f.calls = append(f.calls, "jobs "+arg.OldSlug+"->"+arg.NewSlug)
+	return 1, nil
+}
+
+// TestWriteRename_BoardBeforeJobs guards why the rename sticks at all. The adapter copies
+// boards.company onto every posting on each crawl, so a rename written to jobs alone was
+// undone by the next one. The board goes FIRST: if the jobs write then fails, the next
+// crawl carries the name from the board anyway.
+func TestWriteRename_BoardBeforeJobs(t *testing.T) {
+	f := &fakeRenamer{}
+	r := rename{oldSlug: "a-place-for-mom", oldName: "a-place-for-mom", name: "A Place for Mom", source: "ashby", board: "a-place-for-mom"}
+
+	if _, err := writeRename(context.Background(), f, r); err != nil {
+		t.Fatalf("writeRename: %v", err)
+	}
+	want := []string{"board ashby/a-place-for-mom a-place-for-mom->A Place for Mom", "jobs a-place-for-mom->a-place-for-mom"}
+	if len(f.calls) != 2 || f.calls[0] != want[0] || f.calls[1] != want[1] {
+		t.Fatalf("calls = %q, want %q", f.calls, want)
+	}
+}
+
+// TestWriteRename_BoardFailureLeavesJobs guards the opposite order's trap: jobs renamed
+// while the board still holds the slug make the company stop looking slug-like, so no
+// later run lists it — and the next crawl restores the slug for good.
+func TestWriteRename_BoardFailureLeavesJobs(t *testing.T) {
+	f := &fakeRenamer{boardErr: errors.New("boom")}
+	r := rename{oldSlug: "airgarage", oldName: "airgarage", name: "AirGarage", source: "ashby", board: "airgarage"}
+
+	if _, err := writeRename(context.Background(), f, r); err == nil {
+		t.Fatal("writeRename: want the board error, got nil")
+	}
+	if len(f.calls) != 1 {
+		t.Fatalf("calls = %q, want only the board write", f.calls)
 	}
 }

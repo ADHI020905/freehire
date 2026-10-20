@@ -5919,6 +5919,14 @@ type Querier interface {
 	ReleaseReminderClaim(ctx context.Context, id int64) error
 	// Remove a job from a list. Idempotent: removing an absent job is a no-op.
 	RemoveJobListItem(ctx context.Context, arg RemoveJobListItemParams) error
+	// Carry a display name cmd/backfill-company-names resolved back to the board it came
+	// from. An adapter copies boards.company onto every posting and the job upsert writes
+	// `company = EXCLUDED.company`, so a rename applied to jobs alone is undone by the
+	// board's next crawl. Every region and status: a paused board that comes back must not
+	// bring the slug with it. Guarded on the slug it replaces, so a name a curator set
+	// (or a board whose row names a different company than its postings — see
+	// boardcatalog/AGENTS.md) is left alone.
+	RenameSlugBoardCompany(ctx context.Context, arg RenameSlugBoardCompanyParams) (int64, error)
 	// Apply a resolved display name to every job under a slug-like company and
 	// re-key its company_slug (computed by the caller via normalize.Slug), so the
 	// derived catalogue re-keys through SyncCompaniesFromJobs + DeleteOrphanCompanies.
