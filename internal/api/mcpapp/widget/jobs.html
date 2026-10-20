@@ -77,6 +77,12 @@
   // ---- the bridge: JSON-RPC over postMessage to the host -------------------------------
 
   const pending = new Map();
+  // "*" is deliberate, and what the official ext-apps PostMessageTransport sends with. The
+  // page runs in a sandboxed frame and cannot know its host's origin (ChatGPT's and Claude's
+  // differ, and neither is ours to list), while the recipient is fixed: window.parent, the
+  // frame's own embedder. What goes out is the handshake, the frame size and a public job
+  // URL to open — nothing a third party could not read off the posting itself. Incoming
+  // messages are the side that needs a check, and get one: event.source must be the parent.
   function send(message) { window.parent.postMessage(message, "*"); }
   function request(method, params) {
     const id = nextId++;

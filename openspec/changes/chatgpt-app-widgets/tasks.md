@@ -31,5 +31,5 @@
 - [x] 4.1 Render both views in the MCP Apps reference host locally against a real server;
       screenshot light and dark.
 - [x] 4.2 Update `internal/api/mcpapp/AGENTS.md`.
-- [ ] 4.3 PR → CI → merge → deploy; probe `resources/read` on production.
+- [x] 4.3 PR → CI → merge → deploy; probe `resources/read` on production.
 - [ ] 4.4 Owner: check in ChatGPT developer mode, then resubmit the app for review.
