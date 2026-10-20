@@ -132,6 +132,17 @@ describe('ExperienceBankView add-job form', () => {
       ),
     );
   });
+
+  // The empty bank used to render only the assistant button, which a free account cannot
+  // use — leaving no way to add anything by hand.
+  it('offers the manual add buttons when the bank is empty', async () => {
+    getExperience.mockResolvedValue({ employments: [], unplaced: [] });
+    render(ExperienceBankView, { props: {} });
+
+    expect(await screen.findByRole('button', { name: 'Add experience' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add project' })).toBeTruthy();
+    expect(screen.getByText(/Nothing recorded yet/)).toBeTruthy();
+  });
 });
 
 describe('ExperienceBankView résumé-extraction banner', () => {

@@ -538,26 +538,23 @@
       <States state="loading" />
     {:else if error}
       <States state="error" message={error} />
-    {:else if !bank || (bank.employments.length === 0 && bank.unplaced.length === 0)}
-      <!-- An empty bank is the one that most needs filling, so this state carries the same
-           way in as a full one rather than a sentence and a dead end. -->
-      <div class="flex flex-col items-center gap-4 py-12 text-center">
-        <p class="max-w-prose text-sm text-muted-foreground">
-          Nothing recorded yet. Upload a CV, or talk it through with the assistant — whatever
-          you confirm is kept here and reused in every CV you build.
-        </p>
-        <div class="flex flex-col items-center gap-1.5">
-          {@render interviewEntry()}
-        </div>
-      </div>
-    {:else}
+    {:else if bank}
+      <!-- An empty bank renders the same sections as a full one: it is the one that most
+           needs filling, and the assistant is a paid feature, so the manual "Add" buttons
+           below are the only way in that every plan has. -->
       <div class="flex flex-col gap-6">
         <!-- The header states what this page is FOR, because "experience bank" means nothing
              to someone meeting it for the first time. -->
         <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <p class="max-w-prose flex-1 text-sm text-muted-foreground">
-            {totalAtoms} achievement{totalAtoms === 1 ? '' : 's'} on record. These are what your
-            tailored CVs are built from — edit or remove anything that is not right.
+            {#if totalAtoms === 0}
+              Nothing recorded yet. Upload a CV, add a job or project below, or talk it through
+              with the assistant — whatever you confirm is kept here and reused in every CV you
+              build.
+            {:else}
+              {totalAtoms} achievement{totalAtoms === 1 ? '' : 's'} on record. These are what your
+              tailored CVs are built from — edit or remove anything that is not right.
+            {/if}
           </p>
           <!-- Capped, and right-aligned only once it shares the row: the example is two lines
                of hint, and letting it set the row's width pushed the whole action under the
