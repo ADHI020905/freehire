@@ -34,6 +34,26 @@ func TestCleanLocation(t *testing.T) {
 			want: "Remote",
 		},
 		{
+			name: "strips a plural form label",
+			in:   "Locations: San Francisco",
+			want: "San Francisco",
+		},
+		{
+			name: "strips a singular label regardless of case and spacing",
+			in:   "location:  Minnesota",
+			want: "Minnesota",
+		},
+		{
+			name: "strips a preferences label",
+			in:   "Location Preferences: Minneapolis, MN or Fargo",
+			want: "Minneapolis, MN or Fargo",
+		},
+		{
+			name: "keeps a place whose name merely starts with the word",
+			in:   "Locationville, TX",
+			want: "Locationville, TX",
+		},
+		{
 			name: "empty stays empty",
 			in:   "",
 			want: "",

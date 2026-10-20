@@ -59,6 +59,25 @@ func TestNew_DerivesFacetsFromDraft(t *testing.T) {
 
 // A freshly constructed Job is open and unenriched: no lifecycle or enrichment
 // state until the write/enrich paths set it.
+// A form label inside the location ("Locations: San Francisco") is stripped before the
+// facet derivation reads it, so the posting gets its geography and displays the place.
+func TestNew_StripsALocationLabelBeforeDeriving(t *testing.T) {
+	j, err := job.New(job.Draft{Input: jobderive.Input{
+		Source: "greenhouse", ExternalID: "1", Title: "Engineer", Company: "Acme",
+		Location: "Locations: San Francisco",
+	}})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	f := j.Fields()
+	if f.Location != "San Francisco" {
+		t.Errorf("Location = %q, want %q", f.Location, "San Francisco")
+	}
+	if !slices.Contains(f.Countries, "us") {
+		t.Errorf("Countries = %v, want us", f.Countries)
+	}
+}
+
 func TestNew_FreshJobIsOpenAndUnenriched(t *testing.T) {
 	j, err := job.New(job.Draft{Input: jobderive.Input{Source: "manual", ExternalID: "1", Title: "Engineer", Company: "Acme"}})
 	if err != nil {

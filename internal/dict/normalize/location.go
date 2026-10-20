@@ -12,9 +12,17 @@ import (
 // legitimate "City | Country" split (no numeric tail) intact.
 var coordTail = regexp.MustCompile(`\s*(\|\s*-?\d+(\.\d+)?\s*)+$`)
 
-// CleanLocation strips a source's coordinate tail from a free-text location and
-// trims surrounding whitespace. It never touches a location that has no such
-// tail, so plain places and "City | Country" splits pass through unchanged.
+// Some postings carry the form label inside the value ("Locations: San Francisco",
+// "Location Preferences: Minneapolis, MN"). The geography parser reads the label as
+// part of the first place, so a single-place location resolved to nothing — measured
+// 2026-10-20, 34 stored rows across greenhouse, aijobs, paylocity and herp, most of
+// them with empty countries (freehire#3281).
+var labelHead = regexp.MustCompile(`(?i)^\s*locations?(\s+preferences?)?\s*:\s*`)
+
+// CleanLocation strips a source's coordinate tail and a leading "Location:" label
+// from a free-text location and trims surrounding whitespace. Plain places and
+// "City | Country" splits pass through unchanged.
 func CleanLocation(s string) string {
+	s = labelHead.ReplaceAllString(s, "")
 	return strings.TrimSpace(coordTail.ReplaceAllString(s, ""))
 }
