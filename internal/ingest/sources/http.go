@@ -53,6 +53,13 @@ type XMLGetter interface {
 	GetXML(ctx context.Context, url string, v any) error
 }
 
+// XMLResolvedGetter fetches a URL following redirects and decodes its XML body, also
+// returning the FINAL URL — the XML counterpart of JSONResolvedGetter, for a feed whose
+// platform answers "this board is not served" with a redirect instead of a status code.
+type XMLResolvedGetter interface {
+	GetXMLResolved(ctx context.Context, url string, v any) (string, error)
+}
+
 // HTMLGetter fetches a URL and returns its parsed HTML tree, for adapters whose detail
 // is server-rendered HTML rather than a structured body (e.g. SuccessFactors).
 type HTMLGetter interface {
@@ -142,6 +149,7 @@ type HTTPClient interface {
 	JSONResolvedGetter
 	StreamGetter
 	XMLGetter
+	XMLResolvedGetter
 	HTMLGetter
 	HTMLResolvedGetter
 	TextGetter
@@ -499,6 +507,27 @@ func (c *Client) GetXML(ctx context.Context, url string, v any) error {
 			return xml.NewDecoder(resp.Body).Decode(v)
 		},
 	})
+}
+
+// GetXMLResolved fetches url and decodes its XML body into v, additionally returning the
+// FINAL URL after redirects — the XML counterpart of GetJSONResolved, for a feed whose
+// platform answers "no such board" by redirecting to an HTML page (GetHired; see
+// gethired.go). The decode still runs, so a redirect that lands on a real feed is an
+// ordinary success and the caller simply ignores the URL.
+func (c *Client) GetXMLResolved(ctx context.Context, url string, v any) (string, error) {
+	var final string
+	err := c.do(ctx, request{
+		method: http.MethodGet,
+		url:    url,
+		accept: "application/xml",
+		decode: func(resp *http.Response) error {
+			// Recorded before the decode so a redirect that landed on HTML still reports
+			// where it went, rather than only that the decode failed.
+			final = resp.Request.URL.String()
+			return xml.NewDecoder(resp.Body).Decode(v)
+		},
+	})
+	return final, err
 }
 
 // maxTextBody caps the raw body GetText reads — tighter than the client's own

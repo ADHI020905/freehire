@@ -250,6 +250,29 @@ func TestFromURL(t *testing.T) {
 		{name: "successfactors legacy career section", url: "https://career10.successfactors.com/career?career_ns=job_listing&company=ptmetrodat&career_job_req_id=39731"},
 		{name: "eploy custom domain", url: "https://careers.simplyhealth.co.uk/vacancies/3094/financial-planning--analysis-partner.html"},
 		{name: "phenom custom domain", url: "https://jobs.kwiktrip.com/us/en/job/231967/Customer-Food-Service-Overnight"},
+		// GetHired: the board is the tenant subdomain of easyapply.co. The platform's apply
+		// links sit on the bare apex (/a/<uuid>, /job/<slug>) and name no tenant — the tenant
+		// is only reachable by fetching the page — so they are declined, not guessed.
+		{
+			name:     "gethired career site",
+			url:      "https://freightbreakersllc.easyapply.co/",
+			provider: "gethired", board: "freightbreakersllc", ok: true,
+		},
+		{
+			name:     "gethired career site share link",
+			url:      "https://whiteoakpostacutecare7568.easyapply.co",
+			provider: "gethired", board: "whiteoakpostacutecare7568", ok: true,
+		},
+		{
+			name: "gethired apply link names no tenant",
+			url:  "https://easyapply.co/a/a0a12168-017b-4c25-837c-519d9103c453",
+			ok:   false,
+		},
+		{
+			name: "gethired posting slug names no tenant",
+			url:  "https://easyapply.co/job/produce-clerk-120",
+			ok:   false,
+		},
 		{
 			name: "unknown host",
 			url:  "https://www.caci.com/careers/123",

@@ -400,6 +400,16 @@ func TestNamedProbers(t *testing.T) {
 			},
 			live: "100", wantName: "Acme Inc", empty: "200",
 		},
+		{
+			// The channel title is the tenant's own name, trailing space and all.
+			name: "gethired",
+			p:    gethiredProber{},
+			getter: fakeGetter{
+				"https://acme.easyapply.co/rss":  `<rss><channel><title>Acme Inc </title><item><title>Eng</title></item></channel></rss>`,
+				"https://empty.easyapply.co/rss": `<rss><channel><title>Empty</title></channel></rss>`,
+			},
+			live: "acme", wantName: "Acme Inc", empty: "empty",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

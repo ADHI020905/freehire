@@ -230,6 +230,10 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"likeit.fi", "likeit", modeSubdomain},
 	{"spark.work", "spark", modeSubdomain},
 	{"hire.trakstar.com", "trakstar", modeSubdomain},
+	// GetHired: <tenant>.easyapply.co is the career site the adapter reads /rss from. Its
+	// apply links (easyapply.co/a/<uuid>, easyapply.co/job/<slug>) sit on the bare apex and
+	// name no tenant, so they stay unrecognised — the board is only on the career site.
+	{"easyapply.co", "gethired", modeSubdomain},
 	{"portaldetalentos.senior.com.br", "senior", modeSubdomain},
 	{"vagas.solides.com.br", "solides", modeSubdomain},
 	{"softgarden.io", "softgarden", modeSubdomain},
@@ -954,6 +958,7 @@ var platformLabelsByApex = map[string][]string{
 	"potok.io":       {"www", "stages", "qa", "sentry"},
 	"eploy":          {"www"}, // www.eploy.com is the vendor's marketing site
 	"hiringroom.com": {"www", "ve", "api-ve", "contacto-comercial"},
+	"easyapply.co":   {"www"}, // www.easyapply.co 404s; every tenant is a bare label
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Miller's Market - Norwalk, OH</title>
+    <description>Current Job Openings</description>
+    <generator>Zend_Feed_Writer 1.11.2 (http://framework.zend.com)</generator>
+    <link>https://millersmarketnorwalk.easyapply.co</link>
+    <author>Miller's Market - Norwalk, OH</author>
+    <dc:creator>Miller's Market - Norwalk, OH</dc:creator>
+    <atom:link rel="self" type="application/rss+xml" href="https://millersmarketnorwalk.easyapply.co/rss"/>
+    <item>
+      <title>produce clerk</title>
+      <description><![CDATA[<p>part time produce clerk unloading truck putting out product cutting fruit.</p> ]]></description>
+      <pubDate>Tue, 29 Sep 2026 10:48:27 +0000</pubDate>
+      <link>https://easyapply.co/job/produce-clerk-120</link>
+      <guid>https://easyapply.co/job/produce-clerk-120</guid>
+      <category><![CDATA[Norwalk, OH]]></category>
+    </item>
+    <item>
+      <title>meat dept </title>
+      <description><![CDATA[<p>Now hiring in the meat dept clean up person duty's cleaning meat saw meat grinder cleaning cutting table's leaning how to wrap meat to put out in display case. Learning how to make sausage and ground beef. hours 10 to 6 weekends are a must.</p> ]]></description>
+      <pubDate>Tue, 18 Aug 2026 16:44:23 +0000</pubDate>
+      <link>https://easyapply.co/job/meat-dept-2</link>
+      <guid>https://easyapply.co/job/meat-dept-2</guid>
+      <category><![CDATA[Norwalk, OH]]></category>
+    </item>
+  </channel>
+</rss>

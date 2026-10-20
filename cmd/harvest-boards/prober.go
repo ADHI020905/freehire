@@ -609,6 +609,27 @@ func trakstarEmployer(title string) string {
 	return strings.TrimSpace(name)
 }
 
+// gethiredProber probes a GetHired tenant's RSS feed (<board>.easyapply.co/rss) — the one
+// request the adapter itself makes. A non-empty channel is a live board, and the channel
+// title is the employer's name as the tenant set it, so the board can be gated against the
+// name the seed expected. A subdomain the platform does not serve redirects to its sign-in
+// page, whose HTML fails the decode and is skipped like any absent board.
+type gethiredProber struct{}
+
+func (gethiredProber) probe(ctx context.Context, c httpClient, slug string) (string, int, error) {
+	var feed struct {
+		Title string     `xml:"channel>title"`
+		Items []struct{} `xml:"channel>item"`
+	}
+	if err := c.GetXML(ctx, fmt.Sprintf("https://%s.easyapply.co/rss", slug), &feed); err != nil {
+		return "", 0, nil
+	}
+	if len(feed.Items) == 0 {
+		return "", 0, nil
+	}
+	return strings.TrimSpace(feed.Title), len(feed.Items), nil
+}
+
 // personioProber probes the Personio public XML feed on the .com host (the host the adapter
 // crawls). A non-empty positions list is a live board; a tenant served only on a regional
 // TLD (.de/.es) 404s here and is skipped — correctly, since the adapter could not crawl it
@@ -780,6 +801,7 @@ var probers = map[string]prober{
 	"breezy":          breezyProber{},
 	"teamtailor":      teamtailorProber{},
 	"trakstar":        trakstarProber{},
+	"gethired":        gethiredProber{},
 	"personio":        personioProber{},
 	"gem":             gemProber{},
 	"deel":            deelProber{},
