@@ -29,14 +29,14 @@ func entitlementOf(s *plan.Store) paidEntitlement {
 }
 
 // unmeteredAI is the feature an AI route names when it draws on no daily allowance of its
-// own — the ATS review, search intent, mail recall, autofill, a re-run of extraction. The
+// own — the ATS review, mail recall, autofill, a re-run of extraction. The
 // paid gate still stands in front of it; only the refusal has no allowance to quote.
 const unmeteredAI plan.Feature = ""
 
 // paidAIGate builds the route middleware every user-initiated model call sits behind. It is
 // a function of the feature rather than one handler, so a refusal on a metered route names
 // what the plan does not include in the same body every other plan refusal carries; a route
-// with no allowance of its own (search intent, the ATS review, mail recall, autofill,
+// with no allowance of its own (the ATS review, mail recall, autofill,
 // extraction) passes the zero Feature.
 //
 // Mounted AFTER the authentication gate, which is what put the caller's id in locals.

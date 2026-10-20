@@ -181,6 +181,75 @@ func TestGenerateJSON_JSONObjectModeSendsNoSchema(t *testing.T) {
 	}
 }
 
+// json_object mode drops the schema from response_format, so the shape has to reach
+// the model some other way — and OpenAI-compatible providers also refuse json_object
+// outright unless a message says "json" (prod, 2026-10-20: every AI search answered
+// 500 because its prompt relied on the schema and never wrote the word). The schema
+// therefore rides on the system message, on both entry points.
+func TestJSONObjectModeCarriesTheSchemaInTheSystemPrompt(t *testing.T) {
+	proxy := newRecordingProxy(t)
+
+	c, err := New(proxy.srv.URL, "test-key", "test-model", WithSchemaMode(SchemaModeJSONObject))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	calls := map[string]func() error{
+		"GenerateJSON": func() error {
+			_, err := c.GenerateJSON(context.Background(), "sys", "user", WithSchema("verdict", testSchema(t)))
+			return err
+		},
+		"GenerateJSONStream": func() error {
+			_, err := c.GenerateJSONStream(context.Background(), "sys", "user", nil, WithSchema("verdict", testSchema(t)))
+			return err
+		},
+	}
+	for name, call := range calls {
+		t.Run(name, func(t *testing.T) {
+			if err := call(); err != nil {
+				t.Fatalf("%s: %v", name, err)
+			}
+			system := systemMessage(t, proxy.lastRequest(t))
+			if !strings.HasPrefix(system, "sys") {
+				t.Errorf("system prompt = %q, want the caller's own prompt first", system)
+			}
+			if !strings.Contains(system, "JSON") || !strings.Contains(system, `"verdict"`) {
+				t.Errorf("system prompt = %q, want it to name JSON and carry the schema", system)
+			}
+		})
+	}
+}
+
+// Strict mode already sends the schema in response_format; repeating it in the prompt
+// would only spend tokens.
+func TestStrictModeLeavesTheSystemPromptAlone(t *testing.T) {
+	proxy := newRecordingProxy(t)
+
+	if _, err := proxy.client(t).GenerateJSON(context.Background(), "sys", "user",
+		WithSchema("verdict", testSchema(t))); err != nil {
+		t.Fatalf("GenerateJSON: %v", err)
+	}
+	if got := systemMessage(t, proxy.lastRequest(t)); got != "sys" {
+		t.Errorf("system prompt = %q, want it untouched", got)
+	}
+}
+
+func systemMessage(t *testing.T, req map[string]any) string {
+	t.Helper()
+
+	messages, _ := req["messages"].([]any)
+	for _, m := range messages {
+		msg, _ := m.(map[string]any)
+		if msg["role"] != "system" {
+			continue
+		}
+		content, _ := msg["content"].(string)
+		return content
+	}
+	t.Fatal("request carried no system message")
+	return ""
+}
+
 // A client built without an opinion is the one every existing caller has.
 func TestGenerateJSON_DefaultModeIsStrict(t *testing.T) {
 	proxy := newRecordingProxy(t)

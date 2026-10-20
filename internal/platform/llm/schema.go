@@ -33,9 +33,8 @@ const (
 	// came back as a fenced array of invented job postings, while json_object with
 	// the same prompt returned the exact shape three times out of three.
 	//
-	// The shape is still asked for — every caller in this repository spells its
-	// fields out in the system prompt — and still checked, by the caller's own
-	// validator. What is lost is the provider-side guarantee, which the package
+	// The shape is still asked for — the schema is appended to the system prompt
+	// (systemFor) — and still checked, by the caller's own validator. What is lost is the provider-side guarantee, which the package
 	// documentation already declines to treat as one.
 	SchemaModeJSONObject SchemaMode = "json_object"
 )
@@ -192,6 +191,23 @@ func responseFormat(cfg genConfig, mode SchemaMode) (json.RawMessage, error) {
 	}
 
 	return raw, nil
+}
+
+// systemFor returns the system prompt a call should send. In json_object mode the
+// schema never reaches the wire as response_format, so it rides on the system prompt
+// instead: without it the model has to guess the field names, and OpenAI-compatible
+// providers refuse json_object outright unless some message says "json" — a caller
+// whose prompt leaned on the schema (searchintent) failed every call with a 400.
+// Strict mode, or a call with no schema, sends the caller's prompt unchanged.
+func (c *Client) systemFor(cfg genConfig, system string) (string, error) {
+	if c.schemaMode != SchemaModeJSONObject || cfg.schema == nil {
+		return system, nil
+	}
+	raw, err := json.Marshal(cfg.schema)
+	if err != nil {
+		return "", fmt.Errorf("llm: encode schema for prompt: %w", err)
+	}
+	return system + "\n\nRespond with a single JSON object that matches this JSON Schema:\n" + string(raw), nil
 }
 
 // schemaInjector rewrites `response_format` in the outgoing chat request.

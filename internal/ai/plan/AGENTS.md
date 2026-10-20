@@ -38,12 +38,14 @@ transaction. `store.go` is the transaction around it and nothing else.
   `featureConfig` has no free field, `PLAN_FREE_DAILY_<FEATURE>` is no longer read (it once
   reopened one without a deploy, and a lever that can only weaken an invariant is one an
   operator pulls by accident), and `WithFreeDaily` is gone. `RequirePaid` is the same
-  question asked on its own, for the AI actions that have no allowance (extraction, the ATS
-  review, search intent, mail recall, autofill): `ErrPaymentRequired` for free, the raw
+  question asked on its own, for the AI actions that have no allowance (the ATS review, a
+  re-run of extraction, mail recall, autofill): `ErrPaymentRequired` for free, the raw
   error for a failed read — which a caller refuses on (503) and never authorises, the
   opposite of the meters' fail-open rule below, because what it protects is model spend.
   `WithPaidAI`/`PaidAI` mark a context as having passed it; `internal/api/handler`'s
-  binding refuses to hand out a model client without that mark. Tests that need an
+  binding refuses to hand out a model client without that mark — or without
+  `WithFreeAI`, the named exception for the calls every account gets: the stored-CV parse
+  and the search interpretation ("Describe with AI"). Tests that need an
   allowance to consume partway into pin a real PRO ceiling with `WithProCeiling`.
 
 - **Every metered feature enforces on arrival.** auto-apply was the first to ship this

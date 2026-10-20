@@ -271,6 +271,9 @@ func (c *Client) GenerateJSON(ctx context.Context, system, user string, opts ...
 	if err != nil {
 		return "", err
 	}
+	if system, err = c.systemFor(cfg, system); err != nil {
+		return "", err
+	}
 	// The reasoning effort travels on the context because langchaingo's request builder
 	// cannot carry it; the transport reads it back off. See WithReasoning.
 	ctx = withReasoning(ctx, cfg.reasoning)
@@ -354,6 +357,9 @@ func (c *Client) GenerateJSONStream(
 	cfg := newGenConfig(opts)
 	model, err := c.modelFor(cfg)
 	if err != nil {
+		return "", err
+	}
+	if system, err = c.systemFor(cfg, system); err != nil {
 		return "", err
 	}
 	// Same as GenerateJSON: the effort rides the context to the transport. A caller that

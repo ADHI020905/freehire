@@ -68,14 +68,13 @@ var gatedRoutes = []gatedRoute{
 	{fiber.MethodPost, "/api/v1/me/cvs/00000000-0000-0000-0000-000000000001/cover-letter/stream", plan.FeatureCoverLetter},
 	{fiber.MethodPost, "/api/v1/speech/transcriptions", plan.FeatureDictation},
 	{fiber.MethodPost, "/api/v1/me/profile/ats-report", unmeteredAI},
-	{fiber.MethodPost, "/api/v1/search/interpret", unmeteredAI},
 	{fiber.MethodPost, "/api/v1/me/tracking/some-job/mail-recall", unmeteredAI},
 	{fiber.MethodPost, "/api/v1/me/autofill/run", unmeteredAI},
 }
 
-// openRoutes read a cached AI result, compute something deterministic, or start the CV
-// parse — the one model call every account gets (plan.WithFreeAI). They must stay reachable
-// to free, so the gate must never even be asked.
+// openRoutes read a cached AI result, compute something deterministic, or make one of the
+// model calls every account gets (plan.WithFreeAI) — the CV parse and the search
+// interpretation. They must stay reachable to free, so the gate must never even be asked.
 var openRoutes = []gatedRoute{
 	{method: fiber.MethodGet, path: "/api/v1/jobs/some-job/fit"},
 	{method: fiber.MethodGet, path: "/api/v1/jobs/some-job/match-analysis"},
@@ -88,6 +87,7 @@ var openRoutes = []gatedRoute{
 	{method: fiber.MethodGet, path: "/api/v1/me/cvs/00000000-0000-0000-0000-000000000001/cover-letter"},
 	{method: fiber.MethodGet, path: "/api/v1/me/cvs/00000000-0000-0000-0000-000000000001/tailor-context"},
 	{method: fiber.MethodPost, path: "/api/v1/cv/roast"},
+	{method: fiber.MethodPost, path: "/api/v1/search/interpret"},
 }
 
 // gatedApp registers every feature that serves a model call, as production does, over

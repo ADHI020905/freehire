@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/strelov1/freehire/internal/ai/plan"
 	"github.com/strelov1/freehire/internal/api/ratelimit"
 	"github.com/strelov1/freehire/internal/platform/llm"
 	"github.com/strelov1/freehire/internal/search/searchintent"
@@ -57,7 +58,13 @@ func (h *intentHandlers) register(api fiber.Router, mw middleware) {
 	// spend is attached to an interactive session, where a per-user limiter means
 	// something. An integration that wants filters has the documented facet vocabulary
 	// and /agent/jobs/search; widening this later is additive.
-	api.Post("/search/interpret", mw.cookie, searchIntentLimiter(mw.throttler), mw.paidAI(unmeteredAI), h.InterpretSearch)
+	//
+	// Open to free, deliberately NOT behind mw.paidAI: the interpretation is one of the
+	// model calls every account gets (plan.WithFreeAI, marked in the handler). It is a
+	// short call on a cheap model, bounded per user by the limiter above, and it is how a
+	// visitor first finds the catalogue — a paywall there hid the feature from exactly
+	// the people it is for. Every call answered 402 to free on 2026-10-19.
+	api.Post("/search/interpret", mw.cookie, searchIntentLimiter(mw.throttler), h.InterpretSearch)
 }
 
 // interpretRequest is what the dialog posts: a description, optionally refining a
@@ -145,7 +152,7 @@ func (h *intentHandlers) InterpretSearch(c *fiber.Ctx) error {
 		req.Previous = &previous
 	}
 
-	model, err := h.llm.bind(c.UserContext(), userID, llm.Feature(tagSearchIntent))
+	model, err := h.llm.bind(plan.WithFreeAI(c.UserContext()), userID, llm.Feature(tagSearchIntent))
 	if err != nil {
 		return err
 	}
