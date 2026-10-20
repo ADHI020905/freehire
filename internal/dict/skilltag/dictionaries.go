@@ -781,6 +781,118 @@ var wordAliases = map[string]string{
 	"atlassian": "atlassian",
 	"testrail":  "testrail",
 
+	// batch 5 (2026-10 enrichment mining, freq ≥ 500) — coined product and protocol
+	// names with no common English reading. Each was named by the LLM on 500+ postings
+	// the dictionary tagged with nothing for it.
+	// languages, frameworks, libraries
+	"blazor":      "blazor",
+	"sqlalchemy":  "sqlalchemy",
+	"pydantic":    "pydantic",
+	"asyncio":     "asyncio",
+	"polars":      "polars",
+	"linq":        "linq",
+	"wcf":         "wcf",
+	"ngrx":        "ngrx",
+	"es6":         "javascript",
+	"tailwindcss": "tailwind",
+	// testing
+	"nunit":       "nunit",
+	"xunit":       "xunit",
+	"phpunit":     "phpunit",
+	"restassured": "rest-assured",
+	// cloud, platform and data services
+	"cloudflare":    "cloudflare",
+	"cloudfront":    "cloudfront",
+	"cloudtrail":    "cloudtrail",
+	"route53":       "route53",
+	"fargate":       "fargate",
+	"dataproc":      "dataproc",
+	"dataform":      "dataform",
+	"supabase":      "supabase",
+	"vercel":        "vercel",
+	"cloudera":      "cloudera",
+	"hdfs":          "hadoop",
+	"dataops":       "dataops",
+	"olap":          "olap",
+	"ssas":          "ssas",
+	"kql":           "kql",
+	"odata":         "odata",
+	"avro":          "avro",
+	"ceph":          "ceph",
+	"collibra":      "collibra",
+	"cognos":        "cognos",
+	"microstrategy": "microstrategy",
+	"sybase":        "sybase",
+	"dwh":           "data-warehousing",
+	// integration, workflow and mainframe
+	"workato":    "workato",
+	"boomi":      "boomi",
+	"apigee":     "apigee",
+	"camunda":    "camunda",
+	"websphere":  "websphere",
+	"cics":       "cics",
+	"agentforce": "agentforce",
+	"langfuse":   "langfuse",
+	// devops, build and infrastructure
+	"terragrunt":  "terragrunt",
+	"opentofu":    "opentofu",
+	"kustomize":   "kustomize",
+	"bazel":       "bazel",
+	"gitflow":     "gitflow",
+	"liquibase":   "liquibase",
+	"slurm":       "slurm",
+	"proxmox":     "proxmox",
+	"nutanix":     "nutanix",
+	"veeam":       "veeam",
+	"vsphere":     "vmware",
+	"esxi":        "vmware",
+	"centos":      "centos",
+	"debian":      "debian",
+	"redhat":      "rhel",
+	"intellij":    "intellij",
+	"gdb":         "gdb",
+	"cicd":        "ci-cd",
+	"appdynamics": "appdynamics",
+	"sre":         "sre",
+	"itsm":        "itsm",
+	// networking
+	"evpn":       "evpn",
+	"eigrp":      "eigrp",
+	"ipv6":       "ipv6",
+	"rdma":       "rdma",
+	"infiniband": "infiniband",
+	"webrtc":     "webrtc",
+	"smtp":       "smtp",
+	"wlan":       "wifi",
+	"meraki":     "cisco-meraki",
+	// security
+	"snyk":      "snyk",
+	"qualys":    "qualys",
+	"zscaler":   "zscaler",
+	"sailpoint": "sailpoint",
+	"fortigate": "fortinet",
+	"cspm":      "cspm",
+	"abac":      "abac",
+	"sbom":      "sbom",
+	"appsec":    "application-security",
+	"mtls":      "tls",
+	// embedded, automotive and industrial
+	"yocto":    "yocto",
+	"qnx":      "qnx",
+	"freertos": "freertos",
+	"autosar":  "autosar",
+	"serdes":   "serdes",
+	"profinet": "profinet",
+	"iot":      "iot",
+	"mbse":     "mbse",
+	// AEC software
+	"bim":     "bim",
+	"enscape": "enscape",
+	// architecture patterns
+	"cqrs": "cqrs",
+	// CMS
+	"drupal": "drupal",
+
 	// batch 4, gated half — declared here because ambiguousWords marks wordAliases
 	// keys, not canonicals. Each is a real product whose bare token is also ordinary
 	// English, so it tags only with a concrete technology beside it.
@@ -805,6 +917,23 @@ var wordAliases = map[string]string{
 	"loki":      "loki",
 	"prefect":   "prefect",
 	"flux":      "flux",
+	// batch 5, gated half. Real products and system classes whose bare token either is
+	// ordinary English (stripe, fastlane, perforce) or rides on non-technical postings
+	// that merely name the system they use: an HR generalist's HRIS, a facilities
+	// planner's CMMS, a retail associate's Bluetooth headset, a gamer-store GPU.
+	"stripe":    "stripe",
+	"fastlane":  "fastlane",
+	"perforce":  "perforce",
+	"arista":    "arista",
+	"aem":       "adobe-experience-manager",
+	"hris":      "hris",
+	"cmms":      "cmms",
+	"plm":       "plm",
+	"lims":      "lims",
+	"iaas":      "iaas",
+	"gpu":       "gpu",
+	"bluetooth": "bluetooth",
+	"adas":      "adas",
 }
 
 // ambiguousWords marks the wordAliases keys whose word-pass match is "weak": Parse
@@ -949,6 +1078,20 @@ var ambiguousWords = map[string]bool{
 	"loki":      true,
 	"prefect":   true,
 	"flux":      true,
+	// batch 5, gated half — see the matching wordAliases block.
+	"stripe":    true,
+	"fastlane":  true,
+	"perforce":  true,
+	"arista":    true,
+	"aem":       true,
+	"hris":      true,
+	"cmms":      true,
+	"plm":       true,
+	"lims":      true,
+	"iaas":      true,
+	"gpu":       true,
+	"bluetooth": true,
+	"adas":      true,
 }
 
 // phraseAlias is a punctuated or multi-word term matched against the normalized
@@ -1287,7 +1430,7 @@ var engineeringPhraseAliases = []phraseAlias{
 	// The privacy and trade-control regimes sit in the PROFESSIONAL list further down
 	// instead: a posting whose only match is HIPAA or GDPR is a compliance role.
 	{"nist", "nist"}, {"fedramp", "fedramp"}, {"cmmc", "cmmc"},
-	{"cissp", "cissp"}, {"cism", "cism"}, {"ccna", "ccna"},
+	{"cissp", "cissp"}, {"cism", "cism"}, {"ccna", "ccna"}, {"ccnp", "ccnp"},
 	// "PCI" alone is the bus, "SOC" a system-on-chip or a security operations centre,
 	// "ISO" the organisation (and a camera setting) — the versioned spelling is what
 	// disambiguates each of these.
@@ -1343,6 +1486,76 @@ var engineeringPhraseAliases = []phraseAlias{
 	{"microsoft copilot", "microsoft-copilot"}, {"copilot studio", "microsoft-copilot"},
 	{"google gemini", "gemini"}, {"gemini api", "gemini"},
 	{"anthropic claude", "claude"}, {"claude api", "claude"},
+	// batch 5 (2026-10 enrichment mining). Multi-word product and practice names.
+	// Each phrase emits its canonical BESIDE whatever word its parts already tag
+	// ("api gateway" still tags api) — phrases do not consume text.
+	{"api gateway", "api-gateway"}, {"api testing", "api-testing"},
+	{"integration testing", "integration-testing"},
+	{"react testing library", "react-testing-library"},
+	{"threat modeling", "threat-modeling"}, {"threat modelling", "threat-modeling"},
+	{"threat intelligence", "threat-intelligence"},
+	{"vulnerability management", "vulnerability-management"},
+	{"domain-driven design", "domain-driven-design"}, {"domain driven design", "domain-driven-design"},
+	{"clean architecture", "clean-architecture"},
+	{"hexagonal architecture", "hexagonal-architecture"},
+	{"medallion architecture", "medallion-architecture"},
+	{"data mesh", "data-mesh"},
+	{"big data", "big-data"},
+	{"unity catalog", "unity-catalog"},
+	{"control-m", "control-m"},
+	{"signal integrity", "signal-integrity"},
+	{"model-based systems engineering", "mbse"}, {"model based systems engineering", "mbse"},
+	{"finite element analysis", "fea"},
+	// cloud-vendor services, reachable only qualified: "cloud run", "logic apps" and
+	// "service bus" are generic words on their own.
+	{"azure monitor", "azure-monitor"},
+	{"application insights", "azure-application-insights"},
+	{"azure service bus", "azure-service-bus"},
+	{"azure logic apps", "azure-logic-apps"}, {"logic apps", "azure-logic-apps"},
+	{"arm templates", "arm-templates"},
+	{"cosmos db", "cosmos-db"}, {"cosmosdb", "cosmos-db"},
+	{"data factory", "azure-data-factory"},
+	{"microsoft purview", "microsoft-purview"},
+	{"microsoft sentinel", "microsoft-sentinel"},
+	{"microsoft defender", "microsoft-defender"},
+	{"exchange online", "microsoft-exchange"},
+	{"dynamics 365", "microsoft-dynamics"},
+	{"google cloud run", "cloud-run"}, {"cloud run", "cloud-run"},
+	{"cloud composer", "cloud-composer"},
+	{"aws step functions", "step-functions"},
+	{"ibm mq", "ibm-mq"},
+	{"sap fiori", "sap-fiori"}, {"sap btp", "sap-btp"},
+	{"oracle hyperion", "oracle-hyperion"},
+	{"adobe experience manager", "adobe-experience-manager"},
+	{"cisco meraki", "cisco-meraki"},
+	{"rest assured", "rest-assured"},
+	{"lightning web components", "lwc"},
+	{"argo cd", "argocd"},
+	{"vb.net", "vbnet"},
+	{"ms sql", "sql-server"},
+	{"java ee", "j2ee"},
+	{"relational database", "rdbms"}, {"relational databases", "rdbms"},
+	{"data lakes", "data-lake"},
+	{"cyber security", "cybersecurity"},
+	{"identity and access management", "iam"}, {"identity management", "iam"},
+	// "PCB" is phrase-routed for polychlorinated biphenyl; the assembly form has no
+	// such reading.
+	{"pcba", "pcb"},
+	// Discipline and office-tool vocabulary that a non-technical posting names in
+	// passing — a PM's "MS Project", a planner's FMEA, a designer's Creative Suite.
+	// Real enough to tag, never trustworthy enough to vouch; every canonical here is in
+	// nonCorroboratingPhrases.
+	{"microsoft project", "microsoft-project"}, {"ms project", "microsoft-project"},
+	{"business intelligence", "business-intelligence"},
+	{"fmea", "fmea"},
+	{"design of experiments", "design-of-experiments"},
+	{"design for manufacturing", "design-for-manufacturing"}, {"design for manufacturability", "design-for-manufacturing"},
+	{"adobe creative suite", "adobe-creative-suite"},
+	{"clickup", "clickup"},
+	{"lucidchart", "lucidchart"},
+	{"midjourney", "midjourney"},
+	{"helpdesk", "help-desk"},
+	{"dmaic", "six-sigma"},
 }
 
 // professionalPhraseAliases is the non-engineering half of the IT-company role
@@ -1615,6 +1828,17 @@ var nonCorroboratingPhrases = func() map[string]bool {
 		"video-editing": true,
 		"color-grading": true,
 		"storyboarding": true,
+		// batch 5 — disciplines and office tools a planner, a PM or a designer names in
+		// passing. See the matching block at the end of engineeringPhraseAliases.
+		"microsoft-project":        true,
+		"business-intelligence":    true,
+		"fmea":                     true,
+		"design-of-experiments":    true,
+		"design-for-manufacturing": true,
+		"adobe-creative-suite":     true,
+		"clickup":                  true,
+		"lucidchart":               true,
+		"midjourney":               true,
 		// batch 4 — compliance frameworks and certifications. Naming a regime is evidence
 		// that the posting is SUBJECT to it, never that whoever fills it is technical: a
 		// nurse's posting carries HIPAA, an injection-moulding plant's carries ISO 9001,
@@ -1626,6 +1850,7 @@ var nonCorroboratingPhrases = func() map[string]bool {
 		"cissp":     true,
 		"cism":      true,
 		"ccna":      true,
+		"ccnp":      true,
 		"pci-dss":   true,
 		"soc-2":     true,
 		"iso-9001":  true,

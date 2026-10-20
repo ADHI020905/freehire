@@ -934,3 +934,147 @@ intelex	Intelex is an EHS and quality management platform used for incident trac
 velocityehs	VelocityEHS is a cloud EHS platform covering chemical management, incident tracking and industrial ergonomics.
 sphera	Sphera is an enterprise platform for operational risk, product stewardship and environmental performance reporting.
 cority	Cority is an EHS and occupational health platform covering medical surveillance, industrial hygiene and safety records.
+
+# batch 5 — 2026-10 enrichment mining.
+abac	ABAC (attribute-based access control) is an authorization model that grants or denies access by evaluating attributes of the user, the resource and the context against policy rules.
+adas	ADAS (advanced driver-assistance systems) are the vehicle systems — lane keeping, adaptive cruise control, emergency braking — that use sensors and software to assist a driver.
+adobe-creative-suite	Adobe Creative Suite is Adobe's bundle of design applications, including Photoshop, Illustrator and InDesign, used for graphic design, layout and image editing.
+adobe-experience-manager	Adobe Experience Manager (AEM) is Adobe's enterprise content management system for building and running websites, digital assets and customer experiences.
+agentforce	Agentforce is Salesforce's platform for building and deploying AI agents that work inside Salesforce data and workflows.
+api-gateway	An API gateway is a service that sits in front of backend APIs, routing requests and handling authentication, rate limiting and monitoring in one place.
+api-testing	API testing is the practice of verifying an application programming interface directly — its responses, error handling, performance and security — without going through a user interface.
+apigee	Apigee is Google Cloud's API management platform for designing, securing, publishing and analysing APIs.
+appdynamics	AppDynamics is an application performance monitoring platform, now part of Cisco, that traces requests through services to find slow or failing code.
+application-security	Application security (AppSec) is the discipline of finding, fixing and preventing security vulnerabilities in software throughout its development lifecycle.
+arista	Arista is a networking vendor whose switches and EOS operating system are widely used in data-centre and cloud networks.
+arm-templates	ARM templates are JSON files that declare Azure infrastructure for Azure Resource Manager to deploy, the platform's native infrastructure-as-code format.
+asyncio	asyncio is Python's standard library for writing concurrent code with async and await, running many I/O-bound tasks on a single event loop.
+autosar	AUTOSAR is an automotive software architecture standard that defines how electronic control unit software is structured so components from different suppliers interoperate.
+avro	Avro is an Apache data serialization format that stores records compactly in binary with a schema, common in Kafka and Hadoop data pipelines.
+azure-application-insights	Azure Application Insights is the application performance monitoring feature of Azure Monitor, collecting requests, dependencies, exceptions and traces from running applications.
+azure-logic-apps	Azure Logic Apps is Microsoft's cloud service for building automated workflows that connect applications, data and services with little or no code.
+azure-monitor	Azure Monitor is Microsoft Azure's service for collecting, analysing and alerting on metrics and logs from cloud and on-premises resources.
+azure-service-bus	Azure Service Bus is Microsoft's managed message broker, providing queues and publish-subscribe topics for decoupling applications.
+bazel	Bazel is an open-source build and test tool from Google that builds large multi-language codebases quickly through caching and reproducible builds.
+big-data	Big data refers to datasets too large or fast-moving for traditional databases, and to the distributed tools such as Hadoop and Spark used to store and process them.
+bim	BIM (building information modeling) is the process of creating and managing a digital model of a building that architects, engineers and contractors share through design and construction.
+blazor	Blazor is a Microsoft web framework for building interactive browser interfaces in C# and .NET instead of JavaScript.
+bluetooth	Bluetooth is a short-range wireless standard for exchanging data between devices such as phones, headsets, sensors and embedded hardware.
+boomi	Boomi is a cloud integration platform (iPaaS) for connecting applications and data and automating workflows between them.
+business-intelligence	Business intelligence (BI) is the practice of collecting and analysing business data and presenting it in reports and dashboards to support decisions.
+camunda	Camunda is a process orchestration platform that runs business workflows modelled in BPMN, coordinating people, services and systems.
+ccnp	CCNP (Cisco Certified Network Professional) is Cisco's professional-level certification for planning, implementing and troubleshooting enterprise networks.
+centos	CentOS is a Linux distribution built from Red Hat Enterprise Linux sources, long used for servers; CentOS Stream is its current upstream form.
+ceph	Ceph is an open-source distributed storage system that provides object, block and file storage on clusters of commodity hardware.
+cics	CICS is IBM's transaction processing system for mainframes, running high-volume online applications such as banking and insurance systems.
+cisco-meraki	Cisco Meraki is Cisco's cloud-managed line of networking hardware — switches, wireless access points and security appliances — administered from a web dashboard.
+clean-architecture	Clean Architecture is a software design approach that keeps business rules independent of frameworks, databases and user interfaces by organising code in concentric layers.
+clickup	ClickUp is a project management and productivity application for tasks, documents, goals and team workflows.
+cloud-composer	Cloud Composer is Google Cloud's managed Apache Airflow service for scheduling and orchestrating data workflows.
+cloud-run	Cloud Run is Google Cloud's serverless platform for running containers that scale automatically with incoming requests.
+cloudera	Cloudera is an enterprise data platform built on the Hadoop ecosystem for storing, processing and analysing large datasets.
+cloudflare	Cloudflare is a network and security company whose CDN, DNS, DDoS protection and edge computing services sit in front of websites and applications.
+cloudfront	CloudFront is Amazon Web Services' content delivery network, caching and serving content from edge locations close to users.
+cloudtrail	CloudTrail is the AWS service that records API calls and account activity, used for auditing, security analysis and compliance.
+cmms	A CMMS (computerised maintenance management system) is software that schedules, tracks and records maintenance work on equipment and facilities.
+cognos	Cognos is IBM's business intelligence suite for reporting, dashboards and data analysis.
+collibra	Collibra is a data intelligence platform for data governance, cataloguing and lineage across an organisation.
+control-m	Control-M is BMC's workload automation platform for scheduling and orchestrating batch jobs and data pipelines across systems.
+cosmos-db	Cosmos DB is Microsoft Azure's globally distributed NoSQL database service, supporting several data models and APIs.
+cqrs	CQRS (command query responsibility segregation) is a design pattern that separates the model used to update data from the model used to read it.
+cspm	CSPM (cloud security posture management) is the practice and tooling for continuously detecting misconfigurations and compliance risks in cloud environments.
+data-mesh	Data mesh is an approach to data architecture that assigns ownership of data products to domain teams instead of a central data team.
+dataform	Dataform is a Google Cloud tool for developing, testing and scheduling SQL data transformations in BigQuery.
+dataops	DataOps is a set of practices that applies DevOps ideas — automation, testing and continuous delivery — to building and running data pipelines.
+dataproc	Dataproc is Google Cloud's managed service for running Apache Spark and Hadoop clusters.
+debian	Debian is a long-standing community Linux distribution, widely used on servers and as the base of Ubuntu.
+design-for-manufacturing	Design for manufacturing (DFM) is the engineering practice of designing parts and products so they can be produced easily, reliably and at low cost.
+design-of-experiments	Design of experiments (DOE) is a statistical method for planning tests that measure how several input factors affect an outcome.
+domain-driven-design	Domain-driven design (DDD) is a software design approach that models code closely on the business domain, using a shared language between developers and domain experts.
+drupal	Drupal is an open-source content management system written in PHP, used to build and run websites and digital platforms.
+eigrp	EIGRP (Enhanced Interior Gateway Routing Protocol) is a Cisco-developed routing protocol that routers use to share routes within a network.
+enscape	Enscape is a real-time rendering and visualisation plugin used by architects with tools such as Revit, SketchUp and Rhino.
+evpn	EVPN (Ethernet VPN) is a networking technology that uses BGP to carry layer-2 and layer-3 traffic across data-centre and service-provider networks, often with VXLAN.
+fargate	Fargate is the AWS serverless compute engine that runs containers for ECS and EKS without managing servers.
+fastlane	fastlane is an open-source tool that automates building, signing, testing and releasing iOS and Android apps.
+fmea	FMEA (failure mode and effects analysis) is a structured method for identifying how a product or process can fail and prioritising the risks.
+freertos	FreeRTOS is an open-source real-time operating system kernel for microcontrollers and small embedded devices.
+gdb	GDB (the GNU Debugger) is a command-line debugger for stepping through and inspecting programs written in C, C++ and other languages.
+gitflow	Gitflow is a Git branching model that organises work into feature, develop, release and hotfix branches.
+gpu	A GPU (graphics processing unit) is a processor built for highly parallel computation, used for graphics rendering and for training and running machine-learning models.
+hexagonal-architecture	Hexagonal architecture (ports and adapters) is a software design pattern that isolates core logic from databases, user interfaces and other external systems behind defined interfaces.
+hris	An HRIS (human resources information system) is software that stores employee data and runs HR processes such as payroll, benefits and time off.
+iaas	IaaS (infrastructure as a service) is a cloud model in which a provider rents out virtual servers, storage and networking on demand.
+ibm-mq	IBM MQ is IBM's message-oriented middleware for reliably passing messages between applications through queues.
+infiniband	InfiniBand is a high-throughput, low-latency networking technology used to connect servers in high-performance computing and AI clusters.
+integration-testing	Integration testing is the level of software testing that checks how separately developed components work together.
+intellij	IntelliJ IDEA is JetBrains' integrated development environment, used mostly for Java and Kotlin development.
+iot	IoT (the Internet of Things) is the network of physical devices — sensors, machines, appliances — that connect to the internet to collect and exchange data.
+ipv6	IPv6 is the current version of the Internet Protocol, using 128-bit addresses to replace the exhausted IPv4 address space.
+itsm	ITSM (IT service management) is the practice of designing, delivering and supporting IT services, through processes such as incident, change and request management.
+kql	KQL (Kusto Query Language) is the query language used by Azure Data Explorer, Azure Monitor logs and Microsoft Sentinel.
+kustomize	Kustomize is a Kubernetes configuration tool that customises YAML manifests through overlays without templates.
+langfuse	Langfuse is an open-source observability platform for LLM applications, tracing prompts, responses, costs and evaluations.
+lims	A LIMS (laboratory information management system) is software that tracks samples, tests, results and workflows in a laboratory.
+linq	LINQ (Language Integrated Query) is a .NET feature for writing queries over collections, databases and XML directly in C# or VB.NET.
+liquibase	Liquibase is an open-source tool for versioning and applying database schema changes.
+lucidchart	Lucidchart is a web-based diagramming application for flowcharts, process maps, org charts and architecture diagrams.
+mbse	MBSE (model-based systems engineering) is an engineering approach that uses formal models, often in SysML, instead of documents to define and analyse complex systems.
+medallion-architecture	Medallion architecture is a data-lakehouse design pattern that refines data through bronze, silver and gold layers.
+microsoft-defender	Microsoft Defender is Microsoft's family of security products protecting endpoints, identities, email and cloud workloads.
+microsoft-exchange	Microsoft Exchange is Microsoft's email and calendar server, offered on-premises and as Exchange Online in Microsoft 365.
+microsoft-project	Microsoft Project is Microsoft's project management application for planning schedules, assigning resources and tracking progress.
+microsoft-purview	Microsoft Purview is Microsoft's suite for data governance, cataloguing, information protection and compliance.
+microsoft-sentinel	Microsoft Sentinel is Microsoft's cloud SIEM and SOAR service for collecting security data, detecting threats and automating response.
+microstrategy	MicroStrategy is an enterprise business intelligence and analytics platform for reports, dashboards and data exploration.
+midjourney	Midjourney is a generative AI service that creates images from text prompts.
+ngrx	NgRx is a state management library for Angular applications, based on the Redux pattern and RxJS.
+nunit	NUnit is an open-source unit testing framework for .NET languages.
+nutanix	Nutanix is a hyperconverged infrastructure platform that combines compute, storage and virtualisation for private and hybrid clouds.
+odata	OData (Open Data Protocol) is a standard for building and consuming queryable REST APIs over HTTP.
+olap	OLAP (online analytical processing) is the approach of organising data into multidimensional cubes for fast analytical queries and reporting.
+opentofu	OpenTofu is an open-source fork of Terraform for defining and provisioning infrastructure as code.
+oracle-hyperion	Oracle Hyperion is Oracle's suite of enterprise performance management software for financial planning, budgeting, consolidation and reporting.
+perforce	Perforce (Helix Core) is a version control system built for very large codebases and binary assets, common in game development.
+phpunit	PHPUnit is the standard unit testing framework for PHP.
+plm	PLM (product lifecycle management) is software and practice for managing a product's data from design through manufacturing to retirement.
+polars	Polars is a fast DataFrame library for Python and Rust, built on Apache Arrow, used for data analysis and transformation.
+profinet	PROFINET is an industrial Ethernet standard for communication between controllers and field devices in factory automation.
+proxmox	Proxmox VE is an open-source virtualisation platform for running virtual machines and containers on clustered servers.
+pydantic	Pydantic is a Python library for data validation and settings management based on type hints.
+qnx	QNX is a real-time operating system from BlackBerry used in cars, medical devices and industrial systems.
+qualys	Qualys is a cloud security platform for vulnerability scanning, compliance checking and asset inventory.
+rdma	RDMA (remote direct memory access) is a networking technique that lets one computer read or write another's memory directly, bypassing the CPU for very low latency.
+react-testing-library	React Testing Library is a JavaScript library for testing React components by interacting with them the way a user would.
+rest-assured	REST Assured is a Java library for writing automated tests of REST APIs.
+route53	Route 53 is the AWS managed DNS service for domain registration, DNS routing and health checking.
+sailpoint	SailPoint is an identity governance platform for managing user access, provisioning and access reviews across an organisation.
+sap-btp	SAP BTP (Business Technology Platform) is SAP's cloud platform for building, integrating and extending SAP applications.
+sap-fiori	SAP Fiori is SAP's design system and set of web applications that provide the modern user interface for SAP software.
+sbom	An SBOM (software bill of materials) is an inventory of the components and dependencies in a piece of software, used for security and licence tracking.
+serdes	A SerDes (serializer/deserializer) is a circuit that converts parallel data to a high-speed serial stream and back, used in chip-to-chip and network links.
+signal-integrity	Signal integrity is the electrical engineering discipline of keeping high-speed signals clean as they travel through circuit boards, cables and connectors.
+slurm	Slurm is an open-source workload manager that schedules jobs on high-performance computing clusters.
+smtp	SMTP (Simple Mail Transfer Protocol) is the internet standard protocol for sending email between servers.
+snyk	Snyk is a developer security platform that finds vulnerabilities in code, open-source dependencies, containers and infrastructure as code.
+sqlalchemy	SQLAlchemy is a Python SQL toolkit and object-relational mapper for working with relational databases.
+sre	SRE (site reliability engineering) is the discipline of applying software engineering to operations, keeping production systems reliable through automation, monitoring and error budgets.
+ssas	SSAS (SQL Server Analysis Services) is Microsoft's analytical engine for building OLAP cubes and tabular models for business intelligence.
+step-functions	AWS Step Functions is an Amazon Web Services service for orchestrating serverless workflows as state machines.
+stripe	Stripe is a payments platform whose APIs let businesses accept online payments, run subscriptions and move money.
+supabase	Supabase is an open-source backend platform built on PostgreSQL, providing a database, authentication, storage and APIs.
+sybase	Sybase is a relational database family, now owned by SAP, whose Adaptive Server Enterprise still runs many financial systems.
+terragrunt	Terragrunt is a wrapper around Terraform that keeps infrastructure-as-code configurations DRY across many modules and environments.
+threat-intelligence	Threat intelligence is the collection and analysis of information about attackers, their methods and indicators of compromise, used to anticipate and defend against attacks.
+threat-modeling	Threat modeling is the security practice of systematically identifying how a system could be attacked and which defences to design in.
+unity-catalog	Unity Catalog is Databricks' unified governance layer for data and AI assets, managing access control, lineage and discovery.
+veeam	Veeam is a backup and recovery platform for virtual, physical and cloud workloads.
+vercel	Vercel is a cloud platform for deploying and hosting frontend web applications, made by the creators of Next.js.
+vulnerability-management	Vulnerability management is the ongoing process of finding, prioritising and fixing security weaknesses in systems and software.
+wcf	WCF (Windows Communication Foundation) is a .NET framework for building service-oriented applications that communicate over the network.
+webrtc	WebRTC is an open standard that lets browsers and apps exchange real-time audio, video and data directly between peers.
+websphere	WebSphere is IBM's family of application server and middleware products for running enterprise Java applications.
+workato	Workato is an enterprise integration and automation platform for connecting applications and automating workflows.
+xunit	xUnit.net is an open-source unit testing framework for .NET.
+yocto	The Yocto Project is an open-source toolkit for building custom Linux distributions for embedded devices.
+zscaler	Zscaler is a cloud security platform that inspects and secures internet and private-application traffic as a zero-trust service.

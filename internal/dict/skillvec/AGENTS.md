@@ -35,19 +35,18 @@ before that reuse would read the new skill's weight at the old skill's slot.
 quietly ranking as absent — it has no position until the registry is regenerated.
 
 ## Dimensions
-`Dimensions` (1024) is wider than the dictionary (926 after the 2026-09 occupational-
-safety batch, up from 866 and 749 before it) so growth needs no re-declaration. It is
-NOT free: Meilisearch stores the declared width whether or not the tail is occupied, and
-at catalogue scale each 256 dimensions costs roughly 2.5 GB of index. Changing it forces
-a full rebuild, and until that rebuild finishes the index rejects every document
-carrying the new width.
+`Dimensions` (1280) is wider than the dictionary (1068 after the 2026-10 enrichment-
+mining batch) so growth needs no re-declaration. It is NOT free: Meilisearch stores the
+declared width whether or not the tail is occupied, and at catalogue scale each 256
+dimensions costs roughly 2.5 GB of index. Changing it forces a full rebuild, and until
+that rebuild finishes the index rejects every document carrying the new width.
 
-**Headroom is now 98 positions, and the registry never gives one back** — a retired
-skill keeps its slot by design (see the rule above). One batch the size of the 2026-08
-one crosses the cap, so a mining run that expects to add a hundred canonicals should
-check `RegistrySize()` against `Dimensions` BEFORE curating, not after: crossing it is
-not a bigger diff, it is a full reindex with a window where the live index rejects
-writes.
+**The registry never gives a position back** — a retired skill keeps its slot by design
+(see the rule above). It was widened from 1024 to 1280 in 2026-10, when a single mining
+batch of 142 canonicals met 98 free slots. A mining run that expects to add a hundred
+canonicals should check `RegistrySize()` against `Dimensions` BEFORE curating, not after:
+crossing it is not a bigger diff, it is a full reindex with a window where the live index
+rejects writes and the match sort fails.
 
 **Do not trust the number in this paragraph — run `go generate ./internal/dict/skillvec/`
 and read what it prints.** These counts have gone stale twice now, most recently when

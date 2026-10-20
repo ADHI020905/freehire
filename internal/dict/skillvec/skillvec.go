@@ -17,8 +17,10 @@ package skillvec
 // It is not free. Meilisearch stores the declared width whether or not the tail is
 // occupied, so at the live catalogue's scale each 256 dimensions costs roughly
 // 2.5 GB of index. Widening it later requires a full rebuild, and until that rebuild
-// finishes the index rejects every document carrying the new width.
-const Dimensions = 1024
+// finishes the index rejects every document carrying the new width. Widened from 1024
+// in 2026-10, when one enrichment-mining batch (142 canonicals) outgrew the 98 free
+// positions left.
+const Dimensions = 1280
 
 // positions indexes the registry for lookup.
 var positions = func() map[string]int {
