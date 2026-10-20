@@ -126,6 +126,13 @@ const (
 	// hex — a slug is a spelling of the board, not the id the adapter namespaces postings by, so
 	// reading it would file the employer under a board no crawl stores.
 	modeKeyedSegment = "keyedsegment"
+	// pathjob: board = the first path segment, but ONLY on a posting URL — "<board>/job/<id>-…"
+	// with a numeric id — and only on the apex host itself. Harri serves its marketing pages,
+	// sign-in and search from the same harri.com its career pages (harri.com/<brand slug>) live
+	// on, and its other hosts (gateway., solutions., resources.) are machinery, so neither a
+	// bare first segment nor a subdomain match is evidence of a brand. The platform matches the
+	// slug case-blind; it is lower-cased here, the spelling the catalogue stores.
+	modePathJob = "pathjob"
 )
 
 // atsBoards lists the supported multi-tenant ATS: a host (exact or subdomain-suffix match) →
@@ -368,6 +375,9 @@ var atsBoards = []struct{ host, source, mode string }{
 
 	// --- keyedsegment: board = the shaped segment after a fixed key segment ---
 	{"workstream.us", "workstream", modeKeyedSegment},
+
+	// --- pathjob: board = the first path segment of a POSTING url, on the apex host only.
+	{"harri.com", "harri", modePathJob},
 }
 
 // tenantHostPostingSegments names, per modeTenantHost apex, a path segment a URL must carry to be
@@ -827,6 +837,19 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 		board = segs[1]
 		u.RawQuery, u.Fragment = "", ""
 		u.Path = "/" + k.key + "/" + board
+		return src, board, u.String(), true
+
+	case modePathJob:
+		// Harri: harri.com/<brand slug>/job/<id>-<title>. Anything else on the host — a career
+		// page, a marketing page, an API host matched as a subdomain — is declined.
+		segs := strings.Split(strings.Trim(u.Path, "/"), "/")
+		if host != apex || len(segs) < 3 || segs[0] == "" || !strings.EqualFold(segs[1], "job") ||
+			segs[2] == "" || segs[2][0] < '0' || segs[2][0] > '9' {
+			return "", "", "", false
+		}
+		board = strings.ToLower(segs[0])
+		u.RawQuery, u.Fragment = "", ""
+		u.Path = "/" + board
 		return src, board, u.String(), true
 
 	case modePath, modePathNumeric:

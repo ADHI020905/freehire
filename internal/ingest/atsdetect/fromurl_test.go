@@ -399,3 +399,28 @@ func TestLocalShapesStayOutsideTheSharedTable(t *testing.T) {
 		})
 	}
 }
+
+// TestFromURLHarriApplyLinks feeds real Harri apply links (harri.com/<brand slug>/job/<id>-,
+// collected 2026-10-20) through FromURL. Every slug here resolved to a live brand through the
+// platform's slug lookup, so each is the board the adapter crawls.
+func TestFromURLHarriApplyLinks(t *testing.T) {
+	cases := []struct{ url, board string }{
+		{"https://harri.com/gk-beo1m4ztp4bs/job/2839063-", "gk-beo1m4ztp4bs"},
+		{"https://harri.com/bicos/job/2793867-", "bicos"},
+		{"https://harri.com/jollibeegroupna/job/2842103-", "jollibeegroupna"},
+		{"https://harri.com/brindisakitchenscareers/job/2836139-", "brindisakitchenscareers"},
+		{"https://harri.com/sa-asian-concepts-llc-dba-jollibee/job/2829329-", "sa-asian-concepts-llc-dba-jollibee"},
+		{"https://harri.com/ghaijobs/job/2843117-", "ghaijobs"},
+		{"https://harri.com/5star/job/2841805-", "5star"},
+		{"https://harri.com/the-arts-club-38/job/2840208-", "the-arts-club-38"},
+		{"https://harri.com/wendysukcareers/job/2835499-", "wendysukcareers"},
+		{"https://harri.com/kgk-enterprises-dba-papa-john-s-us/job/2838358-", "kgk-enterprises-dba-papa-john-s-us"},
+		{"https://harri.com/kjsdhflkcxnckjxhfnkjdhxfncdkgvjnrhcfjxhmkhjsdfc/job/2842490-", "kjsdhflkcxnckjxhfnkjdhxfncdkgvjnrhcfjxhmkhjsdfc"},
+	}
+	for _, c := range cases {
+		provider, board, ok := FromURL(c.url)
+		if !ok || provider != "harri" || board != c.board {
+			t.Errorf("FromURL(%q) = (%q, %q, %v), want (harri, %q, true)", c.url, provider, board, ok, c.board)
+		}
+	}
+}

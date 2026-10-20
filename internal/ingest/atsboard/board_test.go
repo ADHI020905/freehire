@@ -420,6 +420,19 @@ func TestRecognize(t *testing.T) {
 		{"dover apply link", "https://app.dover.com/apply/qompyl/f9fd123e-e7ff-4bcc-a16a-bb8c47e591b5", "dover", "qompyl", "https://app.dover.com/jobs/qompyl", true},
 		{"dover board listing", "https://app.dover.com/jobs/qompyl", "dover", "qompyl", "https://app.dover.com/jobs/qompyl", true},
 
+		// Harri: harri.com/<brand slug>/job/<id>-<title>, read only off a posting URL on the apex
+		// host, because the same host serves the vendor's own pages. The first two are real apply
+		// links (their title suffix arrives empty); the slug is lower-cased, as the catalogue
+		// stores it and the platform matches it case-blind.
+		{"harri apply link", "https://harri.com/panera-careers/job/2843465-", "harri", "panera-careers", "https://harri.com/panera-careers", true},
+		{"harri apply link, trailing-hyphen slug", "https://harri.com/tig-reaper-llc-/job/2822379-", "harri", "tig-reaper-llc-", "https://harri.com/tig-reaper-llc-", true},
+		{"harri share link keeps a store slug, lower-cased", "https://www.harri.com/Taco-Social/job/2793867-cashier?utm_source=x", "harri", "taco-social", "https://www.harri.com/taco-social", true},
+		{"harri career page alone is not read", "https://harri.com/bicos", "", "", "", false},
+		{"harri vendor page is not a brand", "https://harri.com/employee-records", "", "", "", false},
+		{"harri job segment without an id", "https://harri.com/search/job/cashier", "", "", "", false},
+		{"harri api host is not a brand", "https://gateway.harri.com/core-reader/job/2845321/x", "", "", "", false},
+		{"harri marketing subdomain is not a brand", "https://solutions.harri.com/demo/job/1", "", "", "", false},
+
 		// Betterteam: the tenant is the subdomain (<board>.betterteam.com/<posting-slug>).
 		{"betterteam posting", "https://110grill.betterteam.com/bartender-20", "betterteam", "110grill", "https://110grill.betterteam.com", true},
 		{"betterteam marketing site has no board", "https://www.betterteam.com/job-posting", "", "", "", false},

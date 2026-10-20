@@ -305,6 +305,10 @@ func All(c HTTPClient) map[string]Source {
 		// a customer domain). One keyless JSON listing carries every vacancy with its body.
 		// See emply.go.
 		NewEmply(c),
+		// Harri: hospitality ATS, board = a brand's career-page slug (harri.com/<slug>). A
+		// keyless JSON search lists the brand tree's postings; bodies are hydrated per posting,
+		// paced (pacedHarri). See harri.go.
+		NewHarri(pacedHarri(c)),
 		NewWorkAtAStartup(c),
 		NewJobStash(c),
 		NewArbeitnow(c),

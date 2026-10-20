@@ -41,7 +41,10 @@ nothing but the URL. No network, no database.
   URLs carry a `job` segment, because the vendor's CDN lives on the same domains and
   boardresolve feeds every URL a career page carries through `Recognize`), `keyedsegment` (the
   segment after a fixed key, only in the platform's id shape — Workstream's `/j/<8-hex>`, whose
-  `/j/<slug>` spelling is a redirect, not the board; `keyedSegmentBoards` is its second row).
+  `/j/<slug>` spelling is a redirect, not the board; `keyedSegmentBoards` is its second row),
+  `pathjob` (the first segment of a `<board>/job/<numeric id>` posting URL on the apex host only, for Harri, whose
+  harri.com also serves the vendor's own pages — a bare `harri.com/<slug>` career page is
+  declined rather than guessed at).
 - **The mode must match how the ingest adapter addresses the board**, not how the URL reads. The
   board string is copied verbatim into the `boards` catalog and into the `external_id`
   namespace, so a truncated one is a board that 404s every crawl: Huntflow's adapter fetches

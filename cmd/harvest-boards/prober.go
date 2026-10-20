@@ -830,6 +830,7 @@ var probers = map[string]prober{
 	"ukgready":        ukgreadyProber{},
 	"edjoin":          edjoinProber{},
 	"workstream":      workstreamProber{},
+	"harri":           harriProber{},
 	// Not an ATS: its boards are the platform's own job categories, enumerated from its
 	// sitemap index rather than seeded. See profession_prober.go.
 	"profession":  newProfessionProber(),
