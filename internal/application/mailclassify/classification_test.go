@@ -83,9 +83,9 @@ func TestSanitizeClampsConfidence(t *testing.T) {
 		{1.5, 1.0}, {-0.3, 0.0}, {0.5, 0.5},
 	}
 	for _, c := range cases {
-		got := Classification{Signal: SignalOffer, Confidence: c.in}.Sanitize()
-		if got.Confidence != c.want {
-			t.Fatalf("clamp(%v) = %v, want %v", c.in, got.Confidence, c.want)
+		got := Classification{Signal: SignalOffer, Confidence: c.in, MatchConfidence: c.in}.Sanitize()
+		if got.Confidence != c.want || got.MatchConfidence != c.want {
+			t.Fatalf("clamp(%v) = (%v, %v), want %v", c.in, got.Confidence, got.MatchConfidence, c.want)
 		}
 	}
 }

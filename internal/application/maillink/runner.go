@@ -284,6 +284,10 @@ func (r *Runner) process(ctx context.Context, cache appCache, c Claimed) error {
 		advanceTo = stageAdvance(job, cur, cls, r.cfg)
 	}
 
+	model := r.model
+	if cls.Model != "" {
+		model = cls.Model
+	}
 	if err := r.store.Save(ctx, c.OutboxID, c.UserID, Result{
 		EmailID:        c.EmailID,
 		JobID:          job,
@@ -293,7 +297,7 @@ func (r *Runner) process(ctx context.Context, cache appCache, c Claimed) error {
 		Signal:         cls.Signal,
 		AdvanceStageTo: advanceTo,
 		MailSource:     c.Source,
-	}, r.model); err != nil {
+	}, model); err != nil {
 		return err
 	}
 

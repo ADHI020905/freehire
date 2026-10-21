@@ -89,9 +89,10 @@ type Settings struct {
 
 	// TypesafeAPIKey backs the Jev provider for every discrete-choice LLM call that opts
 	// in: the autofill agent's Choose call (internal/ai/autofillagent.JevPlanner),
-	// select-kind auto-apply drafting (internal/api/atsapply.JevSelectDrafter), and the
+	// select-kind auto-apply drafting (internal/api/atsapply.JevSelectDrafter), the
 	// Telegram vacancy judge (internal/ingest/telegram.JevJudge, in cmd/tg-ingest and
-	// cmd/backfill-telegram-prefilter). Empty disables it outright for all three: each
+	// cmd/backfill-telegram-prefilter), and inbox mail classification
+	// (internal/application/mailclassify). Empty disables it outright for all four: each
 	// falls back to exactly what it did before this setting existed. Unrelated to LLM_* —
 	// it is read fresh here.
 	TypesafeAPIKey string

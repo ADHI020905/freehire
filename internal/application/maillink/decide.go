@@ -36,7 +36,7 @@ func resolveLink(m mailmatch.Match, cls mailclassify.Classification, cfg thresho
 		return m.JobID, 0, "auto", m.Confidence
 	}
 	if cls.MatchedJobID != 0 {
-		return 0, cls.MatchedJobID, "", cls.Confidence
+		return 0, cls.MatchedJobID, "", cls.MatchConfidence
 	}
 	return 0, 0, "", 0
 }

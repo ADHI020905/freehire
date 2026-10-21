@@ -63,23 +63,37 @@ type Classification struct {
 	Signal       StatusSignal `json:"signal"`
 	Confidence   float64      `json:"confidence"`
 	MatchedJobID int64        `json:"matched_job_id"`
+	// MatchConfidence is the confidence in MatchedJobID, kept apart from Confidence (the
+	// signal's): a suggested link must not inherit how sure the classifier was about the
+	// status. The LLM answers one number for both and copies it; Jev answers each.
+	MatchConfidence float64 `json:"-"`
+	// Model names the classifier that answered, when it is not the caller's default
+	// LLM — persisted as emails.classification_model so Jev's answers stay separable.
+	// Never decoded from a model's JSON: an email cannot choose its own attribution.
+	Model string `json:"-"`
 }
 
 // Sanitize coerces the classification into the controlled vocabulary before it
 // is persisted or served: an unknown signal becomes `other`, and the confidence
-// is clamped to [0,1]. The matched id is validated against the real candidate
+// and match confidence are clamped to [0,1]. The matched id is validated against the real candidate
 // set by the caller, not here.
 func (c Classification) Sanitize() Classification {
 	if !validSignals[c.Signal] {
 		c.Signal = SignalOther
 	}
-	switch {
-	case c.Confidence < 0:
-		c.Confidence = 0
-	case c.Confidence > 1:
-		c.Confidence = 1
-	}
+	c.Confidence = clampUnit(c.Confidence)
+	c.MatchConfidence = clampUnit(c.MatchConfidence)
 	return c
+}
+
+func clampUnit(v float64) float64 {
+	switch {
+	case v < 0:
+		return 0
+	case v > 1:
+		return 1
+	}
+	return v
 }
 
 // StageImplication is what a status signal says about the application: the stage the message

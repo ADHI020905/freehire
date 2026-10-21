@@ -21,10 +21,14 @@ func TestResolveLink(t *testing.T) {
 
 	t.Run("ambiguous match falls to LLM pick as a suggestion", func(t *testing.T) {
 		m := mailmatch.Match{Tier: mailmatch.TierAmbiguous}
-		cls := mailclassify.Classification{MatchedJobID: 7, Confidence: 0.7}
-		job, sug, src, _ := resolveLink(m, cls, cfg)
+		cls := mailclassify.Classification{MatchedJobID: 7, Confidence: 0.99, MatchConfidence: 0.4}
+		job, sug, src, conf := resolveLink(m, cls, cfg)
 		if job != 0 || sug != 7 || src != "" {
 			t.Fatalf("got (job=%d sug=%d src=%q), want (0,7,\"\")", job, sug, src)
+		}
+		// The suggestion carries the confidence of the PICK, not of the status label.
+		if conf != 0.4 {
+			t.Errorf("suggestion confidence = %v, want 0.4 (MatchConfidence)", conf)
 		}
 	})
 

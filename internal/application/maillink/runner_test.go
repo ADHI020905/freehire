@@ -22,6 +22,7 @@ type fakeStore struct {
 	gotBatchSize    int
 	saved           []Result
 	savedOutbox     []int64
+	savedModel      []string
 	failCalls       int
 	failPolicies    []FailurePolicy
 	deadLetter      bool
@@ -47,8 +48,9 @@ func (s *fakeStore) ThreadLinks(context.Context, int64) (map[string]int64, error
 	return s.threadLinks, nil
 }
 func (s *fakeStore) CurrentStage(context.Context, int64, int64) (string, error) { return s.stage, nil }
-func (s *fakeStore) Save(_ context.Context, outboxID, _ int64, r Result, _ string) error {
+func (s *fakeStore) Save(_ context.Context, outboxID, _ int64, r Result, model string) error {
 	s.saved = append(s.saved, r)
+	s.savedModel = append(s.savedModel, model)
 	s.savedOutbox = append(s.savedOutbox, outboxID)
 	// Mirrors the real Store: linking an email writes job_id onto it, and
 	// ThreadLinks derives the thread->job map from already-written emails — so a
@@ -122,6 +124,26 @@ func TestRunnerAutoLinksDeterministicMatchAndAdvancesStage(t *testing.T) {
 	}
 	if store.savedOutbox[0] != 100 {
 		t.Errorf("saved outbox id = %d, want 100", store.savedOutbox[0])
+	}
+}
+
+func TestRunnerPersistsTheModelThatAnswered(t *testing.T) {
+	for _, tc := range []struct {
+		name, answered, want string
+	}{
+		{"default model", "", "test-model"},
+		{"classifier names its model", "jev-latest", "jev-latest"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeStore{claimed: []Claimed{{OutboxID: 1, EmailID: 2, UserID: 1, Subject: "Hi"}}}
+			cls := &fakeClassifier{out: mailclassify.Classification{Signal: mailclassify.SignalOther, Model: tc.answered}}
+			if _, err := New(store, cls, "test-model").Run(context.Background()); err != nil {
+				t.Fatalf("Run: %v", err)
+			}
+			if len(store.savedModel) != 1 || store.savedModel[0] != tc.want {
+				t.Errorf("saved model = %v, want [%s]", store.savedModel, tc.want)
+			}
+		})
 	}
 }
 

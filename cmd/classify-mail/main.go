@@ -39,14 +39,14 @@ func run() int {
 	}
 	defer flush()
 
-	ctx, _, pool, cleanup, err := worker.Bootstrap(context.Background())
+	ctx, cfg, pool, cleanup, err := worker.Bootstrap(context.Background())
 	if err != nil {
 		log.Printf("database: %v", err)
 		return 1
 	}
 	defer cleanup()
 
-	runner := maillink.New(newDBStore(pool), mailclassify.NewClassifier(client), client.ModelID()).
+	runner := maillink.New(newDBStore(pool), mailclassify.NewClassifier(client, cfg.TypesafeAPIKey), client.ModelID()).
 		WithLearner(newDomainLearner(pool))
 	stats, err := runner.Run(ctx)
 	if err != nil {

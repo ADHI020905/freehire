@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/strelov1/freehire/internal/platform/llm"
@@ -30,14 +31,23 @@ type gen interface {
 	GenerateJSON(ctx context.Context, system, user string, opts ...llm.GenOption) (string, error)
 }
 
-// Classifier turns one inbox email into a sanitized Classification via the LLM.
+// Classifier turns one inbox email into a sanitized Classification. When a Jev
+// client is set it answers first; the LLM runs only if Jev is unset or fails.
 type Classifier struct {
 	gen gen
+	jev jevGen
 }
 
 // NewClassifier wraps a prebuilt llm.Client (constructed via llm.NewClient,
-// which also wires optional tracing).
-func NewClassifier(c *llm.Client) *Classifier { return &Classifier{gen: c} }
+// which also wires optional tracing). A non-empty apiKey also wires Jev, which
+// Classify prefers. An empty key leaves classification on the LLM alone.
+func NewClassifier(c *llm.Client, apiKey string) *Classifier {
+	cl := &Classifier{gen: c}
+	if strings.TrimSpace(apiKey) != "" {
+		cl.jev = newJevClient(apiKey)
+	}
+	return cl
+}
 
 // Candidate is one of the caller's applications offered to the LLM for
 // disambiguation when deterministic matching was ambiguous or empty.
@@ -67,6 +77,9 @@ func (c *Classifier) Classify(ctx context.Context, in Input) (Classification, er
 			return Classification{Signal: sig, Confidence: KeywordConfidence}, nil
 		}
 	}
+	if out, ok, err := c.classifyWithJev(ctx, in); ok || err != nil {
+		return out, err
+	}
 	schema, err := requestSchema()
 	if err != nil {
 		return Classification{}, err
@@ -79,9 +92,43 @@ func (c *Classifier) Classify(ctx context.Context, in Input) (Classification, er
 	if err := json.Unmarshal([]byte(raw), &out); err != nil {
 		return Classification{}, fmt.Errorf("%w: %w", ErrUnparseableResponse, err)
 	}
+	out.MatchConfidence = out.Confidence
 	out = out.Sanitize()
 	out.MatchedJobID = validateMatch(out.MatchedJobID, in.Candidates)
 	return out, nil
+}
+
+func (c *Classifier) classifyWithJev(ctx context.Context, in Input) (Classification, bool, error) {
+	if c.jev == nil {
+		return Classification{}, false, nil
+	}
+	out, err := c.jev.Classify(ctx, in)
+	if err == nil && (!validSignals[out.Signal] || !matchAllowed(out.MatchedJobID, in.Candidates)) {
+		err = fmt.Errorf("mailclassify: jev: unusable answer signal=%q job=%d", out.Signal, out.MatchedJobID)
+	}
+	if err != nil {
+		if ctx.Err() != nil {
+			return Classification{}, false, err
+		}
+		log.Printf("mailclassify: jev: %v", err)
+		return Classification{}, false, nil
+	}
+	// matchAllowed already held the id to the offered set; Sanitize only clamps confidence.
+	out = out.Sanitize()
+	out.Model = jevModel
+	return out, true, nil
+}
+
+func matchAllowed(id int64, candidates []Candidate) bool {
+	if id == 0 {
+		return true
+	}
+	for _, c := range candidates {
+		if c.JobID == id {
+			return true
+		}
+	}
+	return false
 }
 
 // validateMatch drops a picked id that is not among the offered candidates.

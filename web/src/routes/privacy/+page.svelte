@@ -13,7 +13,7 @@
 
   // Static effective date — freehire has no Date.now-driven content, and a hard
   // date is what a privacy policy needs. Bump this whenever the policy changes.
-  const lastUpdated = 'October 16, 2026';
+  const lastUpdated = 'October 20, 2026';
 </script>
 
 <Seo
@@ -125,9 +125,17 @@
         <li>
           <span class="font-medium text-foreground">A language-model provider</span> — processes CV
           and job text to produce AI match analysis, only when you request it; and, if you have
-          connected Gmail, classifies the hiring mail our own keyword vocabulary could not place
-          (see “Gmail and Google Calendar”). It processes this text to answer that one request and
-          is contractually barred from training on it.
+          connected Gmail, classifies the hiring mail that neither our own keyword vocabulary nor
+          TypeSafe could place (see “Gmail and Google Calendar”). It processes this text to answer
+          that one request and is contractually barred from training on it.
+        </li>
+        <li>
+          <span class="font-medium text-foreground">TypeSafe (Jev)</span> — if you have connected
+          Gmail, classifies the hiring mail our keyword vocabulary could not place, before any
+          language model is asked. It receives the sender, the subject, the first 4,000 characters
+          of the body, and the company names of your tracked applications, and processes them in
+          the United States. Under its published terms it does not train or fine-tune its models
+          on the requests we send.
         </li>
         <li>
           <span class="font-medium text-foreground">Product analytics (Google Analytics, PostHog)</span>
@@ -227,10 +235,10 @@
           <span class="font-medium text-foreground">Automated processing.</span> To decide which
           application a message belongs to and what stage it signals, we first try a fixed keyword
           vocabulary that runs entirely on our own servers. Only when that cannot decide do we send
-          the sender, the subject, and the first 4,000 characters of the body to our language-model
-          provider (see “Third-party services”). No human at freehire reads your mail, except where
-          you explicitly ask us to look at a specific message for support, or where we are legally
-          required to.
+          the sender, the subject, and the first 4,000 characters of the body to TypeSafe, and, if
+          TypeSafe cannot answer, to our language-model provider (see “Third-party services”). No
+          human at freehire reads your mail, except where you explicitly ask us to look at a
+          specific message for support, or where we are legally required to.
         </li>
         <li>
           <span class="font-medium text-foreground">Your Google token.</span> The refresh token that
