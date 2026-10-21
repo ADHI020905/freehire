@@ -79,12 +79,15 @@ func parseHHMM(s *string) (*time.Duration, error) {
 
 // reminderError maps the reminder sentinels onto HTTP statuses: a bad channel, an
 // enabled rule with no channels, an invalid frequency, a daily rule missing its
-// digest time, or a one-sided quiet-hours window are all 400s. Anything else
-// falls through to a 500.
+// digest time, or a one-sided quiet-hours window are all 400s; push added with no
+// device to reach is a 409. Anything else falls through to a 500.
 func reminderError(err error) error {
 	switch {
 	case errors.Is(err, reminder.ErrInvalidChannel):
 		return fiber.NewError(fiber.StatusBadRequest, "unsupported notification channel")
+	case errors.Is(err, reminder.ErrNoPushDevice):
+		return fiber.NewError(fiber.StatusConflict,
+			"push notifications need the freehire mobile app — sign in there and allow notifications first")
 	case errors.Is(err, reminder.ErrNoChannels):
 		return fiber.NewError(fiber.StatusBadRequest, "enable at least one channel to turn on notifications")
 	case errors.Is(err, reminder.ErrInvalidFrequency):

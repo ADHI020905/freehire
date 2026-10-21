@@ -107,3 +107,16 @@ func (q *Queries) UpsertPushToken(ctx context.Context, arg UpsertPushTokenParams
 	)
 	return i, err
 }
+
+const userHasPushToken = `-- name: UserHasPushToken :one
+SELECT EXISTS (SELECT 1 FROM user_push_tokens WHERE user_id = $1)
+`
+
+// Whether the account has at least one registered device — the precondition for
+// choosing the push channel at all, since push delivers to nothing else.
+func (q *Queries) UserHasPushToken(ctx context.Context, userID int64) (bool, error) {
+	row := q.db.QueryRow(ctx, userHasPushToken, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}

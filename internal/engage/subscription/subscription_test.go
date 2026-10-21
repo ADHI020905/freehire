@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/strelov1/freehire/internal/engage/notify"
 )
 
 // createArgs captures the primitive params Create is handed, so a test can assert them
@@ -23,6 +25,12 @@ type fakeRepo struct {
 	// the guard exists for.
 	savedSearchQuery string
 	savedSearchErr   error
+	// hasPushDevice is whether the account has a registered device.
+	hasPushDevice bool
+}
+
+func (r *fakeRepo) HasPushDevice(context.Context, int64) (bool, error) {
+	return r.hasPushDevice, nil
 }
 
 func (r *fakeRepo) SavedSearchQuery(context.Context, int64, int64) (string, error) {
@@ -131,5 +139,24 @@ func TestCreateSurfacesAMissingSavedSearch(t *testing.T) {
 	repo := &fakeRepo{savedSearchErr: ErrSavedSearchNotFound}
 	if _, err := New(repo).Create(context.Background(), 1, 2, "telegram"); !errors.Is(err, ErrSavedSearchNotFound) {
 		t.Errorf("err = %v, want ErrSavedSearchNotFound", err)
+	}
+}
+
+// Push delivers only to a registered device, so subscribing on it without one
+// would queue matches that can never leave. 49 accounts held such a
+// subscription on prod (2026-10-21) and none had a device: 820k matches piled up.
+func TestCreate_PushNeedsARegisteredDevice(t *testing.T) {
+	repo := filteredRepo()
+	if _, err := New(repo).Create(context.Background(), 1, 2, notify.ChannelPush); !errors.Is(err, ErrNoPushDevice) {
+		t.Fatalf("Create(push) without a device: err = %v, want ErrNoPushDevice", err)
+	}
+	if repo.created != nil {
+		t.Error("Create(push) without a device must not reach the repository")
+	}
+
+	repo = filteredRepo()
+	repo.hasPushDevice = true
+	if _, err := New(repo).Create(context.Background(), 1, 2, notify.ChannelPush); err != nil {
+		t.Fatalf("Create(push) with a device: err = %v, want nil", err)
 	}
 }

@@ -1856,6 +1856,7 @@
       "post": {
         "operationId": "post_me_subscriptions",
         "summary": "Subscribe a saved search to a digest channel.",
+        "description": "Channels: `telegram`, `email`, `push`, `webhook`. `push` needs a device the freehire mobile app has registered (`GET /me/push-tokens`) — without one the request is refused with 409.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3246,7 +3247,7 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "Delivery channels: `email`, `telegram`."
+                    "description": "Delivery channels: `email`, `telegram`, `push`. Adding `push` needs a device the mobile app has registered (409 otherwise)."
                   }
                 }
               }

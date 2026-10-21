@@ -66,6 +66,11 @@ func (r *QueriesRepository) Create(ctx context.Context, userID, savedSearchID in
 	return fromRow(row), nil
 }
 
+// HasPushDevice reports whether the account has a registered push device.
+func (r *QueriesRepository) HasPushDevice(ctx context.Context, userID int64) (bool, error) {
+	return r.q.UserHasPushToken(ctx, userID)
+}
+
 // SavedSearchQuery reads the owner-scoped saved search's stored query. It reuses
 // GetSavedSearch rather than adding a narrower query: the read is once per subscribe,
 // and a second SQL statement selecting one column would be a second place to keep the

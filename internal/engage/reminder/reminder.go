@@ -11,6 +11,7 @@ package reminder
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/strelov1/freehire/internal/engage/notify"
@@ -34,6 +35,12 @@ var (
 	ErrInvalidChannel = errors.New("reminder: unsupported channel")
 	// ErrNoChannels is an enabled rule with no channels to deliver over (mapped to 400).
 	ErrNoChannels = errors.New("reminder: enabled rule needs at least one channel")
+	// ErrNoPushDevice is push newly added to the channels of an account with no
+	// registered device (mapped to 409). Push reaches nothing else, so the channel
+	// would only ever soft-skip. Only ADDING it is refused: a rule that already
+	// carries push keeps it, so a pruned device never locks the rest of the
+	// settings behind un-ticking it first.
+	ErrNoPushDevice = errors.New("reminder: no registered push device")
 	// ErrInvalidFrequency is a DigestFrequency outside {instant, daily} (mapped to 400).
 	ErrInvalidFrequency = errors.New("reminder: digest frequency must be instant or daily")
 	// ErrMissingDigestTime is daily frequency without a DigestTime (mapped to 400).
@@ -88,6 +95,8 @@ func (c ScheduleContext) location() *time.Location {
 // GetSettings returns the default (not an error) when no row exists.
 type Repository interface {
 	GetSettings(ctx context.Context, userID int64) (Settings, error)
+	// HasPushDevice reports whether the account has a registered push device.
+	HasPushDevice(ctx context.Context, userID int64) (bool, error)
 	UpsertSettings(ctx context.Context, userID int64, s Settings) (Settings, error)
 	GetScheduleContext(ctx context.Context, userID int64) (ScheduleContext, error)
 	UpsertReminder(ctx context.Context, userID, jobID int64, fireAt time.Time, channels []string) error
@@ -132,7 +141,33 @@ func (s *Service) UpdateSettings(ctx context.Context, userID int64, in Settings)
 	if (in.QuietHoursStart == nil) != (in.QuietHoursEnd == nil) {
 		return Settings{}, ErrIncompleteQuietHours
 	}
+	if err := s.checkPushDevice(ctx, userID, in.Channels); err != nil {
+		return Settings{}, err
+	}
 	return s.repo.UpsertSettings(ctx, userID, in)
+}
+
+// checkPushDevice refuses push when it is being added and the account has no
+// device for it to reach (see ErrNoPushDevice).
+func (s *Service) checkPushDevice(ctx context.Context, userID int64, channels []string) error {
+	if !slices.Contains(channels, notify.ChannelPush) {
+		return nil
+	}
+	current, err := s.repo.GetSettings(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if slices.Contains(current.Channels, notify.ChannelPush) {
+		return nil
+	}
+	ok, err := s.repo.HasPushDevice(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return ErrNoPushDevice
+	}
+	return nil
 }
 
 // ScheduleOnSave decides the reminder for a just-saved job: scheduled at the fixed

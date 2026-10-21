@@ -16,6 +16,12 @@ type fakeRepo struct {
 
 	upserted  []upsertCall
 	cancelled []jobKey
+
+	hasPushDevice bool
+}
+
+func (f *fakeRepo) HasPushDevice(context.Context, int64) (bool, error) {
+	return f.hasPushDevice, nil
 }
 
 type jobKey struct{ userID, jobID int64 }
@@ -291,5 +297,27 @@ func TestCancel_IsIdempotent(t *testing.T) {
 	}
 	if len(repo.cancelled) != 1 || repo.cancelled[0] != (jobKey{5, 9}) {
 		t.Errorf("cancelled = %v, want one call for (5,9)", repo.cancelled)
+	}
+}
+
+// Adding push needs a registered device — push reaches nothing else. A rule that
+// already carries push may keep it (the device may have been pruned since), so the
+// rest of the settings stay savable without first un-ticking it.
+func TestUpdateSettings_AddingPushNeedsADevice(t *testing.T) {
+	rule := Settings{Enabled: true, Channels: []string{"email", "push"}}
+
+	repo := &fakeRepo{settings: Settings{Enabled: true, Channels: []string{"email"}}}
+	if _, err := New(repo).UpdateSettings(context.Background(), 1, rule); !errors.Is(err, ErrNoPushDevice) {
+		t.Fatalf("adding push without a device: err = %v, want ErrNoPushDevice", err)
+	}
+
+	repo = &fakeRepo{settings: Settings{Enabled: true, Channels: []string{"email"}}, hasPushDevice: true}
+	if _, err := New(repo).UpdateSettings(context.Background(), 1, rule); err != nil {
+		t.Fatalf("adding push with a device: err = %v, want nil", err)
+	}
+
+	repo = &fakeRepo{settings: Settings{Enabled: true, Channels: []string{"push"}}}
+	if _, err := New(repo).UpdateSettings(context.Background(), 1, rule); err != nil {
+		t.Fatalf("keeping an already-chosen push without a device: err = %v, want nil", err)
 	}
 }

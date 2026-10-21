@@ -16,7 +16,9 @@
   // state.
   //
   // A chip is "on" when a subscription exists for that channel; tapping an on chip turns
-  // it off. Telegram hides itself when the feature isn't configured server-side.
+  // it off. Telegram hides itself when the feature isn't configured server-side; Push
+  // hides itself until the mobile app has registered a device (it reaches nothing
+  // else), but stays while a push subscription exists so it can still be turned off.
   //
   // No handler here special-cases a 409: subscribing is idempotent in the store (see
   // notifications.subscribe), which is where the spec's "already subscribed is success"
@@ -65,8 +67,8 @@
     }
   }
 
-  // Push: plain subscribe/unsubscribe — no linking here either; delivery reaches
-  // whichever device(s) the mobile app has registered, or soft-skips until one is.
+  // Push: plain subscribe/unsubscribe — no linking here; delivery reaches whichever
+  // device(s) the mobile app has registered. Offered only once there is one.
   async function togglePush() {
     if (busy) return;
     busy = 'push';
@@ -144,14 +146,16 @@
       Email
     </button>
 
-    <button type="button" onclick={togglePush} disabled={busy !== null} aria-pressed={pushSub != null} class={chipClass(pushSub != null)}>
-      {#if pushSub}
-        <Check class="size-3.5" aria-hidden="true" />
-      {:else}
-        <Smartphone class="size-3.5" aria-hidden="true" />
-      {/if}
-      Push
-    </button>
+    {#if notifications.hasPushDevice || pushSub}
+      <button type="button" onclick={togglePush} disabled={busy !== null} aria-pressed={pushSub != null} class={chipClass(pushSub != null)}>
+        {#if pushSub}
+          <Check class="size-3.5" aria-hidden="true" />
+        {:else}
+          <Smartphone class="size-3.5" aria-hidden="true" />
+        {/if}
+        Push
+      </button>
+    {/if}
 
     {#if webhook?.enabled}
       <button type="button" onclick={toggleWebhook} disabled={busy !== null} aria-pressed={webhookSub != null} class={chipClass(webhookSub != null)}>

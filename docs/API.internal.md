@@ -1147,6 +1147,8 @@ curl "https://freehire.me/api/v1/me/subscriptions" -b cookies.txt
 
 Subscribe a saved search to a digest channel.
 
+Channels: `telegram`, `email`, `push`, `webhook`. `push` needs a device the freehire mobile app has registered (`GET /me/push-tokens`) — without one the request is refused with 409.
+
 **Body**
 
 | Name | Type | Required | Description |
@@ -1874,7 +1876,7 @@ Change your notification rule.
 | Name | Type | Required | Description |
 | --- | --- | --- | --- |
 | `enabled` | boolean | no | Turn notifications on or off. |
-| `channels` | string[] | no | Delivery channels: `email`, `telegram`. |
+| `channels` | string[] | no | Delivery channels: `email`, `telegram`, `push`. Adding `push` needs a device the mobile app has registered (409 otherwise). |
 
 ```bash
 curl -X PUT "https://freehire.me/api/v1/me/notification-settings" -b cookies.txt \

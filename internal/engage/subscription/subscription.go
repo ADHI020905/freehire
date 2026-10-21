@@ -32,6 +32,12 @@ var (
 	// reads as no filter at all, which is the same 248k digest arriving through a query
 	// that looks specific.
 	ErrUnfilteredSearch = errors.New("subscription: saved search has no filter")
+	// ErrNoPushDevice is a push subscription for an account with no registered
+	// device (mapped to 409). Push reaches nothing else, so such a subscription only
+	// queues matches that can never leave — on prod 2026-10-21, 49 accounts held one
+	// and none had a device, with 820k matches piled up behind them. Registering a
+	// device is the mobile app's job; the web cannot satisfy this on its own.
+	ErrNoPushDevice = errors.New("subscription: no registered push device")
 	// ErrSavedSearchNotFound is a saved_search_id that is missing or not the
 	// caller's (mapped to 404).
 	ErrSavedSearchNotFound = errors.New("subscription: saved search not found")
@@ -83,6 +89,9 @@ type Repository interface {
 	// the use case can refuse to subscribe to an unfiltered one. A missing or non-owned
 	// id surfaces as ErrSavedSearchNotFound, like Create.
 	SavedSearchQuery(ctx context.Context, userID, savedSearchID int64) (string, error)
+	// HasPushDevice reports whether the account has at least one registered push
+	// device, the precondition for subscribing on the push channel.
+	HasPushDevice(ctx context.Context, userID int64) (bool, error)
 	SetActive(ctx context.Context, userID, id int64, active bool) (Subscription, error)
 	Delete(ctx context.Context, userID, id int64) error
 }
@@ -114,7 +123,8 @@ func (s *Service) List(ctx context.Context, userID int64) ([]SubscriptionListIte
 // that will actually run rather than by the string being blank. The gate lives here
 // and NOT in that worker: the handful of existing subscriptions to everything are a
 // deliberately kept decision (140eedbd), and refusing them at delivery would drop
-// mail people already receive.
+// mail people already receive. (They were deleted by hand on 2026-10-21; the gate
+// stays here so a future change to the vocabulary is still refused at the door.)
 func (s *Service) Create(ctx context.Context, userID, savedSearchID int64, channel string) (Subscription, error) {
 	if !notify.ValidChannel(channel) {
 		return Subscription{}, ErrInvalidChannel
@@ -130,6 +140,15 @@ func (s *Service) Create(ctx context.Context, userID, savedSearchID int64, chann
 	vals, _ := url.ParseQuery(query)
 	if !search.Narrows(vals) {
 		return Subscription{}, ErrUnfilteredSearch
+	}
+	if channel == notify.ChannelPush {
+		ok, err := s.repo.HasPushDevice(ctx, userID)
+		if err != nil {
+			return Subscription{}, err
+		}
+		if !ok {
+			return Subscription{}, ErrNoPushDevice
+		}
 	}
 	return s.repo.Create(ctx, userID, savedSearchID, channel)
 }

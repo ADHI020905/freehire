@@ -2348,6 +2348,9 @@ data: {"type":"result","stop_reason":"completed"}
         path: '/me/subscriptions',
         auth: 'cookie',
         summary: 'Subscribe a saved search to a digest channel.',
+        description:
+          'Channels: `telegram`, `email`, `push`, `webhook`. `push` needs a device the freehire mobile app has ' +
+          'registered (`GET /me/push-tokens`) — without one the request is refused with 409.',
         body: [
           { name: 'saved_search_id', type: 'integer', required: true, description: 'The saved search to subscribe.', example: '2' },
           { name: 'channel', type: 'string', required: true, description: 'Delivery channel.', example: 'telegram' },
@@ -2988,7 +2991,12 @@ data: {"type":"result","stop_reason":"completed"}
         summary: 'Change your notification rule.',
         body: [
           { name: 'enabled', type: 'boolean', description: 'Turn notifications on or off.' },
-          { name: 'channels', type: 'string[]', description: 'Delivery channels: `email`, `telegram`.' },
+          {
+            name: 'channels',
+            type: 'string[]',
+            description:
+              'Delivery channels: `email`, `telegram`, `push`. Adding `push` needs a device the mobile app has registered (409 otherwise).',
+          },
         ],
         curl: `curl -X PUT "${BASE_URL}/me/notification-settings" -b cookies.txt \\
   -H 'Content-Type: application/json' -d '{"enabled":true,"channels":["email"]}'`,

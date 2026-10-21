@@ -15,6 +15,11 @@ RETURNING *;
 -- The caller's own registered devices, for a test send or a future delivery.
 SELECT * FROM user_push_tokens WHERE user_id = $1;
 
+-- name: UserHasPushToken :one
+-- Whether the account has at least one registered device — the precondition for
+-- choosing the push channel at all, since push delivers to nothing else.
+SELECT EXISTS (SELECT 1 FROM user_push_tokens WHERE user_id = $1);
+
 -- name: DeletePushToken :execrows
 -- Explicit unregistration (sign-out), scoped to the caller so one account
 -- cannot unregister another's device.

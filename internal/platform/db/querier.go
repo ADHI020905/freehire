@@ -7409,6 +7409,9 @@ type Querier interface {
 	// address against the caller's own. A primitive so the handler needs no full user row
 	// (same shape as GetUserRole).
 	UserEmail(ctx context.Context, id int64) (string, error)
+	// Whether the account has at least one registered device — the precondition for
+	// choosing the push channel at all, since push delivers to nothing else.
+	UserHasPushToken(ctx context.Context, userID int64) (bool, error)
 	// Whether a user has a stored original résumé — the check before attaching an 'original'
 	// CV to a request, so a seeker cannot request with a résumé they never uploaded.
 	UserHasResume(ctx context.Context, id int64) (bool, error)

@@ -26,6 +26,9 @@
   let enabled = $state(false);
   let channels = $state<string[]>([]);
   let telegramAvailable = $state(false);
+  // Push reaches only a device the mobile app registered, so the pill is offered
+  // once there is one — or while push is already chosen, so it can be removed.
+  let pushAvailable = $state(false);
 
   let digestFrequency = $state('instant');
   let digestTime = $state('09:00');
@@ -49,10 +52,15 @@
   async function load() {
     status = 'loading';
     try {
-      const [settings, tg] = await Promise.all([api.getNotificationSettings(), api.telegramStatus()]);
+      const [settings, tg, pushDevice] = await Promise.all([
+        api.getNotificationSettings(),
+        api.telegramStatus(),
+        api.hasPushDevice(),
+      ]);
       enabled = settings.enabled;
       channels = settings.channels;
       telegramAvailable = tg.enabled;
+      pushAvailable = pushDevice;
       digestFrequency = settings.digest_frequency || 'instant';
       digestTime = settings.digest_time ?? '09:00';
       quietHoursOn = Boolean(settings.quiet_hours_start && settings.quiet_hours_end);
@@ -188,14 +196,16 @@
             {/if}
             Email
           </button>
-          <button type="button" onclick={() => toggleChannel('push')} aria-pressed={channels.includes('push')} class={pill(channels.includes('push'))}>
-            {#if channels.includes('push')}
-              <Check class="size-3.5" aria-hidden="true" />
-            {:else}
-              <Smartphone class="size-3.5" aria-hidden="true" />
-            {/if}
-            Push
-          </button>
+          {#if pushAvailable || channels.includes('push')}
+            <button type="button" onclick={() => toggleChannel('push')} aria-pressed={channels.includes('push')} class={pill(channels.includes('push'))}>
+              {#if channels.includes('push')}
+                <Check class="size-3.5" aria-hidden="true" />
+              {:else}
+                <Smartphone class="size-3.5" aria-hidden="true" />
+              {/if}
+              Push
+            </button>
+          {/if}
         </div>
         {#if channels.includes('telegram')}
           <p class="text-xs text-muted-foreground">Telegram notifications need the bot connected on the <a class="font-medium text-foreground underline underline-offset-2 hover:opacity-80" href={resolve('/my/integrations')}>Integrations</a> tab.</p>

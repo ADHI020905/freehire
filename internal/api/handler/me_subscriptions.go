@@ -65,7 +65,7 @@ func toSubscriptionListItem(s subscription.SubscriptionListItem) subscriptionRes
 
 // subscriptionError maps the subscription sentinels onto HTTP statuses: an
 // unsupported channel is a 400, a missing/non-owned saved search or subscription
-// is a 404, a duplicate is a 409. Anything else falls through to a 500.
+// is a 404, a duplicate or a push subscription with no device to reach is a 409. Anything else falls through to a 500.
 func subscriptionError(err error) error {
 	switch {
 	case errors.Is(err, subscription.ErrInvalidChannel):
@@ -73,6 +73,9 @@ func subscriptionError(err error) error {
 	case errors.Is(err, subscription.ErrUnfilteredSearch):
 		return fiber.NewError(fiber.StatusBadRequest,
 			"add at least one filter before subscribing — an unfiltered search would notify you about every job")
+	case errors.Is(err, subscription.ErrNoPushDevice):
+		return fiber.NewError(fiber.StatusConflict,
+			"push alerts need the freehire mobile app — sign in there and allow notifications first")
 	case errors.Is(err, subscription.ErrSavedSearchNotFound):
 		return fiber.NewError(fiber.StatusNotFound, "saved search not found")
 	case errors.Is(err, subscription.ErrDuplicate):

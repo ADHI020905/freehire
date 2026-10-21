@@ -46,6 +46,11 @@ func (r *QueriesRepository) GetSettings(ctx context.Context, userID int64) (Sett
 }
 
 // UpsertSettings creates or replaces the caller's rule.
+// HasPushDevice reports whether the account has a registered push device.
+func (r *QueriesRepository) HasPushDevice(ctx context.Context, userID int64) (bool, error) {
+	return r.q.UserHasPushToken(ctx, userID)
+}
+
 func (r *QueriesRepository) UpsertSettings(ctx context.Context, userID int64, s Settings) (Settings, error) {
 	freq := s.DigestFrequency
 	if freq == "" {
