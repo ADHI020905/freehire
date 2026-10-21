@@ -224,6 +224,7 @@ extension/*.zip
 /reindex
 /reindex-companies
 /report-classify-drift
+/report-geo-gaps
 /report-skill-gaps
 /report-unclassified-titles
 /reslug

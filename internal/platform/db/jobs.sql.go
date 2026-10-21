@@ -1891,6 +1891,25 @@ func (q *Queries) FuzzyDedupCandidateTitlesForCompany(ctx context.Context, compa
 	return items, nil
 }
 
+const geoGapReportBounds = `-- name: GeoGapReportBounds :one
+SELECT COALESCE(MIN(id), 0)::bigint AS min_id,
+       COALESCE(MAX(id), 0)::bigint AS max_id
+FROM jobs
+`
+
+type GeoGapReportBoundsRow struct {
+	MinID int64 `json:"min_id"`
+	MaxID int64 `json:"max_id"`
+}
+
+// The id span cmd/report-geo-gaps walks. Same shape as ClassifyDriftReportBounds.
+func (q *Queries) GeoGapReportBounds(ctx context.Context) (GeoGapReportBoundsRow, error) {
+	row := q.db.QueryRow(ctx, geoGapReportBounds)
+	var i GeoGapReportBoundsRow
+	err := row.Scan(&i.MinID, &i.MaxID)
+	return i, err
+}
+
 const getJob = `-- name: GetJob :one
 SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug, last_seen_at, closed_at, countries, regions, work_mode, liveness_strikes, skills, seniority, category, created_by, updated_by, posting_language, employment_type, education_level, experience_years_min, collections, content_hash, english_level, cities, view_count, applied_count, role_fingerprint, semantic_embedded_model, semantic_embedded_hash, duplicate_of, is_tech, semantic_embedding, salary_min_manual, salary_max_manual, salary_currency_manual, salary_period_manual, upvote_count, downvote_count, ats_absent_at, closed_reason, is_private, similar_job_ids, similar_computed_at, salary_min_source, salary_max_source, salary_currency_source, salary_period_source, company_slug_folded, duplicate_of_aggregator, duplicate_of_role, duplicate_of_fuzzy, requires_clearance, requirements_derived, hydrated_at, ai_interview_reports
 FROM jobs
@@ -3911,6 +3930,79 @@ func (q *Queries) ListLiveJobsByIDAfter(ctx context.Context, arg ListLiveJobsByI
 			&i.HydratedAt,
 			&i.AiInterviewReports,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLocationsForGeoGap = `-- name: ListLocationsForGeoGap :many
+SELECT j.location,
+       c.llm_countries,
+       count(*)::bigint AS job_count
+FROM jobs j
+CROSS JOIN LATERAL (
+    SELECT ARRAY(
+        SELECT x
+        FROM jsonb_array_elements_text(
+            CASE WHEN jsonb_typeof(j.enrichment -> 'countries') = 'array'
+                 THEN j.enrichment -> 'countries'
+                 ELSE '[]'::jsonb END) AS x
+        ORDER BY x
+    )::text[] AS llm_countries
+) c
+WHERE j.id >= $1 AND j.id < $2
+  AND j.closed_at IS NULL
+  AND j.duplicate_of IS NULL
+  AND NOT j.is_private
+  AND j.location <> ''
+  AND cardinality(c.llm_countries) > 0
+GROUP BY j.location, c.llm_countries
+`
+
+type ListLocationsForGeoGapParams struct {
+	FromID int64 `json:"from_id"`
+	ToID   int64 `json:"to_id"`
+}
+
+type ListLocationsForGeoGapRow struct {
+	Location     string   `json:"location"`
+	LlmCountries []string `json:"llm_countries"`
+	JobCount     int64    `json:"job_count"`
+}
+
+// One chunk of the geo-gap report: every distinct (location string, LLM country list)
+// pair among PUBLISHABLE postings in an id range, with how many postings in THIS CHUNK
+// carried it. dictgap.GeoGapCandidates re-runs internal/dict/location on each location
+// and compares; the stored jobs.countries is deliberately not read, since it is the
+// answer of whichever dictionary last derived the row.
+//
+// Publishable for the reason ListTitlesForUnclassifiedReport states: a location only
+// closed or duplicate postings carry places nothing in the catalogue.
+//
+// The country list is sorted inside the LATERAL so that two postings naming the same
+// countries in a different order group together. The CASE keeps
+// jsonb_array_elements_text total on a missing or non-array `countries` key, the same
+// guard ListJobSkillsForGapReport documents; a posting whose list is empty is dropped,
+// since it states no opinion to compare.
+//
+// Reads no description column. Deliberately NO row LIMIT, for the reason
+// ListTitlesForClassifyDrift states: the GROUP BY caps the output, and the caller sums
+// a location that spans more than one chunk.
+func (q *Queries) ListLocationsForGeoGap(ctx context.Context, arg ListLocationsForGeoGapParams) ([]ListLocationsForGeoGapRow, error) {
+	rows, err := q.db.Query(ctx, listLocationsForGeoGap, arg.FromID, arg.ToID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLocationsForGeoGapRow{}
+	for rows.Next() {
+		var i ListLocationsForGeoGapRow
+		if err := rows.Scan(&i.Location, &i.LlmCountries, &i.JobCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

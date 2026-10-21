@@ -2187,6 +2187,8 @@ type Querier interface {
 	// is offered again on purpose: it is the only way the pass can ever re-decide it, and without
 	// that a marker survives its canon closing, the descriptions diverging, and every later run.
 	FuzzyDedupCandidateTitlesForCompany(ctx context.Context, company string) ([]FuzzyDedupCandidateTitlesForCompanyRow, error)
+	// The id span cmd/report-geo-gaps walks. Same shape as ClassifyDriftReportBounds.
+	GeoGapReportBounds(ctx context.Context) (GeoGapReportBoundsRow, error)
 	// Authentication accepts only active identities. A pending Apple revocation
 	// must not sign the user back in and silently cancel an unlink request.
 	GetActiveUserByIdentity(ctx context.Context, arg GetActiveUserByIdentityParams) (GetActiveUserByIdentityRow, error)
@@ -4177,6 +4179,25 @@ type Querier interface {
 	// picks the cutoff; the pass degrades to the full table when it passes the zero time,
 	// which keeps the unfiltered behaviour one env var away.
 	ListLiveJobsByIDAfter(ctx context.Context, arg ListLiveJobsByIDAfterParams) ([]Job, error)
+	// One chunk of the geo-gap report: every distinct (location string, LLM country list)
+	// pair among PUBLISHABLE postings in an id range, with how many postings in THIS CHUNK
+	// carried it. dictgap.GeoGapCandidates re-runs internal/dict/location on each location
+	// and compares; the stored jobs.countries is deliberately not read, since it is the
+	// answer of whichever dictionary last derived the row.
+	//
+	// Publishable for the reason ListTitlesForUnclassifiedReport states: a location only
+	// closed or duplicate postings carry places nothing in the catalogue.
+	//
+	// The country list is sorted inside the LATERAL so that two postings naming the same
+	// countries in a different order group together. The CASE keeps
+	// jsonb_array_elements_text total on a missing or non-array `countries` key, the same
+	// guard ListJobSkillsForGapReport documents; a posting whose list is empty is dropped,
+	// since it states no opinion to compare.
+	//
+	// Reads no description column. Deliberately NO row LIMIT, for the reason
+	// ListTitlesForClassifyDrift states: the GROUP BY caps the output, and the caller sums
+	// a location that spans more than one chunk.
+	ListLocationsForGeoGap(ctx context.Context, arg ListLocationsForGeoGapParams) ([]ListLocationsForGeoGapRow, error)
 	// Candidates for cmd/backfill-username-from-mailbox: every hosted mailbox whose
 	// owner has not yet been backfilled onto users.username. Small by construction —
 	// mailboxes is an opt-in feature, nowhere near the row counts the repo's chunked

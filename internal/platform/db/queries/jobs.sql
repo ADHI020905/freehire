@@ -2832,6 +2832,53 @@ WHERE id >= sqlc.arg(from_id) AND id < sqlc.arg(to_id)
   AND NOT is_private
 GROUP BY title;
 
+-- name: GeoGapReportBounds :one
+-- The id span cmd/report-geo-gaps walks. Same shape as ClassifyDriftReportBounds.
+SELECT COALESCE(MIN(id), 0)::bigint AS min_id,
+       COALESCE(MAX(id), 0)::bigint AS max_id
+FROM jobs;
+
+-- name: ListLocationsForGeoGap :many
+-- One chunk of the geo-gap report: every distinct (location string, LLM country list)
+-- pair among PUBLISHABLE postings in an id range, with how many postings in THIS CHUNK
+-- carried it. dictgap.GeoGapCandidates re-runs internal/dict/location on each location
+-- and compares; the stored jobs.countries is deliberately not read, since it is the
+-- answer of whichever dictionary last derived the row.
+--
+-- Publishable for the reason ListTitlesForUnclassifiedReport states: a location only
+-- closed or duplicate postings carry places nothing in the catalogue.
+--
+-- The country list is sorted inside the LATERAL so that two postings naming the same
+-- countries in a different order group together. The CASE keeps
+-- jsonb_array_elements_text total on a missing or non-array `countries` key, the same
+-- guard ListJobSkillsForGapReport documents; a posting whose list is empty is dropped,
+-- since it states no opinion to compare.
+--
+-- Reads no description column. Deliberately NO row LIMIT, for the reason
+-- ListTitlesForClassifyDrift states: the GROUP BY caps the output, and the caller sums
+-- a location that spans more than one chunk.
+SELECT j.location,
+       c.llm_countries,
+       count(*)::bigint AS job_count
+FROM jobs j
+CROSS JOIN LATERAL (
+    SELECT ARRAY(
+        SELECT x
+        FROM jsonb_array_elements_text(
+            CASE WHEN jsonb_typeof(j.enrichment -> 'countries') = 'array'
+                 THEN j.enrichment -> 'countries'
+                 ELSE '[]'::jsonb END) AS x
+        ORDER BY x
+    )::text[] AS llm_countries
+) c
+WHERE j.id >= sqlc.arg(from_id) AND j.id < sqlc.arg(to_id)
+  AND j.closed_at IS NULL
+  AND j.duplicate_of IS NULL
+  AND NOT j.is_private
+  AND j.location <> ''
+  AND cardinality(c.llm_countries) > 0
+GROUP BY j.location, c.llm_countries;
+
 -- name: CloseMisattributedSourceJobs :one
 -- Closes one id-range chunk of a source whose stored rows carry an employer we now know is
 -- wrong and cannot repair in place (see migration 0165 for the case that forced the label).
