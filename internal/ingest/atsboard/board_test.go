@@ -532,6 +532,55 @@ func TestRecognize(t *testing.T) {
 		{"higherme bare careers has no board", "https://app.higherme.com/careers", "", "", "", false},
 		{"higherme sign-in carries no board", "https://app.higherme.com/login", "", "", "", false},
 
+		// Real posting and board URLs sampled from the catalogue (2026-10-20); each board is the
+		// one the provider's boards row stores.
+		// gupy: the career-page subdomain.
+		{"gupy posting", "https://clicksign.gupy.io/job/eyJqb2JJZCI6MTE0MTU0NzksInNvdXJjZSI6Imd1cHlfcG9ydGFsIn0=?jobBoardSource=gupy_portal", "gupy", "clicksign", "https://clicksign.gupy.io", true},
+		{"gupy hyphenated subdomain", "https://confidential-careers.gupy.io/job/eyJqb2JJZCI6MTE0Mzc5NzEsInNvdXJjZSI6Imd1cHlfcG9ydGFsIn0=", "gupy", "confidential-careers", "https://confidential-careers.gupy.io", true},
+		{"gupy job-search portal is not a board", "https://portal.gupy.io/job-search/term=dev", "", "", "", false},
+		{"gupy marketing site is not a board", "https://www.gupy.io/", "", "", "", false},
+		// jobscore: the company shortcode behind the platform's "careers" or "jobs" word.
+		{"jobscore posting", "https://careers.jobscore.com/careers/ariasystems/jobs/implementation-consultant-a6n7LJEMraPQGI8xheCJ7l?ref=rss&sid=68", "jobscore", "ariasystems", "https://careers.jobscore.com/careers/ariasystems/jobs/implementation-consultant-a6n7LJEMraPQGI8xheCJ7l", true},
+		{"jobscore feed", "https://careers.jobscore.com/jobs/ierustechnologiesinc/feed.json?sort=date", "jobscore", "ierustechnologiesinc", "https://careers.jobscore.com/jobs/ierustechnologiesinc/feed.json", true},
+		{"jobscore bare careers has no board", "https://careers.jobscore.com/careers", "", "", "", false},
+		// erecruiter: the cfg token, kept as spelled.
+		{"erecruiter posting", "https://skk.erecruiter.pl/Offer.aspx?oid=4885221&cfg=d9f100d80dcc4d9895201c2993c46816&ejoId=526476&ejorId=216430&comId=20134027", "erecruiter", "d9f100d80dcc4d9895201c2993c46816", "https://skk.erecruiter.pl/GetHtml.ashx?cfg=d9f100d80dcc4d9895201c2993c46816&grid=rows&pn=1", true},
+		{"erecruiter upper-case cfg kept as spelled", "https://skk.erecruiter.pl/Offer.aspx?oid=4978589&cfg=4D3DD27FCA3D40C79E01BEE9745902B7&ejoId=611624", "erecruiter", "4D3DD27FCA3D40C79E01BEE9745902B7", "https://skk.erecruiter.pl/GetHtml.ashx?cfg=4D3DD27FCA3D40C79E01BEE9745902B7&grid=rows&pn=1", true},
+		{"erecruiter malformed cfg is not a board", "https://skk.erecruiter.pl/Offer.aspx?oid=1&cfg=acme", "", "", "", false},
+		// eightfold: "<careers host>/<tenant domain>", the domain from the `domain` parameter only.
+		{"eightfold career site", "https://eaton.eightfold.ai/careers?domain=eaton.com", "eightfold", "eaton.eightfold.ai/eaton.com", "https://eaton.eightfold.ai/careers?domain=eaton.com", true},
+		{"eightfold posting", "https://infineon.eightfold.ai/careers/job/563087396?domain=infineon.com&hl=en", "eightfold", "infineon.eightfold.ai/infineon.com", "https://infineon.eightfold.ai/careers?domain=infineon.com", true},
+		{"eightfold posting without domain is not derivable", "https://paypal.eightfold.ai/careers/job/274922819333", "", "", "", false},
+		{"eightfold microsite is not the tenant domain", "https://albemarle.eightfold.ai/careers/job/1099553928573?microsite=albemarle.com", "", "", "", false},
+		{"eightfold app host is not a board", "https://app.eightfold.ai/careers?domain=eaton.com", "", "", "", false},
+		{"eightfold bare apex is not a board", "https://eightfold.ai/careers?domain=eaton.com", "", "", "", false},
+
+		// pathpattern: the board at a fixed, shaped position behind the platform's own words.
+		{"paycom portal posting", "https://www.paycomonline.net/v4/ats/web.php/portal/0c46774eb61f343c911be787715ae6f2/jobs/61570", "paycom", "0c46774eb61f343c911be787715ae6f2", "https://www.paycomonline.net/v4/ats/web.php/portal/0c46774eb61f343c911be787715ae6f2/career-page", true},
+		{"paycom upper-case portal key kept as spelled", "https://www.paycomonline.net/v4/ats/web.php/portal/1A42347BA146BDD884AC51A0BDA04148/jobs/35720", "paycom", "1A42347BA146BDD884AC51A0BDA04148", "https://www.paycomonline.net/v4/ats/web.php/portal/1A42347BA146BDD884AC51A0BDA04148/career-page", true},
+		{"paycom legacy clientkey link", "https://www.paycomonline.net/v4/ats/web.php/jobs/ViewJobDetails?job=2844&clientkey=0000007733F608D84DFE1BB6118E38D3", "paycom", "0000007733f608d84dfe1bb6118e38d3", "https://www.paycomonline.net/v4/ats/web.php/portal/0000007733f608d84dfe1bb6118e38d3/career-page", true},
+		{"paycom truncated portal key is not a board", "https://www.paycomonline.net/v4/ats/web.php/portal/0c46774eb61f/jobs/1", "", "", "", false},
+		{"paycom marketing page", "https://www.paycom.com/careers/", "", "", "", false},
+		{"comeet board listing", "https://www.comeet.com/jobs/aitan/FA.006", "comeet", "aitan/FA.006", "https://www.comeet.com/jobs/aitan/FA.006", true},
+		{"comeet posting", "https://www.comeet.com/jobs/Dario.Health/34.006/senior-backend-engineer/9B.F62", "comeet", "Dario.Health/34.006", "https://www.comeet.com/jobs/Dario.Health/34.006", true},
+		{"comeet .co host", "https://www.comeet.co/jobs/trullion/07.000", "comeet", "trullion/07.000", "https://www.comeet.co/jobs/trullion/07.000", true},
+		{"comeet slug without uid", "https://www.comeet.com/jobs/aitan", "", "", "", false},
+		{"comeet vendor page", "https://www.comeet.com/pricing/plans/x", "", "", "", false},
+		{"neogov agency posting", "https://www.governmentjobs.com/careers/ALBANYOR/jobs/5179173/on-call-transit-operator", "neogov", "governmentjobs.com/ALBANYOR", "https://www.governmentjobs.com/careers/ALBANYOR", true},
+		{"neogov schooljobs posting", "https://www.schooljobs.com/careers/cochisecollege/jobs/5232702/pt-lifelong-learning-instructor", "neogov", "schooljobs.com/cochisecollege", "https://www.schooljobs.com/careers/cochisecollege", true},
+		{"neogov agency home", "https://www.governmentjobs.com/careers/champlin", "neogov", "governmentjobs.com/champlin", "https://www.governmentjobs.com/careers/champlin", true},
+		{"neogov search page is not an agency", "https://www.governmentjobs.com/careers/home/index?agency=champlin", "", "", "", false},
+		{"neogov posting outside an agency", "https://www.governmentjobs.com/jobs/5179173-0/on-call-transit-operator", "", "", "", false},
+		{"geekhunter posting", "https://www.geekhunter.com/pt/bigens/jobs/controller-financeiro-2", "geekhunter", "bigens", "https://www.geekhunter.com/pt/bigens/jobs", true},
+		{"geekhunter board listing", "https://www.geekhunter.com/pt/ntt-data/jobs", "geekhunter", "ntt-data", "https://www.geekhunter.com/pt/ntt-data/jobs", true},
+		{"geekhunter page without jobs is not a board", "https://www.geekhunter.com/pt/vagas", "", "", "", false},
+		{"cleverstaff company page", "https://cleverstaff.net/i/devabit", "cleverstaff", "devabit", "https://cleverstaff.net/i/devabit", true},
+		{"cleverstaff vacancies alias", "https://cleverstaff.net/i/master-of-code-global-vacancies", "cleverstaff", "master-of-code-global", "https://cleverstaff.net/i/master-of-code-global", true},
+		{"cleverstaff posting names no alias", "https://cleverstaff.net/i/vacancy-VDpQ85", "", "", "", false},
+		{"cleverstaff lower-case posting id names no alias", "https://cleverstaff.net/i/vacancy-qhbrpo", "", "", "", false},
+		{"cleverstaff app route is not a tenant", "https://cleverstaff.net/i/signup", "", "", "", false},
+		{"cleverstaff deep app route is not a tenant", "https://cleverstaff.net/i/pv/abc123", "", "", "", false},
+
 		{"unknown host", "https://example.com/careers/1", "", "", "", false},
 		{"not http", "ftp://acme.recruitee.com", "", "", "", false},
 		{"garbage", "not a url", "", "", "", false},
@@ -579,6 +628,11 @@ func TestVacancyAndListingSameBoard(t *testing.T) {
 		{"https://senca.hireclick.com/jb/family-development-associate-nebraska-city/view/264587", "https://senca.hireclick.com/jobboard/jobboard.aspx"},
 		// path (Gusto): a paged listing and the bare board
 		{"https://jobs.gusto.com/boards/100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90?page=3", "https://jobs.gusto.com/boards/100-degrees-consulting-ec8f0e9c-d6b4-4a32-8544-9c213ca6bc90"},
+		// pathpattern (NEOGOV, Paycom): a posting and the board's own listing
+		{"https://www.governmentjobs.com/careers/champlin/jobs/5179173/analyst", "https://www.governmentjobs.com/careers/champlin"},
+		{"https://www.paycomonline.net/v4/ats/web.php/portal/0c46774eb61f343c911be787715ae6f2/jobs/61570", "https://www.paycomonline.net/v4/ats/web.php/portal/0c46774eb61f343c911be787715ae6f2/career-page"},
+		// query with a tenant host (Eightfold): a posting and the career site
+		{"https://eaton.eightfold.ai/careers/job/1?domain=eaton.com", "https://eaton.eightfold.ai/careers?domain=eaton.com"},
 	}
 	for _, p := range pairs {
 		sa, ba, _, oka := Recognize(p[0])
@@ -615,8 +669,9 @@ func TestRecognizeMapsHostsToTheIngestProviderName(t *testing.T) {
 
 // TestQueryModeRowsAreConfigured guards the modes whose rows are not self-contained: a query
 // entry needs a second row in queryBoards naming the parameter, a querypair entry a row in
-// queryPairBoards naming both, and a keyedsegment entry a row in keyedSegmentBoards naming the key
-// and the board shape. Without it the host matches and then declines every link on it —
+// queryPairBoards naming both, a keyedsegment entry a row in keyedSegmentBoards naming the key
+// and the board shape, and a pathpattern entry a row in pathPatternBoards whose pattern captures
+// exactly one group. Without it the host matches and then declines every link on it —
 // a platform that looks supported and recognises nothing. The rest of the table keeps the
 // "one row plus one test case" promise on its own.
 func TestQueryModeRowsAreConfigured(t *testing.T) {
@@ -638,6 +693,12 @@ func TestQueryModeRowsAreConfigured(t *testing.T) {
 			if k, ok := keyedSegmentBoards[a.host]; !ok || k.key == "" || k.boardPattern == nil {
 				t.Errorf("atsBoards entry %q (%s) is %s mode but keyedSegmentBoards has no complete entry for it",
 					a.host, a.source, modeKeyedSegment)
+			}
+		case modePathPattern:
+			p, ok := pathPatternBoards[a.host]
+			if !ok || p.path == nil || p.path.NumSubexp() != 1 || p.listing == "" || (p.param != "") != (p.paramPattern != nil) {
+				t.Errorf("atsBoards entry %q (%s) is %s mode but pathPatternBoards has no complete entry for it",
+					a.host, a.source, modePathPattern)
 			}
 		}
 	}

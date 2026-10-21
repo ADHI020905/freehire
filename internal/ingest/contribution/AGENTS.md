@@ -34,9 +34,11 @@ contributions are URL-only, auto-validated, unmoderated.
   vanity careers page names its board, and matching it first also stops
   `boards-api.greenhouse.io` from being read as the tenant `v1`. This is
   deliberately a small local table, NOT a per-adapter method on `linksource` — adding an ATS is
-  one row + a test. Covers ~37 multi-tenant ATS (greenhouse, lever, ashby, workable, recruitee,
+  one row + a test. Covers ~100 multi-tenant ATS (greenhouse, lever, ashby, workable, recruitee,
   smartrecruiters, bamboohr, personio, peopleforce, gupy, freshteam, jazzhr, huntflow, deel,
-  jobvite, gem, …); hosts were verified against each adapter's public job URL.
+  jobvite, gem, paycom, neogov, comeet, …) across more modes than the ones named here — see
+  [atsboard/AGENTS.md](../atsboard/AGENTS.md) for the full list; hosts were verified against
+  each adapter's public job URL.
 - **Fail-safe by design.** A wrong or missing table entry only makes a link *unrecognized*
   (422), never a false board: a bad apex/mode yields an empty board → reject. So adding a
   best-guess host is safe. Excluded on purpose: single-company brands, aggregators, and

@@ -18,6 +18,7 @@ package atsboard
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/url"
 	"regexp"
 	"slices"
@@ -149,6 +150,13 @@ const (
 	// site exists on exactly one of them, so the adapter needs both
 	// (internal/ingest/sources/paradox.go). Site slugs are case-insensitive at the platform.
 	modeHostSite = "hostsite"
+	// pathpattern: board = the one capture group of a per-host path pattern (pathPatternBoards),
+	// for a platform whose board sits at a fixed position behind fixed words on a host that also
+	// serves the vendor's own pages — Comeet's /jobs/<slug>/<uid>, NEOGOV's /careers/<agency>,
+	// Paycom's /v4/ats/web.php/portal/<key>. The pattern carries the board's SHAPE as well as its
+	// position, so a vendor page that merely shares the leading word matches nothing. A path the
+	// pattern does not match is declined, never read some other way.
+	modePathPattern = "pathpattern"
 )
 
 // atsBoards lists the supported multi-tenant ATS: a host (exact or subdomain-suffix match) →
@@ -203,6 +211,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	// URLs (apply.appone.com/job/<id>) are deliberately absent: they name the posting, never the
 	// portal, which only the posting's own API record carries (internal/ingest/sources/appone.go).
 	{"jobs.appone.com", "appone", modePath},
+	// JobScore: careers.jobscore.com/careers/<board>/jobs/<posting> and the feed the adapter
+	// reads, /jobs/<board>/feed.json. Both leading words are the platform's (reservedSegments).
+	{"careers.jobscore.com", "jobscore", modePath},
 
 	// --- pathportal: board = the segment before the posting segment ---
 	{"jobs.smartrecruiters.com", "smartrecruiters", modePathPortal},
@@ -222,6 +233,10 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"recruitingbypaycor.com", "paycor", modeQuery},
 	{"candidate.hr-manager.net", "hrmanager", modeQuery},
 	{"pulse.tenstreet.com", "tenstreet", modeQuery},
+	{"skk.erecruiter.pl", "erecruiter", modeQuery},
+	// Eightfold tenants on the vendor's own domain (<tenant>.eightfold.ai). A career site on the
+	// employer's own domain (apply.careers.microsoft.com) is a vanity host and stays unrecognised.
+	{"eightfold.ai", "eightfold", modeQuery},
 
 	// --- querypair: board = two named query parameters joined by ":" (see queryPairBoards) ---
 	{"workforcenow.adp.com", "adp", modeQueryPair},
@@ -296,6 +311,9 @@ var atsBoards = []struct{ host, source, mode string }{
 	// vendor's own hosts (marketing, the Venezuelan instance and its API, a sales form) are in
 	// platformLabelsByApex.
 	{"hiringroom.com", "hiringroom", modeSubdomain},
+	// Gupy: one <subdomain>.gupy.io career page per employer, the subdomain the adapter lists
+	// by (?subdomain=<board>). The vendor's own hosts are in platformLabelsByApex.
+	{"gupy.io", "gupy", modeSubdomain},
 
 	// --- subdomainchain: board = every label under the apex (tenant nested under a region) ---
 	{"huntflow.io", "huntflow", modeSubdomainChain},
@@ -421,7 +439,87 @@ var atsBoards = []struct{ host, source, mode string }{
 
 	// --- encodedcareers: board = the base64-encoded numeric id in "/<slug>/<id>/careers" ---
 	{"app.idealtraits.com", "idealtraits", modeEncodedCareers},
+
+	// --- pathpattern: board = the capture group of a per-host path pattern (see pathPatternBoards) ---
+	{"paycomonline.net", "paycom", modePathPattern},
+	{"comeet.com", "comeet", modePathPattern},
+	{"comeet.co", "comeet", modePathPattern}, // 301s to comeet.com with the path unchanged
+	{"governmentjobs.com", "neogov", modePathPattern},
+	{"schooljobs.com", "neogov", modePathPattern},
+	{"geekhunter.com", "geekhunter", modePathPattern},
+	{"cleverstaff.net", "cleverstaff", modePathPattern},
 }
+
+// pathPattern is one pathPatternBoards entry; see there.
+type pathPattern struct {
+	path, reject, paramPattern *regexp.Regexp
+	param, listing             string
+	hostBoard                  bool
+}
+
+// pathPatternBoards holds, per modePathPattern host entry, the path pattern whose one capture
+// group is the board, and the board listing's path (%s = the captured value) the canonical
+// collapses to. The capture is kept VERBATIM: these platforms serve any case, and the catalogue
+// stores what the link it was harvested from spelled (NEOGOV's "ALBANYOR" beside "champlin",
+// Paycom's upper- and lower-case client keys), so folding would miss the boards stored the other way.
+//
+//   - reject names captured values that are the platform's own pages, for the words a shape
+//     cannot exclude on its own.
+//   - hostBoard prefixes the board with the entry's host, for an adapter whose board names the
+//     domain too (NEOGOV: "<domain>/<agency>", two domains being separate tenant spaces).
+//   - param names a query parameter that carries the board on the paths the pattern does not
+//     match, held to paramPattern after folding to lower case.
+var pathPatternBoards = map[string]pathPattern{
+	// Paycom: a portal is /v4/ats/web.php/portal/<32-hex client key>/…
+	// (internal/ingest/sources/paycom.go). An older posting link
+	// (…/jobs/ViewJobDetails?job=<id>&clientkey=<key>, sometimes on a regional host) names the
+	// key as a parameter instead, usually upper-case; it redirects to the portal and the
+	// platform serves either case, so it is folded to the lower case most of the catalogue holds.
+	"paycomonline.net": {
+		path:         regexp.MustCompile(`^/v4/ats/web\.php/portal/([0-9A-Fa-f]{32})(?:/|$)`),
+		param:        "clientkey",
+		paramPattern: regexp.MustCompile(`^[0-9a-f]{32}$`),
+		listing:      "/v4/ats/web.php/portal/%s/career-page",
+	},
+	// Comeet: the board is "<slug>/<company uid>" (internal/ingest/sources/comeet.go), both halves
+	// required. The uid's fixed shape ("B1.001", "32.00E") is what separates a board from the
+	// vendor's own pages under the same host.
+	"comeet.com": comeetPattern,
+	"comeet.co":  comeetPattern,
+	// NEOGOV: /careers/<agency>[/jobs/<id>/<title>] on either domain. /careers/home is the
+	// platform's search page, not an agency. A posting outside an agency (/jobs/<id>) names none.
+	"governmentjobs.com": neogovPattern,
+	"schooljobs.com":     neogovPattern,
+	// GeekHunter: /<language>/<board>/jobs[/<posting slug>] (internal/ingest/sources/geekhunter.go).
+	// The trailing "jobs" is what proves the segment is a company; the site's other pages under a
+	// language prefix carry none.
+	"geekhunter.com": {
+		path:    regexp.MustCompile(`^/(?:pt|en|es)/([a-z0-9-]+)/jobs(?:/|$)`),
+		listing: "/pt/%s/jobs",
+	},
+	// CleverStaff: a tenant's public page is /i/<alias>, which the app also answers as
+	// /i/<alias>-vacancies (it strips the suffix to find the alias) and /i/<alias>/description.
+	// The other single-segment routes under /i/ are the app's own; a posting (/i/vacancy-<id>)
+	// names no alias at all, only the posting's short id.
+	"cleverstaff.net": {
+		path:    regexp.MustCompile(`^/i/([a-z0-9-]+?)(?:-vacancies)?(?:/description)?/?$`),
+		reject:  regexp.MustCompile(`^(?:signup|hidden-vacancy|extension-removed|account-not-found|vacancy-.*)$`),
+		listing: "/i/%s",
+	},
+}
+
+var (
+	comeetPattern = pathPattern{
+		path:    regexp.MustCompile(`^/jobs/([A-Za-z0-9_.-]+/[0-9A-Za-z]{2}\.[0-9A-Za-z]{3})(?:/|$)`),
+		listing: "/jobs/%s",
+	}
+	neogovPattern = pathPattern{
+		path:      regexp.MustCompile(`^/careers/([A-Za-z0-9_-]+)(?:/|$)`),
+		reject:    regexp.MustCompile(`^(?i:home)$`),
+		listing:   "/careers/%s",
+		hostBoard: true,
+	}
+)
 
 // tenantHostPostingSegments names, per modeTenantHost apex, a path segment a URL must carry to be
 // read as a tenant's. Phenom serves its CDN and assets from subdomains of the same domains its
@@ -459,9 +557,17 @@ var businessID = regexp.MustCompile(`^[1-9][0-9]*$`)
 // weaker signal than a path segment on a board-only host, so without it any value on the host
 // reads as a board — and a board that does not exist is the expensive direction, recorded by the
 // contribution flow and paid for.
+//
+// The value is folded to lower case unless keepCase is set. tenantHost makes the board
+// "<host>/<value>" and admits only a host exactly one tenant label under the entry's domain, for
+// a platform that addresses a tenant by its careers host AND a parameter. listingQuery holds any
+// fixed parameters the listing URL needs beyond the one that names the board.
 var queryBoards = map[string]struct {
 	param, listingPath string
 	boardPattern       *regexp.Regexp
+	keepCase           bool
+	tenantHost         bool
+	listingQuery       url.Values
 }{
 	// Paycor Recruiting addresses an employer's portal by a 32-hex clientId: the listing is
 	// /career/CareerHome.action?clientId=<board> and a posting is
@@ -493,6 +599,29 @@ var queryBoards = map[string]struct {
 		param:        "company_id",
 		listingPath:  "/share_app_index.php",
 		boardPattern: regexp.MustCompile(`^[0-9]+$`),
+	},
+	// eRecruiter names a company's board by its 32-hex cfg token on every page of the career
+	// widget — a posting is /Offer.aspx?oid=<id>&cfg=<board>&… (internal/ingest/sources/erecruiter.go).
+	// The host has no human listing page (the widget is embedded on the employer's own site), so
+	// the canonical is the listing the adapter reads. The token is kept as spelled: the platform
+	// serves either case and the catalogue stores the spelling of the embed it was harvested from.
+	"skk.erecruiter.pl": {
+		param:        "cfg",
+		listingPath:  "/GetHtml.ashx",
+		boardPattern: regexp.MustCompile(`^[0-9A-Fa-f]{32}$`),
+		keepCase:     true,
+		listingQuery: url.Values{"grid": {"rows"}, "pn": {"1"}},
+	},
+	// Eightfold's board is "<careers host>/<tenant domain>" (internal/ingest/sources/eightfold.go):
+	// the tenant key is the `domain` parameter every career-site page carries
+	// (<tenant>.eightfold.ai/careers?domain=eaton.com). It is not derivable from the host — a
+	// link without it is declined. `microsite`, which some posting links carry instead, names a
+	// microsite of the tenant rather than the tenant itself and is not read.
+	"eightfold.ai": {
+		param:        "domain",
+		listingPath:  "/careers",
+		boardPattern: regexp.MustCompile(`^[a-z0-9-]+(?:\.[a-z0-9-]+)+$`),
+		tenantHost:   true,
 	},
 }
 
@@ -663,6 +792,8 @@ var reservedSegments = map[string][]string{
 	"greenhouse.io": {"embed", "job_app", "job_board", "js"},
 	// Gusto's board listing is /boards/<board>; "boards" is the platform's word, never a tenant.
 	"jobs.gusto.com": {"boards"},
+	// JobScore: /careers/<board>/… (the career site) and /jobs/<board>/feed.json (the feed).
+	"careers.jobscore.com": {"careers", "jobs"},
 }
 
 // Recognize parses a pasted job link into the company board it belongs to: the source
@@ -765,21 +896,61 @@ func Recognize(rawURL string) (source, board, canonical string, ok bool) {
 
 	case modeQuery:
 		// Paycor: the board is a query parameter, and the canonical is the board's own listing —
-		// so a posting and the career home collapse to one. Lower-cased for the same reason as
-		// UKG Ready: the platform serves either spelling of the hex client id and paycor.yml
-		// holds it lower-case.
+		// so a posting and the career home collapse to one. Lower-cased by default for the same
+		// reason as UKG Ready: the platform serves either spelling of the hex client id and
+		// paycor.yml holds it lower-case.
 		q, configured := queryBoards[apex]
 		if !configured || q.boardPattern == nil {
 			return "", "", "", false
 		}
+		value := u.Query().Get(q.param)
+		if !q.keepCase {
+			value = strings.ToLower(value)
+		}
 		// The pattern rejects an absent or empty parameter along with a malformed one, so a link
 		// on the host that names no board is declined rather than turned into one.
-		if board = strings.ToLower(u.Query().Get(q.param)); !q.boardPattern.MatchString(board) {
+		if !q.boardPattern.MatchString(value) {
 			return "", "", "", false
+		}
+		board = value
+		if q.tenantHost {
+			if platformHost(host, apex) || subdomainLabel(host, apex) == "" {
+				return "", "", "", false // vendor host, bare apex, or deeper than one tenant label
+			}
+			board = host + "/" + value
+		}
+		query := url.Values{q.param: {value}}
+		for k, v := range q.listingQuery {
+			query[k] = v
 		}
 		u.Fragment = ""
 		u.Path = q.listingPath
-		u.RawQuery = url.Values{q.param: {board}}.Encode()
+		u.RawQuery = query.Encode()
+		return src, board, u.String(), true
+
+	case modePathPattern:
+		p, configured := pathPatternBoards[apex]
+		if !configured || p.path == nil || p.listing == "" {
+			return "", "", "", false
+		}
+		if m := p.path.FindStringSubmatch(u.Path); len(m) == 2 && m[1] != "" {
+			board = m[1]
+		} else if p.param != "" && p.paramPattern != nil {
+			board = strings.ToLower(u.Query().Get(p.param))
+			if !p.paramPattern.MatchString(board) {
+				return "", "", "", false
+			}
+		} else {
+			return "", "", "", false
+		}
+		if p.reject != nil && p.reject.MatchString(board) {
+			return "", "", "", false
+		}
+		u.RawQuery, u.Fragment = "", ""
+		u.Path = fmt.Sprintf(p.listing, board)
+		if p.hostBoard {
+			board = apex + "/" + board
+		}
 		return src, board, u.String(), true
 
 	case modeQueryPair:
@@ -1114,6 +1285,11 @@ var platformLabelsByApex = map[string][]string{
 	// www.hireclick.com redirects to employers.hireclick.com, the vendor's marketing site —
 	// which is also where an unknown tenant label lands.
 	"hireclick.com": {"www", "employers"},
+	// Every unknown gupy.io label answers as an (empty) career page, so these are the vendor's
+	// hosts that resolve somewhere ELSE: the marketing site and its content hubs, the candidates'
+	// job-search portal, the API the adapter reads, support, community, docs and status.
+	"gupy.io":      {"www", "portal", "private-api", "suporte", "comunidade", "developers", "status", "conteudo", "academy"},
+	"eightfold.ai": {"www"}, // the vendor's marketing site
 }
 
 // platformHost reports whether host is the ATS's own product host rather than a tenant's —

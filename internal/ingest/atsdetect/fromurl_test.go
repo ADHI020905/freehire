@@ -457,31 +457,25 @@ func TestFromURL(t *testing.T) {
 
 // TestLocalShapesStayOutsideTheSharedTable guards the split that remains.
 //
-// FromURL delegates to atsboard.Recognize and keeps only the five shapes atsboard deliberately
-// excludes. That exclusion is load-bearing, not an oversight: atsboard is the accept-set for
-// internal/ingest/contribution, which PAYS for onboarded boards, so moving one of these in is a
-// money-affecting decision that needs its own proposal — not a tidy-up. (iCIMS was a sixth here
-// until the contribution reward was retired entirely — nothing pays for an onboarded board any
-// more, so the risk this split exists to guard against no longer applies to it. It moved into
-// atsboard's shared table and is covered by that package's own TestRecognize instead.)
+// FromURL delegates to atsboard.Recognize and keeps only the two shapes atsboard has not taken
+// in. The split once guarded a money-affecting accept-set — internal/ingest/contribution paid for
+// onboarded boards — and since that reward was retired, shapes have moved into the shared table
+// one by one (iCIMS, then NEOGOV, Paycom and Comeet), each now covered by that package's own
+// TestRecognize and deleted here.
 //
-// So the two sets must stay disjoint in both directions. If a shape here starts being recognised
-// by the shared table, this package's case for it is dead code silently shadowed by the
-// delegation above it; and the widening happened without anyone arguing for it.
+// The two sets must still stay disjoint in both directions. If a shape here starts being
+// recognised by the shared table, this package's case for it is dead code silently shadowed by
+// the delegation above it — delete it here in the same change, as those four were.
 func TestLocalShapesStayOutsideTheSharedTable(t *testing.T) {
 	local := map[string]string{
 		"oracle": "https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/1234",
 		"taleo":  "https://valero.taleo.net/careersection/2/jobsearch.ftl",
-		"neogov": "https://www.governmentjobs.com/careers/cityofboise/jobs/4567",
-		"paycom": "https://www.paycomonline.net/v4/ats/web.php/portal/0123456789abcdef0123456789abcdef/jobs",
-		"comeet": "https://www.comeet.com/jobs/overwolf/B1.001",
 	}
 	for provider, rawurl := range local {
 		t.Run(provider, func(t *testing.T) {
 			if src, board, _, ok := atsboard.Recognize(rawurl); ok {
 				t.Errorf("atsboard now recognises the %s shape as (%q, %q). Either this package's "+
-					"case is dead code shadowed by the delegation, or the contribution accept-set "+
-					"widened without a proposal — decide which, do not just delete one.",
+					"case is dead code shadowed by the delegation — delete it here in the same change.",
 					provider, src, board)
 			}
 			got, _, ok := FromURL(rawurl)

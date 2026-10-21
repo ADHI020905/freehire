@@ -2,7 +2,6 @@ package atsdetect
 
 import (
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/strelov1/freehire/internal/ingest/atsboard"
@@ -23,14 +22,12 @@ import (
 // Delegating also means an ATS added to atsboard is immediately visible to the harvest tools,
 // which was the standing cost of the split.
 //
-// What stays here are the five shapes atsboard deliberately EXCLUDES. That exclusion is not an
-// oversight to correct: atsboard is the accept-set for internal/ingest/contribution, which PAYS for
-// onboarded boards, so widening it is a money-affecting decision that needs its own proposal.
-// These five are harvest-only, and the harvest path validates every candidate against the
-// platform's API before committing it. iCIMS used to be a sixth: it joined atsboard once the
-// board-contribution reward itself was retired (nothing pays for an onboarded board any more,
-// so the risk this split was guarding against no longer applies), and its local case here
-// became dead code shadowed by the delegation above — see TestLocalShapesStayOutsideTheSharedTable.
+// What stays here are the two shapes atsboard has not taken in: Oracle and Taleo Enterprise.
+// They are harvest-only, and the harvest path validates every candidate against the platform's
+// API before committing it. The split used to guard a money-affecting accept-set —
+// internal/ingest/contribution paid for onboarded boards — and once that reward was retired the
+// shapes it kept out began moving into the shared table: iCIMS first, then NEOGOV, Paycom and
+// Comeet, each deleted here when it did — see TestLocalShapesStayOutsideTheSharedTable.
 func FromURL(rawurl string) (provider, board string, ok bool) {
 	if src, brd, _, found := atsboard.Recognize(rawurl); found {
 		return src, brd, true
@@ -57,41 +54,9 @@ func FromURL(rawurl string) (provider, board string, ok bool) {
 		if section := segAfter(segs, "careersection"); section != "" {
 			return "taleo", host + "/" + section, true
 		}
-	case host == "www.governmentjobs.com", host == "www.schooljobs.com":
-		// board is "<domain>/<agency>"; the two domains are separate tenant spaces.
-		if agency := segAfter(segs, "careers"); agency != "" {
-			return "neogov", strings.TrimPrefix(host, "www.") + "/" + agency, true
-		}
-	case host == "www.comeet.com", host == "comeet.com":
-		// board is "<slug>/<companyUID>" — Comeet's adapter needs both halves, so the slug alone
-		// is not a shorter board id but one the crawl rejects. The uid's fixed shape ("B1.001")
-		// is what proves the path names a board: comeet.com also serves the vendor's own pages,
-		// whose second segment would otherwise read as a company uid.
-		if len(segs) >= 3 && segs[0] == "jobs" && comeetUID.MatchString(segs[2]) {
-			return "comeet", segs[1] + "/" + segs[2], true
-		}
-	case host == "paycomonline.net", strings.HasSuffix(host, ".paycomonline.net"):
-		// board is the 32-hex client key in /v4/ats/web.php/portal/<clientkey>/...
-		if key := segAfter(segs, "portal"); key != "" {
-			return "paycom", key, true
-		}
-		// A posting link (…/jobs/ViewJobDetails?job=<id>&clientkey=<key>, sometimes on a regional
-		// host) carries the key as a parameter instead, usually upper-case; the catalogue holds it
-		// lower-case and the platform serves either.
-		if key := strings.ToLower(u.Query().Get("clientkey")); paycomClientKey.MatchString(key) {
-			return "paycom", key, true
-		}
 	}
 	return "", "", false
 }
-
-// paycomClientKey matches Paycom's 32-hex client key; a parameter is a weaker signal than a path
-// segment, so its value must have the shape before it is taken as a board.
-var paycomClientKey = regexp.MustCompile(`^[0-9a-f]{32}$`)
-
-// comeetUID matches a Comeet company UID: two alphanumerics, a dot, three more ("B1.001",
-// "32.00E"). Requiring the shape is what separates a board URL from any other comeet.com path.
-var comeetUID = regexp.MustCompile(`^[0-9A-Za-z]{2}\.[0-9A-Za-z]{3}$`)
 
 // pathSegments splits a URL path into its non-empty segments.
 func pathSegments(p string) []string {

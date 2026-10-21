@@ -57,7 +57,7 @@ func New() *Resolver { return &Resolver{http: sources.NewClient()} }
 //  1. the Greenhouse embed shape (script for=<board>) via atsdetect — which the URL recognizer
 //     can't parse, since the board is in the query param and the path holds only machinery;
 //  2. any supported ATS apply/board URL embedded in the page, run through the full
-//     atsboard.Recognize (all ~40 ATS, all modes) — this catches a company careers page
+//     atsboard.Recognize (all ~100 ATS, all modes) — this catches a company careers page
 //     that links to its recruitee/peopleforce/zoho/workday board;
 //  3. the platforms whose board IS the careers host (Radancy/Phenom/Jibe/Teamtailor), via
 //     atsdetect.DetectSelfHosted — a site that links to no ATS host because it is the ATS.
