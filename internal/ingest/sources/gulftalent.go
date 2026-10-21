@@ -3,6 +3,7 @@ package sources
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -14,6 +15,11 @@ import (
 // employer comes from the posting (hiringOrganization), not a configured entry. GulfTalent's
 // Akamai edge 403s Go's default TLS+HTTP/2 fingerprint, so in production the adapter is wired with
 // the shared Chrome-fingerprint transport (fingerprintHTTP) rather than the shared client. Keyless.
+//
+// That fingerprint stopped passing too; production crawls it through the Scrapling tier's
+// browser (scraplingtier.go), ~6 s a detail page. The sitemap lists ~20k postings, so the whole
+// sitemap is read every run (the sweep relies on it) but only NEW postings are hydrated, up to
+// maxNewPerRun a run — re-reading every posting each run took a run past four hours.
 
 // gulftalentHTTP is the transport gulftalent needs: XML sitemaps plus HTML detail pages.
 type gulftalentHTTP interface {
@@ -23,11 +29,20 @@ type gulftalentHTTP interface {
 
 type gulftalent struct {
 	http gulftalentHTTP
+	// maxNewPerRun bounds how many new postings one run hydrates; non-positive takes
+	// gulftalentMaxNewPerRun. The rest are deferred — not yielded, so not stored — to a later run.
+	maxNewPerRun int
 }
+
+// gulftalentMaxNewPerRun is the default hydration budget: at ~6 s a browser page, 500 is well
+// under an hour.
+const gulftalentMaxNewPerRun = 500
 
 // NewGulfTalent builds the GulfTalent adapter over the given HTTP client (the shared
 // Chrome-fingerprint fingerprintHTTP in production).
-func NewGulfTalent(c gulftalentHTTP) Source { return gulftalent{http: c} }
+func NewGulfTalent(c gulftalentHTTP) Source {
+	return gulftalent{http: c, maxNewPerRun: gulftalentMaxNewPerRun}
+}
 
 func (gulftalent) Provider() string { return "gulftalent" }
 
@@ -85,12 +100,60 @@ type gulftalentAddress struct {
 	AddressCountry  string `json:"addressCountry"`
 }
 
+// Fetch hydrates every listed posting: the path for callers that supply no seen set. FetchNew
+// is the one ingest uses.
 func (g gulftalent) Fetch(ctx context.Context, _ CompanyEntry) ([]Job, error) {
+	links, err := g.listing(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return fetchDetails(links, gulftalentDetailWorkers, func(link string) (Job, bool) {
+		return g.detail(ctx, link)
+	}), nil
+}
+
+// FetchNew reads the whole sitemap and hydrates only what the catalogue lacks: a seen posting
+// is a liveness refresh with no request of its own, and new ones are hydrated up to the per-run
+// budget. A new posting past the budget is deferred rather than stored half-read.
+func (g gulftalent) FetchNew(ctx context.Context, _ CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
+	links, err := g.listing(ctx)
+	if err != nil {
+		return nil, err
+	}
+	budget := g.maxNewPerRun
+	if budget <= 0 {
+		budget = gulftalentMaxNewPerRun
+	}
+	var jobs []Job
+	var fresh []string
+	deferred := 0
+	for _, link := range links {
+		id := gulftalentJobID(link)
+		switch {
+		case seen(id):
+			jobs = append(jobs, Job{ExternalID: id, URL: link, SeenRefresh: true})
+		case len(fresh) < budget:
+			fresh = append(fresh, link)
+		default:
+			deferred++
+		}
+	}
+	if deferred > 0 {
+		log.Printf("gulftalent: hydration budget %d reached; %d new postings deferred to a later run", budget, deferred)
+	}
+	return append(jobs, fetchDetails(fresh, gulftalentDetailWorkers, func(link string) (Job, bool) {
+		return g.detail(ctx, link)
+	})...), nil
+}
+
+// listing reads the sitemap index and every job-posting shard and returns the posting links. A
+// shard that cannot be read fails the whole listing: gulftalent is swept, so a listing missing a
+// shard would close every posting in it.
+func (g gulftalent) listing(ctx context.Context) ([]string, error) {
 	index, err := getSitemap(ctx, g.http, gulftalentSitemapURL)
 	if err != nil {
 		return nil, fmt.Errorf("gulftalent: sitemap index: %w", err)
 	}
-
 	var links []string
 	for _, s := range index.Sitemaps {
 		if !strings.Contains(s.Loc, gulftalentJobShardMarker) {
@@ -98,7 +161,7 @@ func (g gulftalent) Fetch(ctx context.Context, _ CompanyEntry) ([]Job, error) {
 		}
 		shard, err := getSitemap(ctx, g.http, s.Loc)
 		if err != nil {
-			continue // a single unreadable shard just drops its slice of the catalogue this run
+			return nil, fmt.Errorf("gulftalent: shard %s: %w", s.Loc, err)
 		}
 		for _, u := range shard.URLs {
 			if gulftalentJobID(u.Loc) != "" {
@@ -106,10 +169,7 @@ func (g gulftalent) Fetch(ctx context.Context, _ CompanyEntry) ([]Job, error) {
 			}
 		}
 	}
-
-	return fetchDetails(links, gulftalentDetailWorkers, func(link string) (Job, bool) {
-		return g.detail(ctx, link)
-	}), nil
+	return links, nil
 }
 
 // detail fetches one job page and maps its ld+json JobPosting to a Job, returning ok=false when

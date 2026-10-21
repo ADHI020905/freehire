@@ -215,3 +215,51 @@ func TestGulfTalentUnparseableIndexErrors(t *testing.T) {
 		t.Fatal("an unparseable sitemap index must error, not silently yield no jobs")
 	}
 }
+
+// FetchNew hydrates only what the catalogue lacks: a seen posting is a liveness refresh with no
+// detail request of its own, and new ones are hydrated up to the per-run budget — the rest are
+// deferred (not yielded, so not stored) to a later run. The sitemap lists ~20k postings and each
+// detail page is a browser navigation of seconds, so re-reading every one each run took a run
+// past its four-hour timeout (2026-10-21).
+func TestGulfTalentFetchNewRefreshesSeenAndBudgetsNew(t *testing.T) {
+	seenURL := "https://www.gulftalent.com/uae/jobs/old-role-100"
+	newA := "https://www.gulftalent.com/uae/jobs/role-a-201"
+	newB := "https://www.gulftalent.com/uae/jobs/role-b-202"
+	fake := (&routedHTTP{}).
+		route("/sitemap.xml", gtSitemapIndexXML("https://www.gulftalent.com/sitemaps/sitemap_jx000.xml")).
+		route("sitemap_jx000.xml", gtShardXML(seenURL, newA, newB)).
+		route("role-a-201", gtDetailHTML("A", "2026-07-03T00:00:00+00:00", "Acme", "Dubai", "UAE")).
+		route("role-b-202", gtDetailHTML("B", "2026-07-03T00:00:00+00:00", "Beta", "Dubai", "UAE"))
+	src := gulftalent{http: fake, maxNewPerRun: 1}
+	jobs, err := src.FetchNew(context.Background(), CompanyEntry{}, func(id string) bool { return id == "100" })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	got := map[string]Job{}
+	for _, j := range jobs {
+		got[j.ExternalID] = j
+	}
+	if len(got) != 2 || !got["100"].SeenRefresh || got["201"].Title != "A" {
+		t.Fatalf("jobs = %+v, want 100 refreshed and 201 hydrated (202 deferred)", jobs)
+	}
+}
+
+// A job shard that cannot be read fails the crawl rather than dropping its slice: gulftalent is
+// swept, so a listing missing a shard would close every posting in it.
+func TestGulfTalentUnreadableJobShardFailsTheCrawl(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("/sitemap.xml", gtSitemapIndexXML(
+			"https://www.gulftalent.com/sitemaps/sitemap_jx000.xml",
+			"https://www.gulftalent.com/sitemaps/sitemap_jx001.xml")).
+		route("sitemap_jx000.xml", gtShardXML("https://www.gulftalent.com/uae/jobs/role-a-201")).
+		route("role-a-201", gtDetailHTML("A", "2026-07-03T00:00:00+00:00", "Acme", "Dubai", "UAE"))
+	if _, err := (gulftalent{http: fake}).FetchNew(context.Background(), CompanyEntry{}, func(string) bool { return false }); err == nil {
+		t.Fatal("want an error when a job shard cannot be read")
+	}
+}
+
+func TestGulfTalentIsAHydratingSource(t *testing.T) {
+	if _, ok := NewGulfTalent(nil).(HydratingSource); !ok {
+		t.Fatal("gulftalent must implement HydratingSource")
+	}
+}
