@@ -40,6 +40,12 @@ Curated dictionary deriving ISO 3166-1 alpha-2 country codes, region codes, and 
 - **Add country NAMES, never country CODES.** `resolveSubdivision` runs before the bare-code
   branch, so a code would collide with the US/Canada subdivision table (`LA`→Louisiana,
   `MN`→Minnesota, `MO`→Missouri). Names are full words and cannot.
+- **Non-US/CA region names live in `foreignSubdivisionNames`** (`foreign_subdivisions.go`),
+  merged into `nameToCountry` at init — Russian federal subjects, the UK nations and
+  unambiguous counties, Australian states, German Länder, Indian states. Names only; a name
+  with a second reading this catalogue meets (`Punjab`, `Victoria`, `Berkshire`) is withheld,
+  and the contested territories (Crimea, Sevastopol, Donetsk, Luhansk, Zaporizhzhia, Kherson)
+  are left out on purpose. A duplicate of a `nameToCountry` key panics at load.
 - **A colliding state code defaults per code, by measurement.** `IL`, `MA`, `PA`… are both
   a US state and a country. The default reading is the country unless the preceding city is
   a known US/CA place — except for `stateFirstSubdivisions` (pa, ma, md, il, mn, al, mo, la,

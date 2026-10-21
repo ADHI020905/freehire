@@ -143,6 +143,19 @@ func Parse(location string) Geo {
 				}
 			}
 			lead := strings.TrimSpace(segs[0])
+			if !tailResolved {
+				// "TX-El Paso", "FL-Orlando": a US/CA subdivision code leading a city the
+				// curated maps do not name but GeoNames places in the US or Canada. The
+				// city is the confirmation, so "on-site", "co-op" and "hi-tech" — whose
+				// tails are no city — still resolve nothing.
+				if code, ok := subdivisionToCountry[lead]; ok && len(lead) == 2 &&
+					isRecognizedUSCACity(strings.TrimSpace(strings.Join(segs[1:], "-"))) {
+					countrySet[code] = struct{}{}
+					if r, ok := countryToRegion[code]; ok {
+						regionSet[r] = struct{}{}
+					}
+				}
+			}
 			if !resolveGeoName(lead, countrySet, regionSet) && tailResolved {
 				// The dash-tail is the context that confirms a colliding lead code
 				// ("il" in "IL-Cupertino") as a real US/CA subdivision, the same role

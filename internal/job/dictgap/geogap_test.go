@@ -7,11 +7,12 @@ import (
 
 func TestGeoGapCandidates(t *testing.T) {
 	rows := []LocationCountries{
-		// A gap: the dictionary places nothing, the model names a country. Spellings
+		// A gap: the dictionary places nothing, the model names a country. The places
+		// are invented so that no dictionary growth ever resolves them. Spellings
 		// that differ only in case and surrounding space fold into one entry.
-		{Location: "Свердловская область", LLMCountries: []string{"RU"}, Count: 300},
-		{Location: "  свердловская область ", LLMCountries: []string{"ru"}, Count: 88},
-		{Location: "Свердловская область", LLMCountries: []string{"KZ"}, Count: 12},
+		{Location: "Тридесятая область", LLMCountries: []string{"RU"}, Count: 300},
+		{Location: "  тридесятая область ", LLMCountries: []string{"ru"}, Count: 88},
+		{Location: "Тридесятая область", LLMCountries: []string{"KZ"}, Count: 12},
 		// A conflict: both answer, and they disagree.
 		{Location: "Tbilisi, Georgia", LLMCountries: []string{"US"}, Count: 40},
 		// Agreement is not a finding.
@@ -28,7 +29,7 @@ func TestGeoGapCandidates(t *testing.T) {
 	got := GeoGapCandidates(rows)
 
 	wantGaps := []GeoGapCandidate{{
-		Location:   "свердловская область",
+		Location:   "тридесятая область",
 		Count:      400,
 		LLMCountry: "ru",
 		LLMShare:   0.97,
@@ -51,16 +52,16 @@ func TestGeoGapCandidates(t *testing.T) {
 
 func TestGeoGapCandidatesRanksByCountThenLocation(t *testing.T) {
 	rows := []LocationCountries{
-		{Location: "Краснодарский край", LLMCountries: []string{"RU"}, Count: 10},
-		{Location: "Алтайский край", LLMCountries: []string{"RU"}, Count: 10},
-		{Location: "Пермский край", LLMCountries: []string{"RU"}, Count: 30},
+		{Location: "Тридевятый край", LLMCountries: []string{"RU"}, Count: 10},
+		{Location: "Заморский край", LLMCountries: []string{"RU"}, Count: 10},
+		{Location: "Лукоморский край", LLMCountries: []string{"RU"}, Count: 30},
 	}
 	got := GeoGapCandidates(rows).Gaps
 	var order []string
 	for _, c := range got {
 		order = append(order, c.Location)
 	}
-	want := []string{"пермский край", "алтайский край", "краснодарский край"}
+	want := []string{"лукоморский край", "заморский край", "тридевятый край"}
 	if !reflect.DeepEqual(order, want) {
 		t.Errorf("order = %v, want %v", order, want)
 	}
