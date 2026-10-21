@@ -352,3 +352,67 @@ func TestBaytRegisteredAsFullBoardListing(t *testing.T) {
 		t.Error("FullBoardListingProviders(All(nil)) should include bayt")
 	}
 }
+
+// baytListingWithNav renders a listing page whose pagination links the given page numbers, the
+// way bayt.com renders its pager: the last page links nothing beyond itself.
+func baytListingWithNav(pages []int, hrefs ...string) string {
+	var nav strings.Builder
+	for _, p := range pages {
+		fmt.Fprintf(&nav, `<a href="/en/uae/jobs/?page=%d">%d</a>`, p, p)
+	}
+	return strings.Replace(baytListingHTML(hrefs...), "</ul>", "</ul><nav>"+nav.String()+"</nav>", 1)
+}
+
+// Past its last page bayt does not answer an empty page: it redirects to the last one
+// (measured 2026-10-20: ?page=1000 of a 14,200-posting country landed on page 333), so an
+// "empty page" end never arrives. The pager is the end: a page linking nothing beyond itself
+// is the last, and nothing after it is requested.
+func TestBaytListingEndsAtThePagerLastPage(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("/en/uae/jobs/?page=1", baytListingWithNav([]int{2, 3}, "/en/uae/jobs/a-1/")).
+		route("/en/uae/jobs/?page=2", baytListingWithNav([]int{1, 3}, "/en/uae/jobs/b-2/")).
+		route("/en/uae/jobs/?page=3", baytListingWithNav([]int{1, 2, 3}, "/en/uae/jobs/c-3/")).
+		route("/en/uae/jobs/a-1/", baytDetailHTML("A", "2026-07-01", "Acme", "Dubai", "AE")).
+		route("/en/uae/jobs/b-2/", baytDetailHTML("B", "2026-07-02", "Beta", "Dubai", "AE")).
+		route("/en/uae/jobs/c-3/", baytDetailHTML("C", "2026-07-03", "Gamma", "Dubai", "AE"))
+	jobs, err := NewBayt(fake).Fetch(context.Background(), CompanyEntry{Company: "Bayt", Board: "uae"})
+	if err != nil {
+		t.Fatalf("Fetch: %v (page 4 must never be requested)", err)
+	}
+	if len(jobs) != 3 {
+		t.Fatalf("got %d jobs, want 3", len(jobs))
+	}
+}
+
+// FetchNew hydrates only what the catalogue lacks: a seen posting is a liveness refresh with no
+// detail request of its own, and new ones are hydrated up to the per-run budget — the rest are
+// deferred (not yielded, so not stored) to a later run. A country lists thousands of postings
+// and each detail page is a browser navigation of seconds.
+func TestBaytFetchNewRefreshesSeenAndBudgetsNew(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("/en/uae/jobs/?page=1", baytListingHTML("/en/uae/jobs/s-9/", "/en/uae/jobs/a-1/", "/en/uae/jobs/b-2/", "/en/uae/jobs/c-3/")).
+		route("/en/uae/jobs/?page=2", baytListingHTML()).
+		route("/en/uae/jobs/a-1/", baytDetailHTML("A", "2026-07-01", "Acme", "Dubai", "AE")).
+		route("/en/uae/jobs/b-2/", baytDetailHTML("B", "2026-07-02", "Beta", "Dubai", "AE"))
+	src := bayt{http: fake, maxNewPerRun: 2}
+	jobs, err := src.FetchNew(context.Background(), CompanyEntry{Company: "Bayt", Board: "uae"}, func(id string) bool { return id == "9" })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	got := map[string]Job{}
+	for _, j := range jobs {
+		got[j.ExternalID] = j
+	}
+	if len(got) != 3 || !got["9"].SeenRefresh || got["1"].Title != "A" || got["2"].Title != "B" {
+		t.Fatalf("jobs = %+v, want seen 9 refreshed and 1, 2 hydrated (3 deferred)", jobs)
+	}
+	if _, deferred := got["3"]; deferred {
+		t.Error("posting 3 is past the budget and must be deferred")
+	}
+}
+
+func TestBaytIsAHydratingSource(t *testing.T) {
+	if _, ok := NewBayt(nil).(HydratingSource); !ok {
+		t.Fatal("bayt must implement HydratingSource")
+	}
+}

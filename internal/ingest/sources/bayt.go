@@ -3,8 +3,10 @@ package sources
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -17,17 +19,26 @@ import (
 // from the posting (hiringOrganization), not the configured entry. Bayt's Akamai/Cloudflare edge
 // 403s Go's default TLS+HTTP/2 fingerprint, so in production the adapter is wired with the shared
 // Chrome-fingerprint transport (fingerprintHTTP) rather than the shared client. Keyless.
+//
+// That fingerprint stopped passing: Bayt's Cloudflare-managed challenge 403s every plain request,
+// direct or proxied, and production crawls it through the Scrapling tier's browser, which solves
+// the challenge (scraplingtier.go). A browser page costs ~6 s, which is what shapes the crawl:
+// the whole listing is walked (it is what the sweep relies on) but only NEW postings are
+// hydrated, up to maxNewPerRun per country per run.
 
 // baytHTTP is the transport bayt needs: HTML listing and detail pages.
 type baytHTTP interface{ HTMLGetter }
 
 type bayt struct {
 	http baytHTTP
+	// maxNewPerRun bounds how many new postings one run hydrates per country; non-positive takes
+	// baytMaxNewPerRun. The rest are deferred — not yielded, so not stored — to a later run.
+	maxNewPerRun int
 }
 
 // NewBayt builds the Bayt adapter over the given HTTP client (the shared Chrome-fingerprint
 // fingerprintHTTP in production).
-func NewBayt(c baytHTTP) Source { return bayt{http: c} }
+func NewBayt(c baytHTTP) Source { return bayt{http: c, maxNewPerRun: baytMaxNewPerRun} }
 
 func (bayt) Provider() string { return "bayt" }
 
@@ -37,9 +48,9 @@ func (bayt) Provider() string { return "bayt" }
 // nature and future-proofs facet inclusion should bayt ever become boardless.
 func (bayt) aggregator() {}
 
-// fullBoardListing: Fetch proves completeness by paginating sequentially to a genuinely
-// empty page (the raw job-link count, before cross-page dedup), and treats a page failure
-// or reaching baytMaxPages as a hard Fetch failure. detail additionally never drops a
+// fullBoardListing: the listing walk proves completeness by paginating sequentially to the
+// pager's last page (or a genuinely empty page, where no pager is rendered), and treats a page
+// failure or reaching baytMaxPages as a hard failure. detail additionally never drops a
 // posting on a merely-unreadable fetch (see detail's own comment) — a plain drop there
 // would have defeated this marker's promise given bayt's documented throttling risk. See
 // the fullBoardListing interface (source.go) for the bar.
@@ -48,8 +59,12 @@ func (bayt) fullBoardListing() {}
 const (
 	baytBaseURL = "https://www.bayt.com"
 	// baytMaxPages caps the per-country pagination so a listing that never runs dry (or a
-	// markup change that keeps yielding "new" links) cannot loop unboundedly.
-	baytMaxPages = 50
+	// markup change that keeps yielding "new" links) cannot loop unboundedly. Measured
+	// 2026-10-20 the UAE alone lists 14,200 postings over ~334 pages of 30.
+	baytMaxPages = 2000
+	// baytMaxNewPerRun is the default hydration budget per country per run: at ~6 s a browser
+	// detail page and baytDetailWorkers in flight, 300 is ~10 minutes a country.
+	baytMaxNewPerRun = 300
 	// baytDetailWorkers bounds the detail fan-out well below the shared defaultDetailWorkers (8):
 	// Bayt's Akamai edge throttles a fast burst to 403 (observed live), and the fingerprint
 	// transport does not retry, so a wide fan-out would silently drop postings. A modest pool
@@ -94,19 +109,66 @@ type baytAddress struct {
 	AddressCountry  string `json:"addressCountry"`
 }
 
-// Fetch walks the country's listing pages sequentially (one request at a time — the burst
-// throttling bayt's Akamai edge is documented to apply is a concurrency-triggered risk,
-// which the detail fan-out below already paces around with baytDetailWorkers) until a
-// genuinely empty page is reached — the raw per-page link count, not the count of links
-// newly kept after cross-page dedup, since a non-empty page whose links are all
-// already-seen duplicates is not itself proof the listing has no more pages beyond it.
-// Every page failing, and reaching baytMaxPages without a genuinely empty page, are hard
-// Fetch failures rather than a partial success — see the fullBoardListing interface
-// (source.go) for the bar.
+// Fetch hydrates every listed posting: the path for callers that supply no seen set. FetchNew
+// is the one ingest uses.
 func (b bayt) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
+	links, err := b.listing(ctx, e)
+	if err != nil {
+		return nil, err
+	}
+	return fetchDetails(links, baytDetailWorkers, func(link string) (Job, bool) {
+		return b.detail(ctx, e, link)
+	}), nil
+}
+
+// FetchNew walks the whole listing and hydrates only what the catalogue lacks: a seen posting
+// is a liveness refresh with no request of its own, and new ones are hydrated up to the per-run
+// budget. A new posting past the budget is deferred rather than stored half-read.
+func (b bayt) FetchNew(ctx context.Context, e CompanyEntry, seen func(externalID string) bool) ([]Job, error) {
+	links, err := b.listing(ctx, e)
+	if err != nil {
+		return nil, err
+	}
+	budget := b.maxNewPerRun
+	if budget <= 0 {
+		budget = baytMaxNewPerRun
+	}
+	var jobs []Job
+	var fresh []string
+	deferred := 0
+	for _, link := range links {
+		id := baytJobID(link)
+		switch {
+		case seen(id):
+			jobs = append(jobs, Job{ExternalID: id, URL: link, Company: e.Company, SeenRefresh: true})
+		case len(fresh) < budget:
+			fresh = append(fresh, link)
+		default:
+			deferred++
+		}
+	}
+	if deferred > 0 {
+		log.Printf("bayt: %s: hydration budget %d reached; %d new postings deferred to a later run", e.Board, budget, deferred)
+	}
+	return append(jobs, fetchDetails(fresh, baytDetailWorkers, func(link string) (Job, bool) {
+		return b.detail(ctx, e, link)
+	})...), nil
+}
+
+// listing walks the country's listing pages sequentially (one request at a time — the burst
+// throttling bayt's edge is documented to apply is a concurrency-triggered risk, which the
+// detail fan-out paces around with baytDetailWorkers) and returns every posting link, deduped.
+//
+// The end is the PAGER: a page that links no page beyond itself is the last one. Bayt never
+// answers an empty page past its end — measured 2026-10-20, ?page=1000 of the UAE listing
+// redirected to page 333 — so waiting for one walked into the cap and failed every country. A
+// genuinely empty page still ends the walk, for a page rendered without a pager. A page whose
+// links are all already-seen duplicates does not: only the pager or an empty page proves the
+// end. Every page failing, and reaching baytMaxPages, are hard failures rather than a partial
+// success — see the fullBoardListing interface (source.go) for the bar.
+func (b bayt) listing(ctx context.Context, e CompanyEntry) ([]string, error) {
 	seen := make(map[string]struct{})
 	var links []string
-	done := false
 	for page := 1; page <= baytMaxPages; page++ {
 		url := fmt.Sprintf("%s/en/%s/jobs/?page=%d", baytBaseURL, e.Board, page)
 		root, err := b.http.GetHTML(ctx, url)
@@ -117,8 +179,9 @@ func (b bayt) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
 		// before cross-page dedup — the raw count a genuinely empty page proof needs.
 		// baytListingLinks itself returns every anchor including navigation chrome, which
 		// is never empty even on the listing's last page, so it cannot serve as the proof.
+		hrefs := baytListingLinks(root)
 		var jobLinks []string
-		for _, href := range baytListingLinks(root) {
+		for _, href := range hrefs {
 			if baytJobID(href) != "" {
 				jobLinks = append(jobLinks, href)
 			}
@@ -132,17 +195,36 @@ func (b bayt) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
 			links = append(links, baytAbsURL(href))
 		}
 		if len(jobLinks) == 0 {
-			done = true
-			break // a genuinely empty page: the listing is exhausted
+			return links, nil // a genuinely empty page: the listing is exhausted
+		}
+		if last, ok := baytPagerLast(hrefs); ok && last <= page {
+			return links, nil // the pager links nothing beyond this page: it is the last
 		}
 	}
-	if !done {
-		return nil, fmt.Errorf("bayt: listing %s: reached the %d-page safety ceiling without finding the board's end", e.Board, baytMaxPages)
-	}
+	return nil, fmt.Errorf("bayt: listing %s: reached the %d-page safety ceiling without finding the board's end", e.Board, baytMaxPages)
+}
 
-	return fetchDetails(links, baytDetailWorkers, func(link string) (Job, bool) {
-		return b.detail(ctx, e, link)
-	}), nil
+// baytPagerPattern captures the page number of a listing pager link (?page=N or &page=N).
+var baytPagerPattern = regexp.MustCompile(`[?&]page=(\d+)`)
+
+// baytPagerLast returns the highest page number a listing page's pager links, and whether it
+// links any at all.
+func baytPagerLast(hrefs []string) (int, bool) {
+	last, found := 0, false
+	for _, href := range hrefs {
+		if baytJobID(href) != "" {
+			continue
+		}
+		if m := baytPagerPattern.FindStringSubmatch(href); m != nil {
+			if n, err := strconv.Atoi(m[1]); err == nil {
+				found = true
+				if n > last {
+					last = n
+				}
+			}
+		}
+	}
+	return last, found
 }
 
 // baytListingLinks collects every anchor href on a listing page; Fetch filters them to
@@ -182,8 +264,7 @@ func baytAbsURL(href string) string {
 // evidence the posting is gone. Everything else — a fetch failure (including a throttled
 // 403, the documented risk of a fast burst against Bayt's Akamai edge), a 200 with no
 // ld+json JobPosting at all, or one with no resolvable employer — comes back as an
-// unreadableDetail marker instead: this crawl now proves listing completeness
-// (fullBoardListing) and re-fetches every posting's detail on every run (no HydratingSource),
+// unreadableDetail marker instead: this crawl proves listing completeness (fullBoardListing),
 // so a plain drop on any of these would be indistinguishable from the posting having been
 // taken down, and a site-wide markup change that broke parsing would silently look like a
 // mass removal to the board-scoped close.
