@@ -47,6 +47,23 @@ var ATSDomains = []string{
 	"mail.paylocity.com",       // Paylocity applicant relay (subdomain: avoid product mail)
 }
 
+// JobBoardSenders are the application-mail addresses of job boards whose host also sends
+// everything else (alerts, feeds, digests), so the host fails the learned-domain precision
+// bar (MaxOtherShare) and is on no allowlist. Measured on prod 2026-10-21, share of synced
+// mail classified `other`: indeedapply@indeed.com 1% (562 hiring mails), noreply@indeed.com
+// 0%, no-reply-message@indeed.com 0%, applyonline@dice.com 0% — against 75% for indeed.com
+// and 88% for dice.com as hosts. Gmail's from: takes a full address as readily as a domain.
+//
+// No LinkedIn address, by the decision in #1027: its InMail and "just messaged you" mail is
+// recruiter outreach, not an application. The learned cache had re-admitted linkedin.com
+// wholesale (90% `other`); MaxOtherShare is what takes it back out.
+var JobBoardSenders = []string{
+	"indeedapply@indeed.com",
+	"noreply@indeed.com",
+	"no-reply-message@indeed.com",
+	"applyonline@dice.com",
+}
+
 // Only vendor/protocol-level signals belong hardcoded here — they generalise to
 // any job seeker. Niche one-off ATS domains observed in a single inbox are NOT
 // hardcoded; they enter the query via the self-learning cache (see learn.go), so
@@ -106,8 +123,9 @@ var recallPhrases = []string{
 // The exclusion sits OUTSIDE the alternation. Inside it, `-from:` would be one more thing a
 // message could match rather than a condition every message must meet.
 func BuildQueryFor(selfAddr string, afterUnix int64, extraDomains []string) string {
-	senders := make([]string, 0, len(ATSDomains)+len(extraDomains))
+	senders := make([]string, 0, len(ATSDomains)+len(JobBoardSenders)+len(extraDomains))
 	senders = append(senders, ATSDomains...)
+	senders = append(senders, JobBoardSenders...)
 	senders = append(senders, extraDomains...)
 
 	clauses := []string{

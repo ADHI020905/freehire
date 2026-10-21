@@ -217,3 +217,21 @@ func TestBuildQueryExcludesTheConnectedAddress(t *testing.T) {
 		t.Errorf("an address nobody gave leaked into the query:\n%s", plain)
 	}
 }
+
+// Job boards send hiring mail and much else from one host, so their DOMAIN fails the
+// learned-domain precision bar (indeed.com measured 75% `other`). The addresses that
+// carry application mail are listed instead; the rest of the host stays out.
+func TestBuildQueryJobBoardSenders(t *testing.T) {
+	q := BuildQueryFor("", 0, nil)
+	for _, addr := range []string{"indeedapply@indeed.com", "applyonline@dice.com"} {
+		if !strings.Contains(q, addr) {
+			t.Errorf("query missing job-board sender %s: %q", addr, q)
+		}
+	}
+	senders := strings.TrimSuffix(strings.SplitN(strings.SplitN(q, "from:(", 2)[1], ")", 2)[0], ")")
+	for _, s := range strings.Split(senders, " OR ") {
+		if s == "indeed.com" || s == "dice.com" {
+			t.Errorf("query lists the whole job-board host %s; only its application senders belong", s)
+		}
+	}
+}

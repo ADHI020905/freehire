@@ -31,7 +31,15 @@ func TestLearnableDomain(t *testing.T) {
 }
 
 // fakeLearnStore counts Observe calls per domain and promotes at the threshold.
-type fakeLearnStore struct{ counts map[string]int }
+type fakeLearnStore struct {
+	counts map[string]int
+	misses []string
+}
+
+func (f *fakeLearnStore) Miss(_ context.Context, host string) error {
+	f.misses = append(f.misses, host)
+	return nil
+}
 
 func (f *fakeLearnStore) Observe(_ context.Context, domain string) (int, error) {
 	f.counts[domain]++
@@ -67,5 +75,24 @@ func TestRecordJobMailLearnsThenPromotes(t *testing.T) {
 	promoted, _ := store.Promoted(ctx)
 	if len(promoted) != 1 || promoted[0] != "updates.teamex.io" {
 		t.Errorf("promoted = %v, want [updates.teamex.io]", promoted)
+	}
+}
+
+func TestRecordNonJobMailCountsAgainstLearnableSender(t *testing.T) {
+	store := &fakeLearnStore{counts: map[string]int{}}
+	ctx := context.Background()
+
+	// The same senders RecordJobMail ignores are ignored here: free-mail and known ATS
+	// domains are never in the cache, so there is nothing to count against.
+	_ = RecordNonJobMail(ctx, store, "friend@gmail.com")
+	_ = RecordNonJobMail(ctx, store, "no-reply@ashbyhq.com")
+	if err := RecordNonJobMail(ctx, store, "Security <no-reply@accounts.google.com>"); err != nil {
+		t.Fatalf("RecordNonJobMail: %v", err)
+	}
+	if len(store.misses) != 1 || store.misses[0] != "accounts.google.com" {
+		t.Errorf("misses = %v, want [accounts.google.com]", store.misses)
+	}
+	if len(store.counts) != 0 {
+		t.Errorf("a miss recorded a hit: %v", store.counts)
 	}
 }

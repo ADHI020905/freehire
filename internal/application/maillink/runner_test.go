@@ -156,10 +156,15 @@ func TestRunnerFeedsHTMLOnlyBodyToClassifier(t *testing.T) {
 	}
 }
 
-type fakeLearner struct{ learned []string }
+type fakeLearner struct{ learned, missed []string }
 
 func (l *fakeLearner) Learn(_ context.Context, fromAddr string) error {
 	l.learned = append(l.learned, fromAddr)
+	return nil
+}
+
+func (l *fakeLearner) Miss(_ context.Context, fromAddr string) error {
+	l.missed = append(l.missed, fromAddr)
 	return nil
 }
 
@@ -194,6 +199,11 @@ func TestRunnerDoesNotLearnNonApplicationMail(t *testing.T) {
 	}
 	if len(learner.learned) != 0 {
 		t.Errorf("learned %v, want none (signal was 'other')", learner.learned)
+	}
+	// ...but it counts against the sender: a learned domain whose mail is mostly not
+	// about applications must lose its place in the sync allowlist.
+	if len(learner.missed) != 1 || learner.missed[0] != "news@newsletter.example" {
+		t.Errorf("missed = %v, want [news@newsletter.example]", learner.missed)
 	}
 }
 
@@ -242,6 +252,30 @@ func TestRunnerLearnsOnlyFromTheMailboxThatAuthenticatedTheSender(t *testing.T) 
 			if len(learner.learned) != 0 {
 				t.Errorf("learned %v from %q mail, want none — that From is not authenticated",
 					learner.learned, source)
+			}
+		})
+	}
+}
+
+// The mirror image: a miss demotes a domain, so a forged From on hosted or external mail
+// could push a real ATS out of every user's sync allowlist.
+func TestRunnerCountsMissesOnlyFromTheMailboxThatAuthenticatedTheSender(t *testing.T) {
+	for _, source := range []string{"hosted", "external", ""} {
+		t.Run("source="+source, func(t *testing.T) {
+			store := &fakeStore{claimed: []Claimed{{
+				OutboxID: 100, EmailID: 200, UserID: 1, Source: source,
+				FromAddr: "no-reply@realats.example", Subject: "Weekly digest", Body: "…",
+			}}}
+			cls := &fakeClassifier{out: mailclassify.Classification{Signal: mailclassify.SignalOther, Confidence: 0.9}}
+			learner := &fakeLearner{}
+			r := New(store, cls, "test-model").WithLearner(learner)
+
+			if _, err := r.Run(context.Background()); err != nil {
+				t.Fatalf("Run: %v", err)
+			}
+			if len(learner.missed) != 0 {
+				t.Errorf("missed %v from %q mail, want none — that From is not authenticated",
+					learner.missed, source)
 			}
 		})
 	}

@@ -97,11 +97,13 @@ type Classifier interface {
 }
 
 // Learner records the sender of a confidently-classified application email so a
-// recurring unknown ATS domain can be learned into the sync allowlist. Optional:
-// a nil learner disables the feedback loop. Kept minimal so maillink stays
+// recurring unknown ATS domain can be learned into the sync allowlist, and the sender of
+// non-application mail so a learned domain that is mostly noise falls back out of it.
+// Optional: a nil learner disables the feedback loop. Kept minimal so maillink stays
 // decoupled from the sync package that implements it.
 type Learner interface {
 	Learn(ctx context.Context, fromAddr string) error
+	Miss(ctx context.Context, fromAddr string) error
 }
 
 // Runner drains the outbox.
@@ -312,13 +314,28 @@ func (r *Runner) process(ctx context.Context, cache appCache, c Claimed) error {
 	// reads From out of the MIME headers), and external mail is whatever the caller's own
 	// harness pushed — so on those two tiers anyone who can post to an address could
 	// nominate the domain they want trusted.
-	if r.learner != nil && c.Source == "gmail" &&
-		cls.Signal != "" && cls.Signal != mailclassify.SignalOther && cls.Confidence >= r.cfg.stage {
-		if err := r.learner.Learn(ctx, c.FromAddr); err != nil {
-			log.Printf("maillink: learn %q: %v", c.FromAddr, err)
-		}
+	if r.learner != nil && c.Source == "gmail" {
+		r.learn(ctx, c.FromAddr, cls)
 	}
 	return nil
+}
+
+// learn feeds one Gmail classification to the learner. `other` counts against the sender
+// at any confidence — demoting is the safe direction, and a domain's noise is what keeps
+// it out of every user's query. The same From-authentication argument applies to misses
+// as to hits: a forged From that could demote a real ATS is the same forgery that could
+// promote one.
+func (r *Runner) learn(ctx context.Context, fromAddr string, cls mailclassify.Classification) {
+	switch {
+	case cls.Signal == mailclassify.SignalOther:
+		if err := r.learner.Miss(ctx, fromAddr); err != nil {
+			log.Printf("maillink: miss %q: %v", fromAddr, err)
+		}
+	case cls.Signal != "" && cls.Confidence >= r.cfg.stage:
+		if err := r.learner.Learn(ctx, fromAddr); err != nil {
+			log.Printf("maillink: learn %q: %v", fromAddr, err)
+		}
+	}
 }
 
 // matchCandidates attaches each application's already-linked thread ids so the

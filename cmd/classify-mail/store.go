@@ -29,6 +29,10 @@ func (l domainLearner) Learn(ctx context.Context, fromAddr string) error {
 	return gmailsync.RecordJobMail(ctx, l.store, fromAddr)
 }
 
+func (l domainLearner) Miss(ctx context.Context, fromAddr string) error {
+	return gmailsync.RecordNonJobMail(ctx, l.store, fromAddr)
+}
+
 // dbStore adapts the generated queries + connection pool to maillink.Store. The
 // success path (SetEmailClassification + optional stage advance + delete outbox
 // row) runs in one transaction here.

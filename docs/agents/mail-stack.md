@@ -289,7 +289,9 @@ the point: it is the tier that costs us nothing. See the `external` bullets belo
   nothing here ever clears `failed_at`. An unrecognised source is deliberately on the
   *upstream* side: the one time that fired, the column was fine and the store's own mapping
   had dropped the field.
-- **The self-learning ATS-domain cache is fed by Gmail mail only.** What `learner.Learn`
+- **The self-learning ATS-domain cache is fed by Gmail mail only** — hits and misses alike.
+  A miss demotes, so a forged `From` could push a real ATS out as easily as a hit could pull
+  one in. What `learner.Learn`
   records is a domain read off `From`, and the cache decides which senders a future sync
   accepts. Gmail authenticated that `From`; hosted mail's is whatever SMTP claimed and
   external mail's is whatever the caller's harness pushed, so on those tiers anyone able to
@@ -354,5 +356,8 @@ every other worker in this repo.
   restricted and therefore carries an annual paid security assessment; the calendar scopes
   beside it do not. [../google-oauth-verification.md](../google-oauth-verification.md) is
   the runbook, and holds the scope justifications and demo-video script the forms ask for.
-- `internal/application/gmailsync/learn.go` self-learns confident job-mail sender domains; promotion is
-  count-based and has no decay.
+- `internal/application/gmailsync/learn.go` self-learns confident job-mail sender domains. Promotion
+  needs `PromoteThreshold` hits AND at most `MaxOtherShare` of the domain's mail classified
+  `other` (misses, `learned_ats_domains.other_hits`, migration 0185): a promoted domain's
+  whole mailstream joins every user's query, and a count alone had admitted google.com and
+  linkedin.com. There is no decay; a demoted domain's misses stay.

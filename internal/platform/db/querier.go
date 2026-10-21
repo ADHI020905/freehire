@@ -5023,6 +5023,10 @@ type Querier interface {
 	// after normalisation, so a private title merges into a public one's count rather than
 	// standing alone under it.
 	MineJobTitles(ctx context.Context) ([]MineJobTitlesRow, error)
+	// Record one non-job sighting (classified `other`) against the learned domain that covers
+	// this sender host: the domain itself or a parent, the way from:domain matches. Updates only
+	// — a host no learned domain covers is not inserted, so newsletters never enter the table.
+	MissLearnedDomain(ctx context.Context, host string) error
 	// The kinds this user currently has live against one company. The write surface needs
 	// it to open in the right state: without it a returning reader cannot be shown that
 	// they already reported, and the only way to find out would be to try and be refused.
@@ -5155,9 +5159,11 @@ type Querier interface {
 	// the caller rather than about the code, and telling them "you have already used a code" is
 	// both useful and leaks nothing.
 	PreviewPromoCode(ctx context.Context, code string) (int16, error)
-	// Domains whose confident-hit count has reached the promotion threshold; the sync
-	// worker unions these into the Gmail search query.
-	PromotedDomains(ctx context.Context, threshold int32) ([]string, error)
+	// Domains with enough confident hits AND mostly job mail: at most max_other_share of their
+	// sightings classified `other`. The sync worker unions these into the Gmail search query.
+	// The share is compared as a quotient so an exact boundary (2 of 6 against 1/3) is inclusive;
+	// NULLIF because SQL does not promise to evaluate the threshold first.
+	PromotedDomains(ctx context.Context, arg PromotedDomainsParams) ([]string, error)
 	// Denormalize each company's curated-collection set onto its jobs, so the search
 	// facet (jobs.collections) reflects current membership — one keyset batch at a
 	// time. Run by cmd/import-collections after it writes companies.collections, which

@@ -896,6 +896,7 @@ type LearnedAtsDomain struct {
 	ConfidentHits int32              `json:"confident_hits"`
 	FirstSeenAt   pgtype.Timestamptz `json:"first_seen_at"`
 	LastSeenAt    pgtype.Timestamptz `json:"last_seen_at"`
+	OtherHits     int64              `json:"other_hits"`
 }
 
 type Mailbox struct {

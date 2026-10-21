@@ -66,8 +66,17 @@ func (s *DBStore) Observe(ctx context.Context, domain string) (int, error) {
 	return int(hits), err
 }
 
-// Promoted returns the domains whose confident-hit count has reached the
-// promotion threshold — the read side the sync worker unions into the query.
+// Miss counts one non-job sighting against the learned domain covering host.
+// Implements LearnedDomainStore.
+func (s *DBStore) Miss(ctx context.Context, host string) error {
+	return s.q.MissLearnedDomain(ctx, host)
+}
+
+// Promoted returns the domains that reached the promotion threshold with at most
+// MaxOtherShare of their mail `other` — the read side the sync worker unions into the query.
 func (s *DBStore) Promoted(ctx context.Context) ([]string, error) {
-	return s.q.PromotedDomains(ctx, PromoteThreshold)
+	return s.q.PromotedDomains(ctx, db.PromotedDomainsParams{
+		Threshold:     PromoteThreshold,
+		MaxOtherShare: MaxOtherShare,
+	})
 }

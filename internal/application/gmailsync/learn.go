@@ -5,19 +5,28 @@ import "context"
 // The self-learning ATS-domain cache. It closes the overfitting trap of the
 // hardcoded allowlist: instead of a human adding every niche ATS domain seen in
 // one inbox, a domain earns its place after its mail is confidently classified as
-// job-application mail PromoteThreshold times. BuildQueryFor then unions the promoted
+// job-application mail PromoteThreshold times, and keeps it only while at most
+// MaxOtherShare of its mail is classified `other`. BuildQueryFor then unions the promoted
 // domains into the sync query, so coverage grows from real classifications.
 //
 // Wiring (two seams): the write side — mailclassify/maillink calls RecordJobMail
-// with the sender when it confidently labels an email as an application — and the
+// with the sender when it confidently labels an email as an application, and
+// RecordNonJobMail when it labels one `other` — and the
 // read side — the sync Worker loads Promoted() and passes it to BuildQueryFor. The
-// DB adapter over the learned_ats_domains table (migration 0036) implements
+// DB adapter over the learned_ats_domains table (migrations 0036, 0185) implements
 // LearnedDomainStore.
 
 // PromoteThreshold is how many confident job-mail sightings a domain needs before
 // it joins the sync allowlist. Above 1 so a single misclassification can't promote
 // a newsletter domain.
 const PromoteThreshold = 3
+
+// MaxOtherShare bounds how much of a domain's mail may be classified `other` for it to stay
+// promoted. A promoted domain's whole mailstream joins every user's query, so the hit count
+// alone learned senders that mail a few hiring messages among many others — on prod,
+// google.com (98% `other`) and linkedin.com (87%). Real recruiter and ATS domains measured
+// under 20%; a third leaves headroom without keeping a mostly-noise sender.
+const MaxOtherShare = 1.0 / 3
 
 // DomainSource is the read side the sync Worker depends on: the promoted domains
 // to union into the query. A nil/empty result leaves the query at its hardcoded
@@ -27,10 +36,12 @@ type DomainSource interface {
 }
 
 // LearnedDomainStore is the full port: the read side plus Observe, which records
-// one confident sighting and returns the domain's running count.
+// one confident sighting and returns the domain's running count, and Miss, which counts
+// one non-job sighting against the learned domain covering a sender host (if any).
 type LearnedDomainStore interface {
 	DomainSource
 	Observe(ctx context.Context, domain string) (count int, err error)
+	Miss(ctx context.Context, host string) error
 }
 
 // noLearnedDomains is the default DomainSource: it learns nothing, so a Worker
@@ -76,4 +87,16 @@ func RecordJobMail(ctx context.Context, store LearnedDomainStore, from string) e
 	}
 	_, err := store.Observe(ctx, domain)
 	return err
+}
+
+// RecordNonJobMail is the other half of the write side: the classifier calls it for mail
+// it labelled `other`, counting it against the learned domain that brought it in (see
+// MaxOtherShare). The same senders RecordJobMail skips are skipped — they are never in
+// the cache.
+func RecordNonJobMail(ctx context.Context, store LearnedDomainStore, from string) error {
+	host, ok := LearnableDomain(from)
+	if !ok {
+		return nil
+	}
+	return store.Miss(ctx, host)
 }
