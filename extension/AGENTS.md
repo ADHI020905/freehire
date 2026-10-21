@@ -48,6 +48,9 @@ extension/            WXT + Svelte MV3 extension (npm-managed; the repo's other
                       dispatch (+ tests), the ToolChannel socket to hire's relay,
                       and the PageBridge that reaches the tab's frames.
     auth.ts           "Sign in with freehire" (launchWebAuthFlow) + token storage
+    analytics.ts      anonymous usage events to GA4 via the Measurement Protocol
+                      (gtag.js is remote code MV3 forbids); inert without the
+                      WXT_GA_* build vars (+ test)
     freehire.ts       hire API reads (job, match, autofill profile)
     protocol.ts       in-extension RuntimeMessage contract (+ test)
     scraper.ts        DOM -> PageSnapshot, pure over its Document arg (+ test)

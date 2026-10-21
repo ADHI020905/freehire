@@ -109,13 +109,18 @@ describe('sendTurn', () => {
       ok: false,
       status: 402,
       body: null,
-      json: async () => ({ error: "Your plan doesn't include assistant messages.", upgrade_url: '/my/plan' }),
+      json: async () => ({
+        error: "Your plan doesn't include assistant messages.",
+        upgrade_url: '/my/plan',
+        allowance: { feature: 'assistant' },
+      }),
     }));
 
     const err = await sendTurn('s1', 'hi', 'tok', () => {}).done.catch((e: unknown) => e);
     expect(err).toBeInstanceOf(PlanRefused);
     expect((err as PlanRefused).message).toBe("Your plan doesn't include assistant messages.");
     expect((err as PlanRefused).upgradeUrl).toBe('/my/plan');
+    expect((err as PlanRefused).feature).toBe('assistant');
   });
 
   it('still rejects with a PlanRefused when the 402 body is unreadable', async () => {

@@ -160,13 +160,14 @@
         <li>
           <span class="font-medium text-foreground">Session token.</span> Signing in stores your
           freehire session token in <code class="font-mono text-foreground">chrome.storage.local</code
-          >, scoped to your browser profile. Nothing else is stored there.
+          >, scoped to your browser profile, alongside the random analytics id described below.
+          Nothing else is stored there.
         </li>
         <li>
           <span class="font-medium text-foreground">Page content.</span> While the panel is open and
           only in service of what you asked for, it can read the current page's URL, title, and
           visible text (capped at 5,000 characters), or the fields of a job-application form you asked
-          it to fill. This is sent to freehire.me — the only host the extension talks to — and kept in
+          it to fill. This is sent to freehire.me and nowhere else, and kept in
           that conversation's transcript, which you can read and delete from your account. A read is
           always named in the panel, and browser-internal pages, other extensions' pages, and local
           files are never read.
@@ -175,6 +176,13 @@
           <span class="font-medium text-foreground">Profile data for Autofill.</span> Filling an
           application form sends the relevant fields from your freehire profile (name, email, phone,
           CV fields) to the page; you review and submit yourself.
+        </li>
+        <li>
+          <span class="font-medium text-foreground">Usage analytics.</span> The extension sends
+          anonymous usage events to Google Analytics — that the panel was opened, that you signed
+          in, sent a chat message, ran Autofill, or reached a plan limit — under a random id minted
+          for this browser profile, not your freehire account. No page address, page content,
+          message, or profile field is ever part of an event.
         </li>
       </ul>
       <p class="text-sm leading-relaxed text-muted-foreground">

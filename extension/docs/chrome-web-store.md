@@ -71,7 +71,7 @@ Paste one per field in the dashboard.
 
 ## Privacy practices
 
-Data collected — declare all three:
+Data collected — declare all four:
 
 - **Personally identifiable information** — name, email, phone and CV fields from
   the user's freehire profile, fetched to fill application forms.
@@ -79,8 +79,8 @@ Data collected — declare all three:
   `chrome.storage.local`.
 - **Website content** — the URL, title and visible text (capped at 5000
   characters, see `extension/lib/scraper.ts`) of the page open while the user is
-  asking about it, plus the form fields Autofill reads. Sent to `freehire.me`,
-  which is the only host this extension contacts.
+  asking about it, plus the form fields Autofill reads. Sent to `freehire.me`
+  and nowhere else.
 
   Two things worth stating plainly, because they changed: the agent now decides
   when to read the page — during a turn, when the user's question is about what is
@@ -93,6 +93,13 @@ Data collected — declare all three:
   touched. And every read is named in the conversation itself — the panel shows
   which page it read, without the query string, so a read the user did not expect
   is one they can see.
+
+- **User activity** — anonymous usage events (`extension/lib/analytics.ts`):
+  the panel opened, a sign-in, a chat message sent, Autofill run, a plan limit
+  shown and its upgrade link clicked. Sent to Google Analytics under a random
+  per-install id, never the freehire account; no URL, page text, message or
+  profile field is ever part of an event. This is the only request the
+  extension makes to a host other than `freehire.me`.
 
 Not collected: health, financial, location, personal communications, browsing
 history, keystroke logging.

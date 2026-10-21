@@ -8,6 +8,7 @@
   import { initChat, reduceTurnEvent, type ChatState } from '../../lib/assistant/chat';
   import { eventsFromTranscript } from '../../lib/assistant/wire';
   import { recallSession, rememberSession, forgetSession } from '../../lib/assistant/session';
+  import { track } from '../../lib/analytics';
   import { HIRE_ORIGIN, signIn, signOut, getToken, fetchMe, type HireUser } from '../../lib/auth';
   import {
     freehireSlugFromUrl,
@@ -90,6 +91,7 @@
   let activeTab = $state<'match' | 'chat'>('match');
 
   onMount(() => {
+    track('panel_open');
     // The conversation is created lazily on the first message, so an idle panel
     // starts nothing; a conversation held earlier is repainted here.
     void restoreSession();
@@ -349,6 +351,7 @@
       user = await fetchMe(token);
       if (!user) authError = 'Signed in, but could not load your account.';
       else {
+        track('sign_in');
         tools.start(token);
         chatPageKey = await currentPageKey();
         void loadMatch();
@@ -407,6 +410,7 @@
         chat = reduceTurnEvent(chat, event);
       });
       await turn.done;
+      track('assistant_message');
     } catch (err) {
       // An aborted fetch is the Stop button, not a failure: the stream may drop
       // before the response headers arrive, which lands here rather than in the
@@ -416,6 +420,7 @@
       } else if (err instanceof PlanRefused) {
         // The turn never started, so there is no assistant message to close.
         planRefusal = err;
+        track('plan_refused', { feature: err.feature, upgrade_offered: err.upgradeUrl !== null });
       } else {
         chatError = err instanceof Error ? err.message : 'Could not reach the agent.';
         // Close the open message. Without this the turn keeps its `streaming`
@@ -699,6 +704,7 @@
       if (report.filled.length > 0) formFilled = true;
       await walkReported(report.filled);
       const filled = report.filled.length;
+      track('autofill', { mode: 'agent', filled });
       notices.push(
         filled > 0
           ? `✓ Autofilled ${filled} field${filled === 1 ? '' : 's'} — review before submitting.`
@@ -713,6 +719,7 @@
       notices.push(
         `Agent autofill unavailable: ${err instanceof Error ? err.message : 'error'} — using the basic filler.`,
       );
+      track('autofill', { mode: 'basic' });
       await deterministicAutofill(token);
     } finally {
       autofilling = false;
@@ -982,7 +989,9 @@
                   size="sm"
                   href={`${HIRE_ORIGIN}${planRefusal.upgradeUrl}`}
                   target="_blank"
-                  rel="noreferrer">Upgrade your plan</Button
+                  rel="noreferrer"
+                  onclick={() => track('upgrade_click', { feature: planRefusal?.feature ?? 'unknown' })}
+                  >Upgrade your plan</Button
                 >
               {/if}
             </Alert>

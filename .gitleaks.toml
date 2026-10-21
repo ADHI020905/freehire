@@ -72,3 +72,8 @@ regexes = ['''^data-job-key='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 description = "Paradox names each posting by a `job_token` of the shape PDX_JONB_<UUID>_<number> (internal/ingest/sources/testdata/paradox/). It is the posting's id inside the public job JSON every visitor's browser receives, not a credential; the field name is what trips generic-api-key. Pinned to that exact shape."
 regexTarget = "secret"
 regexes = ['''^PDX_JONB_[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}_[0-9]+$''']
+
+[[allowlists]]
+description = "The extension's GA4 Measurement Protocol API secret. It ships inside every published build (MV3 cannot fetch it at runtime from anywhere a reader could not), and all it permits is sending events to the site's own analytics stream — public by construction, like the gtag measurement id beside it. Matched by the variable it is assigned to, so a different key pasted into the same file still fails."
+regexTarget = "line"
+regexes = ['''WXT_GA_API_SECRET=[A-Za-z0-9_-]{16,40}''']

@@ -24,11 +24,14 @@ const BASE = `${HIRE_ORIGIN}/api/v1/assistant`;
 export class PlanRefused extends Error {
   /** A path on the hire origin (e.g. `/my/plan`), or null when nothing is for sale. */
   readonly upgradeUrl: string | null;
+  /** The metered feature that refused (e.g. `assistant`), or `unknown`. */
+  readonly feature: string;
 
-  constructor(message: string, upgradeUrl: string | null) {
+  constructor(message: string, upgradeUrl: string | null, feature = 'unknown') {
     super(message);
     this.name = 'PlanRefused';
     this.upgradeUrl = upgradeUrl;
+    this.feature = feature;
   }
 }
 
@@ -114,6 +117,7 @@ async function planRefusal(res: Response): Promise<PlanRefused> {
     return new PlanRefused(
       typeof body?.error === 'string' ? body.error : fallback,
       typeof body?.upgrade_url === 'string' ? body.upgrade_url : null,
+      typeof body?.allowance?.feature === 'string' ? body.allowance.feature : 'unknown',
     );
   } catch {
     return new PlanRefused(fallback, null);
