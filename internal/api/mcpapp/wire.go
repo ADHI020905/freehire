@@ -70,7 +70,16 @@ type SearchJobsResult struct {
 	// refusing — a retired facet must not break a saved search, and silence is what let a
 	// mistyped country pass for a search of that country.
 	IgnoredParams []string `json:"ignored_params,omitempty" jsonschema:"filters that were not applied; the answer is wider than asked"`
+	// Semantic reports what became of a `semantic: true` request: SemanticApplied, or
+	// SemanticUnavailable when it was answered by keywords alone. Omitted when not asked.
+	Semantic string `json:"semantic,omitempty" jsonschema:"applied: matched by meaning as asked; unavailable: answered by keywords only"`
 }
+
+// The two values of SearchJobsResult.Semantic.
+const (
+	SemanticApplied     = "applied"
+	SemanticUnavailable = "unavailable"
+)
 
 // JobResult is one posting in full: the summary plus what only a chosen posting is worth
 // reading.

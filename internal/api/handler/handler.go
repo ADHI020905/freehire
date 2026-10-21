@@ -299,13 +299,19 @@ func listResponseWithHidden(c *fiber.Ctx, data any, total, hidden int64, limit, 
 // learns to skip — at which point the one response that does carry a warning
 // gets skipped too.
 func listResponseWithIgnored(c *fiber.Ctx, data any, total int64, limit, offset int, ignored []search.UnknownParam, values map[string][]string) error {
+	return c.JSON(fiber.Map{"data": data, "meta": listMeta(total, limit, offset, ignored, values)})
+}
+
+// listMeta is listResponseWithIgnored's meta block, for a list endpoint that has one
+// more thing of its own to say beside it.
+func listMeta(total int64, limit, offset int, ignored []search.UnknownParam, values map[string][]string) fiber.Map {
 	meta := fiber.Map{
 		"total":  total,
 		"limit":  limit,
 		"offset": offset,
 	}
 	addIgnored(meta, ignored, values)
-	return c.JSON(fiber.Map{"data": data, "meta": meta})
+	return meta
 }
 
 // dataResponseWithIgnored is listResponseWithIgnored for the single-item
@@ -732,19 +738,23 @@ func Register(app *fiber.App, cfg Config) {
 		sitemapFreshJobs = cfg.Search
 	}
 	sitemapH := newSitemapHandlers(sitemapJobs, sitemapCompanies, sitemapFreshJobs)
+	// One opt-in semantic search for both agent surfaces, so OJCP and /agent/jobs/search
+	// cannot disagree about when a query was answered by meaning. The embedder is assigned
+	// only when set: a nil *search.QueryEmbedder in the interface field would be a non-nil
+	// interface, and the "no backend" check would never fire.
+	semantic := semanticSearch{threshold: cfg.SemanticScoreThreshold}
+	if cfg.QueryEmbedder != nil {
+		semantic.embedder = cfg.QueryEmbedder
+	}
 	searchH := newSearchHandlers(jobSearch, facets, queries, cfg.Cache, profileSvc)
+	searchH.semantic = semantic
 	// The OJCP read surface. It shares the search backend and the store with the handlers
 	// above rather than holding its own: an agent's question and a browser's must reach the
 	// same catalogue, or the two answers drift.
 	ojcpH := newOJCPHandlers(jobSearch, queries, cfg.FrontendOrigin, atsapply.SubmittableProviders())
 	ojcpH.signer = cfg.OJCPSigner
 	ojcpH.anonStrict = cfg.PublicAnonStrict
-	// Assigned only when set: a nil *search.QueryEmbedder in the interface field would be
-	// a non-nil interface, and the handler's "no backend" check would never fire.
-	if cfg.QueryEmbedder != nil {
-		ojcpH.embedder = cfg.QueryEmbedder
-	}
-	ojcpH.scoreThreshold = cfg.SemanticScoreThreshold
+	ojcpH.semantic = semantic
 	// The ChatGPT app's MCP surface. A SECOND MCP server beside the OJCP one, over the same
 	// search backend and the same store: that one renders a foreign schema for agents which
 	// branch on error codes, this one renders ours for a language model reading prose. They
@@ -752,6 +762,7 @@ func Register(app *fiber.App, cfg Config) {
 	mcpappH := newMCPAppHandlers(jobSearch, companySearch, queries, cfg.FrontendOrigin)
 	mcpappH.facets = facets
 	mcpappH.cache = cfg.Cache
+	mcpappH.semantic = semantic
 	// The completion dictionary. Left nil when search is unconfigured — same reason as
 	// jobSearch above: a nil *suggest.Service wrapped in the interface would be a
 	// non-nil interface, and the handler's "not configured" check would pass straight

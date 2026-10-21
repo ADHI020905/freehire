@@ -53,6 +53,9 @@ type mcpappHandlers struct {
 	facets    facetCounter
 	cache     cache.Cache
 	projector mcpapp.Projector
+	// semantic answers search_jobs' opt-in `semantic: true`; the same value the OJCP and
+	// agent search surfaces hold.
+	semantic semanticSearch
 	// origin is the site's address; the MCP server builds its icon and website link from it.
 	origin string
 }
@@ -95,12 +98,18 @@ func (h *mcpappHandlers) SearchJobs(ctx context.Context, in mcpapp.SearchInput) 
 	values := in.QueryValues()
 	limit, offset := in.Page()
 
-	res, err := h.search.Search(ctx, search.SearchParams{
+	params := search.SearchParams{
 		Query:  values.Get("q"),
 		Filter: search.FilterFromValues(values),
 		Limit:  limit,
 		Offset: offset,
-	})
+	}
+	ignored := in.Unsupported()
+	res, outcome, err := h.semantic.search(ctx, h.search, params, in.WantsSemantic())
+	if outcome == semanticDropped {
+		// Nothing to embed, so the flag was not honoured and says so like any dropped filter.
+		ignored = append(ignored, "semantic")
+	}
 	if err != nil {
 		return mcpapp.SearchJobsResult{}, err
 	}
@@ -120,7 +129,8 @@ func (h *mcpappHandlers) SearchJobs(ctx context.Context, in mcpapp.SearchInput) 
 		Total:         int(res.Total),
 		Offset:        offset,
 		Jobs:          jobs,
-		IgnoredParams: in.Unsupported(),
+		IgnoredParams: ignored,
+		Semantic:      outcome.wire(mcpapp.SemanticApplied, mcpapp.SemanticUnavailable),
 	}, nil
 }
 

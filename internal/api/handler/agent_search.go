@@ -25,11 +25,16 @@ type jobDescriptions interface {
 // lightweight variant uses that endpoint instead. Public and unauthenticated like
 // the other job reads; full descriptions are already public via the detail
 // endpoint.
+//
+// `semantic=true` opts into the same hybrid search OJCP offers (see semanticSearch);
+// meta.semantic then says whether the description vectors answered ("applied") or the
+// request fell back to keywords ("unavailable"). Omitted when not asked.
 func (h *searchHandlers) AgentSearchJobs(c *fiber.Ctx) error {
-	res, limit, offset, dropped, err := h.runJobSearch(c)
+	out, err := h.runJobSearch(c, c.QueryBool("semantic"))
 	if err != nil {
 		return err
 	}
+	res := out.res
 
 	if len(res.Hits) > 0 {
 		if err := h.hydrateDescriptions(c.Context(), res.Hits); err != nil {
@@ -44,8 +49,12 @@ func (h *searchHandlers) AgentSearchJobs(c *fiber.Ctx) error {
 		views[i] = hit.Job
 	}
 
-	ignored := mergedJobSearchIgnored(c, agentSearchParams, dropped)
-	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignored, ignoredJobValues(c))
+	ignored := mergedJobSearchIgnored(c, agentSearchParams, out.dropped)
+	meta := listMeta(res.Total, out.limit, out.offset, ignored, ignoredJobValues(c))
+	if out.semantic != "" {
+		meta["semantic"] = out.semantic
+	}
+	return c.JSON(fiber.Map{"data": views, "meta": meta})
 }
 
 // hydrateDescriptions replaces each hit's truncated preview description with the

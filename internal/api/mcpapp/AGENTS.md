@@ -36,6 +36,15 @@ shows. Neither is a trade worth making.
 **Do not make them share a tool registration.** What they must share — and do — is the
 `Reader`, so they cannot disagree about what is in the catalogue.
 
+## Semantic search
+
+`search_jobs` takes `semantic: true` and answers it through the same `semanticSearch` value
+(`internal/api/handler/semantic_search.go`) OJCP and `/agent/jobs/search` hold, so the three
+cannot disagree about when a query was matched by meaning. The result's `semantic` says
+`applied` or `unavailable`; the latter is a keyword-only answer, never an error. It is off
+unless asked: description vectors exist only for `is_tech` postings, so for most of the
+catalogue the keyword hits are the answer anyway.
+
 ## What the tools must not do
 
 - **Return a full description from `search_jobs`.** `/agent/jobs/search` rehydrates every

@@ -42,8 +42,7 @@ func (f *fakeQueryEmbedder) EmbedQuery(_ context.Context, text string) ([]float3
 
 func semanticHandlers(s searcher, e queryEmbedder) *ojcpHandlers {
 	h := newOJCPHandlers(s, fakeOJCPStore{}, "https://freehire.me", nil)
-	h.embedder = e
-	h.scoreThreshold = 0.7
+	h.semantic = semanticSearch{embedder: e, threshold: 0.7}
 	return h
 }
 

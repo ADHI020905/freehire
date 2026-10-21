@@ -265,6 +265,11 @@ paths:
 
         Responses are several times larger per hit than `searchJobs`, so prefer a
         small `limit`.
+
+        Send `semantic=true` to rank by meaning as well as keywords (a hybrid search
+        over posting descriptions). `meta.semantic` then says whether that ran
+        (`applied`) or the request was answered by keywords alone (`unavailable`);
+        it is omitted when the flag was not sent.
       x-openai-isConsequential: false
       parameters:
         - $ref: "#/components/parameters/Q"
@@ -274,6 +279,7 @@ paths:
         - $ref: "#/components/parameters/Sort"
         - $ref: "#/components/parameters/Order"
         - $ref: "#/components/parameters/DescriptionFormat"
+        - $ref: "#/components/parameters/Semantic"
         - $ref: "#/components/parameters/Regions"
         - $ref: "#/components/parameters/Countries"
         - $ref: "#/components/parameters/Cities"
@@ -1090,6 +1096,18 @@ components:
       description: |
         Format of the full description. `html` is the stored verbatim markup;
         any unrecognized value falls back to it rather than erroring.
+    Semantic:
+      name: semantic
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: |
+        `true` also matches postings that describe `q` in other words, e.g.
+        "help kids learn to read" finding a reading interventionist. Needs `q`
+        (without it the flag is reported in `meta.ignored_params`) and is not
+        combined with `sort=match`. Description vectors cover technical roles;
+        elsewhere the keyword hits answer.
     Regions:
       name: regions
       in: query

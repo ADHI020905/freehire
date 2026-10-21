@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/strelov1/freehire/internal/api/ojcp"
 	"github.com/strelov1/freehire/internal/dict/skillvec"
 	"github.com/strelov1/freehire/internal/identity/auth"
 	"github.com/strelov1/freehire/internal/identity/userprofile"
@@ -40,6 +41,9 @@ type searchHandlers struct {
 	// userProfile reads the caller's profile skills for the match sort. Nil disables
 	// that sort entirely, which is exactly how it degrades everywhere else.
 	userProfile profileReader
+	// semantic answers /agent/jobs/search's opt-in `semantic=true`; shared with OJCP.
+	// The public /jobs/search never asks for it.
+	semantic semanticSearch
 }
 
 // profileReader loads a caller's profile. *userprofile.Service satisfies it; tests
@@ -103,9 +107,9 @@ var searchParams = []string{"q", "sort", "order", "limit", "offset"}
 // searchParams but never reads q_fields) understand.
 var jobSearchParams = slices.Concat(searchParams, []string{"q_fields"})
 
-// agentSearchParams is jobSearchParams plus the agent endpoint's
-// response-format selector.
-var agentSearchParams = slices.Concat(jobSearchParams, []string{"description_format"})
+// agentSearchParams is jobSearchParams plus the agent endpoint's own two: the
+// response-format selector and the opt-in semantic search.
+var agentSearchParams = slices.Concat(jobSearchParams, []string{"description_format", "semantic"})
 
 // ignoredParams reports the query params of this request that neither the filter
 // nor the endpoint itself reads. They are echoed in the response meta instead of
@@ -178,10 +182,11 @@ func (h *searchHandlers) matchVector(c *fiber.Ctx) []float32 {
 // view...], "meta": {total, limit, offset}} — results carry public_slug and never
 // the internal id.
 func (h *searchHandlers) SearchJobs(c *fiber.Ctx) error {
-	res, limit, offset, dropped, err := h.runJobSearch(c)
+	out, err := h.runJobSearch(c, false)
 	if err != nil {
 		return err
 	}
+	res, limit, offset, dropped := out.res, out.limit, out.offset, out.dropped
 
 	views := make([]jobview.Job, len(res.Hits))
 	for i, hit := range res.Hits {
@@ -193,30 +198,44 @@ func (h *searchHandlers) SearchJobs(c *fiber.Ctx) error {
 	return listResponseWithIgnored(c, views, res.Total, limit, offset, ignored, ignoredJobValues(c))
 }
 
+// jobSearchOutcome is what runJobSearch hands back: the raw hits, the applied
+// limit/offset, every value-level ignored-param report gathered while building the
+// query, and — only when the caller asked for semantic search and it could be tried —
+// whether the hybrid answered (ojcp.SemanticApplied / ojcp.SemanticUnavailable).
+type jobSearchOutcome struct {
+	res      search.SearchResult
+	limit    int
+	offset   int
+	dropped  []search.UnknownParam
+	semantic string
+}
+
 // runJobSearch performs the request handling shared by both job-search endpoints:
 // the availability check, the pagination-window guard, and the index query. It is
 // the single place the query is built, so the public and agent search endpoints
 // cannot drift. The availability and deep-pagination guards return a fiber *Error
-// the caller can return directly; on success it returns the raw hits, the applied
-// limit/offset, and every value-level ignored-param report gathered while building
-// the query — q_fields naming a field outside the searchable vocabulary, plus any
-// filter params dropped by the degrade below (nil in the ordinary case) — for the
-// caller to merge into its own ignoredParams(c, own) report.
-func (h *searchHandlers) runJobSearch(c *fiber.Ctx) (search.SearchResult, int, int, []search.UnknownParam, error) {
+// the caller can return directly; on success `dropped` carries q_fields naming a
+// field outside the searchable vocabulary, plus any filter params dropped by the
+// degrade below (nil in the ordinary case), for the caller to merge into its own
+// ignoredParams(c, own) report.
+//
+// wantSemantic runs the query as a hybrid through h.semantic; a flag it cannot honour
+// (see semanticDropped) is reported as a dropped param.
+func (h *searchHandlers) runJobSearch(c *fiber.Ctx, wantSemantic bool) (jobSearchOutcome, error) {
 	if h.search == nil {
-		return search.SearchResult{}, 0, 0, nil, fiber.NewError(fiber.StatusServiceUnavailable, "search is not available")
+		return jobSearchOutcome{}, fiber.NewError(fiber.StatusServiceUnavailable, "search is not available")
 	}
 
 	limit, offset, err := pageParams(c)
 	if err != nil {
-		return search.SearchResult{}, 0, 0, nil, err
+		return jobSearchOutcome{}, err
 	}
 
 	vector := h.matchVector(c)
 	sort := searchSort(c, vector != nil)
 	filter := buildSearchFilter(c)
 	qFields, qFieldsIgnored := search.QFieldsFromValues(queryValues(c))
-	res, err := h.search.Search(c.Context(), search.SearchParams{
+	params := search.SearchParams{
 		Query:   c.Query("q"),
 		Filter:  filter,
 		Sort:    sort,
@@ -224,9 +243,14 @@ func (h *searchHandlers) runJobSearch(c *fiber.Ctx) (search.SearchResult, int, i
 		QFields: qFields,
 		Limit:   limit,
 		Offset:  offset,
-	})
+	}
 
 	dropped := qFieldsIgnored
+	res, outcome, err := h.semantic.search(c.Context(), h.search, params, wantSemantic)
+	if outcome == semanticDropped {
+		dropped = append(dropped, search.UnknownParam{Param: "semantic"})
+	}
+
 	if err != nil {
 		// Degrade, not fail, when the filter itself is why Meilisearch refused the
 		// query — the deploy window a filterable attribute is declared in code
@@ -239,21 +263,28 @@ func (h *searchHandlers) runJobSearch(c *fiber.Ctx) (search.SearchResult, int, i
 			// RenderError renders a generic 500 (or 400 for ErrBadQuery); returning
 			// the error keeps the failure cause visible to logging instead of
 			// swallowing it.
-			return search.SearchResult{}, 0, 0, nil, err
+			return jobSearchOutcome{}, err
 		}
 		res, err = h.search.Search(c.Context(), search.SearchParams{
 			Query: c.Query("q"), Sort: sort, Vector: vector, QFields: qFields, Limit: limit, Offset: offset,
 		})
 		if err != nil {
-			return search.SearchResult{}, 0, 0, nil, err
+			return jobSearchOutcome{}, err
 		}
 		// Which single param Meilisearch minded is not knowable from its own
 		// error, so every active filter param is reported rather than a guess.
 		dropped = append(dropped, search.ActiveFilterParams(queryValues(c))...)
+		// The retry is keyword-only, so a semantic request was not answered by meaning.
+		if outcome == semanticApplied {
+			outcome = semanticUnavailable
+		}
 	}
 
 	h.recordQuery(c.Query("q"))
-	return res, limit, offset, dropped, nil
+	return jobSearchOutcome{
+		res: res, limit: limit, offset: offset, dropped: dropped,
+		semantic: outcome.wire(ojcp.SemanticApplied, ojcp.SemanticUnavailable),
+	}, nil
 }
 
 // recordQuery notes what the catalogue was asked for, so the suggestion dictionary can
