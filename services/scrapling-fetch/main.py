@@ -4,6 +4,9 @@ SCRAPLING_FETCH_TOKEN     bearer token every /fetch request must carry (required
 SCRAPLING_FETCH_ADDR      host:port to listen on (default 127.0.0.1:8098)
 SCRAPLING_MAX_BROWSERS    live browser sessions at most (default 3)
 SCRAPLING_IDLE_SECONDS    close a session unused this long (default 600)
+SCRAPLING_TABS_PER_BROWSER  concurrent pages one browser session serves (default 4)
+SCRAPLING_SESSION_MAX_SECONDS  retire a session this old even while in use (default 1800)
+SCRAPLING_SESSION_MAX_PAGES    retire a session after this many pages (default 500)
 SOURCES_PROXY_URL         the proxy `proxy: true` egresses through (optional)
 SCRAPLING_PROXY_ROTATING  a gateway giving a new exit IP per request, for http mode (optional)
 SCRAPLING_PROXY_STICKY    a proxy URL template with {n}, one fixed exit IP per n, for browser
@@ -25,6 +28,10 @@ REAP_INTERVAL_SECONDS = 30
 # How long a browser request may queue for a session. Below the Go transport's own timeout, so
 # a request its caller has abandoned gives up instead of later spending a browser on nothing.
 ACQUIRE_TIMEOUT_SECONDS = 120
+# The hard limit on one browser page, past the navigation's own 90 s timeout and a challenge
+# solve. With the acquire bound it stays under the Go transport's 5-minute timeout, so the
+# caller hears the service's own error instead of timing out first.
+USE_TIMEOUT_SECONDS = 170
 DEFAULT_ADDR = ("127.0.0.1", 8098)
 
 
@@ -55,11 +62,16 @@ def main() -> None:
 
     host, port = listen_address(os.environ.get("SCRAPLING_FETCH_ADDR", ""))
     proxies = ProxyConfig.from_env(os.environ)
+    tabs = _positive_int("SCRAPLING_TABS_PER_BROWSER", 4)
     pool = SessionPool(
-        stealth_session_factory(proxies),
+        stealth_session_factory(proxies, tabs=tabs),
         max_sessions=_positive_int("SCRAPLING_MAX_BROWSERS", 3),
         idle_ttl=_positive_int("SCRAPLING_IDLE_SECONDS", 600),
         acquire_timeout=ACQUIRE_TIMEOUT_SECONDS,
+        per_session=tabs,
+        max_age=_positive_int("SCRAPLING_SESSION_MAX_SECONDS", 1800),
+        max_uses=_positive_int("SCRAPLING_SESSION_MAX_PAGES", 500),
+        use_timeout=USE_TIMEOUT_SECONDS,
     )
     app = create_app(
         token=token,

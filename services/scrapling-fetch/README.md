@@ -34,11 +34,18 @@ transport headers are dropped (they would undo the impersonation), and the retur
 ## Browser sessions
 
 One warm session per `(host, proxy)`, reused across requests so a challenge is solved once per
-crawl; a host crawled in parallel gets several. At most `SCRAPLING_MAX_BROWSERS` live at once
+crawl. A session serves up to `SCRAPLING_TABS_PER_BROWSER` pages at once, one tab each — much
+cheaper than a browser per page — and a host needing more than that gets several sessions. At most `SCRAPLING_MAX_BROWSERS` live at once
 (~1-1.7 GB each); past that an idle session of another host is closed, and if none is idle the
 request waits — for at most 120 s, after which it fails with a 502 rather than queue on behalf
 of a caller that has already given up. A session unused for `SCRAPLING_IDLE_SECONDS` is closed; a session whose page
-raised is discarded.
+raised takes no new pages and closes once its other tabs finish.
+
+Memory does not leak through a session that never idles: a session in constant use (a crawl
+running for hours) is retired after `SCRAPLING_SESSION_MAX_SECONDS` or
+`SCRAPLING_SESSION_MAX_PAGES`, whichever comes first, and a page still running after 170 s is
+cut off and its session retired, so one hung tab cannot hold a slot for ever. Behind all of it,
+the container's memory cap and `Restart=always` catch anything the pool does not.
 
 ## Proxy rotation
 
@@ -60,6 +67,9 @@ sticky template `http://<user>-{n}:<pass>@p.webshare.io:80`, one fixed IP per `n
 | `SCRAPLING_FETCH_ADDR` | `127.0.0.1:8098` | the crawlers run on the same host |
 | `SCRAPLING_MAX_BROWSERS` | `3` | |
 | `SCRAPLING_IDLE_SECONDS` | `600` | |
+| `SCRAPLING_TABS_PER_BROWSER` | `4` | concurrent pages one browser session serves |
+| `SCRAPLING_SESSION_MAX_SECONDS` | `1800` | a session this old is retired even while in use |
+| `SCRAPLING_SESSION_MAX_PAGES` | `500` | a session is retired after this many pages |
 | `SOURCES_PROXY_URL` | — | the single proxy `proxy: true` egresses through, when the two below are unset |
 | `SCRAPLING_PROXY_ROTATING` | `SOURCES_PROXY_URL` | a gateway handing out a new exit IP per request — what `http` mode uses |
 | `SCRAPLING_PROXY_STICKY` | `SOURCES_PROXY_URL` | a proxy URL template with `{n}`, one fixed exit IP per `n` — what browser sessions use |

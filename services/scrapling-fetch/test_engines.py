@@ -111,7 +111,7 @@ def test_a_refused_browser_session_is_retired_so_the_next_gets_another_ip():
     opened = []
     statuses = [[429], [200]]
 
-    async def open_session(key, proxy):
+    async def open_session(key, proxy, tabs):
         b = FakeBrowser(proxy, statuses.pop(0))
         opened.append(b)
         return b
@@ -134,7 +134,7 @@ def test_a_refused_browser_session_is_retired_so_the_next_gets_another_ip():
 def test_a_direct_browser_session_gets_no_proxy():
     got = []
 
-    async def open_session(key, proxy):
+    async def open_session(key, proxy, tabs):
         got.append(proxy)
         return FakeBrowser(proxy, [200])
 

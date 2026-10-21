@@ -153,10 +153,11 @@ def browser_fetcher(pool: SessionPool):
     return fetch
 
 
-async def _open_stealth(key, proxy: Optional[str]):
+async def _open_stealth(key, proxy: Optional[str], tabs: int = 1):
     from scrapling.fetchers import AsyncStealthySession
 
-    kwargs = dict(headless=True, solve_cloudflare=True, timeout=BROWSER_TIMEOUT_MS, retries=1)
+    # max_pages is how many tabs the session runs at once; the pool sends it no more uses.
+    kwargs = dict(headless=True, solve_cloudflare=True, timeout=BROWSER_TIMEOUT_MS, retries=1, max_pages=tabs)
     if proxy:
         kwargs["proxy"] = proxy
     session = AsyncStealthySession(**kwargs)
@@ -164,11 +165,12 @@ async def _open_stealth(key, proxy: Optional[str]):
     return session
 
 
-def stealth_session_factory(proxies: ProxyConfig, open_session=_open_stealth):
-    """The pool's factory. A proxied session takes the next sticky exit IP; a direct one none."""
+def stealth_session_factory(proxies: ProxyConfig, open_session=_open_stealth, tabs: int = 1):
+    """The pool's factory. A proxied session takes the next sticky exit IP; a direct one none.
+    Each session opens with `tabs` tabs, the pool's per_session."""
 
     async def factory(key):
         _, use_proxy = key
-        return await open_session(key, proxies.next_sticky() if use_proxy else None)
+        return await open_session(key, proxies.next_sticky() if use_proxy else None, tabs)
 
     return factory

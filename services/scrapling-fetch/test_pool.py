@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from pool import PoolBusy, PoolClosed, SessionPool
+from pool import PoolBusy, PoolClosed, SessionPool, UseTimedOut
 
 
 class FakeSession:
@@ -259,3 +259,107 @@ def test_close_all_also_closes_a_session_still_opening():
 
     run(go())
     assert made and all(s.closed for s in made) and pool.size() == 0
+
+
+def test_one_session_serves_up_to_per_session_uses_at_once():
+    # A browser takes several tabs; three concurrent uses of one key ride one session.
+    f = Factory()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=60, per_session=3)
+
+    async def work(s):
+        await asyncio.sleep(0.01)
+        return s
+
+    async def go():
+        return await asyncio.gather(*(pool.run(("ex.com", None), work) for _ in range(3)))
+
+    got = run(go())
+    assert len(f.made) == 1 and all(s is f.made[0] for s in got)
+
+
+def test_past_per_session_a_second_session_opens():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=60, per_session=2)
+
+    async def work(s):
+        await asyncio.sleep(0.01)
+        return s
+
+    async def go():
+        return await asyncio.gather(*(pool.run(("ex.com", None), work) for _ in range(4)))
+
+    run(go())
+    assert len(f.made) == 2
+
+
+def test_a_failed_use_retires_a_shared_session_after_its_other_tabs_finish():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=60, per_session=2)
+    seen_closed_mid_use = []
+
+    async def slow(s):
+        await asyncio.sleep(0.03)
+        seen_closed_mid_use.append(s.closed)
+        return s
+
+    async def boom(s):
+        await asyncio.sleep(0.005)
+        raise RuntimeError("tab crashed")
+
+    async def go():
+        t = asyncio.create_task(pool.run(("ex.com", None), slow))
+        await asyncio.sleep(0.001)
+        with pytest.raises(RuntimeError):
+            await pool.run(("ex.com", None), boom)
+        after = await pool.run(("ex.com", None), lambda s: _ret(s))  # must not get the retired one
+        await t
+        return after
+
+    after = run(go())
+    first = f.made[0]
+    assert seen_closed_mid_use == [False]  # the neighbour tab finished on an open session
+    assert first.closed and after is not first
+
+
+def test_a_session_past_its_max_age_is_retired_and_replaced():
+    # A session in constant use never idles out, and Chromium grows over its life, so age alone
+    # must retire it.
+    f = Factory()
+    clock = Clock()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=600, max_age=1800, clock=clock)
+
+    async def go():
+        a = await pool.run(("ex.com", None), lambda s: _ret(s))
+        clock.t = 1801
+        b = await pool.run(("ex.com", None), lambda s: _ret(s))
+        return a, b
+
+    a, b = run(go())
+    assert a is not b and a.closed and not b.closed
+
+
+def test_a_session_past_its_max_uses_is_retired_and_replaced():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=2, idle_ttl=600, max_uses=2)
+
+    async def go():
+        return [await pool.run(("ex.com", None), lambda s: _ret(s)) for _ in range(3)]
+
+    a, b, c = run(go())
+    assert a is b and c is not a and a.closed
+
+
+def test_a_use_that_hangs_past_the_deadline_frees_its_slot_and_retires_the_session():
+    f = Factory()
+    pool = SessionPool(f, max_sessions=1, idle_ttl=600, use_timeout=0.02)
+
+    async def hang(s):
+        await asyncio.sleep(10)
+
+    async def go():
+        with pytest.raises(UseTimedOut):
+            await pool.run(("ex.com", None), hang)
+        return await asyncio.wait_for(pool.run(("ex.com", None), lambda s: _ret(s)), 1)
+
+    s = run(go())
+    assert f.made[0].closed and s is f.made[1]
