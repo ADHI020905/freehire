@@ -1,6 +1,10 @@
 package telegram
 
-import "regexp"
+import (
+	"context"
+	"log"
+	"regexp"
+)
 
 // vacancyMarkers matches signals that a post plausibly advertises a job: hiring
 // verbs and nouns (RU + EN), role-seeking phrasing, salary amounts, and apply
@@ -64,4 +68,33 @@ func AdmitsPost(text string, links []Link, m LinkMatcher) bool {
 		return true
 	}
 	return m != nil && m.Matches(links)
+}
+
+// VacancyJudge answers, for a post the markers declined, whether it advertises a vacancy
+// after all. The markers are a hand-kept word list, and a list misses what it has no word
+// for: measured 2026-10-21 over 150 posts they had declined, 90 were real vacancies —
+// "RUST DEVELOPER | REMOTE", "B2B Marketing Director … Job description", a Farsi posting.
+// The judge is the second half of admission, not a replacement for the first: the markers
+// stay free and decide most posts, and the judge is asked only about what they refuse.
+type VacancyJudge interface {
+	IsVacancy(ctx context.Context, text string) (bool, error)
+}
+
+// judgeRescues asks the judge about a post AdmitsPost refused. A nil judge rescues nothing,
+// which is today's behaviour exactly.
+//
+// A judge that fails ADMITS. The extractor is the real classifier and may still find no
+// vacancy, which costs one model call; a post left declined is stamped done and nothing
+// looks at it again, which costs the vacancy. The first mistake is cheap and visible, the
+// second is neither.
+func judgeRescues(ctx context.Context, j VacancyJudge, text string) bool {
+	if j == nil {
+		return false
+	}
+	ok, err := j.IsVacancy(ctx, text)
+	if err != nil {
+		log.Printf("telegram: vacancy judge failed, admitting the post for the extractor to decide: %v", err)
+		return true
+	}
+	return ok
 }

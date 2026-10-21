@@ -66,3 +66,25 @@ out to a vacancy a destination adapter resolves — is called by BOTH `CrawlRunn
 it, and the two disagreeing is not cosmetic: the backfill would requeue posts the next
 crawl refuses, or leave behind the ones it now admits. Add a marker and both readers move
 together. A nil matcher (no registry configured) means only the text can admit.
+
+## The judge: what the markers have no word for
+The markers are a hand-kept list, and measured 2026-10-21 they were losing more than they
+kept out: of 150 posts declined in the previous 30 days, a model reading each one called 90
+real vacancies — "RUST DEVELOPER | REMOTE", "B2B Marketing Director … Job description", a
+Farsi posting — with `forproducts`, `morejobs`, `jtbl_vacancy`, `seekingyourjobs` and
+`Remoteit` losing the most. So admission has a second half: a `VacancyJudge`, asked ONLY
+about what the markers refuse. `JevJudge` (TypeSafe's Jev, one yes/no question, ~0.2s)
+admitted all 90 of those and 3 non-vacancies beside them, and of 144 vacancies the markers
+did admit it would have declined one.
+
+- **The crawl asks it after the insert, never before**, because only the insert knows a post
+  is new — a channel's page is re-fetched every crawl, and judging first would re-ask about
+  every stored post each run. A rescued post is inserted as declined and then handed back
+  with `RequeueTelegramPost`, the backfill's own write.
+- **A judge that fails admits** (`judgeRescues`): the extractor is the real classifier and a
+  wasted model call is visible, while a post left declined is never looked at again.
+- **Both readers take the same judge**, for the same reason they share `AdmitsPost`. That
+  makes `cmd/backfill-telegram-prefilter` the way the posts declined BEFORE the judge
+  existed get rescued — and makes even its dry run ask Jev once per declined post it scans.
+- No `TYPESAFE_API_KEY` is today's behaviour exactly: `telegram.JudgeFromKey` returns no
+  judge and the markers alone decide.

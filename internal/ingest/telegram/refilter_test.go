@@ -251,3 +251,23 @@ func TestRefilterRunnerMaxLandingOnTheLastRowIsStillDone(t *testing.T) {
 		t.Error("Stopped = true, want false — the bound and the end of the table coincided")
 	}
 }
+
+// The pass decides with the same rule the crawl does, judge included: a stored post the
+// markers still refuse is requeued when the judge recognises it. The judge is asked only
+// about those — a post the markers already admit costs no request.
+func TestRefilterRunnerRequeuesWhatTheJudgeRecognises(t *testing.T) {
+	store := &fakeRefilterStore{posts: refilterCorpus()}
+	judge := &fakeJudge{say: true}
+	r := RefilterRunner{Store: store, Batch: 2, Apply: true, Judge: judge}
+
+	stats, err := r.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if stats.Requeued != 4 {
+		t.Errorf("Requeued = %d, want all 4", stats.Requeued)
+	}
+	if len(judge.asked) != 2 {
+		t.Errorf("judge asked %d times, want 2 (only the posts the markers refuse)", len(judge.asked))
+	}
+}

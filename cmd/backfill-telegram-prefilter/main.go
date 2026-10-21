@@ -75,7 +75,7 @@ func run() int {
 		return 1
 	}
 
-	ctx, _, pool, cleanup, err := worker.Bootstrap(context.Background())
+	ctx, cfg, pool, cleanup, err := worker.Bootstrap(context.Background())
 	if err != nil {
 		log.Printf("database: %v", err)
 		return 1
@@ -86,7 +86,9 @@ func run() int {
 		Store: &refilterStore{q: db.New(pool)},
 		// The same registry cmd/tg-ingest hands its crawl, so a post admitted by its
 		// stored links here is admitted by the crawl there.
-		Links:        linkMatcher{reg: linksource.All(sources.NewClient())},
+		Links: linkMatcher{reg: linksource.All(sources.NewClient())},
+		// The same judge the crawl uses, for the same reason as the registry above.
+		Judge:        telegram.JudgeFromKey(cfg.TypesafeAPIKey),
 		Apply:        *apply,
 		Max:          maxScan,
 		AfterChannel: afterChannel,

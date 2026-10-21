@@ -13,9 +13,11 @@ type PostFetcher interface {
 
 // PostStore persists crawled posts. Insert stores a post once — done marks it
 // already-processed (the prefilter found no vacancy) — and reports whether the
-// post was new; an already-stored post is left untouched.
+// post was new; an already-stored post is left untouched. Requeue hands a post
+// stored as done back to the extraction queue, for one the judge rescued.
 type PostStore interface {
 	Insert(ctx context.Context, channel string, p Post, done bool) (bool, error)
+	Requeue(ctx context.Context, channel string, msgID int64) (int64, error)
 }
 
 // LinkMatcher reports whether a post's outbound links include one a destination adapter
@@ -27,8 +29,9 @@ type LinkMatcher interface {
 
 // CrawlStats summarizes one crawl run.
 type CrawlStats struct {
-	Stored   int // new posts queued for extraction
+	Stored   int // new posts queued for extraction, rescued ones included
 	Filtered int // new posts recorded as non-vacancies
+	Rescued  int // of Stored, the posts the markers declined and the judge admitted
 	Failed   int // channels whose fetch or store failed
 }
 
@@ -40,6 +43,7 @@ type CrawlRunner struct {
 	Store   PostStore
 	Delay   time.Duration // pause between channels; zero in tests
 	Links   LinkMatcher   // optional; keeps link-out digest posts the text filter would drop
+	Judge   VacancyJudge  // optional; rescues a NEW post the markers declined
 }
 
 // Run crawls the channels, isolating failures: a channel whose fetch or store
@@ -73,6 +77,18 @@ func (r CrawlRunner) Run(ctx context.Context, channels []ChannelEntry) (CrawlSta
 			}
 			if !inserted {
 				continue // already stored by an earlier crawl
+			}
+			// The judge is asked after the insert, not before it, because only the insert
+			// knows the post is new: a channel's page is re-fetched on every crawl, and
+			// judging before it would repeat the same questions about stored posts each run.
+			if !isVacancy && judgeRescues(ctx, r.Judge, p.Text) {
+				if _, err := r.Store.Requeue(ctx, ch.Channel, p.MsgID); err != nil {
+					log.Printf("telegram: requeue %s/%d failed: %v", ch.Channel, p.MsgID, err)
+					failed = true
+					break
+				}
+				isVacancy = true
+				stats.Rescued++
 			}
 			if isVacancy {
 				stats.Stored++

@@ -48,10 +48,12 @@ type RefilterStats struct {
 // 2026-09-23, 96 stored posts already matched the marker set and were stuck behind an
 // older one, and the Spanish marker landing that day left 6,335 more behind it.
 //
-// It decides with AdmitsPost, the same function the crawl calls, so the two cannot drift.
+// It decides with AdmitsPost and the judge, the same rule the crawl applies, so the two
+// cannot drift.
 type RefilterRunner struct {
 	Store RefilterStore
-	Links LinkMatcher // optional, as in CrawlRunner; nil means only the text can admit
+	Links LinkMatcher  // optional, as in CrawlRunner; nil means only the text can admit
+	Judge VacancyJudge // optional, as in CrawlRunner; nil means only the markers decide
 
 	// Apply writes. Unset, the run reports what it WOULD requeue and changes nothing —
 	// the shape cmd/merge-companies and cmd/close-chronic-boards already use.
@@ -126,7 +128,7 @@ func (r RefilterRunner) Run(ctx context.Context) (RefilterStats, error) {
 			// row this run actually finished rather than the last one its reader read.
 			afterChannel, afterMsgID = p.Channel, p.MsgID
 
-			if !AdmitsPost(p.Text, p.Links, r.Links) {
+			if !AdmitsPost(p.Text, p.Links, r.Links) && !judgeRescues(ctx, r.Judge, p.Text) {
 				continue
 			}
 			stats.Admitted++

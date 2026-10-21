@@ -26,7 +26,7 @@ func main() {
 }
 
 func run() int {
-	ctx, _, pool, cleanup, err := worker.Bootstrap(context.Background())
+	ctx, cfg, pool, cleanup, err := worker.Bootstrap(context.Background())
 	if err != nil {
 		log.Printf("database: %v", err)
 		return 1
@@ -45,6 +45,8 @@ func run() int {
 		Store:   &postStore{q: q},
 		Delay:   2 * time.Second, // polite pacing toward t.me
 		Links:   linkMatcher{reg: linksource.All(sources.NewClient())},
+		// Without TYPESAFE_API_KEY there is no judge and the markers alone decide.
+		Judge: telegram.JudgeFromKey(cfg.TypesafeAPIKey),
 	}
 
 	stats, err := runner.Run(ctx, chanCfg.Channels)
@@ -52,8 +54,8 @@ func run() int {
 		log.Printf("crawl: %v", err)
 		return 1
 	}
-	log.Printf("tg-ingest done: stored=%d filtered=%d failed=%d",
-		stats.Stored, stats.Filtered, stats.Failed)
+	log.Printf("tg-ingest done: stored=%d (rescued=%d) filtered=%d failed=%d",
+		stats.Stored, stats.Rescued, stats.Filtered, stats.Failed)
 	return worker.ExitCode(stats.Failed, 0)
 }
 
@@ -87,6 +89,10 @@ func (s *postStore) Insert(ctx context.Context, channel string, p telegram.Post,
 		return false, err
 	}
 	return rows > 0, nil
+}
+
+func (s *postStore) Requeue(ctx context.Context, channel string, msgID int64) (int64, error) {
+	return s.q.RequeueTelegramPost(ctx, db.RequeueTelegramPostParams{Channel: channel, MsgID: msgID})
 }
 
 var _ telegram.PostStore = (*postStore)(nil)
