@@ -8,12 +8,15 @@ vi.mock('$app/state', () => ({
   page: { data: { locale: 'ru' }, url: new URL('http://localhost/') },
 }));
 
-const { getWebhook, createOrUpdateWebhook, setWebhookEnabled, deleteWebhook } = vi.hoisted(() => ({
-  getWebhook: vi.fn(),
-  createOrUpdateWebhook: vi.fn(),
-  setWebhookEnabled: vi.fn(),
-  deleteWebhook: vi.fn(),
-}));
+const { getWebhook, createOrUpdateWebhook, setWebhookEnabled, deleteWebhook, testWebhook } = vi.hoisted(
+  () => ({
+    getWebhook: vi.fn(),
+    createOrUpdateWebhook: vi.fn(),
+    setWebhookEnabled: vi.fn(),
+    deleteWebhook: vi.fn(),
+    testWebhook: vi.fn(),
+  }),
+);
 
 const { StubApiError } = vi.hoisted(() => ({
   StubApiError: class StubApiError extends Error {
@@ -27,7 +30,7 @@ const { StubApiError } = vi.hoisted(() => ({
 }));
 
 vi.mock('$lib/api', () => ({
-  api: { getWebhook, createOrUpdateWebhook, setWebhookEnabled, deleteWebhook },
+  api: { getWebhook, createOrUpdateWebhook, setWebhookEnabled, deleteWebhook, testWebhook },
   ApiError: StubApiError,
 }));
 
@@ -46,6 +49,7 @@ beforeEach(() => {
   createOrUpdateWebhook.mockReset();
   setWebhookEnabled.mockReset();
   deleteWebhook.mockReset();
+  testWebhook.mockReset();
 });
 
 describe('WebhookSettingsView — Russian locale', () => {
@@ -100,5 +104,46 @@ describe('WebhookSettingsView — Russian locale', () => {
     await vi.waitFor(() =>
       expect(screen.getByText('Введите корректный URL, начинающийся с http:// или https://.')).toBeTruthy(),
     );
+  });
+
+  it('shows what the destination answered when saving fails the test delivery', async () => {
+    getWebhook.mockResolvedValue(null);
+    createOrUpdateWebhook.mockRejectedValue(
+      new StubApiError(422, 'webhook test failed: destination responded 404'),
+    );
+    render(WebhookSettingsView);
+
+    const input = await vi.waitFor(() =>
+      screen.getByPlaceholderText('https://example.com/freehire-hook'),
+    );
+    await fireEvent.input(input, { target: { value: 'https://example.com/hook' } });
+    await fireEvent.click(screen.getByText('Создать вебхук'));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.getByText('Адрес не принял тестовый запрос: destination responded 404'),
+      ).toBeTruthy(),
+    );
+  });
+
+  it('sends a test delivery from the button and reports the result', async () => {
+    getWebhook.mockResolvedValue(webhook);
+    testWebhook.mockResolvedValueOnce({ ...webhook, last_success_at: new Date().toISOString() });
+    render(WebhookSettingsView);
+
+    await fireEvent.click(await vi.waitFor(() => screen.getByText('Проверить')));
+    await vi.waitFor(() => expect(screen.getByText('Тестовый запрос доставлен.')).toBeTruthy());
+    expect(testWebhook).toHaveBeenCalledTimes(1);
+
+    testWebhook.mockRejectedValueOnce(
+      new StubApiError(422, 'webhook test failed: destination responded 400'),
+    );
+    await fireEvent.click(screen.getByText('Проверить'));
+    await vi.waitFor(() =>
+      expect(
+        screen.getByText('Адрес не принял тестовый запрос: destination responded 400'),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByText('Тестовый запрос доставлен.')).toBeNull();
   });
 });

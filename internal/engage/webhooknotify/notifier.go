@@ -90,6 +90,22 @@ func (n *Notifier) Send(ctx context.Context, _ string, dest string, d notify.Dig
 	return nil
 }
 
+// TestSearchName is the saved_search_name a probe carries, so a receiver can
+// tell it apart from a real digest.
+const TestSearchName = "freehire webhook test"
+
+// Test POSTs a sample digest with no jobs to dest and reports what the
+// destination answered, with Send's own error vocabulary. It is how the API
+// proves a URL accepts our payload before relying on it: saving the URL, and
+// the explicit "test" action. The empty job list is a non-nil slice so it
+// encodes as [] — a receiver's template that ranges over it must not choke.
+func (n *Notifier) Test(ctx context.Context, dest string) error {
+	return n.Send(ctx, notify.ChannelWebhook, dest, notify.Digest{
+		SavedSearchName: TestSearchName,
+		Jobs:            []notify.DigestJob{},
+	})
+}
+
 // validateScheme rejects anything but http/https before a request is ever
 // built — defense in depth alongside the API layer's own creation-time check
 // (see internal/api/handler), and the only thing standing between a malformed

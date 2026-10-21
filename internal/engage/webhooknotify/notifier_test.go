@@ -112,3 +112,36 @@ func TestSend_ProductionClientRejectsPrivateAddress(t *testing.T) {
 		t.Error("Send: want an error when the production client targets a loopback address")
 	}
 }
+
+// Test sends a recognisable sample so the receiver can tell a probe from a
+// digest, with an empty (not null) job list a template can still range over.
+func TestTest_PostsSampleAndReportsStatus(t *testing.T) {
+	var got map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&got)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	if err := newNotifier(srv.Client()).Test(context.Background(), srv.URL); err != nil {
+		t.Fatalf("Test returned error: %v", err)
+	}
+	if got["saved_search_name"] != TestSearchName {
+		t.Errorf("saved_search_name = %v, want %q", got["saved_search_name"], TestSearchName)
+	}
+	if jobs, ok := got["jobs"].([]any); !ok || len(jobs) != 0 {
+		t.Errorf("jobs = %#v, want an empty array", got["jobs"])
+	}
+}
+
+func TestTest_Non2xxIsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	err := newNotifier(srv.Client()).Test(context.Background(), srv.URL)
+	if err == nil {
+		t.Fatal("Test: want an error for a 404")
+	}
+}

@@ -25,10 +25,35 @@
   // A key into the catalog, not the message itself — the text is derived from `s`
   // below so an already-shown error follows a later locale change instead of
   // freezing in whatever locale was resolved when it was set.
-  let formErrorKind = $state<'invalidUrl' | 'saveFailed' | 'updateFailed' | 'deleteFailed' | null>(
-    null,
-  );
-  const formError = $derived(formErrorKind ? s[formErrorKind] : null);
+  let formErrorKind = $state<
+    'invalidUrl' | 'saveFailed' | 'updateFailed' | 'deleteFailed' | 'testFailed' | null
+  >(null);
+  // What the destination answered when a test delivery failed — the server's
+  // own words ("destination responded 404"), shown after the localized lead-in.
+  let testFailure = $state('');
+  const formError = $derived.by(() => {
+    if (formErrorKind === 'testFailed') return `${s.testFailed} ${testFailure}`;
+    return formErrorKind ? s[formErrorKind] : null;
+  });
+  let testing = $state(false);
+  let testPassed = $state(false);
+
+  // A 422 from save or test means the destination refused the sample
+  // delivery; its message carries the reason after a fixed server prefix.
+  function testFailureOf(error: unknown): string | null {
+    if (!(error instanceof ApiError) || error.status !== 422) return null;
+    return error.message.replace(/^webhook test failed:\s*/, '');
+  }
+
+  function showError(kind: NonNullable<typeof formErrorKind>, error: unknown) {
+    const failure = testFailureOf(error);
+    if (failure !== null) {
+      testFailure = failure;
+      formErrorKind = 'testFailed';
+    } else {
+      formErrorKind = kind;
+    }
+  }
 
   $effect(() => {
     if (webhook && !url) url = webhook.url;
@@ -40,12 +65,28 @@
     if (!trimmed || saving) return;
     saving = true;
     formErrorKind = null;
+    testPassed = false;
     try {
       webhookData.value = await api.createOrUpdateWebhook(trimmed);
     } catch (error) {
-      formErrorKind = error instanceof ApiError && error.status === 400 ? 'invalidUrl' : 'saveFailed';
+      showError(error instanceof ApiError && error.status === 400 ? 'invalidUrl' : 'saveFailed', error);
     } finally {
       saving = false;
+    }
+  }
+
+  async function sendTest() {
+    if (!webhook || testing) return;
+    testing = true;
+    formErrorKind = null;
+    testPassed = false;
+    try {
+      webhookData.value = await api.testWebhook();
+      testPassed = true;
+    } catch (error) {
+      showError('updateFailed', error);
+    } finally {
+      testing = false;
     }
   }
 
@@ -106,6 +147,8 @@
 
       {#if formError}
         <p class="text-sm text-destructive">{formError}</p>
+      {:else if testPassed}
+        <p class="text-sm text-muted-foreground">{s.testPassed}</p>
       {/if}
 
       {#if webhook}
@@ -123,6 +166,9 @@
             </span>
           </div>
           <div class="flex shrink-0 items-center gap-2">
+            <Button variant="outline" size="sm" onclick={sendTest} disabled={testing}>
+              {testing ? s.testing : s.test}
+            </Button>
             <Button variant="outline" size="sm" onclick={toggleEnabled}>
               {webhook.enabled ? s.disable : s.enable}
             </Button>

@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -35,7 +36,7 @@ func TestWebhookEndToEnd(t *testing.T) {
 	iss := auth.NewIssuer("test-secret", time.Hour)
 	cookie, _ := iss.Issue(userID, testTokenVersion)
 	queries := db.New(pool)
-	h := newWebhookHandlers(queries)
+	h := newWebhookHandlers(queries, okWebhookTester{})
 
 	app := fiber.New(fiber.Config{ErrorHandler: RenderError})
 	app.Post("/api/v1/me/webhook", auth.RequireAuth(iss, testVersions), h.CreateOrUpdateWebhook)
@@ -215,5 +216,73 @@ func TestRecordWebhookDeliverySuccessStampsLastSuccessAt(t *testing.T) {
 	}
 	if !after.LastSuccessAt.Valid {
 		t.Error("last_success_at should be set after RecordWebhookDeliverySuccess")
+	}
+}
+
+// POST /me/webhook/test probes the STORED destination: a pass stamps
+// last_success_at (the page's "last delivered" line), a failure is a 422 that
+// changes nothing, and no destination at all is a 404.
+func TestWebhookTestEndpoint(t *testing.T) {
+	pool := startPostgres(t)
+	ctx := context.Background()
+
+	var userID int64
+	if err := pool.QueryRow(ctx,
+		`INSERT INTO users (email, email_verified) VALUES ('webhook-test@example.test', true) RETURNING id`).Scan(&userID); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	iss := auth.NewIssuer("test-secret", time.Hour)
+	cookie, _ := iss.Issue(userID, testTokenVersion)
+	queries := db.New(pool)
+
+	probe := func(tester webhookTester) (int, []byte) {
+		t.Helper()
+		app := fiber.New(fiber.Config{ErrorHandler: RenderError})
+		app.Post("/api/v1/me/webhook/test", auth.RequireAuth(iss, testVersions), newWebhookHandlers(queries, tester).TestWebhook)
+		req := httptest.NewRequestWithContext(ctx, fiber.MethodPost, "/api/v1/me/webhook/test", nil)
+		req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: cookie})
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("test request: %v", err)
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		return resp.StatusCode, body
+	}
+
+	if status, _ := probe(okWebhookTester{}); status != fiber.StatusNotFound {
+		t.Errorf("no destination: status = %d, want 404", status)
+	}
+
+	if _, err := queries.UpsertWebhookConfig(ctx, db.UpsertWebhookConfigParams{
+		UserID: userID, URL: "https://example.test/hook",
+	}); err != nil {
+		t.Fatalf("create webhook config: %v", err)
+	}
+
+	if status, _ := probe(failingWebhookTester{errors.New("webhooknotify: destination responded 400")}); status != fiber.StatusUnprocessableEntity {
+		t.Errorf("failing probe: status = %d, want 422", status)
+	}
+	if row, _ := queries.GetWebhookConfig(ctx, userID); row.LastSuccessAt.Valid {
+		t.Error("a failed probe must not stamp last_success_at")
+	}
+
+	status, body := probe(okWebhookTester{})
+	if status != fiber.StatusOK {
+		t.Fatalf("passing probe: status = %d, want 200", status)
+	}
+	var got struct {
+		Data struct {
+			LastSuccessAt *time.Time `json:"last_success_at"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Data.LastSuccessAt == nil {
+		t.Error("a passing probe must return the destination with last_success_at set")
 	}
 }

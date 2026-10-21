@@ -34,6 +34,29 @@ nothing. There SHALL be at most one webhook destination per account.
 - **WHEN** a user submits a URL whose scheme is not `http` or `https`
 - **THEN** the system rejects the request and creates or changes nothing
 
+#### Scenario: A URL that refuses the test delivery is rejected
+
+- **WHEN** a user submits an `http(s)` URL that does not answer a sample
+  delivery (no jobs, `saved_search_name` "freehire webhook test") with a 2xx
+- **THEN** the system rejects the request with 422, naming what the
+  destination answered, and creates or changes nothing
+
+### Requirement: Testing the stored destination
+
+The system SHALL let a signed-in user send the same sample delivery to their
+stored destination on demand. A 2xx answer SHALL stamp `last_success_at`; any
+other answer SHALL be reported as a 422 naming it and SHALL change nothing.
+
+#### Scenario: A passing test stamps the destination
+
+- **WHEN** a user tests a destination that answers 2xx
+- **THEN** the destination is returned with `last_success_at` set
+
+#### Scenario: Testing with no destination
+
+- **WHEN** a user with no webhook destination requests a test
+- **THEN** the system responds 404
+
 ### Requirement: Enabling, disabling, and deleting the destination
 
 The system SHALL let a signed-in user disable, re-enable, or delete their

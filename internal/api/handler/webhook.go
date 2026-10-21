@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"strings"
@@ -14,14 +15,21 @@ import (
 )
 
 // webhookHandlers serves the account's single saved-search webhook
-// destination: create/update, view, enable/disable, delete. Deliveries are
-// plain, unsigned POSTs — there is no secret to manage.
+// destination: create/update, view, enable/disable, delete, test. Deliveries
+// are plain, unsigned POSTs — there is no secret to manage.
 type webhookHandlers struct {
 	queries *db.Queries
+	tester  webhookTester
 }
 
-func newWebhookHandlers(queries *db.Queries) *webhookHandlers {
-	return &webhookHandlers{queries: queries}
+// webhookTester sends a sample delivery to a URL and reports whether the
+// destination accepted it — webhooknotify.Notifier in production.
+type webhookTester interface {
+	Test(ctx context.Context, url string) error
+}
+
+func newWebhookHandlers(queries *db.Queries, tester webhookTester) *webhookHandlers {
+	return &webhookHandlers{queries: queries, tester: tester}
 }
 
 func (h *webhookHandlers) register(api fiber.Router, mw middleware) {
@@ -31,6 +39,7 @@ func (h *webhookHandlers) register(api fiber.Router, mw middleware) {
 	api.Post("/me/webhook", mw.cookie, h.CreateOrUpdateWebhook)
 	api.Patch("/me/webhook", mw.cookie, h.SetWebhookEnabled)
 	api.Delete("/me/webhook", mw.cookie, h.DeleteWebhook)
+	api.Post("/me/webhook/test", mw.cookie, h.TestWebhook)
 }
 
 // webhookResponse is the public shape of a webhook destination.
@@ -87,6 +96,13 @@ func (h *webhookHandlers) CreateOrUpdateWebhook(c *fiber.Ctx) error {
 	if err := validateWebhookURL(in.URL); err != nil {
 		return err
 	}
+	// Prove the destination accepts our payload before storing it. A URL that
+	// only fails at the first real digest is disabled a few failures later
+	// with nobody watching — Discord's own webhook URLs (which want a
+	// different body) and endpoints that 404 were saved exactly that way.
+	if err := h.probe(c.Context(), in.URL); err != nil {
+		return err
+	}
 
 	row, err := h.queries.UpsertWebhookConfig(c.Context(), db.UpsertWebhookConfigParams{
 		UserID: userID,
@@ -95,8 +111,56 @@ func (h *webhookHandlers) CreateOrUpdateWebhook(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if row, err = h.recordProbeSuccess(c.Context(), userID); err != nil {
+		return err
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"data": toWebhookResponse(row)})
+}
+
+// TestWebhook sends a sample delivery to the stored destination, so a user
+// can check an endpoint they changed on their side without re-saving it. A
+// pass stamps last_success_at; a failure changes nothing and is a 422 naming
+// what the destination answered. A missing destination is a 404.
+func (h *webhookHandlers) TestWebhook(c *fiber.Ctx) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+	row, err := h.queries.GetWebhookConfig(c.Context(), userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return fiber.NewError(fiber.StatusNotFound, "no webhook destination configured")
+	}
+	if err != nil {
+		return err
+	}
+	if err := h.probe(c.Context(), row.URL); err != nil {
+		return err
+	}
+	if row, err = h.recordProbeSuccess(c.Context(), userID); err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{"data": toWebhookResponse(row)})
+}
+
+// probe runs the tester against url and turns a refusal into a 422 the user
+// can act on ("destination responded 404"), without the transport's package
+// prefix.
+func (h *webhookHandlers) probe(ctx context.Context, url string) error {
+	if err := h.tester.Test(ctx, url); err != nil {
+		reason := strings.TrimPrefix(err.Error(), "webhooknotify: ")
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "webhook test failed: "+reason)
+	}
+	return nil
+}
+
+// recordProbeSuccess stamps a passed probe the way a delivered digest is
+// stamped, and returns the destination as it now reads.
+func (h *webhookHandlers) recordProbeSuccess(ctx context.Context, userID int64) (db.WebhookConfig, error) {
+	if err := h.queries.RecordWebhookDeliverySuccess(ctx, userID); err != nil {
+		return db.WebhookConfig{}, err
+	}
+	return h.queries.GetWebhookConfig(ctx, userID)
 }
 
 // GetWebhook returns the authenticated user's webhook destination metadata, or

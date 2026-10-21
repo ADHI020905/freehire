@@ -1302,7 +1302,7 @@ curl "https://freehire.me/api/v1/me/webhook" -b cookies.txt
 
 Create your webhook destination, or update its URL if one already exists.
 
-There is exactly one destination per account. Deliveries are plain, unsigned HTTP POSTs — subscribe a saved search to the `webhook` channel (see `POST /me/subscriptions`) to receive its matches here.
+There is exactly one destination per account. Deliveries are plain, unsigned HTTP POSTs — subscribe a saved search to the `webhook` channel (see `POST /me/subscriptions`) to receive its matches here. Before the URL is stored it receives a test delivery (`saved_search_name` "freehire webhook test", an empty `jobs` list); a URL that does not answer it with a 2xx is refused with 422, naming what it answered.
 
 **Body**
 
@@ -1340,6 +1340,22 @@ curl -X PATCH "https://freehire.me/api/v1/me/webhook" \
 
 ```json
 { "data": { "url": "https://example.com/hook", "enabled": false, "created_at": "2026-09-04T12:00:00Z", "last_success_at": null, "disabled_at": "2026-09-04T13:00:00Z" } }
+```
+
+### `POST /me/webhook/test`
+
+**Auth:** Session only
+
+Send a test delivery to your stored webhook destination.
+
+The same sample delivery saving a URL sends. A 2xx answer stamps `last_success_at` and returns the destination; anything else is a 422 naming what the destination answered, and changes nothing. 404 when no destination is configured.
+
+```bash
+curl -X POST "https://freehire.me/api/v1/me/webhook/test" -b cookies.txt
+```
+
+```json
+{ "data": { "url": "https://example.com/hook", "enabled": true, "created_at": "2026-09-04T12:00:00Z", "last_success_at": "2026-09-04T13:00:00Z", "disabled_at": null } }
 ```
 
 ### `DELETE /me/webhook`

@@ -1762,6 +1762,14 @@ export function createApi(
     return requestData<WebhookConfig>('/api/v1/me/webhook', jsonBody('PATCH', { enabled }));
   }
 
+  /** Send a sample delivery to the stored destination. A pass returns the
+   *  destination with `last_success_at` stamped; a destination that refuses it
+   *  is a 422 whose message names what it answered. Saving a URL runs the same
+   *  test first. */
+  async function testWebhook(): Promise<WebhookConfig> {
+    return requestData<WebhookConfig>('/api/v1/me/webhook/test', { method: 'POST' });
+  }
+
   /** Delete the destination entirely. */
   async function deleteWebhook(): Promise<void> {
     await call('/api/v1/me/webhook', { method: 'DELETE' });
@@ -3195,6 +3203,7 @@ export function createApi(
     createOrUpdateWebhook,
     setWebhookEnabled,
     deleteWebhook,
+    testWebhook,
     listSavedSearches,
     createSavedSearch,
     updateSavedSearch,
