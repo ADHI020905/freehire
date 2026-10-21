@@ -195,6 +195,13 @@ func main() {
 		startSuggestRefresh(ctx, suggestSvc)
 	}
 
+	// How many on-site applications one candidate may send a day. A value that is set but
+	// unreadable fails the start, for the same reason the semantic-search knobs below do.
+	directApplyLimit, err := config.LoadDirectApplyDailyLimit()
+	if err != nil {
+		log.Fatalf("direct apply: %v", err)
+	}
+
 	// An agent's opt-in semantic search embeds its query against EMBED_URL. Unset, the
 	// embedder is nil and every such request is answered keyword-only and told so — which
 	// is also the rollback. A value that is set but unreadable fails the start: a mistyped
@@ -379,6 +386,7 @@ func main() {
 		Suggest:                     suggestSvc,
 		Blob:                        blobStore,
 		TypstBin:                    cfg.TypstBin,
+		DirectApplyDailyLimit:       directApplyLimit,
 		CVEditAllowBulletTruncation: cfg.CVEditAllowBulletTruncation,
 		TracerLinkSalt:              cfg.TracerLinkSalt,
 		LLM:                         llmClient,

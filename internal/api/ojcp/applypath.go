@@ -39,6 +39,17 @@ type Projector struct {
 	Submittable map[string]bool
 }
 
+// The apply path types this provider emits, from the standard's own enum. ApplyPathTypes
+// is what the manifest declares, so the declaration and the projection cannot drift apart.
+const (
+	pathATSDirect        = "ats_direct"
+	pathExternalRedirect = "external_redirect"
+	pathPlatformNative   = "platform_native"
+)
+
+// ApplyPathTypes is every apply path type JobPosting can emit.
+var ApplyPathTypes = []string{pathATSDirect, pathExternalRedirect, pathPlatformNative}
+
 // ApplyPath is OJCP's description of one way to apply, and the part of the standard this
 // catalogue is unusually well placed to answer: `required_fields` and `ats_provider` come
 // straight from the form `cmd/capture-apply-form` already stored.
@@ -55,17 +66,27 @@ type ApplyPath struct {
 func (p Projector) JobPosting(j jobview.Job, form *applyform.Form) JobPosting {
 	posting := jobPostingFrom(j, p.Origin)
 	posting.OfficialJobURL = p.officialJobURL(j)
-	posting.ApplyPaths = p.applyPaths(j, form)
+	posting.ApplyPaths = p.applyPaths(j, form, posting.URL)
 	return posting
 }
 
 // applyPaths describes how to apply. There is ALWAYS at least one path: the source's own
 // page. Omitting the field for a posting whose form we never captured would read as "there
-// is no way to apply", which is never true.
-func (p Projector) applyPaths(j jobview.Job, form *applyform.Form) []ApplyPath {
+// is no way to apply", which is never true. pageURL is the posting's page on this site.
+func (p Projector) applyPaths(j jobview.Job, form *applyform.Form, pageURL string) []ApplyPath {
+	if j.DirectApply {
+		// An employer vacancy taking applications here has no outside page: the way in is
+		// this platform's own. Its questions are the employer's, not an ATS's, and only a
+		// signed-in candidate can send it, so no agent submits it.
+		path := ApplyPath{Type: pathPlatformNative, URL: pageURL}
+		if form != nil {
+			path.RequiredFields = requiredFieldNames(form)
+		}
+		return []ApplyPath{path}
+	}
 	if form == nil {
 		return []ApplyPath{{
-			Type: "external_redirect",
+			Type: pathExternalRedirect,
 			URL:  j.URL,
 			// Never true here: with no captured form there is nothing for an agent to fill,
 			// whatever this deployment can otherwise drive.
@@ -74,7 +95,7 @@ func (p Projector) applyPaths(j jobview.Job, form *applyform.Form) []ApplyPath {
 	}
 
 	return []ApplyPath{{
-		Type:                    "ats_direct",
+		Type:                    pathATSDirect,
 		URL:                     applyEntryPoint(j),
 		ATSProvider:             form.Provider,
 		RequiredFields:          requiredFieldNames(form),

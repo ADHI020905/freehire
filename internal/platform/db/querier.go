@@ -2174,6 +2174,9 @@ type Querier interface {
 	// Two open rows may share a URL (an aggregator and an ATS row the dedup passes have not
 	// collapsed), so a canonical row wins over a duplicate, then the most recently confirmed,
 	// with id as the deterministic tiebreak.
+	//
+	// A link that normalizes to nothing matches nothing: a posting with no outside page
+	// stores an empty url, and "https://www." must not answer with one of those.
 	FindOpenJobByURL(ctx context.Context, url string) (string, error)
 	// The (id, title) of one company's open canonical postings — deliberately WITHOUT the
 	// description. The caller groups these into buckets with the same normalized-title function the
@@ -2335,6 +2338,11 @@ type Querier interface {
 	// language stamp is checked against the VACANCY, not the caller's profile, unlike
 	// GetUserJobAnalysis.
 	GetCoverLetter(ctx context.Context, arg GetCoverLetterParams) (GetCoverLetterRow, error)
+	// One candidate's application to one vacancy, if any — whether it reached the employer is
+	// sent_at, whether a delivery is in flight is a sending_at younger than the claim's two
+	// minutes. Read by the apply form ("already applied") and by Apply to tell the three
+	// reasons UpsertDirectApplication can return nothing apart.
+	GetDirectApplication(ctx context.Context, arg GetDirectApplicationParams) (GetDirectApplicationRow, error)
 	// One account's binding, for the integrations surface and for the unlink path. No rows means
 	// not linked, which every caller reports as a state rather than as an error.
 	GetDiscordLink(ctx context.Context, userID int64) (DiscordLink, error)
@@ -4848,6 +4856,8 @@ type Querier interface {
 	// within the same local calendar day. Only called after a successful `daily`-mode
 	// delivery — `instant`-mode subscriptions never touch this column.
 	MarkDigestSent(ctx context.Context, id int64) error
+	// Stamps an application delivered. Only ever after the email succeeded.
+	MarkDirectApplicationSent(ctx context.Context, id int64) error
 	// Stamp read on first open; a no-op once already read.
 	MarkEmailRead(ctx context.Context, arg MarkEmailReadParams) error
 	// Write one company's whole fuzzy verdict in a single statement rather than a round trip per
@@ -5949,6 +5959,9 @@ type Querier interface {
 	// matches nothing and returns 0. That is what lets every failure path call this without
 	// first working out whether it owes one.
 	ReleaseConsumption(ctx context.Context, arg ReleaseConsumptionParams) (int64, error)
+	// Gives up a delivery claim after the email failed, so the candidate's retry is immediate
+	// rather than waiting out the claim.
+	ReleaseDirectApplication(ctx context.Context, id int64) error
 	// Release the lease on a subscription's claimed jobs without counting an attempt,
 	// so a soft-skipped delivery (e.g. Telegram not yet linked) is retried promptly on
 	// a later pass instead of waiting out the lease.
@@ -6268,7 +6281,9 @@ type Querier interface {
 	// registered ATS board provider — the sources no ingest run re-crawls and the sweep
 	// therefore never closes (telegram, habr_career, geekjob, …). The caller passes the
 	// ATS provider set from the sources registry; <> ALL excludes them, so a new adapter
-	// never silently becomes a probe target. Closed jobs are skipped (already not open).
+	// never silently becomes a probe target. Closed jobs are skipped (already not open), and
+	// so is a posting with no outside page (an employer vacancy taking applications on
+	// freehire): there is nothing to request, and its employer closes it.
 	SelectOrphanLivenessCandidates(ctx context.Context, atsProviders []string) ([]SelectOrphanLivenessCandidatesRow, error)
 	// Liveness backstop for a registered provider whose ingest sweep cannot reach every open
 	// job — see job-lifecycle: CloseUnseenJobs scopes closes to the company_slugs a run
@@ -7215,6 +7230,18 @@ type Querier interface {
 	// re-ages itself on every redraft would silently break any future rule that did — the same
 	// trap the fit-analysis quota documents on its own upsert.
 	UpsertCoverLetter(ctx context.Context, arg UpsertCoverLetterParams) error
+	// Records a candidate's application to an on-site vacancy and CLAIMS it for delivery
+	// (sending_at), or replaces the content of one they recorded earlier that never reached the
+	// employer — the retry after a failed delivery. See migration 0187.
+	//
+	// Returns no row in exactly three cases, which GetDirectApplication tells apart afterwards:
+	// the application was already SENT; another request holds a live claim on it (a delivery in
+	// flight — claiming it again would email the employer twice); or the candidate has reached
+	// today's cap. The cap counts applications created since midnight UTC
+	// on OTHER vacancies, and a retry on this one always passes, so a failed delivery never
+	// costs a second slot. Two concurrent first applications can both pass the count and land
+	// one over the cap; the cap bounds abuse, it is not a quota anyone is billed against.
+	UpsertDirectApplication(ctx context.Context, arg UpsertDirectApplicationParams) (int64, error)
 	// Store a Gmail message, idempotent by (user_id, source, external_id) with
 	// source fixed to 'gmail'; the hosted path has its own insert (InsertHostedMessage).
 	UpsertEmail(ctx context.Context, arg UpsertEmailParams) error

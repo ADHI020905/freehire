@@ -43,6 +43,7 @@ import (
 	"github.com/strelov1/freehire/internal/engage/mentorship"
 	"github.com/strelov1/freehire/internal/engage/processreport"
 	"github.com/strelov1/freehire/internal/engage/referral"
+	"github.com/strelov1/freehire/internal/engage/reminder"
 	"github.com/strelov1/freehire/internal/engage/report"
 	"github.com/strelov1/freehire/internal/engage/webhooknotify"
 	"github.com/strelov1/freehire/internal/identity/accountdelete"
@@ -57,6 +58,7 @@ import (
 	"github.com/strelov1/freehire/internal/identity/userprofile"
 	"github.com/strelov1/freehire/internal/ingest/boardresolve"
 	"github.com/strelov1/freehire/internal/ingest/contribution"
+	"github.com/strelov1/freehire/internal/ingest/directapply"
 	"github.com/strelov1/freehire/internal/ingest/employer"
 	"github.com/strelov1/freehire/internal/ingest/jdresolve"
 	"github.com/strelov1/freehire/internal/ingest/linkimport"
@@ -384,6 +386,9 @@ type Config struct {
 	// Blob backs résumé storage (internal/platform/blobstore). Nil disables storage: résumé
 	// upload only extracts skills in-request (no regression).
 	Blob blobstore.Store
+	// DirectApplyDailyLimit caps how many on-site applications one candidate sends per UTC
+	// day (config.LoadDirectApplyDailyLimit, read and validated in cmd/server).
+	DirectApplyDailyLimit int64
 	// TypstBin is the resolved path to the typst binary for CV PDF rendering. Empty
 	// disables rendering: the /me/cvs/:id/pdf endpoint returns 501, the rest works.
 	TypstBin string
@@ -694,7 +699,10 @@ func Register(app *fiber.App, cfg Config) {
 		chain:   coverletter.NewAnalyzer(cfg.LLM),
 		bank:    bank,
 	}
-	cvH := newCVHandlers(cfg.Pool, queries, cvStore, assistantStore, cvRenderer, cfg.TracerLinkSalt, cfg.FrontendOrigin, servedHostsOrDefault(cfg.ServedHosts, cfg.FrontendOrigin), resumeStore, photoStore, plans, matchH, bankGate{bank: bank}, trackingJobs, letterDeps, !cfg.CVEditAllowBulletTruncation)
+	// How a CV is rendered when its owner sends it somewhere — the CV page's download and an
+	// on-site application share it.
+	cvPDF := newOwnedCVPDF(queries, cvStore, cvRenderer, photoStore, cfg.FrontendOrigin, servedHostsOrDefault(cfg.ServedHosts, cfg.FrontendOrigin))
+	cvH := newCVHandlers(cfg.Pool, queries, cvStore, assistantStore, cvRenderer, cvPDF, cfg.TracerLinkSalt, cfg.FrontendOrigin, resumeStore, photoStore, plans, matchH, bankGate{bank: bank}, trackingJobs, letterDeps, !cfg.CVEditAllowBulletTruncation)
 
 	cvH.llm = llmBinding{client: cfg.LLM, keys: llmKeys}
 	telegramH := newTelegramHandlers(queries, cfg.JWTSecret, cfg.TelegramBotToken, cfg.TelegramBotUsername, cfg.TelegramWebhookSecret, cfg.FrontendOrigin, contributionsH.intake)
@@ -776,7 +784,13 @@ func Register(app *fiber.App, cfg Config) {
 	intentH := newIntentHandlers(llmBinding{client: cmp.Or(cfg.SearchIntentLLM, cfg.LLM), keys: llmKeys})
 	companiesH := newCompaniesHandlers(queries, companySearch)
 	geoH := newGeoHandlers()
-	trackingH := newTrackingHandlers(queries, cfg.Pool, jobSearch)
+	// One reminder service, handed to tracking as its Reminders port and kept by the tracking
+	// handlers for the notification-settings endpoints. Save/unsave/apply schedule and cancel
+	// inside the tracking service, so every caller of it — the tracking routes, the in-app
+	// assistant, the mail reconstruction, an on-site application — gets the same side effect.
+	reminders := reminder.New(reminder.NewQueriesRepository(queries))
+	tracking := jobtracking.New(jobtracking.NewQueriesRepository(queries, cfg.Pool), jobtracking.WithReminders(reminders))
+	trackingH := newTrackingHandlers(queries, tracking, reminders, jobSearch)
 	timelineH := newTimelineHandlers(queries)
 	resumeH := newResumeHandlers(resumeStore, structuredExtractor, facets, profileSvc, atsAnalyzer, queries)
 	photoH := newPhotoHandlers(photoStore)
@@ -876,7 +890,24 @@ func Register(app *fiber.App, cfg Config) {
 		employerMailer = employerClaimMailer
 	}
 	employerRepo := employer.NewQueriesRepository(queries, cfg.Pool)
-	employerH := newEmployerHandlers(queries, employer.New(employerRepo, authH.accounts, employerMailer, employerRepo, moderationSvc))
+	employerSvc := employer.New(employerRepo, authH.accounts, employerMailer, employerRepo, moderationSvc)
+	employerH := newEmployerHandlers(queries, employerSvc)
+	// Applying on freehire needs both a CV renderer and a mail transport; without either an
+	// application could be recorded but never delivered, so the routes answer 501 instead.
+	directApplyH := &directApplyHandlers{}
+	if cvRenderer != nil && mailClient != nil {
+		directApplyH.svc = directapply.New(
+			directapply.NewQueriesRepository(queries),
+			employerSvc,
+			directApplyCVs{pdf: cvPDF},
+			directApplyMailer{mailer: emailnotify.NewApplicationMailer(mailClient, cfg.NotifyEmailFrom, cfg.FrontendOrigin), origin: cfg.FrontendOrigin},
+			directApplyTracker{tracking: tracking},
+			answerBank,
+			cfg.DirectApplyDailyLimit,
+		)
+	} else {
+		log.Print("directapply: no CV renderer or no mail transport — applications on freehire are unavailable")
+	}
 	var referralTelegram referral.TelegramSender
 	if telegramH.telegramBot != nil {
 		referralTelegram = telegramH.telegramBot
@@ -1064,6 +1095,7 @@ func Register(app *fiber.App, cfg Config) {
 	// Verified-employer accounts: claim, curated profile, own vacancies, and the
 	// moderator/admin review surface (see employerHandlers).
 	employerH.register(api, mw)
+	directApplyH.register(api, mw)
 
 	// Link contributions (see contributionHandlers).
 	contributionsH.register(api, mw)
