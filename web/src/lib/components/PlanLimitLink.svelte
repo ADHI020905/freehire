@@ -22,6 +22,11 @@
   // `variant` lets a caller whose surrounding chrome is already colored (AssistantChat's
   // destructive-styled plan-limit alert) ask for something that doesn't fight it, without
   // dulling the CTA everywhere else it sits on a neutral card.
+  //
+  // A new tab, because every surface showing this is mid-task — a tailoring dialog, an
+  // assistant conversation, an analysis — and Stripe returns a finished checkout to
+  // /my/plan, not to where the candidate started. The task stays open in its own tab
+  // for them to come back to once they've paid.
   let { variant = 'primary' }: { variant?: ButtonVariant } = $props();
 
   const isFree = $derived((currentUser()?.tier ?? 'free') === 'free');
@@ -47,9 +52,9 @@
 </script>
 
 {#if isFree}
-  <Button href={planHref} {variant} size="sm">
+  <Button href={planHref} target="_blank" {variant} size="sm">
     {proMonthlyLabel ? format(s.upgradeWithPrice, { price: `${proMonthlyLabel}/mo` }) : s.upgrade}
   </Button>
 {:else}
-  <a href={planHref} class="text-xs font-medium underline underline-offset-4">{s.seeYourPlan}</a>
+  <a href={planHref} target="_blank" rel="noopener noreferrer" class="text-xs font-medium underline underline-offset-4">{s.seeYourPlan}</a>
 {/if}

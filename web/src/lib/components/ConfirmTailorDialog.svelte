@@ -7,8 +7,13 @@
   // candidate commits to tailoring their CV against it — always, not just when
   // something looks off, so the check is a habit rather than a surprise.
   import { Check, TriangleAlert } from '@lucide/svelte';
+  import { beforeNavigate } from '$app/navigation';
   import { notInPlan, refuses, remaining, resetsAtLabel } from '$lib/allowance';
-  import { confirmTailorDialog, settleConfirmTailorDialog } from '$lib/confirmTailorDialog.svelte';
+  import {
+    confirmTailorDialog,
+    refreshConfirmTailorAllowance,
+    settleConfirmTailorDialog,
+  } from '$lib/confirmTailorDialog.svelte';
   import { partitionBlockers, toneText, haveChipClass, missingChipClass } from '$lib/jobMatch';
   import { ConfirmDialog } from '$lib/ui';
   import SkillIcon from './SkillIcon.svelte';
@@ -42,7 +47,24 @@
   const allowance = $derived(confirmTailorDialog.allowance);
   const refused = $derived(refuses(allowance));
   const left = $derived(remaining(allowance));
+
+  // Mounted in the root layout, so a navigation does not unmount it: following the upgrade
+  // link would land on /my/plan with this dialog still covering the page. Leaving the page
+  // is a cancel — the candidate went somewhere else instead of tailoring.
+  beforeNavigate(() => {
+    if (confirmTailorDialog.open) settleConfirmTailorDialog(false);
+  });
+
+  // The upgrade link opens /my/plan in a new tab; coming back after paying should find
+  // the confirm already available, not a refusal the candidate just paid to lift.
+  function onVisibilityChange() {
+    if (document.visibilityState === 'visible' && confirmTailorDialog.open && refused) {
+      refreshConfirmTailorAllowance();
+    }
+  }
 </script>
+
+<svelte:document onvisibilitychange={onVisibilityChange} />
 
 <!-- Facing a real refusal the confirm button acknowledges rather than proceeds: settling
      false keeps the candidate where they are instead of navigating them into a 402 they can

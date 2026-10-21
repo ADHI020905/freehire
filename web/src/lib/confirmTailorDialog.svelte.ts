@@ -63,6 +63,16 @@ export function askConfirmTailor(slug: string, label?: string): Promise<boolean>
   // Its own request and its own failure: what the plan allows is a separate question from
   // how well the candidate fits, and a plan read that fails must not take the fit check
   // down with it. The dialog simply says nothing about cost in that case.
+  refreshConfirmTailorAllowance();
+  return new Promise((resolve) => {
+    resolver = resolve;
+  });
+}
+
+/** Re-reads the tailoring allowance. Called on open, and again when the candidate comes
+ *  back to the tab — the upgrade link opens /my/plan in a new one, so a purchase made
+ *  there should turn this dialog's refusal into a working confirm without a reload. */
+export function refreshConfirmTailorAllowance() {
   api
     .myPlan()
     .then((p) => {
@@ -71,9 +81,6 @@ export function askConfirmTailor(slug: string, label?: string): Promise<boolean>
     .catch(() => {
       allowance = null;
     });
-  return new Promise((resolve) => {
-    resolver = resolve;
-  });
 }
 
 /** Settles the pending ask. Called both by the dialog's own confirm/cancel and by

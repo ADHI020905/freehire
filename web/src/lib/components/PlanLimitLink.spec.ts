@@ -31,6 +31,9 @@ describe('PlanLimitLink', () => {
     // be a second copy of the money rule money.ts warns against.
     const link = await screen.findByRole('link', { name: 'Upgrade to Pro — $5.00/mo' });
     expect(link.getAttribute('href')).toBe('/my/plan');
+    // A new tab: Stripe returns a checkout to /my/plan, so the task the candidate was in
+    // the middle of has to survive in the tab they left.
+    expect(link.getAttribute('target')).toBe('_blank');
   });
 
   it('still upgrades, just without a price in the label, when the price fetch fails', async () => {
