@@ -385,6 +385,26 @@ var subdivisionToCountry = map[string]string{
 // stays California.
 var collidingSubdivisions = computeCollidingSubdivisions()
 
+// stateFirstSubdivisions are the colliding codes whose US-STATE reading dominates
+// this catalogue, so the default flips: after a city the dictionary does not place
+// in the colliding country, the code is the state. Without it, every US town the
+// curated maps and GeoNames do not call American — "Cambridge" and "Birmingham" are
+// British there, "Annapolis Junction" is nowhere — fell through to the country code.
+//
+// Measured 2026-10-21 by cmd/report-geo-gaps over open postings stored under the
+// country reading, against the countries LLM enrichment recorded for them: PA
+// (Panama) 227 of 239 read as US, MA (Morocco) 168/227, MD (Moldova) 131/132, IL
+// (Israel) 48/51, MN (Mongolia) 35/35, AL (Albania) 30/31, MO (Macau) 42/42, LA
+// (Laos) 61/64, ME (Montenegro) 8/8 — about 29k postings in all.
+//
+// Deliberately absent, because the same measurement says the COUNTRY wins there:
+// DE (Germany, 5 of 708 US), IN (India, 34/503), ID (Indonesia, 2/51), AR
+// (Argentina, 7/49), CO (Colombia, 83/321), TN (Tunisia, 36/101), MT (Malta, 1/6).
+// A code joins this set on a measurement like that one, never on intuition.
+var stateFirstSubdivisions = map[string]struct{}{
+	"pa": {}, "ma": {}, "md": {}, "il": {}, "mn": {}, "al": {}, "mo": {}, "la": {}, "me": {},
+}
+
 func computeCollidingSubdivisions() map[string]struct{} {
 	out := map[string]struct{}{}
 	for code := range subdivisionToCountry {

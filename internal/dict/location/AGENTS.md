@@ -40,6 +40,13 @@ Curated dictionary deriving ISO 3166-1 alpha-2 country codes, region codes, and 
 - **Add country NAMES, never country CODES.** `resolveSubdivision` runs before the bare-code
   branch, so a code would collide with the US/Canada subdivision table (`LA`→Louisiana,
   `MN`→Minnesota, `MO`→Missouri). Names are full words and cannot.
+- **A colliding state code defaults per code, by measurement.** `IL`, `MA`, `PA`… are both
+  a US state and a country. The default reading is the country unless the preceding city is
+  a known US/CA place — except for `stateFirstSubdivisions` (pa, ma, md, il, mn, al, mo, la,
+  me), where the US-state reading dominates the catalogue: after any city the dictionary does
+  not place in that country, the code is the state. Without it ~29k US postings sat under
+  Morocco, Panama, Moldova and Albania ("Cambridge, MA": GeoNames calls Cambridge British).
+  A code joins the set on a `cmd/report-geo-gaps` measurement, never on intuition.
 - **A country name that is also a US city/state is deliberately withheld.** `georgia` is
   absent (the state); `palestine` is absent (Palestine, Texas) in favour of the unambiguous
   long forms. `Tbilisi, Georgia` still resolves to `ge` — through the city, not the country

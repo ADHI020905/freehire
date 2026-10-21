@@ -740,3 +740,67 @@ func TestParseCityFacetExpansion(t *testing.T) {
 		})
 	}
 }
+
+// TestParseStateFirstSubdivisions covers the colliding codes whose US-state reading
+// dominates this catalogue (measured 2026-10-21 by cmd/report-geo-gaps: of the open
+// postings stored under Morocco for a trailing ", MA", the model read 168 of 227 as
+// US; Moldova/MD 131 of 132; Panama/PA 227 of 239). For these, a city the
+// dictionary does not place in the colliding COUNTRY is enough to read the state —
+// "Cambridge, MA" is Massachusetts even though GeoNames calls Cambridge British.
+// The country reading still wins when the city is that country's own.
+func TestParseStateFirstSubdivisions(t *testing.T) {
+	tests := []struct {
+		location string
+		want     []string
+	}{
+		// The state, now.
+		{"Cambridge, MA", []string{"us"}},
+		{"Birmingham, AL", []string{"us"}},
+		{"Montgomery County, PA", []string{"us"}},
+		{"Annapolis Junction, MD", []string{"us"}},
+		{"Fort Meade, MD", []string{"us"}},
+		{"Oak Brook, IL", []string{"us"}},
+		{"Lone Tree, MN", []string{"us"}},
+		{"Statewide, LA", []string{"us"}},
+		{"Slu Saint Louis, MO", []string{"us"}},
+		{"Portland, ME", []string{"us"}},
+		{"Brighton MA", []string{"us"}},
+		// The country, still: the city is that country's own.
+		{"Tel Aviv, IL", []string{"il"}},
+		{"Haifa, IL", []string{"il"}},
+		{"Casablanca, MA", []string{"ma"}},
+		{"Rabat, MA", []string{"ma"}},
+		{"Tirana, AL", []string{"al"}},
+		{"Chisinau, MD", []string{"md"}},
+		{"Panama City, PA", []string{"pa"}},
+		{"Ulaanbaatar, MN", []string{"mn"}},
+		{"Podgorica, ME", []string{"me"}},
+		{"Vientiane, LA", []string{"la"}},
+		// A bare code has no city to judge by and keeps its old reading.
+		{"MA", []string{"ma"}},
+		{"IL", []string{"il"}},
+		// Codes whose COUNTRY reading dominates are untouched: an unknown city
+		// beside them still reads as the country.
+		{"Unknownville, DE", []string{"de"}},
+		{"Unknownville, IN", []string{"in"}},
+		{"Unknownville, CO", []string{"co"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.location, func(t *testing.T) {
+			got := Parse(tt.location).Countries
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Parse(%q).Countries = %v, want %v", tt.location, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestStateFirstSubdivisionsAreColliding guards the set against dead entries: a
+// code that is not a colliding subdivision never reaches the check that reads it.
+func TestStateFirstSubdivisionsAreColliding(t *testing.T) {
+	for code := range stateFirstSubdivisions {
+		if _, ok := collidingSubdivisions[code]; !ok {
+			t.Errorf("stateFirstSubdivisions[%q] is not a colliding subdivision code", code)
+		}
+	}
+}

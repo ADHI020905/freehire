@@ -350,12 +350,33 @@ func resolveSubdivision(tok, prevTok string) (string, bool) {
 // subdivisionAccepted reports whether a matched subdivision code should win over
 // its identically-spelled country-code reading. A code outside
 // collidingSubdivisions is unambiguous and always accepted; a colliding one is
-// accepted only when cityTok is isRecognizedUSCACity.
+// accepted when cityTok is isRecognizedUSCACity — or, for a stateFirstSubdivisions
+// code, when there is a city at all and the dictionary does not place it in the
+// colliding country itself.
 func subdivisionAccepted(code, cityTok string) bool {
 	if _, ambiguous := collidingSubdivisions[code]; !ambiguous {
 		return true
 	}
-	return isRecognizedUSCACity(cityTok)
+	if isRecognizedUSCACity(cityTok) {
+		return true
+	}
+	if _, stateFirst := stateFirstSubdivisions[code]; stateFirst && cityTok != "" {
+		return !isRecognizedCityOf(cityTok, code)
+	}
+	return false
+}
+
+// isRecognizedCityOf reports whether tok names a place the parser already knows is
+// in the given country — the same two lookups isRecognizedUSCACity makes. It is what
+// keeps "Casablanca, MA" Moroccan once MA defaults to Massachusetts.
+func isRecognizedCityOf(tok, country string) bool {
+	if code, ok := nameToCountry[tok]; ok {
+		return code == country
+	}
+	if ce, ok := cityDict[tok]; ok {
+		return ce.Country == country
+	}
+	return false
 }
 
 // isRecognizedUSCACity reports whether tok names a place the parser already knows
