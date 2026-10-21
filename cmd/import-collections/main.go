@@ -131,7 +131,7 @@ func run() int {
 		}
 	}
 
-	propagated, err := q.PropagateCollectionsToJobs(ctx)
+	propagated, err := propagate(ctx, q)
 	if err != nil {
 		log.Printf("import-collections: propagate to jobs: %v", err)
 		return 1

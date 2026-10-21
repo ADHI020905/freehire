@@ -97,6 +97,9 @@ describe('credential collections in the job-search facet', () => {
       'uk-skilled-worker-sponsor',
       'nl-recognised-sponsor',
       'us-h1b-sponsor',
+      'ca-lmia-employer',
+      'ie-permit-employer',
+      'dk-fast-track-company',
     ]);
     for (const c of credentials) {
       expect(c.group).toBe('Employer credentials');

@@ -283,6 +283,30 @@ var All = []Collection{
 		// register's multi-route file.
 		Gate: RequireCountry("US"),
 	},
+	{
+		Slug:        "ca-lmia-employer",
+		Title:       "Canada LMIA employer",
+		Description: "Open roles at employers ESDC issued a positive Labour Market Impact Assessment in the last four quarters, through the High Wage, Global Talent or Permanent Resident streams. The approval belongs to the employer — it is not a commitment to sponsor any particular role.",
+		Kind:        KindCredential,
+		Dataset:     &Dataset{Records: FetchCALMIASponsors},
+		Gate:        AllOf(RequireCountry("CA"), RequireRoute(caWorkStreams...)),
+	},
+	{
+		Slug:        "ie-permit-employer",
+		Title:       "Ireland permit employer",
+		Description: "Open roles at employers DETE issued Irish employment permits to this year or in the two years before. The permits belong to the employer — it is not a commitment to sponsor any particular role.",
+		Kind:        KindCredential,
+		Dataset:     &Dataset{Records: FetchIEPermitEmployers},
+		Gate:        RequireCountry("IE"),
+	},
+	{
+		Slug:        "dk-fast-track-company",
+		Title:       "Denmark Fast-track company",
+		Description: "Open roles at companies SIRI has certified for the Danish Fast-track scheme for hiring foreign skilled workers. The certification belongs to the employer — it is not a commitment to sponsor any particular role.",
+		Kind:        KindCredential,
+		Dataset:     &Dataset{URL: dkSponsorURL, Parse: ParseDKSponsors, IdentityKey: "cvr"},
+		Gate:        RequireCountry("DK"),
+	},
 }
 
 // Default dataset URLs (overridable per collection via <SLUG>_DATASET_URL in the

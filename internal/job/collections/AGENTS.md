@@ -2,13 +2,13 @@
 
 ## Scope
 The code-owned registry of curated company tags: editorial themes (Big Tech, Unicorn),
-credentials from authoritative public registers (UK/NL/US visa sponsors), and backers (YC,
+credentials from authoritative public registers (UK/NL/US/CA/IE/DK visa sponsors), and backers (YC,
 Techstars, a16z). This package is the source of truth for which tags exist and how members
 are matched; `cmd/import-collections` writes `companies.collections`, and the search facet
 (`jobs.collections`) serves it.
 
 ## Always true
-- **The registry is code.** `All` (collections.go:167-286 — 16 slugs, in display order) is
+- **The registry is code.** `All` (collections.go:167-310 — 19 slugs, in display order) is
   the fixed set; adding a tag is one entry with exactly one membership source: a static
   `Slugs` hand list or a `Dataset`. `Kind` decides how the tag renders (editorial chip /
   credential with issuing body and snapshot date / backer brand mark) and its zero value is
@@ -55,13 +55,27 @@ are matched; `cmd/import-collections` writes `companies.collections`, and the se
   `RequireRoute`. With an empty IdentityKey the guard is permissive on purpose: firing it
   on a register that cannot disambiguate would delete its every duplicate, and the
   geography gates are the real defence there.
-- **A company is tagged when ANY of its records passes the gate** (collections.go:469-496):
+- **A company is tagged when ANY of its records passes the gate** (collections.go:493-520):
   a register lists an organisation once per route it holds, so a work-route row must win
   even when a temporary-route row sorts first.
 - **`Reconcile` is given live + retired slugs** so a removed or renamed tag is stripped
-  everywhere on the next run (collections.go:537-562; `RetiredSlugs` collections.go:447-452;
+  everywhere on the next run (collections.go:561-586; `RetiredSlugs` collections.go:471-476;
   wired at cmd/import-collections/main.go:358). Tags the registry does not manage are
   preserved untouched.
+
+- **Canada, Ireland and Denmark carry no identity field we can use**, and that is a decision,
+  not an omission. The LMIA file's only per-row discriminator is the business ADDRESS, which
+  differs per location of one employer — keyed on it, `DropAmbiguous` would delete every
+  multi-site employer. DETE's permit workbooks carry nothing but the name. (SIRI's list does
+  carry a CVR number and uses it.) The geography gate is the defence for the first two.
+- **Canada is gated by stream** (`caWorkStreams`): Primary Agriculture and Low Wage are most
+  of the LMIA rows and would badge a farm as a sponsor for an engineering role — the
+  `ukWorkRoutes` argument again.
+- **New Zealand was investigated and declined (2026-10-21).** INZ publishes its accredited
+  employer list only as a search box behind an Imperva captcha; the data comes from an
+  undocumented `list-api` POST that refuses any query matching more than ~1,000 employers.
+  There is no file to import, and mirroring it means thousands of requests per run against an
+  endpoint that can change with any redeploy. Revisit if INZ publishes a download.
 
 ## How it works
 `cmd/import-collections` resolves each collection's dataset, matches records to the

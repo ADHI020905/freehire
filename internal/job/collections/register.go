@@ -91,6 +91,9 @@ var countryAliases = map[string][]string{
 	"GB": {"uk", "united kingdom", "great britain", "england", "scotland", "wales"},
 	"NL": {"netherlands", "the netherlands", "holland"},
 	"US": {"usa", "u.s.a.", "u.s.", "united states", "united states of america", "america"},
+	"CA": {"canada"},
+	"IE": {"ireland", "republic of ireland"},
+	"DK": {"denmark"},
 }
 
 // countryMatches reports whether a stored country value denotes the given ISO code.

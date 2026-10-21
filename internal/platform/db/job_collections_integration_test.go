@@ -1,6 +1,6 @@
 //go:build integration
 
-// Integration test for PropagateCollectionsToJobs: a company's curated-collection
+// Integration test for PropagateCollectionsToJobsBatch: a company's curated-collection
 // set is denormalized onto its jobs (matched by company_slug), an untagged
 // company's jobs stay empty, and re-running is idempotent. This is SQL behavior
 // (UPDATE ... FROM with an IS DISTINCT FROM guard), so it runs against a real
@@ -78,7 +78,7 @@ func jobCollections(t *testing.T, pool *pgxpool.Pool, externalID string) []strin
 	return got
 }
 
-func TestPropagateCollectionsToJobs(t *testing.T) {
+func TestPropagateCollectionsToJobsBatch(t *testing.T) {
 	pool := startPostgres(t)
 	q := New(pool)
 	ctx := context.Background()
@@ -89,31 +89,48 @@ func TestPropagateCollectionsToJobs(t *testing.T) {
 
 	insertCompanyWithCollections(t, pool, "stripe", "Stripe", []string{"yc", "bigtech"})
 	insertCompanyWithCollections(t, pool, "acme", "Acme", []string{})
-	insertJobForCompany(t, pool, "j-stripe", "stripe")
+	insertJobForCompany(t, pool, "j-stripe-1", "stripe")
 	insertJobForCompany(t, pool, "j-acme", "acme")
+	insertJobForCompany(t, pool, "j-stripe-2", "stripe")
 
-	rows, err := q.PropagateCollectionsToJobs(ctx)
-	if err != nil {
-		t.Fatalf("PropagateCollectionsToJobs: %v", err)
+	// A batch of one walks the keyset: each batch takes the next diverging job past
+	// the cursor, and acme's job (its empty set already matches) is never a batch.
+	var after, total int64
+	for batches := 0; ; batches++ {
+		if batches > 3 {
+			t.Fatal("propagation did not converge")
+		}
+		got, err := q.PropagateCollectionsToJobsBatch(ctx, PropagateCollectionsToJobsBatchParams{AfterID: after, BatchSize: 1})
+		if err != nil {
+			t.Fatalf("PropagateCollectionsToJobsBatch: %v", err)
+		}
+		if got.Updated == 0 {
+			break
+		}
+		if got.LastID <= after {
+			t.Fatalf("cursor did not advance: %d -> %d", after, got.LastID)
+		}
+		after, total = got.LastID, total+got.Updated
 	}
-	// Only the tagged company's job changes (acme's empty set already matches).
-	if rows != 1 {
-		t.Errorf("rows updated = %d, want 1", rows)
+	if total != 2 {
+		t.Errorf("jobs updated = %d, want 2", total)
 	}
 
-	if got := jobCollections(t, pool, "j-stripe"); !slices.Equal(got, []string{"yc", "bigtech"}) {
-		t.Errorf("stripe job collections = %v, want [yc bigtech]", got)
+	for _, id := range []string{"j-stripe-1", "j-stripe-2"} {
+		if got := jobCollections(t, pool, id); !slices.Equal(got, []string{"yc", "bigtech"}) {
+			t.Errorf("%s collections = %v, want [yc bigtech]", id, got)
+		}
 	}
 	if got := jobCollections(t, pool, "j-acme"); len(got) != 0 {
 		t.Errorf("acme job collections = %v, want empty", got)
 	}
 
-	// Idempotent: a second run changes nothing.
-	rows, err = q.PropagateCollectionsToJobs(ctx)
+	// Idempotent: a fresh pass from the start finds nothing to change.
+	got, err := q.PropagateCollectionsToJobsBatch(ctx, PropagateCollectionsToJobsBatchParams{AfterID: 0, BatchSize: 100})
 	if err != nil {
-		t.Fatalf("PropagateCollectionsToJobs (2nd): %v", err)
+		t.Fatalf("PropagateCollectionsToJobsBatch (2nd pass): %v", err)
 	}
-	if rows != 0 {
-		t.Errorf("2nd run rows updated = %d, want 0 (idempotent)", rows)
+	if got.Updated != 0 {
+		t.Errorf("2nd pass updated = %d, want 0 (idempotent)", got.Updated)
 	}
 }

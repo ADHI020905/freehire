@@ -208,6 +208,35 @@ UK/NL forms it already recognises.
 - **THEN** the company receives the credential, the comparison having recognised
   the name as denoting the same country
 
+### Requirement: Canada, Ireland and Denmark grant credentials from their official employer lists
+
+The system SHALL source three further credentials, each gated on the company having
+open jobs in that country (`RequireCountry`):
+
+- `ca-lmia-employer` from ESDC's positive-LMIA employers list on open.canada.ca. The
+  quarterly English XLSX files SHALL be discovered from the dataset's CKAN metadata at
+  fetch time and the **4 most recent** combined. Only rows in the High Wage, Global
+  Talent or Permanent Resident streams SHALL earn the credential.
+- `ie-permit-employer` from DETE's annual "employment permits issued to companies"
+  workbooks, discovered through the statistics index and each year's page, combining
+  the **3 most recent** years (the current, partial year and the two before it).
+- `dk-fast-track-company` from SIRI's list of companies certified for the Danish
+  Fast-track scheme, a single HTML table keyed by CVR number.
+
+Each fetch SHALL be all-or-nothing, and fewer files than the window SHALL be an
+error, as for the US register.
+
+#### Scenario: A Canadian agricultural LMIA does not earn the credential
+
+- **WHEN** an employer's only LMIA rows are in the Primary Agriculture or Low Wage stream
+- **THEN** it does not receive `ca-lmia-employer`
+
+#### Scenario: One unreachable Irish year aborts the whole fetch
+
+- **WHEN** one of the 3 target years' workbook cannot be fetched
+- **THEN** the resolve fails and the previous run's `ie-permit-employer` membership is
+  left unchanged
+
 ### Requirement: Credential matching is conservative and never assigns on a coincidence of names
 
 The system SHALL match a register entry to a catalogue company by normalized name,

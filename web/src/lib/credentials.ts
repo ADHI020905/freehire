@@ -38,6 +38,21 @@ const COPY: Record<string, { issuer: string; tooltip: string }> = {
     tooltip:
       'This employer has had H-1B petitions approved by USCIS in the last five fiscal years, per the USCIS H-1B Employer Data Hub. The approval belongs to the employer and is not a commitment to sponsor this role.',
   },
+  'ca-lmia-employer': {
+    issuer: 'ESDC',
+    tooltip:
+      'This employer was issued a positive Labour Market Impact Assessment by Employment and Social Development Canada in the last four quarters, through the High Wage, Global Talent or Permanent Resident streams. The approval belongs to the employer and is not a commitment to sponsor this role.',
+  },
+  'ie-permit-employer': {
+    issuer: 'DETE',
+    tooltip:
+      'This employer was issued Irish employment permits this year or in the two years before, per the Department of Enterprise, Tourism and Employment. The permits belong to the employer and are not a commitment to sponsor this role.',
+  },
+  'dk-fast-track-company': {
+    issuer: 'SIRI',
+    tooltip:
+      'This company is certified by SIRI for the Danish Fast-track scheme for hiring foreign skilled workers. The certification belongs to the employer and is not a commitment to sponsor this role.',
+  },
 };
 
 /**

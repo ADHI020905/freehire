@@ -5159,11 +5159,23 @@ type Querier interface {
 	// worker unions these into the Gmail search query.
 	PromotedDomains(ctx context.Context, threshold int32) ([]string, error)
 	// Denormalize each company's curated-collection set onto its jobs, so the search
-	// facet (jobs.collections) reflects current membership. Run by cmd/import-collections
-	// after it writes companies.collections. updated_at is bumped so `reindex --since`
+	// facet (jobs.collections) reflects current membership — one keyset batch at a
+	// time. Run by cmd/import-collections after it writes companies.collections, which
+	// loops until a batch updates nothing. updated_at is bumped so `reindex --since`
 	// picks the changed rows up; the IS DISTINCT FROM guard skips unchanged rows, making
 	// re-runs idempotent and cheap.
-	PropagateCollectionsToJobs(ctx context.Context) (int64, error)
+	//
+	// Batched because it is no longer safe as one statement: a credential reaching a
+	// few thousand more companies rewrites hundreds of thousands of jobs, and a single
+	// UPDATE holding all those row locks at once deadlocked against the live ingest
+	// writers on 2026-10-21. A batch locks at most batch_size rows, in id order, and is
+	// its own transaction, so a deadlock costs one batch's retry rather than the run.
+	//
+	// Keyset on id rather than an id-range walk: ids are sparse (12M rows over a 1.6B
+	// span), so fixed ranges would be tens of thousands of mostly-empty statements.
+	// last_id is the cursor for the next batch; updated = 0 means nothing past
+	// after_id diverges and the pass is done.
+	PropagateCollectionsToJobsBatch(ctx context.Context, arg PropagateCollectionsToJobsBatchParams) (PropagateCollectionsToJobsBatchRow, error)
 	// Per-provider health rollup that backs the public /status page: one row per
 	// provider with board counts and freshness. Read-only — it never touches cooldown
 	// state. healthy_boards counts boards being served (NOT in an active cooldown), so a
@@ -6851,7 +6863,7 @@ type Querier interface {
 	// job cards say nothing reads as a bug.
 	//
 	// The enqueue is the half that was missing. Bumping updated_at alone is what
-	// PropagateCollectionsToJobs does, and its comment points at `reindex --since` — a mode
+	// PropagateCollectionsToJobsBatch does, and its comment points at `reindex --since` — a mode
 	// cmd/reindex does not have. Nothing carried the change into Meilisearch, so the badge
 	// appeared on the job page (served from Postgres) and on nothing else, and the filter
 	// matched nobody. The first report on prod had to be pushed into search_outbox by hand

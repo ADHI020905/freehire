@@ -177,7 +177,7 @@ type SyncJobsAIInterviewReportsParams struct {
 // job cards say nothing reads as a bug.
 //
 // The enqueue is the half that was missing. Bumping updated_at alone is what
-// PropagateCollectionsToJobs does, and its comment points at `reindex --since` — a mode
+// PropagateCollectionsToJobsBatch does, and its comment points at `reindex --since` — a mode
 // cmd/reindex does not have. Nothing carried the change into Meilisearch, so the badge
 // appeared on the job page (served from Postgres) and on nothing else, and the filter
 // matched nobody. The first report on prod had to be pushed into search_outbox by hand
