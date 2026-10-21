@@ -3615,7 +3615,7 @@
       "get": {
         "operationId": "get_jobs_find",
         "summary": "Resolve a posting URL to a catalogue slug.",
-        "description": "Answers `{\"data\": null}` when the posting cannot be identified, rather than 404 — \"we do not carry this\" is a normal answer here. Used by the extension to tell whether the page you are on is a job we already have.",
+        "description": "Answers `{\"data\": null}` when the posting cannot be identified, rather than 404 — \"we do not carry this\" is a normal answer here. Used by the extension to tell whether the page you are on is a job we already have. A miss also carries `meta.ats_board`: true when the URL sits on an ATS board freehire knows how to crawl, so a client can tell a posting worth adding from an arbitrary page.",
         "parameters": [
           {
             "name": "url",

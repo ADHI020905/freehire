@@ -315,19 +315,30 @@ export function resolveNotice(status: ResolveStatus): string {
   }
 }
 
+/** What `/jobs/find` says about a page: the catalog slug it is, or null when the posting
+ *  is not one we carry — and, on a miss, whether the URL is an ATS board the server knows
+ *  how to crawl. */
+export interface FoundJob {
+  slug: string | null;
+  atsBoard: boolean;
+}
+
 /**
- * Resolves the page's URL to a freehire catalog slug, or null when the posting
- * is not one we carry (or is on an ATS the server cannot yet read a job id
- * from). The server matches on the posting's own identity in the URL; it used to
- * take a company and a guessed title, which was both unreliable and slow enough
- * to time out.
+ * Resolves the page's URL to a freehire catalog slug (see `FoundJob`). The server matches
+ * on the posting's own identity in the URL; it used to take a company and a guessed title,
+ * which was both unreliable and slow enough to time out. Reads the envelope itself rather
+ * than through `getData`, because the ATS verdict travels in `meta`.
  */
-export async function findJob(url: string, token: string): Promise<string | null> {
-  const found = await getData<{ public_slug: string } | null>(
-    `/api/v1/jobs/find?url=${encodeURIComponent(url)}`,
-    token,
-  );
-  return found?.public_slug ?? null;
+export async function findJob(url: string, token: string): Promise<FoundJob> {
+  const path = `/api/v1/jobs/find?url=${encodeURIComponent(url)}`;
+  const res = await authedFetch(path, token);
+  const body = await res.text();
+  if (!res.ok) throw new Error(apiErrorMessage(path, res.status, body));
+  const parsed = JSON.parse(body) as {
+    data: { public_slug: string } | null;
+    meta?: { ats_board?: boolean };
+  };
+  return { slug: parsed.data?.public_slug ?? null, atsBoard: parsed.meta?.ats_board === true };
 }
 
 /** A tailored CV as `GET /me/cvs` lists it — mirrors internal/api/handler's

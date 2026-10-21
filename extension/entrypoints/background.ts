@@ -40,6 +40,8 @@ export default defineBackground(() => {
     switch (message.kind) {
       case 'GET_PAGE_SNAPSHOT':
         return readTopFrameSnapshot();
+      case 'GET_JOB_POSTING_MARKUP':
+        return readTopFrameJobPostingMarkup();
       case 'GET_FRAMED_FORM':
         return readFramedForm();
       case 'FILL_BY_LABEL':
@@ -78,6 +80,25 @@ async function readTopFrameSnapshot(): Promise<RuntimeMessage> {
   return browser.tabs.sendMessage(tabId, { kind: 'GET_PAGE_SNAPSHOT' } satisfies RuntimeMessage, {
     frameId: TOP_FRAME,
   });
+}
+
+/** Asks the TOP document whether it is marked up as a JobPosting — the page the user is
+ *  on, for the reason `readTopFrameSnapshot` gives. A tab with no content script (a
+ *  browser page, the web store) answers false rather than failing. */
+async function readTopFrameJobPostingMarkup(): Promise<RuntimeMessage> {
+  const absent: RuntimeMessage = { kind: 'JOB_POSTING_MARKUP', present: false };
+  const tabId = await activeTabId();
+  if (tabId == null) return absent;
+  try {
+    const reply = (await browser.tabs.sendMessage(
+      tabId,
+      { kind: 'GET_JOB_POSTING_MARKUP' } satisfies RuntimeMessage,
+      { frameId: TOP_FRAME },
+    )) as RuntimeMessage | undefined;
+    return reply?.kind === 'JOB_POSTING_MARKUP' ? reply : absent;
+  } catch {
+    return absent;
+  }
 }
 
 /** Reads every frame of the active tab, tagging each observation with its frame. */

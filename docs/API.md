@@ -2256,7 +2256,7 @@ Turning a URL in the wild into something freehire knows about. One intake sequen
 
 Resolve a posting URL to a catalogue slug.
 
-Answers `{"data": null}` when the posting cannot be identified, rather than 404 — "we do not carry this" is a normal answer here. Used by the extension to tell whether the page you are on is a job we already have.
+Answers `{"data": null}` when the posting cannot be identified, rather than 404 — "we do not carry this" is a normal answer here. Used by the extension to tell whether the page you are on is a job we already have. A miss also carries `meta.ats_board`: true when the URL sits on an ATS board freehire knows how to crawl, so a client can tell a posting worth adding from an arbitrary page.
 
 **Query parameters**
 

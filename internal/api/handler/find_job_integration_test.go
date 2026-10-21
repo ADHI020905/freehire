@@ -38,6 +38,14 @@ func (s stubPostingAPI) GetJSON(_ context.Context, url string, v any) error {
 // findSlug calls the endpoint and returns the resolved slug, or "" for {"data": null}.
 func findSlug(t *testing.T, app *fiber.App, url string) string {
 	t.Helper()
+	slug, _ := find(t, app, url)
+	return slug
+}
+
+// find calls the endpoint and returns the resolved slug and, on a miss, the meta.ats_board
+// verdict (nil when the response carries none).
+func find(t *testing.T, app *fiber.App, url string) (string, *bool) {
+	t.Helper()
 	req := httptest.NewRequest(fiber.MethodGet, "/api/v1/jobs/find?url="+url, nil)
 	resp, err := app.Test(req)
 	if err != nil {
@@ -55,14 +63,21 @@ func findSlug(t *testing.T, app *fiber.App, url string) string {
 		Data *struct {
 			PublicSlug string `json:"public_slug"`
 		} `json:"data"`
+		Meta *struct {
+			ATSBoard *bool `json:"ats_board"`
+		} `json:"meta"`
 	}
 	if err := json.Unmarshal(body, &out); err != nil {
 		t.Fatalf("decode %s: %v", body, err)
 	}
-	if out.Data == nil {
-		return ""
+	var atsBoard *bool
+	if out.Meta != nil {
+		atsBoard = out.Meta.ATSBoard
 	}
-	return out.Data.PublicSlug
+	if out.Data == nil {
+		return "", atsBoard
+	}
+	return out.Data.PublicSlug, atsBoard
 }
 
 func TestFindJobResolvesByIdentityAndByURL(t *testing.T) {
@@ -160,6 +175,36 @@ func TestFindJobResolvesByIdentityAndByURL(t *testing.T) {
 	t.Run("recognised identity with no posting falls through to the URL lookup", func(t *testing.T) {
 		if slug := findSlug(t, app, "https%3A%2F%2Fjob-boards.greenhouse.io%2Fnobody%2Fjobs%2F1"); slug != "" {
 			t.Errorf("slug = %q, want no match", slug)
+		}
+	})
+
+	// The extension offers "add this job" on a miss only where the URL is a board we could
+	// crawl (or the page marks itself up as a posting), so a miss has to say which it is.
+	t.Run("a miss reports whether the url is a recognised ATS board", func(t *testing.T) {
+		cases := []struct {
+			name, url string
+			want      bool
+		}{
+			{"ATS board we do not carry", "https%3A%2F%2Fjobs.lever.co%2Fnobody%2F1b2c3d", true},
+			{"LinkedIn feed", "https%3A%2F%2Fwww.linkedin.com%2Ffeed%2F", false},
+			{"chat app", "https%3A%2F%2Fchatgpt.com%2Fc%2Fabc", false},
+			{"localhost", "http%3A%2F%2Flocalhost%3A5174%2Fjobs", false},
+		}
+		for _, tc := range cases {
+			slug, atsBoard := find(t, app, tc.url)
+			if slug != "" {
+				t.Errorf("%s: slug = %q, want no match", tc.name, slug)
+			}
+			if atsBoard == nil || *atsBoard != tc.want {
+				t.Errorf("%s: meta.ats_board = %v, want %v", tc.name, atsBoard, tc.want)
+			}
+		}
+	})
+
+	t.Run("a hit carries no meta", func(t *testing.T) {
+		slug, atsBoard := find(t, app, "https%3A%2F%2Fjob-boards.greenhouse.io%2Fvgw-eu%2Fjobs%2F8617539002")
+		if slug != "engineer-vgw-eu" || atsBoard != nil {
+			t.Errorf("got (%q, %v), want (engineer-vgw-eu, nil)", slug, atsBoard)
 		}
 	})
 

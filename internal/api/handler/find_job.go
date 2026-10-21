@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/strelov1/freehire/internal/ingest/atsboard"
 	"github.com/strelov1/freehire/internal/ingest/sources"
 	"github.com/strelov1/freehire/internal/platform/db"
 )
@@ -68,13 +69,21 @@ func catalogSlugForURL(ctx context.Context, queries *db.Queries, postings source
 // browser extension can tell that the page it is on is a job we already carry and switch
 // from the ad-hoc text match to the curated card. Public; returns {"data": null} whenever
 // the posting cannot be identified.
+//
+// A miss also says whether the URL sits on an ATS board we know how to crawl
+// (meta.ats_board), answered by atsboard.Recognize — the one table of ATS hosts, so the
+// extension does not keep a second copy. The panel offers "add this job" only where that is
+// true or where the page marks itself up as a JobPosting: offered on every page, it filled
+// the triage queue with LinkedIn feeds, chat apps and localhost.
 func (h *jobsHandlers) FindJob(c *fiber.Ctx) error {
-	slug, err := catalogSlugForURL(c.Context(), h.queries, h.postings, strings.TrimSpace(c.Query("url")))
+	pageURL := strings.TrimSpace(c.Query("url"))
+	slug, err := catalogSlugForURL(c.Context(), h.queries, h.postings, pageURL)
 	if err != nil {
 		return err
 	}
 	if slug == "" {
-		return c.JSON(fiber.Map{"data": nil})
+		_, _, _, atsBoard := atsboard.Recognize(pageURL)
+		return c.JSON(fiber.Map{"data": nil, "meta": fiber.Map{"ats_board": atsBoard}})
 	}
 	return c.JSON(fiber.Map{"data": fiber.Map{"public_slug": slug}})
 }

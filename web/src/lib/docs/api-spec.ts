@@ -2839,7 +2839,10 @@ data: {"type":"result","stop_reason":"completed"}
         description:
           'Answers `{"data": null}` when the posting cannot be identified, rather ' +
           'than 404 — "we do not carry this" is a normal answer here. Used by the ' +
-          'extension to tell whether the page you are on is a job we already have.',
+          'extension to tell whether the page you are on is a job we already have. ' +
+          'A miss also carries `meta.ats_board`: true when the URL sits on an ATS board ' +
+          'freehire knows how to crawl, so a client can tell a posting worth adding ' +
+          'from an arbitrary page.',
         query: [{ name: 'url', type: 'string', required: true, description: "The posting's URL in the wild.", example: 'https://boards.greenhouse.io/acme/jobs/123' }],
         curl: `curl "${BASE_URL}/jobs/find?url=https%3A%2F%2Fboards.greenhouse.io%2Facme%2Fjobs%2F123"`,
         responseExample: `{ "data": { "public_slug": "senior-backend-engineer-acme-1a2b" } }`,

@@ -45,3 +45,42 @@ function extractVisibleText(doc: Document): string {
   const raw = body.innerText || body.textContent || '';
   return raw.replace(/\s+/g, ' ').trim().slice(0, MAX_TEXT_LENGTH);
 }
+
+/** How deep `hasJobPostingMarkup` walks a JSON-LD tree. Real markup nests a posting at
+ *  most a few levels down (`@graph`, `mainEntity`); the bound only stops a pathological
+ *  document from costing more than a glance. */
+const MAX_LD_DEPTH = 8;
+
+/**
+ * Whether the page declares itself a job posting: a schema.org `JobPosting` in any of
+ * its JSON-LD blocks, at the top level, in a list, under `@graph` or nested inside
+ * another node. That markup is what search engines' job features read, so an employer's
+ * own careers page carries it even where its URL names no ATS we recognise. A block that
+ * does not parse is skipped, never fatal. Pure over its Document argument.
+ */
+export function hasJobPostingMarkup(doc: Document): boolean {
+  for (const script of doc.querySelectorAll('script[type="application/ld+json"]')) {
+    let data: unknown;
+    try {
+      data = JSON.parse(script.textContent ?? '');
+    } catch {
+      continue;
+    }
+    if (declaresJobPosting(data, 0)) return true;
+  }
+  return false;
+}
+
+function declaresJobPosting(node: unknown, depth: number): boolean {
+  if (depth > MAX_LD_DEPTH || node === null || typeof node !== 'object') return false;
+  if (Array.isArray(node)) return node.some((item) => declaresJobPosting(item, depth + 1));
+  const record = node as Record<string, unknown>;
+  const types: unknown[] = Array.isArray(record['@type']) ? record['@type'] : [record['@type']];
+  if (types.some(isJobPostingType)) return true;
+  return Object.values(record).some((value) => declaresJobPosting(value, depth + 1));
+}
+
+/** `JobPosting`, also written as a compact IRI (`schema:JobPosting`) or a full one. */
+function isJobPostingType(type: unknown): boolean {
+  return typeof type === 'string' && /(^|[/:#])JobPosting$/.test(type.trim());
+}

@@ -53,7 +53,9 @@ extension/            WXT + Svelte MV3 extension (npm-managed; the repo's other
                       WXT_GA_* build vars (+ test)
     freehire.ts       hire API reads (job, match, autofill profile)
     protocol.ts       in-extension RuntimeMessage contract (+ test)
-    scraper.ts        DOM -> PageSnapshot, pure over its Document arg (+ test)
+    scraper.ts        DOM -> PageSnapshot + JobPosting JSON-LD check, pure over
+                      its Document arg (+ test)
+    addJob.ts         whether the empty match state offers "Add this job" (+ test)
     form.ts           form observe/map/act/reveal for Autofill (+ test)
     applyPlan.ts      form fields -> the panel's checklist + required counter (+ test)
     walk.ts           the order an autofill works through the form, as a value (+ test)
@@ -150,6 +152,11 @@ content --PAGE_SNAPSHOT--> background --> panel --> relay --> the agent, mid-tur
   cannot land stale. For the same reason the page announces a mutation only when
   the NUMBER of controls changes — typing is covered by the input/change
   listeners, where it does not.
+- **"Add this job" is offered only on a plausible vacancy** (`offersAddJob`): a URL
+  `/jobs/find` reports as a recognised ATS board (`meta.ats_board`, from the
+  server's `atsboard.Recognize` — never copy its host list here), or a page carrying
+  schema.org `JobPosting` JSON-LD. Offered everywhere, it filled the triage queue
+  with LinkedIn feeds, chat apps and localhost (63 submissions, nearly all junk).
 - **`revealField` borrows the page's style and gives it back.** The outline is
   inline style, restored after ~600ms: the extension runs on pages freehire does
   not own, where an injected class can collide with the ATS's own and a stylesheet

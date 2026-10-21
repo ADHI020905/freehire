@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { extractSnapshot, extractHeadline } from './scraper';
+import { extractSnapshot, extractHeadline, hasJobPostingMarkup } from './scraper';
 
 function reset() {
   document.title = '';
@@ -64,5 +64,57 @@ describe('extractSnapshot', () => {
     expect(snapshot.text).toContain('We are hiring.');
     // whitespace is collapsed, not preserved verbatim
     expect(snapshot.text).not.toContain('  ');
+  });
+});
+
+function addLd(json: string) {
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.textContent = json;
+  document.head.append(script);
+}
+
+describe('hasJobPostingMarkup', () => {
+  beforeEach(reset);
+
+  it('finds a top-level JobPosting', () => {
+    addLd('{"@context":"https://schema.org","@type":"JobPosting","title":"Go Engineer"}');
+    expect(hasJobPostingMarkup(document)).toBe(true);
+  });
+
+  it('finds one under @graph, in a list, or as a type array', () => {
+    addLd('{"@graph":[{"@type":"WebPage"},{"@type":"JobPosting"}]}');
+    expect(hasJobPostingMarkup(document)).toBe(true);
+    reset();
+    addLd('[{"@type":"Organization"},{"@type":["Thing","JobPosting"]}]');
+    expect(hasJobPostingMarkup(document)).toBe(true);
+  });
+
+  it('finds one nested inside another node, and in IRI form', () => {
+    addLd('{"@type":"WebPage","mainEntity":{"@type":"schema:JobPosting"}}');
+    expect(hasJobPostingMarkup(document)).toBe(true);
+    reset();
+    addLd('{"@type":"http://schema.org/JobPosting"}');
+    expect(hasJobPostingMarkup(document)).toBe(true);
+  });
+
+  it('ignores other types, malformed blocks and non-JSON-LD scripts', () => {
+    addLd('{"@type":"Organization","name":"Acme"}');
+    addLd('{not json');
+    const plain = document.createElement('script');
+    plain.type = 'application/json';
+    plain.textContent = '{"@type":"JobPosting"}';
+    document.head.append(plain);
+    expect(hasJobPostingMarkup(document)).toBe(false);
+  });
+
+  it('does not mistake a type that merely contains the word', () => {
+    addLd('{"@type":"JobPostingCollection"}');
+    expect(hasJobPostingMarkup(document)).toBe(false);
+  });
+
+  it('is false for a page with no JSON-LD', () => {
+    addParagraph('Just a page');
+    expect(hasJobPostingMarkup(document)).toBe(false);
   });
 });

@@ -23,6 +23,7 @@
     type JobMatch,
     type AutofillProfile,
   } from '../../lib/freehire';
+  import { offersAddJob } from '../../lib/addJob';
   import {
     planLabelFills,
     looksLikeApplication,
@@ -82,6 +83,9 @@
   let matchJob = $state<FreehireJob | null>(null);
   let match = $state<JobMatch | null>(null);
   let matchError = $state('');
+  // Whether the empty state offers "Add this job": only on a page that is plausibly a
+  // vacancy (lib/addJob.ts), decided alongside the miss that put the panel there.
+  let canAddJob = $state(false);
 
   // "Match" carries the current page's job info and its page-scoped actions
   // (Autofill, Add to freehire); "Chat" carries the conversation. Split into tabs
@@ -269,6 +273,7 @@
     if (requestId !== matchRequestId) return;
     if (!token) {
       matchStatus = 'empty';
+      canAddJob = false;
       matchJob = null;
       match = null;
       return;
@@ -294,19 +299,33 @@
       // job posting or not, which is both wasted work and a wasted LLM call for
       // the vast majority of pages. `contributePage` (the "Add vacancy" action on
       // the empty state) is the explicit, on-demand equivalent.
-      const catalogSlug = await findJob(sanitizeForLookup(url), token);
+      const found = await findJob(sanitizeForLookup(url), token);
       if (requestId !== matchRequestId) return;
-      if (catalogSlug) {
-        if (!(await loadCatalog(catalogSlug, token, requestId))) return;
+      if (found.slug) {
+        if (!(await loadCatalog(found.slug, token, requestId))) return;
         matchStatus = 'ready';
         return;
       }
+      const offer = offersAddJob({
+        atsBoard: found.atsBoard,
+        // The page is asked only when the URL alone did not settle it.
+        jobPostingMarkup: !found.atsBoard && (await readJobPostingMarkup()),
+      });
+      if (requestId !== matchRequestId) return;
+      canAddJob = offer;
       matchStatus = 'empty';
     } catch (err) {
       if (requestId !== matchRequestId) return;
       matchError = err instanceof Error ? err.message : 'Could not load match';
       matchStatus = 'error';
     }
+  }
+
+  async function readJobPostingMarkup(): Promise<boolean> {
+    const reply = (await browser.runtime.sendMessage({
+      kind: 'GET_JOB_POSTING_MARKUP',
+    } satisfies RuntimeMessage)) as RuntimeMessage | undefined;
+    return reply?.kind === 'JOB_POSTING_MARKUP' && reply.present;
   }
 
   let contributing = $state(false);
@@ -878,10 +897,11 @@
                   <Button variant="outline" size="sm" onclick={loadMatch}>Retry</Button>
                 {/snippet}
               </EmptyState>
-            {:else if matchStatus === 'empty'}
-              <!-- Not an empty state but an offer: a page freehire does not carry yet is
+            {:else if matchStatus === 'empty' && canAddJob}
+              <!-- Not an empty state but an offer: a vacancy freehire does not carry yet is
                    the one moment the panel can ask for something useful, so it leads with
-                   the action and says what it buys — rather than reporting a miss. -->
+                   the action and says what it buys — rather than reporting a miss. Any
+                   other page gets nothing here (see canAddJob). -->
               <Card class="add-job">
                 <Button
                   class="add-job-cta"

@@ -1,4 +1,4 @@
-import { extractSnapshot } from '../lib/scraper';
+import { extractSnapshot, hasJobPostingMarkup } from '../lib/scraper';
 import { extractForm, extractUploads, fillByLabel, revealField } from '../lib/form';
 import { runStep } from '../lib/combobox';
 import { debounce } from '../lib/debounce';
@@ -33,6 +33,11 @@ export default defineContentScript({
           return Promise.resolve<RuntimeMessage>({
             kind: 'PAGE_SNAPSHOT',
             snapshot: extractSnapshot(document),
+          });
+        case 'GET_JOB_POSTING_MARKUP':
+          return Promise.resolve<RuntimeMessage>({
+            kind: 'JOB_POSTING_MARKUP',
+            present: hasJobPostingMarkup(document),
           });
         case 'GET_FRAMED_FORM':
           // The frame tag is stamped by the background relay, which is the only

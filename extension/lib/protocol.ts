@@ -188,6 +188,10 @@ export interface RevealRequest {
 export type RuntimeMessage =
   | { kind: 'GET_PAGE_SNAPSHOT' }
   | { kind: 'PAGE_SNAPSHOT'; snapshot: PageSnapshot }
+  // Whether the top document marks itself up as a schema.org JobPosting — one of the two
+  // things that make the panel offer "Add this job" (see lib/addJob.ts).
+  | { kind: 'GET_JOB_POSTING_MARKUP' }
+  | { kind: 'JOB_POSTING_MARKUP'; present: boolean }
   | { kind: 'FORM'; fields: FormField[]; uploads: Upload[] }
   // Reading a form and filling it both fan out across the tab's frames in the
   // background relay: an apply form is routinely served from an ATS iframe, and
