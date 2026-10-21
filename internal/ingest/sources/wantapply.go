@@ -15,12 +15,13 @@ import (
 // that 403s non-browser clients, so this adapter crawls the .cy mirror, which serves identical
 // content (same backend — sitemap lastmod matches to the millisecond) without the WAF.
 //
-// The mirroring holds for PAGES and not for the SITEMAPS, which is worth stating because the
-// difference is most of the catalogue. Measured 2026-09-07: .cy enumerates ~605 vacancies and
-// .com enumerates 2 755, yet five vacancies absent from the .cy sitemap all answered 200 on .cy.
-// So .cy can serve the whole catalogue; it just does not advertise it. NewWantapplyViaHostedSitemap
-// reads the fuller enumeration from .com and still fetches every page from .cy — one metered
-// request for the sitemap, and the 2 755 pages free. Wantapply
+// The mirroring does NOT hold for the whole catalogue, which is most of it. .cy enumerates a
+// fraction of the vacancies .com does (~605 against 2 755 on 2026-09-07), and measured
+// 2026-10-20 it answers most of the ones it does not list with an empty shell — 5 of 6 sampled
+// .com vacancies had no JobPosting on .cy, while 4 of those 5 were served in full on .com (the
+// fifth was closed). A run that read .com's sitemap and fetched pages from .cy dropped 2 045 of
+// 2 489 vacancies that way. So production reads both from .com, whose WAF the Scrapling tier's
+// browser passes (NewWantapplyOnCom, scraplingtier.go). Wantapply
 // is a directApply aggregator (many employers, no per-tenant board), so the adapter is boardless
 // and stays in the source facet, taking each posting's company from the JSON-LD. Its sitemap
 // enumerates every vacancy as a single-segment slug page and each page server-renders a schema.org
@@ -30,15 +31,10 @@ import (
 // pipeline's unseen-sweep is the close signal (a vacancy that drops out of the sitemap is closed).
 type wantapply struct {
 	http wantapplyHTTP
-	// sitemap is where the enumeration comes from; it is s.http for the ordinary construction
-	// and a different transport when the fuller .com sitemap is used.
-	sitemap XMLGetter
-	// sitemapURL and sitemapHost describe that enumeration: the URL to read and the host its
-	// entries must carry. detailHost is where the pages are actually fetched from, which is not
-	// the same when the two differ.
-	sitemapURL  string
-	sitemapHost string
-	detailHost  string
+	// sitemapURL is the enumeration to read, and host the hostname its entries must carry; the
+	// pages are fetched from the entries' own URLs, on that same host.
+	sitemapURL string
+	host       string
 }
 
 // wantapplyHTTP is the transport wantapply needs: the XML sitemap plus HTML detail pages.
@@ -48,11 +44,13 @@ type wantapplyHTTP interface {
 }
 
 const (
-	wantapplyHost       = "https://wantapply.cy"
-	wantapplySitemapURL = wantapplyHost + "/sitemap.xml"
+	wantapplySitemapURL = "https://wantapply.cy/sitemap.xml"
 	// wantapplyHostname is the sitemap host a vacancy loc must carry (guards against a foreign
 	// or malformed URL slipping through as a slug).
 	wantapplyHostname = "wantapply.cy"
+	// wantapplyComSitemapURL / wantapplyComHostname are the fuller .com enumeration and its host.
+	wantapplyComSitemapURL = "https://wantapply.com/sitemap.xml"
+	wantapplyComHostname   = "wantapply.com"
 	// wantapplyDetailWorkers bounds the detail-fetch fan-out below the shared default (8): a burst
 	// at 8 is throttled hard (a residential-IP crawl landed ~32% at 8 vs ~100% at 4). Prod egresses
 	// through a proxy whose IP the .cy edge rate-caps per window, so one run still lands only part
@@ -70,28 +68,13 @@ var wantapplyReserved = map[string]struct{}{
 // NewWantapply builds the Wantapply adapter over the given HTTP client: sitemap and pages both
 // from the .cy mirror.
 func NewWantapply(c wantapplyHTTP) Source {
-	return wantapply{
-		http:        c,
-		sitemap:     c,
-		sitemapURL:  wantapplySitemapURL,
-		sitemapHost: wantapplyHostname,
-		detailHost:  wantapplyHost,
-	}
+	return wantapply{http: c, sitemapURL: wantapplySitemapURL, host: wantapplyHostname}
 }
 
-// NewWantapplyViaHostedSitemap reads the enumeration from sitemapURL through a separate
-// transport — the .com sitemap, which needs the hosted tier — while still fetching every page
-// through c, the ordinary proxied client on .cy. See the type doc for why that is worth doing:
-// the two hosts mirror each other's PAGES, so the only thing the metered request buys is the
-// list, and it buys 2 154 vacancies the .cy sitemap never mentions.
-func NewWantapplyViaHostedSitemap(c wantapplyHTTP, sitemap XMLGetter, sitemapURL, sitemapHost string) Source {
-	return wantapply{
-		http:        c,
-		sitemap:     sitemap,
-		sitemapURL:  sitemapURL,
-		sitemapHost: sitemapHost,
-		detailHost:  wantapplyHost,
-	}
+// NewWantapplyOnCom builds the adapter over a client .com's WAF serves (the Scrapling tier's
+// browser): sitemap and pages both from .com. See the type doc for why not .cy's pages.
+func NewWantapplyOnCom(c wantapplyHTTP) Source {
+	return wantapply{http: c, sitemapURL: wantapplyComSitemapURL, host: wantapplyComHostname}
 }
 
 func (wantapply) Provider() string { return "wantapply" }
@@ -166,38 +149,22 @@ func (s wantapply) fetchCounting(ctx context.Context, seen func(string) bool) ([
 // crawl reads the sitemap and returns every vacancy candidate (reserved pages, /company/*, and
 // /jobs/* excluded) — the shared enumeration behind Fetch and FetchNew.
 func (s wantapply) crawl(ctx context.Context) ([]wantapplyVacancy, error) {
-	sitemap, err := getSitemap(ctx, s.sitemap, s.sitemapURL)
+	sitemap, err := getSitemap(ctx, s.http, s.sitemapURL)
 	if err != nil {
 		return nil, fmt.Errorf("wantapply: sitemap: %w", err)
 	}
 	var out []wantapplyVacancy
 	for _, entry := range sitemap.URLs {
-		slug := wantapplyVacancySlugOn(entry.Loc, s.sitemapHost)
+		slug := wantapplyVacancySlugOn(entry.Loc, s.host)
 		if slug == "" {
 			continue
 		}
 		// The PATH is taken from the sitemap's own loc rather than rebuilt from the slug — the
 		// slug is url.Parse-decoded, so reconstruction could diverge from the real page. Only
 		// the host is swapped, and only when the enumeration came from the other mirror.
-		out = append(out, wantapplyVacancy{slug: slug, url: s.detailURL(entry.Loc)})
+		out = append(out, wantapplyVacancy{slug: slug, url: entry.Loc})
 	}
 	return out, nil
-}
-
-// detailURL points a sitemap entry at the host the pages are fetched from, keeping its path
-// byte for byte. When the sitemap and the pages come from the same host this returns loc
-// unchanged, which is the ordinary case.
-func (s wantapply) detailURL(loc string) string {
-	u, err := url.Parse(loc)
-	if err != nil {
-		return loc
-	}
-	base, err := url.Parse(s.detailHost)
-	if err != nil {
-		return loc
-	}
-	u.Scheme, u.Host = base.Scheme, base.Host
-	return u.String()
 }
 
 // detail fetches one vacancy page and maps its JobPosting ld+json to a Job, returning ok=false

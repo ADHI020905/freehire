@@ -3,7 +3,6 @@ package sources
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -18,12 +17,12 @@ type scraplingRoute struct {
 	proxy bool
 }
 
-// scraplingProvider rebuilds one provider over the tier. fetch is the tier's client for the
-// provider's route; direct is the ordinary transport (proxied when SOURCES_PROXY_URL is set),
-// for a provider that sends only PART of its crawl through the tier.
+// scraplingProvider rebuilds one provider over the tier; fetch is the tier's client for the
+// provider's route. A provider that sends only PART of its crawl through the tier builds its own
+// plain client for the rest (hh, startupjobs).
 type scraplingProvider struct {
 	route scraplingRoute
-	build func(fetch *Client, direct HTTPClient) Source
+	build func(fetch *Client) Source
 }
 
 // scraplingProviders is the allowlist of providers no plain client can reach, crawled through
@@ -41,56 +40,51 @@ type scraplingProvider struct {
 var scraplingProviders = map[string]scraplingProvider{
 	// 405 to the crawl host's IP; through the proxy, a GeeTest challenge from the sixth listing
 	// page on a plain client, and 20 of 20 pages in a browser over the same proxy.
-	"infojobs": {scraplingRoute{scraplingfetch.ModeBrowser, true}, func(f *Client, _ HTTPClient) Source {
+	"infojobs": {scraplingRoute{scraplingfetch.ModeBrowser, true}, func(f *Client) Source {
 		return NewInfoJobs(f)
 	}},
 	// Cloudflare-managed challenge: 403 to every plain request, direct or proxied; the browser
 	// solves it from the crawl host's own IP.
-	"bayt": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client, _ HTTPClient) Source {
+	"bayt": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client) Source {
 		return NewBayt(f)
 	}},
 	// Its sitemap answered a Cloudflare challenge to http + proxy; the browser reads sitemap and
 	// pages alike.
-	"gulftalent": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client, _ HTTPClient) Source {
+	"gulftalent": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client) Source {
 		return NewGulfTalent(f)
 	}},
-	// Only the .com sitemap goes through the tier — it lists ~2 755 vacancies against the free
-	// .cy mirror's ~605 — and every posting page stays on the free client.
-	"wantapply": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client, direct HTTPClient) Source {
-		return NewWantapplyViaHostedSitemap(direct, f, wantapplyComSitemapURL, wantapplyComHostname)
+	// .com's WAF refuses every plain request and the .cy mirror answers most of the catalogue
+	// with an empty shell (see the type doc), so sitemap and pages alike come from .com.
+	"wantapply": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client) Source {
+		return NewWantapplyOnCom(f)
 	}},
 	// 403 to a plain request; the impersonating fetcher through the proxy is served. Its role
 	// slices are crawled concurrently, so the in-flight cap the hosted tier needed is kept.
-	"wellfound": {scraplingRoute{scraplingfetch.ModeHTTP, true}, func(f *Client, _ HTTPClient) Source {
+	"wellfound": {scraplingRoute{scraplingfetch.ModeHTTP, true}, func(f *Client) Source {
 		return NewWellfound(limitedWellfoundGetter(f))
 	}},
 	// Only detail hydration: through the proxy the detail pages redirect to a DDoS-Guard
 	// captcha, and the impersonating fetcher reads them direct. The listing keeps a fresh plain
-	// client, never `direct`, which is the proxied one whenever SOURCES_PROXY_URL is set.
-	"hh": {scraplingRoute{scraplingfetch.ModeHTTP, false}, func(f *Client, _ HTTPClient) Source {
+	// client, never a proxied one: its own pages were never blocked.
+	"hh": {scraplingRoute{scraplingfetch.ModeHTTP, false}, func(f *Client) Source {
 		return NewHHWithDetailGetter(NewClient(), f)
 	}},
 	// Only its Cloudflare-challenged pages, still paced: the sitemap CDN and the public Algolia
 	// index have no Cloudflare in front and stay on the plain client.
-	"startupjobs": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client, _ HTTPClient) Source {
+	"startupjobs": {scraplingRoute{scraplingfetch.ModeBrowser, false}, func(f *Client) Source {
 		plain := NewClient()
 		return NewStartupJobs(pacedStartupJobsSite(f), plain, plain, 0)
 	}},
 	// 403 to the Go client's TLS fingerprint and to every proxied request; Chrome's fingerprint
 	// from the crawl host is served.
-	"cleverstaff": {scraplingRoute{scraplingfetch.ModeHTTP, false}, func(f *Client, _ HTTPClient) Source {
+	"cleverstaff": {scraplingRoute{scraplingfetch.ModeHTTP, false}, func(f *Client) Source {
 		return NewCleverstaff(f)
 	}},
 	// The crawl host's IP times out; the impersonating fetcher through the proxy is served.
-	"kontur": {scraplingRoute{scraplingfetch.ModeHTTP, true}, func(f *Client, _ HTTPClient) Source {
+	"kontur": {scraplingRoute{scraplingfetch.ModeHTTP, true}, func(f *Client) Source {
 		return NewKontur(f)
 	}},
 }
-
-const (
-	wantapplyComSitemapURL = "https://wantapply.com/sitemap.xml"
-	wantapplyComHostname   = "wantapply.com"
-)
 
 // A browser fetch that meets a challenge on its first page measured ~110 s, and the service
 // queues a request for a free browser for up to 120 s; the timeout covers both.
@@ -136,12 +130,6 @@ func ApplyScraplingEgress(registry map[string]Source) error {
 	if _, err := scraplingfetch.New(cfg, scraplingfetch.ModeHTTP, false, scraplingHTTPTimeout); err != nil {
 		return fmt.Errorf("sources: scrapling tier: %w", err)
 	}
-	direct := HTTPClient(NewClient())
-	if proxyRaw := strings.TrimSpace(os.Getenv("SOURCES_PROXY_URL")); proxyRaw != "" {
-		if u, err := url.Parse(proxyRaw); err == nil && u.Host != "" {
-			direct = NewProxyClient(u)
-		}
-	}
 	for name, p := range scraplingProviders {
 		if _, ok := registry[name]; !ok {
 			continue
@@ -150,7 +138,7 @@ func ApplyScraplingEgress(registry map[string]Source) error {
 		if err != nil {
 			return fmt.Errorf("sources: scrapling tier: %w", err)
 		}
-		registry[name] = p.build(c, direct)
+		registry[name] = p.build(c)
 	}
 	return nil
 }

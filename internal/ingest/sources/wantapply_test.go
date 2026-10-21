@@ -337,7 +337,11 @@ func TestWantapplyRegisteredInAll(t *testing.T) {
 //
 // So the enumeration may come from .com while the pages are still read from .cy, which is the
 // whole point: the sitemap is one metered request, the 2 755 pages are free.
-func TestWantapplyRewritesSitemapHostToTheDetailHost(t *testing.T) {
+// Through the Scrapling tier both the enumeration and the pages come from .com. The .cy mirror
+// lists a fraction of the catalogue and, measured 2026-10-20, answers most of the vacancies it
+// does not list with an empty shell (5 of 6 sampled) that .com serves in full — so a page on
+// .cy is never requested here; the fake serves none.
+func TestWantapplyOnComReadsSitemapAndPagesFromCom(t *testing.T) {
 	sitemap := `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>https://wantapply.com/senior-ios-engineer-at-opal</loc></url>
@@ -350,22 +354,17 @@ func TestWantapplyRewritesSitemapHostToTheDetailHost(t *testing.T) {
 
 	http := &wantapplyFake{
 		xml:  map[string]string{"https://wantapply.com/sitemap.xml": sitemap},
-		html: map[string]string{"https://wantapply.cy/senior-ios-engineer-at-opal": page},
+		html: map[string]string{"https://wantapply.com/senior-ios-engineer-at-opal": page},
 	}
-	s := NewWantapplyViaHostedSitemap(http, http, "https://wantapply.com/sitemap.xml", "wantapply.com")
-
-	jobs, err := s.Fetch(context.Background(), CompanyEntry{})
+	jobs, err := NewWantapplyOnCom(http).Fetch(context.Background(), CompanyEntry{})
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
 	}
 	if len(jobs) != 1 {
 		t.Fatalf("want 1 vacancy (company/ and sign-in are not vacancies), got %d: %+v", len(jobs), jobs)
 	}
-	if jobs[0].URL != "https://wantapply.cy/senior-ios-engineer-at-opal" {
-		t.Errorf("URL = %q, want the .cy host with the sitemap's path", jobs[0].URL)
-	}
-	if jobs[0].Company != "Opal" {
-		t.Errorf("Company = %q", jobs[0].Company)
+	if jobs[0].URL != "https://wantapply.com/senior-ios-engineer-at-opal" || jobs[0].Company != "Opal" {
+		t.Errorf("job = %+v, want the .com page of Opal's vacancy", jobs[0])
 	}
 }
 
