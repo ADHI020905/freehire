@@ -59,6 +59,12 @@ type Scheduler struct {
 	// light pool gets whatever is left of Cap, never Cap plus this — see DefaultHeavyCap.
 	HeavyCap int
 
+	// Paused reports whether the ingest pause switch is held (worker.Paused for the `ingest`
+	// job); nil means never. While it is, a tick claims nothing: a run launched into the pause
+	// exits 0 at once without crawling, but its claim has already moved next_due_at a whole
+	// cadence on — a daily provider lost a day that way on 2026-10-21.
+	Paused func(context.Context) bool
+
 	// Apply false is SHADOW MODE, and it is the default. The scheduler resolves, reports
 	// and launches nothing, so a first deployment cannot disturb a fleet still driven by
 	// the static timers.
@@ -90,6 +96,8 @@ type PoolResult struct {
 type TickResult struct {
 	Applied   bool
 	Saturated bool
+	// Paused is a tick that claimed nothing because the ingest pause switch is held.
+	Paused bool
 
 	Eligible int
 	// Tracked is how many providers have run state — every ENABLED one, whether or not
@@ -227,6 +235,13 @@ func (s Scheduler) Tick(ctx context.Context) (TickResult, error) {
 
 	heavyBudget := clamp(heavyCap-runningHeavy, 0, maxRuns)
 	lightBudget := clamp(lightCap-runningLight, 0, maxRuns)
+
+	if s.Paused != nil && s.Paused(ctx) {
+		// The same rule as saturation below: claim nothing, so every due row stays due for
+		// the tick after the pause lifts instead of being pushed a cadence on.
+		result.Paused = true
+		return result, nil
+	}
 
 	if heavyBudget <= 0 && lightBudget <= 0 {
 		// Claim nothing from either pool, so every due row stays claimable for the next

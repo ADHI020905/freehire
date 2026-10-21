@@ -759,3 +759,44 @@ func stillRunning(provider string, n int) []Run {
 	}
 	return out
 }
+
+// A run started while the ingest pause is held exits 0 at once ("ingest is paused, skipping
+// this run"), but its claim had already advanced next_due_at by a whole cadence — measured
+// 2026-10-21, a daily provider launched into the load-guard pause lost a day. So a paused tick
+// claims nothing, exactly as a saturated one does, and every due row stays due.
+func TestPausedTickClaimsNothingAndSaysSo(t *testing.T) {
+	repo := &fakeRepo{
+		eligible: []Settings{managed("infojobs")},
+		due:      []Run{{Provider: "infojobs", Shard: 1, Shards: 1, RunTimeout: DefaultRunTimeout}},
+	}
+	launcher := &fakeLauncher{}
+	sched := Scheduler{Repo: repo, Launcher: launcher, Cap: 10, Grace: time.Minute, Apply: true,
+		Paused: func(context.Context) bool { return true }}
+
+	got, err := sched.Tick(context.Background())
+	if err != nil {
+		t.Fatalf("Tick: %v", err)
+	}
+	if !got.Paused {
+		t.Error("Paused = false, want true")
+	}
+	if repo.claimed || len(launcher.launched) != 0 {
+		t.Errorf("a paused tick claimed (%v) or launched %v; it must do neither", repo.claimed, launcher.launched)
+	}
+}
+
+func TestUnpausedTickStillLaunches(t *testing.T) {
+	repo := &fakeRepo{
+		eligible: []Settings{managed("infojobs")},
+		due:      []Run{{Provider: "infojobs", Shard: 1, Shards: 1, RunTimeout: DefaultRunTimeout}},
+	}
+	launcher := &fakeLauncher{}
+	sched := Scheduler{Repo: repo, Launcher: launcher, Cap: 10, Grace: time.Minute, Apply: true,
+		Paused: func(context.Context) bool { return false }}
+	if _, err := sched.Tick(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(launcher.launched) != 1 {
+		t.Errorf("launched %v, want the one due run", launcher.launched)
+	}
+}

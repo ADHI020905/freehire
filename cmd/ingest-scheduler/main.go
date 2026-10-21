@@ -82,6 +82,11 @@ func run() int {
 		HeavyCap: cfg.HeavyCap,
 		Grace:    cfg.Grace,
 		Apply:    cfg.Apply,
+		// The crawls it launches are the `ingest` binary, so it is that job's switch that
+		// decides whether launching one would do anything.
+		Paused: func(ctx context.Context) bool {
+			return worker.Paused(ctx, config.Load().RedisURL, "ingest")
+		},
 	}
 
 	result, err := scheduler.Tick(ctx)
@@ -109,10 +114,10 @@ func report(r ingestsched.TickResult, apply bool) {
 	}
 	log.Printf("scheduler tick: mode=%s eligible=%d tracked=%d in_flight=%d reaped=%d launched=%d "+
 		"would_launch=%d disabled=%d unmanaged=%d refused=%d failed=%d saturated=%t "+
-		"heavy_cap=%d light_cap=%d",
+		"paused=%t heavy_cap=%d light_cap=%d",
 		mode, r.Eligible, r.Tracked, r.InFlight, r.Reaped, len(r.Launched),
 		len(r.WouldLaunch), len(r.Disabled), len(r.Unmanaged), len(r.Refused), len(r.Failed),
-		r.Saturated, r.Heavy.Cap, r.Light.Cap)
+		r.Saturated, r.Paused, r.Heavy.Cap, r.Light.Cap)
 
 	// A pool budgeted ZERO slots launches nothing, for ever, while every other figure on
 	// the line above reads healthy — launched=0 looks like "nothing was due" and
@@ -129,6 +134,9 @@ func report(r ingestsched.TickResult, apply bool) {
 			r.Heavy.Cap+r.Light.Cap)
 	}
 
+	if r.Paused {
+		log.Print("scheduler: ingest is paused; nothing claimed, every due run stays due for the next tick")
+	}
 	if r.Saturated {
 		log.Printf("scheduler: fleet saturated at %d in flight; every due run stays claimable for the next tick", r.InFlight)
 	}
