@@ -222,6 +222,32 @@ describe('experienceYearsMax', () => {
   });
 });
 
+describe('experienceIncludeUnspecified', () => {
+  it('serializes beside a bound and reads it back', () => {
+    const f = emptyFilters();
+    f.experienceYearsMax = 3;
+    f.experienceIncludeUnspecified = true;
+    const p = filtersToParams(f);
+    expect(p.get('experience_include_unspecified')).toBe('true');
+    expect(filtersFromParams(p).experienceIncludeUnspecified).toBe(true);
+  });
+
+  // Without a bound there is nothing to widen, so the param would be noise in every
+  // shared link and saved search that once had a bound and then cleared it.
+  it('is not written when no bound is set', () => {
+    const f = emptyFilters();
+    f.experienceIncludeUnspecified = true;
+    expect(filtersToParams(f).has('experience_include_unspecified')).toBe(false);
+  });
+
+  it('does not count as a filter of its own', () => {
+    const f = emptyFilters();
+    f.experienceYearsMax = 3;
+    f.experienceIncludeUnspecified = true;
+    expect(activeFilterCount(f)).toBe(1);
+  });
+});
+
 describe('salary bounds', () => {
   it('serializes each bound under its own param and reads both back', () => {
     const f = emptyFilters();

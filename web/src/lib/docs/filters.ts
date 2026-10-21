@@ -92,7 +92,13 @@ export const FILTER_EXTRAS: FilterRow[] = [
     param: 'experience_years_max',
     label: 'Maximum experience',
     values:
-      'integer — jobs requiring at most this many years, the same figure experience_years_min bounds from below. Use 0 for jobs stating no prior experience is required. Either bound excludes jobs that state no requirement at all',
+      'integer — jobs requiring at most this many years, the same figure experience_years_min bounds from below. Use 0 for jobs stating no prior experience is required. Either bound excludes jobs that state no requirement at all, unless experience_include_unspecified is set',
+  },
+  {
+    param: 'experience_include_unspecified',
+    label: 'Include unstated experience',
+    values:
+      'true — with either experience bound, also keep the jobs that state no experience requirement (roughly half the catalogue). Has no effect without a bound',
   },
   {
     param: 'posted_within_days',

@@ -113,6 +113,10 @@ export class StagedFilters implements FacetStore {
     this.#f = { ...this.#f, experienceYearsMax: n };
   }
 
+  setExperienceIncludeUnspecified(on: boolean): void {
+    this.#f = { ...this.#f, experienceIncludeUnspecified: on };
+  }
+
   /** Reset every staged filter. */
   clear(): void {
     this.#f = emptyFilters();

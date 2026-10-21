@@ -465,13 +465,26 @@
         class="w-full accent-primary"
       />
       <!-- Roughly half the catalogue states no experience requirement at all, and a
-           bound excludes every one of those postings. Shown permanently rather than
-           only once bounded: a result count that collapses without explanation is
-           read as a broken filter, and by then the user has already been misled. The
-           sentence is therefore about what SETTING a bound does, so it stays true at
-           the unbounded "Any" stop instead of describing a filter that is not on. -->
-      <p class="mt-2 text-xs text-muted-foreground">
-        Setting a limit matches only postings that state an experience requirement — about half of them.
+           bound excludes every one of those postings unless this is ticked. Shown
+           permanently rather than only once bounded: a result count that collapses
+           without explanation is read as a broken filter, and by then the user has
+           already been misled. Disabled at "Any", where there is no bound to widen. -->
+      <label
+        class="mt-3 flex items-center gap-2 text-sm {staged.value.experienceYearsMax == null
+          ? 'cursor-not-allowed opacity-50'
+          : 'cursor-pointer'}"
+      >
+        <input
+          type="checkbox"
+          class="size-4 rounded border-border"
+          checked={staged.value.experienceIncludeUnspecified}
+          disabled={staged.value.experienceYearsMax == null}
+          onchange={(e) => staged.setExperienceIncludeUnspecified(e.currentTarget.checked)}
+        />
+        <span>Include postings that don't state experience</span>
+      </label>
+      <p class="mt-1 text-xs text-muted-foreground">
+        About half of all postings don't state an experience requirement. A limit hides them unless this is ticked.
       </p>
     </div>
   {:else if entry.kind === 'work'}

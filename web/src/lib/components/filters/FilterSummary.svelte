@@ -100,7 +100,10 @@
     if (f.postedWithinDays != null) push('Posted', [{ key: 'posted_within_days', text: freshnessLabel(f.postedWithinDays), exclude: false, remove: () => store.setPostedWithinDays(null) }]);
     // `!= null`, not truthiness: a zero bound is the entry-level filter, and hiding
     // its chip would leave the narrowest experience filter with no way to remove it.
-    if (f.experienceYearsMax != null) push('Experience', [{ key: 'experience_years_max', text: experienceLabel(f.experienceYearsMax), exclude: false, remove: () => store.setExperienceYearsMax(null) }]);
+    if (f.experienceYearsMax != null) {
+      const text = experienceLabel(f.experienceYearsMax) + (f.experienceIncludeUnspecified ? ' or not stated' : '');
+      push('Experience', [{ key: 'experience_years_max', text, exclude: false, remove: () => store.setExperienceYearsMax(null) }]);
+    }
 
     return out;
   });

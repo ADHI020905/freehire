@@ -41,6 +41,12 @@ func IsNotEmpty(attr string) string {
 	return attr + " IS NOT EMPTY"
 }
 
+// NotExists builds `attr NOT EXISTS`, matching documents that do not carry the
+// attribute at all — how an omitempty field the posting never stated is stored.
+func NotExists(attr string) string {
+	return attr + " NOT EXISTS"
+}
+
 // Gte builds a `attr >= n` numeric fragment.
 func Gte(attr string, n int) string {
 	return attr + " >= " + strconv.Itoa(n)

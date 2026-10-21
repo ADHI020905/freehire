@@ -84,6 +84,10 @@ export interface JobFilters {
    *  `0` is a real bound — the jobs stating no prior experience is required — so
    *  every read of this field must test for null, never for falsiness. */
   experienceYearsMax: number | null;
+  /** Also keep the jobs that state no experience requirement — roughly half the
+   *  catalogue, which a bound drops otherwise. A modifier of the bound, not a filter:
+   *  written to the URL only beside one, and never counted on its own. */
+  experienceIncludeUnspecified: boolean;
   /** Feed ordering, or `null` for "the caller has not chosen one".
    *
    *  `relevance` is the engine's own ranking, `newest` is freshest first, `views` is
@@ -257,6 +261,7 @@ export function emptyFilters(): JobFilters {
     postedWithinDays: null,
     openWithinDays: null,
     experienceYearsMax: null,
+    experienceIncludeUnspecified: false,
     sort: null,
     qFields: null,
   };
@@ -286,7 +291,10 @@ export function filtersToParams(f: JobFilters): URLSearchParams {
   if (f.salaryMax != null) p.set('salary_max', String(f.salaryMax));
   if (f.postedWithinDays != null) p.set('posted_within_days', String(f.postedWithinDays));
   if (f.openWithinDays != null) p.set('open_within_days', String(f.openWithinDays));
-  if (f.experienceYearsMax != null) p.set('experience_years_max', String(f.experienceYearsMax));
+  if (f.experienceYearsMax != null) {
+    p.set('experience_years_max', String(f.experienceYearsMax));
+    if (f.experienceIncludeUnspecified) p.set('experience_include_unspecified', 'true');
+  }
   // The default is written as the ABSENCE of the param, which is how the endpoint
   // spells both of its own defaults — so a browse feed and a relevance-ranked search
   // both serialize clean, and `newest` under a query becomes explicit instead of
@@ -372,6 +380,7 @@ export function filtersFromParams(p: URLSearchParams): JobFilters {
   const rawYears = p.get('experience_years_max')?.trim() ?? '';
   const years = Number(rawYears);
   f.experienceYearsMax = rawYears !== '' && Number.isInteger(years) && years >= 0 ? years : null;
+  f.experienceIncludeUnspecified = p.get('experience_include_unspecified') === 'true';
   // Anything but a recognized value reads as the contextual default — including the
   // retired `sort=cv` and the endpoint's `created_at`, which the browse UI does not
   // offer. Shared links and saved searches still carry old sort params, and the same

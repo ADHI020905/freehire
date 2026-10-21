@@ -263,15 +263,24 @@ func filterFromValues(v url.Values, now time.Time) any {
 	// is what the posting asks for, so these are a floor and a ceiling on that one ask,
 	// not a min/max pair over two fields. Meili compares only documents carrying the
 	// attribute, so either bound drops the postings that state no requirement — the
-	// honest reading of "asks for at most N years".
+	// honest reading of "asks for at most N years", and roughly half the catalogue.
+	// `experience_include_unspecified=true` ORs those postings back into each bound's
+	// own group; on its own it bounds nothing, so it adds no group of its own.
+	includeUnstated := v.Get(ExperienceIncludeUnspecifiedParam) == "true"
+	experienceGroup := func(bound string) []string {
+		if includeUnstated {
+			return []string{bound, NotExists("enrichment.experience_years_min")}
+		}
+		return []string{bound}
+	}
 	if n, ok := atoiOK(v.Get("experience_years_min")); ok {
-		groups = append(groups, []string{Gte("enrichment.experience_years_min", n)})
+		groups = append(groups, experienceGroup(Gte("enrichment.experience_years_min", n)))
 	}
 	// n >= 0 because a negative ceiling can only match nothing — the attribute is
 	// never below zero — so it is a typo, and honouring it would render an empty
 	// page that looks like a legitimately narrow search rather than a bad param.
 	if n, ok := atoiOK(v.Get("experience_years_max")); ok && n >= 0 {
-		groups = append(groups, []string{Lte("enrichment.experience_years_min", n)})
+		groups = append(groups, experienceGroup(Lte("enrichment.experience_years_min", n)))
 	}
 
 	// Freshness: posted_within_days=N restricts to jobs posted in the last N days,

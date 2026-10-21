@@ -37,6 +37,8 @@ func TestUnknownParams_AcceptsTheFilterVocabulary(t *testing.T) {
 		"experience_years_min": {"3"},
 		"experience_years_max": {"8"},
 		"posted_within_days":   {"7"},
+
+		"experience_include_unspecified": {"true"},
 	}
 
 	if got := UnknownParams(v, nil); len(got) != 0 {

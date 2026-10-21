@@ -12,7 +12,9 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"net/url"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -604,4 +606,58 @@ func TestSearchOperatorsOnRealEngine(t *testing.T) {
 			t.Fatalf("FacetResult = %+v", fr)
 		}
 	})
+}
+
+// The experience bounds and their include-unspecified modifier, against a real
+// index: a stated requirement is stored as a number, an unstated one as no
+// attribute at all (omitempty), and NOT EXISTS has to find exactly the latter.
+func TestIntegration_ExperienceIncludeUnspecified(t *testing.T) {
+	ctx := context.Background()
+	c := startMeili(t)
+	if err := c.EnsureIndex(ctx); err != nil {
+		t.Fatalf("EnsureIndex: %v", err)
+	}
+
+	// The requirement is a dictionary column folded into the nested enrichment at
+	// projection time, so the fixture sets the column, not the blob.
+	years := func(n int32) pgtype.Int4 { return pgtype.Int4{Int32: n, Valid: true} }
+	empty := enrichedJSON(t, enrich.Enrichment{})
+	jobs := []db.Job{
+		{ID: 1, Title: "Two years", PublicSlug: "two", ExperienceYearsMin: years(2), Enrichment: empty},
+		{ID: 2, Title: "Eight years", PublicSlug: "eight", ExperienceYearsMin: years(8), Enrichment: empty},
+		{ID: 3, Title: "Not stated", PublicSlug: "unstated", Enrichment: empty},
+	}
+	docs := make([]JobDocument, 0, len(jobs))
+	for _, j := range jobs {
+		d, err := FromJob(j, nil)
+		if err != nil {
+			t.Fatalf("FromJob: %v", err)
+		}
+		docs = append(docs, d)
+	}
+	if err := c.IndexJobs(ctx, docs); err != nil {
+		t.Fatalf("IndexJobs: %v", err)
+	}
+
+	for _, tc := range []struct {
+		query string
+		want  []int64
+	}{
+		{"experience_years_max=3", []int64{1}},
+		{"experience_years_max=3&experience_include_unspecified=true", []int64{1, 3}},
+	} {
+		v, _ := url.ParseQuery(tc.query)
+		res, err := c.Search(ctx, SearchParams{Filter: FilterFromValues(v), Limit: 10})
+		if err != nil {
+			t.Fatalf("%s: Search: %v", tc.query, err)
+		}
+		var got []int64
+		for _, h := range res.Hits {
+			got = append(got, h.ID)
+		}
+		slices.Sort(got)
+		if !slices.Equal(got, tc.want) {
+			t.Errorf("%s: hits = %v, want %v", tc.query, got, tc.want)
+		}
+	}
 }

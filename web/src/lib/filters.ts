@@ -133,6 +133,10 @@ export class FilterStore {
     this.#url.setNow({ ...this.#url.value, autoApplyAvailable: on });
   }
 
+  setExperienceIncludeUnspecified(on: boolean) {
+    this.#url.setNow({ ...this.#url.value, experienceIncludeUnspecified: on });
+  }
+
   setClearance(v: ClearanceFilter) {
     this.#url.setNow({ ...this.#url.value, clearance: v });
   }

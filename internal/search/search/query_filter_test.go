@@ -183,6 +183,29 @@ func TestFilterFromValues_ExperienceYearsClosedRange(t *testing.T) {
 	}
 }
 
+// experience_include_unspecified widens each experience bound to also admit the
+// postings that state no requirement at all — roughly half the catalogue, which a
+// bound otherwise drops. It is an OR inside the bound's own group, so it never
+// widens anything else in the query.
+func TestFilterFromValues_ExperienceIncludeUnspecified(t *testing.T) {
+	got := normalizeGroups(t, FilterFromValues(vals("experience_years_min=2&experience_years_max=5&experience_include_unspecified=true")))
+	want := [][]string{
+		{`enrichment.experience_years_min <= 5`, `enrichment.experience_years_min NOT EXISTS`},
+		{`enrichment.experience_years_min >= 2`, `enrichment.experience_years_min NOT EXISTS`},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+// On its own the modifier bounds nothing, so it must not invent a filter: a query
+// carrying only it is the whole catalogue, and Narrows has to say so.
+func TestFilterFromValues_ExperienceIncludeUnspecifiedAloneIsNoFilter(t *testing.T) {
+	if got := FilterFromValues(vals("experience_include_unspecified=true")); got != nil {
+		t.Errorf("got %v, want no filter", got)
+	}
+}
+
 // Zero is the entry-level selector, not an absent value: `experience_years_max=0`
 // asks for the postings that state no prior experience is required. A guard that
 // treats the bound as falsy would silently drop the one filter juniors need.

@@ -22,6 +22,16 @@ var scalarFilters = []string{
 	"open_within_days",
 }
 
+// ExperienceIncludeUnspecifiedParam widens the experience bounds to also admit the
+// postings that state no requirement. It is a modifier, not a filter: alone it reads
+// nothing, so it lives beside scalarFilters rather than on it (whose test demands
+// that each entry narrows a query by itself).
+const ExperienceIncludeUnspecifiedParam = "experience_include_unspecified"
+
+// scalarModifiers are params filterFromValues reads only to change how a scalar
+// filter applies. Known to UnknownParams, never a filter on their own.
+var scalarModifiers = []string{ExperienceIncludeUnspecifiedParam}
+
 // qSearchableFields are the fields `q` matches against, in the same order as the
 // jobs index's SearchableAttributes (see facetSettings in client.go). q_fields
 // restricts `q` to a subset of this vocabulary.
@@ -197,13 +207,16 @@ func SortAndCap(params []UnknownParam) []UnknownParam {
 // its `_exclude` and `_mode` conventions, the scalar filters, and whatever the
 // caller declared as its own.
 func knownParams(alsoKnown []string) map[string]bool {
-	known := make(map[string]bool, len(StringFacets)*3+len(scalarFilters)+len(alsoKnown))
+	known := make(map[string]bool, len(StringFacets)*3+len(scalarFilters)+len(scalarModifiers)+len(alsoKnown))
 	for param := range StringFacets {
 		known[param] = true
 		known[param+"_exclude"] = true
 		known[param+"_mode"] = true
 	}
 	for _, param := range scalarFilters {
+		known[param] = true
+	}
+	for _, param := range scalarModifiers {
 		known[param] = true
 	}
 	for _, param := range alsoKnown {
