@@ -38,11 +38,21 @@ SHALL only select it with `proxy: true`; the request SHALL NOT carry a proxy add
 - **THEN** the service answers 400 rather than fetching directly
 
 ### Requirement: Warm browser sessions under a global cap
-The service SHALL reuse warm browser sessions keyed by `(host, proxy)` across requests, opening
-another for the same key only when its existing ones are busy, closing a session after an idle
+The service SHALL reuse warm browser sessions keyed by `(host, proxy)` across requests, each
+serving up to `SCRAPLING_TABS_PER_BROWSER` pages at once, opening another for the same key only
+when its existing ones are full, closing a session after an idle
 timeout, and SHALL keep no more than `SCRAPLING_MAX_BROWSERS` sessions alive — closing an idle
 session of another key to make room, and otherwise queuing a request for at most a bounded time
 before failing it.
+
+#### Scenario: A session in constant use is still retired
+- **WHEN** a session is older than `SCRAPLING_SESSION_MAX_SECONDS` or has served
+  `SCRAPLING_SESSION_MAX_PAGES` pages
+- **THEN** it takes no new pages and closes once its in-flight pages finish
+
+#### Scenario: A hung page frees its slot
+- **WHEN** a page is still running after the per-use deadline
+- **THEN** the request fails with a 5xx and its session is retired
 
 #### Scenario: Second page on a host reuses the session
 - **WHEN** two `browser` fetches for the same host and proxy arrive in sequence
@@ -113,8 +123,8 @@ so one dead page cannot cost several browser timeouts.
 `cmd/ingest` SHALL rebuild the providers named in `scraplingProviders` over the Scrapling
 transport at startup, each with its own mode and proxy flag, when `SCRAPLING_FETCH_URL` is set.
 When it is unset, every provider SHALL keep its existing transport. The allowlist SHALL cover
-infojobs, bayt, gulftalent, wantapply (sitemap only), wellfound, hh (detail only), startupjobs
-(its Cloudflare-challenged pages only), cleverstaff and kontur.
+infojobs, bayt, gulftalent, wantapply, wellfound, hh (detail only), startupjobs (its
+Cloudflare-challenged pages only), cleverstaff and kontur.
 
 #### Scenario: Unset means unchanged
 - **WHEN** `SCRAPLING_FETCH_URL` is unset
@@ -122,9 +132,8 @@ infojobs, bayt, gulftalent, wantapply (sitemap only), wellfound, hh (detail only
 
 #### Scenario: Partial routing
 - **WHEN** `SCRAPLING_FETCH_URL` is set
-- **THEN** wantapply reads its sitemap through the service and its posting pages through its
-  existing free client, and hh hydrates details through the service while its listing stays on
-  its existing client
+- **THEN** hh hydrates details through the service while its listing stays on a plain client,
+  and startupjobs reads only its challenged site pages through the service
 
 ### Requirement: Hosted Firecrawl tier removed
 The repository SHALL NOT contain the hosted Firecrawl client or tier, and SHALL NOT read

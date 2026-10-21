@@ -32,11 +32,11 @@
 - [x] 5.1 Build the image on host2 and start it under a systemd unit written in `freehire-ops` (`provision/host2/`); `/health` answers
 - [x] 5.2 Live-verify each allowlisted provider through the deployed service with its configured mode (one real page each); correct any row whose mode no longer passes
 - [x] 5.3 InfoJobs detail pages through browser + proxy: if they pass, restore hydration for unseen offers (with a test); otherwise record the measurement in the adapter header
-- [ ] 5.4 InfoJobs parallel sessions (listing pages fetched 3 at a time — done in code): measure a full listing crawl's duration; set its `ingest_schedule` timeout to fit
-- [ ] 5.5 Set `SCRAPLING_FETCH_URL` / `SCRAPLING_FETCH_TOKEN` on host2, deploy, and confirm each provider's next run in `board_health`
+- [x] 5.4 InfoJobs parallel sessions (listing pages fetched 3 at a time — done in code): measure a full listing crawl's duration; set its `ingest_schedule` timeout to fit
+- [x] 5.5 Set `SCRAPLING_FETCH_URL` / `SCRAPLING_FETCH_TOKEN` on host2, deploy, and confirm each provider's next run in `board_health`
 
 ## 6. Proxy rotation
 
 - [x] 6.1 `ProxyConfig` in the service: a rotating gateway for http mode and a sticky `{n}` pool for browser sessions, falling back to `SOURCES_PROXY_URL` — with tests
 - [x] 6.2 Retry a 403/429 through the rotating gateway (3 attempts); retire a refused browser session so the next takes another sticky IP — with tests
-- [ ] 6.3 Deploy: rebuild the image, add the rotating and sticky settings to `/opt/freehire/env/scrapling-fetch.env`, restart, and confirm wellfound's boards through it
+- [x] 6.3 Deploy: rebuild the image, add the rotating and sticky settings to `/opt/freehire/env/scrapling-fetch.env`, restart, and confirm wellfound's boards through it

@@ -17,7 +17,7 @@ it — never a silent, provider-absent no-op.
 - **THEN** it does so through the Scrapling tier so the response is the real page rather than
   the refusal
 
-#### Scenario: No service configured means every crawl attempt fails loudly
+#### Scenario: No credential means every crawl attempt fails loudly
 
 - **WHEN** `SCRAPLING_FETCH_URL` is not configured
 - **THEN** `wellfound` remains present in the crawl registry, and a crawl attempt fails with
