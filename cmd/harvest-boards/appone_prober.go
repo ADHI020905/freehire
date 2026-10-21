@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 
 	"github.com/strelov1/freehire/internal/ingest/atsboard"
-	"github.com/strelov1/freehire/internal/ingest/sources"
 )
 
 // The AppOne endpoints mirror internal/ingest/sources/appone.go's, which are unexported.
@@ -45,7 +42,7 @@ func (apponeProber) probe(ctx context.Context, c httpClient, slug string) (strin
 		// An unknown portal is a 404 and simply not a board. Anything else — the platform's
 		// edge answers a stray 403 to a share of requests (see sources/appone.go) — is
 		// surfaced, so a refused probe is counted rather than mistaken for a dead board.
-		if apponeGone(err) {
+		if boardGone(err) {
 			return "", 0, nil
 		}
 		return "", 0, err
@@ -74,7 +71,7 @@ func (apponeProber) resolveSeed(ctx context.Context, c httpClient, token string)
 			JobPortalURL string `json:"jobPortalUrl"`
 		}
 		if err := c.GetJSON(ctx, apponePostingAPI+m[1], &rec); err != nil {
-			if apponeGone(err) {
+			if boardGone(err) {
 				return "", nil
 			}
 			return "", err
@@ -85,10 +82,4 @@ func (apponeProber) resolveSeed(ctx context.Context, c httpClient, token string)
 		return board, nil
 	}
 	return "", nil
-}
-
-// apponeGone reports whether err is the platform saying the thing asked for does not exist.
-func apponeGone(err error) bool {
-	var se *sources.StatusError
-	return errors.As(err, &se) && (se.Code == http.StatusNotFound || se.Code == http.StatusGone)
 }

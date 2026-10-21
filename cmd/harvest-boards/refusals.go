@@ -119,3 +119,10 @@ func (c *countingClient) PostJSONWithHeaders(ctx context.Context, url string, he
 	c.record(err)
 	return err
 }
+
+// boardGone reports whether err is the platform saying the thing asked for does not exist —
+// the one error a prober may read as "not a board" rather than surface as a probe failure.
+func boardGone(err error) bool {
+	var se *sources.StatusError
+	return errors.As(err, &se) && (se.Code == http.StatusNotFound || se.Code == http.StatusGone)
+}
