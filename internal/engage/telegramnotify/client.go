@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -76,16 +77,16 @@ func (c *Client) call(ctx context.Context, method string, payload map[string]any
 	if err != nil {
 		return err
 	}
-	url := c.base + "/bot" + c.token + "/" + method
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	endpoint := c.base + "/bot" + c.token + "/" + method
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return fmt.Errorf("telegram %s: %w", method, withoutURL(err))
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("telegram %s: %w", method, err)
+		return fmt.Errorf("telegram %s: %w", method, withoutURL(err))
 	}
 	defer resp.Body.Close()
 
@@ -100,6 +101,18 @@ func (c *Client) call(ctx context.Context, method string, payload map[string]any
 		return fmt.Errorf("telegram %s failed (%d): %s", method, resp.StatusCode, r.Description)
 	}
 	return nil
+}
+
+// withoutURL drops the request URL from a net/http error. The Bot API puts the
+// bot token in the path, *url.Error quotes that path verbatim, and the error text
+// is persisted to subscription_matches.last_error and logged. The cause it wraps
+// (a timeout, a refused dial) is kept, so errors.Is/As still see it.
+func withoutURL(err error) error {
+	var ue *url.Error
+	if errors.As(err, &ue) {
+		return fmt.Errorf("%s: %w", ue.Op, ue.Err)
+	}
+	return err
 }
 
 // Update is the minimal slice of a Telegram webhook update this feature reads: a
