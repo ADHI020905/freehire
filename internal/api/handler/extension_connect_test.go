@@ -46,7 +46,8 @@ func TestRedirectWithFragment(t *testing.T) {
 }
 
 func TestValidateExtensionRedirect(t *testing.T) {
-	allow := []string{"abcdefghijklmnop", "qrstuvwxyzabcdef"}
+	firefox := "13f2644fb08a641dc52d5b7c11faf2fb9775ee26"
+	allow := []string{"abcdefghijklmnop", "qrstuvwxyzabcdef", firefox}
 
 	cases := []struct {
 		name    string
@@ -64,6 +65,10 @@ func TestValidateExtensionRedirect(t *testing.T) {
 		{"multi-label before suffix", "https://a.abcdefghijklmnop.chromiumapp.org/", allow, true},
 		{"port present", "https://abcdefghijklmnop.chromiumapp.org:8080/", allow, true},
 		{"malformed url", "https://%zz", allow, true},
+		{"allowlisted firefox hash", "https://" + firefox + ".extensions.allizom.org/", allow, false},
+		{"unknown firefox hash", "https://ffffffffffffffffffffffffffffffffffffffff.extensions.allizom.org/", allow, true},
+		{"firefox hash under a sibling label", "https://" + firefox + ".allizom.org/", allow, true},
+		{"multi-label before firefox suffix", "https://a." + firefox + ".extensions.allizom.org/", allow, true},
 		{"empty allowlist disables", "https://abcdefghijklmnop.chromiumapp.org/", nil, true},
 	}
 

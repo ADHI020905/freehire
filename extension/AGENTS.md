@@ -20,7 +20,7 @@ flow minted: `Authorization: Bearer` on the HTTP API, the `freehire-jwt`
 subprotocol on the relay's WebSocket (a browser cannot set headers on
 `new WebSocket`).
 
-Stack: **WXT + Svelte** (Chrome MV3), styled on `freehire-design-system`
+Stack: **WXT + Svelte** (Chrome MV3; Firefox MV2 from the same source), styled on `freehire-design-system`
 (Tailwind v4 tokens + primitives — see the root `AGENTS.md`'s design-system row).
 No local server, and no separate agent service.
 
@@ -210,3 +210,21 @@ cd extension && npm run check        # svelte-check
 Load unpacked in Chrome: `chrome://extensions` → Developer mode → **Load
 unpacked** → `extension/.output/chrome-mv3`. Click the toolbar icon to open the
 panel.
+
+### Firefox
+
+`npm run dev:firefox` / `npm run build:firefox` (-> `.output/firefox-mv2`) /
+`npm run zip:firefox` (the addons.mozilla.org artifact). Load it at
+`about:debugging` → This Firefox → **Load Temporary Add-on** → the build's
+`manifest.json`. The `sidepanel` entrypoint becomes Firefox's `sidebar_action`,
+and the toolbar click toggles it (`background.ts`).
+
+Two differences, both in `wxt.config.ts`:
+
+- **No Attach tailored CV.** It needs `chrome.debugger`, which Firefox does not
+  have, so the panel hides the button (`import.meta.env.FIREFOX`).
+- **A different sign-in redirect.** Firefox's `identity.getRedirectURL()` is
+  `https://<sha1(gecko id)>.extensions.allizom.org/`, so hire's
+  `EXTENSION_REDIRECT_ALLOWLIST` must carry that hash beside the Chrome ids. For
+  `extension@freehire.me` it is `13f2644fb08a641dc52d5b7c11faf2fb9775ee26`; the
+  gecko id is therefore as fixed as Chrome's `key`.

@@ -323,8 +323,9 @@ type Settings struct {
 	ServedHosts []string
 
 	// ExtensionRedirectAllowlist bounds where the browser-extension connect flow
-	// may hand back a minted token: only https://<id>.chromiumapp.org redirects
-	// whose <id> is listed here are accepted. Empty disables the connect flow.
+	// may hand back a minted token: only https://<id>.chromiumapp.org (Chrome) or
+	// https://<id>.extensions.allizom.org (Firefox) redirects whose <id> is listed
+	// here are accepted. Empty disables the connect flow.
 	ExtensionRedirectAllowlist []string
 
 	// AutoApplyOrchestratorSecret is the shared, static credential

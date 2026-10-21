@@ -18,30 +18,56 @@ import tailwindcss from '@tailwindcss/vite';
  */
 const RELEASE = process.env.WXT_RELEASE === '1';
 
+/**
+ * Firefox's add-on id. It is what Firefox hashes into the identity redirect,
+ * `https://<sha1(id)>.extensions.allizom.org/`, so like Chrome's `key` it must
+ * never change — hire allowlists that hash.
+ */
+const GECKO_ID = 'extension@freehire.me';
+
 const DEV_KEY =
   'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2GECbcIeOfNjo0xv8Q4bMKgLHN5qKCOQSYfVr3aTTHlIk1VliYT/Kb+xZiCyR34tBHFYlTaJATBWLIqmoTqQghXPMvM2LmNPo6ttNKuRdiNJNFvMz5M8RE7Qfgawj8EJo2dCTzWbSdRet2HLTKTBDLsZ/9F4RpXnDQrWVaqQqDvNO9CXT99UqBuzpuTXq3WyWJYcnSjDETND62jkW2kUKj0YpybpxMYDjC1NwoXGgI2f6z3gy2FB/ld3yiaYwVu2NwZGTILgmKLQKGrutHQktnVc27qoeBVvO0s8VMnJkf3kFJPPNmJktGAbnvdiGlx4wBEGBqVEqFBhBaj0GlE1dwIDAQAB';
 
 export default defineConfig({
   modules: ['@wxt-dev/module-svelte'],
   vite: () => ({ plugins: [tailwindcss()] }),
-  manifest: () =>
+  manifest: ({ browser }) =>
     ({
-      ...(RELEASE ? {} : { key: DEV_KEY }),
+      // Firefox ignores `key` and pins its id through `gecko.id` instead.
+      ...(RELEASE || browser === 'firefox' ? {} : { key: DEV_KEY }),
+      ...(browser === 'firefox'
+        ? {
+            browser_specific_settings: {
+              gecko: {
+                id: GECKO_ID,
+                // 140 is the first release that reads data_collection_permissions,
+                // which addons.mozilla.org requires of every new listing.
+                strict_min_version: '140.0',
+                data_collection_permissions: {
+                  required: ['authenticationInfo', 'websiteContent'],
+                },
+              },
+            },
+          }
+        : {}),
       name: 'freehire',
       description: 'Your job-application agent, on any page.',
       // `debugger`/`downloads` back the "Attach tailored CV" action only: attaching the
       // debugger is what lets DOM.setFileInputFiles place a file into an
       // `input[type=file]`, since neither a page's own script nor a content script can
       // assign HTMLInputElement.files (see extension-attach-tailored-cv's design.md).
+      //
+      // Firefox has neither: no `chrome.debugger` (so no Attach tailored CV — the panel
+      // hides it) and a sidebar instead of `sidePanel`, which WXT emits as
+      // `sidebar_action` from the same entrypoint.
       permissions: [
         'storage',
         'tabs',
-        'sidePanel',
         'scripting',
         'activeTab',
         'identity',
-        'debugger',
         'downloads',
+        ...(browser === 'firefox' ? [] : ['sidePanel', 'debugger']),
       ],
       host_permissions: ['<all_urls>'],
       // `icons` is discovered from public/icon/*.png. The variants swap in the
@@ -56,8 +82,8 @@ export default defineConfig({
       //
       // Both groups name their scheme: a group without `color_schemes` is a
       // wildcard, and the first match by array order wins — so a wildcard here
-      // would shadow the dark one.
-      ...(RELEASE
+      // would shadow the dark one. Chrome's key only: Firefox warns on it.
+      ...(RELEASE && browser !== 'firefox'
         ? {
             icon_variants: [
               {

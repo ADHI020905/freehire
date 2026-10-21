@@ -32,9 +32,17 @@ import {
  *    frame ids, so it is also what tags the fields it reads back.
  */
 export default defineBackground(() => {
-  browser.sidePanel
-    ?.setPanelBehavior({ openPanelOnActionClick: true })
-    .catch((err) => console.error('setPanelBehavior failed', err));
+  if (import.meta.env.FIREFOX) {
+    // Firefox's sidebar has no "open on action click" setting; toggling it from the
+    // click handler is the user gesture sidebarAction requires.
+    browser.browserAction.onClicked.addListener(() => {
+      void (browser as unknown as FirefoxSidebar).sidebarAction.toggle();
+    });
+  } else {
+    browser.sidePanel
+      ?.setPanelBehavior({ openPanelOnActionClick: true })
+      .catch((err) => console.error('setPanelBehavior failed', err));
+  }
 
   browser.runtime.onMessage.addListener((message: RuntimeMessage) => {
     switch (message.kind) {
@@ -57,6 +65,11 @@ export default defineBackground(() => {
     }
   });
 });
+
+/** Firefox's sidebar API, which WXT's Chrome-derived `browser` types do not carry. */
+interface FirefoxSidebar {
+  sidebarAction: { toggle(): Promise<void> };
+}
 
 /** The tab's top document — frame 0 in every Chromium tab. */
 const TOP_FRAME = 0;

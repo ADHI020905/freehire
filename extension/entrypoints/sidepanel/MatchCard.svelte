@@ -159,7 +159,11 @@
       })
       .catch(() => {});
   });
-  let showAttach = $derived(isCatalogJob && hasUploadField && tailoredCV !== null);
+  // Firefox has no chrome.debugger, the only way background can place a file into
+  // an upload field — so the action is not offered there at all.
+  let showAttach = $derived(
+    !import.meta.env.FIREFOX && isCatalogJob && hasUploadField && tailoredCV !== null,
+  );
 
   async function attachTailoredCV() {
     if (attaching || !tailoredCV) return;

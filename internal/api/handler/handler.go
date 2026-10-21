@@ -469,7 +469,7 @@ type Config struct {
 	AWSRegion       string
 	NotifyEmailFrom string
 	// ExtensionRedirectAllowlist bounds the browser-extension connect flow: only
-	// https://<id>.chromiumapp.org redirects whose <id> is listed may receive a
+	// https://<id>.chromiumapp.org or <id>.extensions.allizom.org redirects whose <id> is listed may receive a
 	// minted token. Empty leaves the connect endpoint refusing every redirect.
 	ExtensionRedirectAllowlist []string
 	// ServedHosts are the exact hostnames honoured as an OAuth redirect origin.

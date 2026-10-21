@@ -57,7 +57,7 @@ type authHandlers struct {
 	// frontendOrigin is where OAuth callbacks send the browser back to.
 	frontendOrigin string
 	// extensionRedirectAllowlist bounds the browser-extension connect flow to the
-	// chromiumapp.org redirect ids listed here. Empty refuses every redirect.
+	// chromiumapp.org / extensions.allizom.org redirect ids listed here. Empty refuses every redirect.
 	extensionRedirectAllowlist []string
 	// servedHosts are the exact hostnames this deployment answers on. Only these are
 	// honoured as an OAuth redirect origin; anything else falls back to frontendOrigin.

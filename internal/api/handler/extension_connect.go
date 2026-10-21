@@ -9,13 +9,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// chromiumappSuffix is the host suffix Chrome's identity redirect URLs carry:
-// launchWebAuthFlow only resolves a redirect to https://<extension-id>.chromiumapp.org.
-const chromiumappSuffix = ".chromiumapp.org"
+// extensionRedirectSuffixes are the host suffixes a browser's identity redirect
+// URL carries: launchWebAuthFlow only resolves a redirect to its own browser's
+// domain — https://<extension-id>.chromiumapp.org in Chrome,
+// https://<sha1-of-addon-id>.extensions.allizom.org in Firefox. Both domains belong
+// to the browser vendor, so a label under either names one installed extension.
+var extensionRedirectSuffixes = []string{".chromiumapp.org", ".extensions.allizom.org"}
 
 // validateExtensionRedirect reports whether redirectURI is a safe target for the
 // browser-extension connect flow to hand a minted token to. It accepts only an
-// https://<extension-id>.chromiumapp.org URL whose <extension-id> is a single
+// https URL on one of extensionRedirectSuffixes whose leading part is a single
 // host label present in allowlist. An empty allowlist disables the flow entirely.
 func validateExtensionRedirect(redirectURI string, allowlist []string) error {
 	if len(allowlist) == 0 {
@@ -32,17 +35,20 @@ func validateExtensionRedirect(redirectURI string, allowlist []string) error {
 		return fmt.Errorf("redirect_uri must not carry a port")
 	}
 	host := u.Hostname()
-	if !strings.HasSuffix(host, chromiumappSuffix) {
-		return fmt.Errorf("redirect_uri host must be *%s, got %q", chromiumappSuffix, host)
+	for _, suffix := range extensionRedirectSuffixes {
+		id, ok := strings.CutSuffix(host, suffix)
+		if !ok {
+			continue
+		}
+		if id == "" || strings.Contains(id, ".") {
+			return fmt.Errorf("redirect_uri must be a single <id>%s label, got %q", suffix, host)
+		}
+		if !slices.Contains(allowlist, id) {
+			return fmt.Errorf("extension id %q is not allowlisted", id)
+		}
+		return nil
 	}
-	id := strings.TrimSuffix(host, chromiumappSuffix)
-	if id == "" || strings.Contains(id, ".") {
-		return fmt.Errorf("redirect_uri must be a single <id>%s label, got %q", chromiumappSuffix, host)
-	}
-	if !slices.Contains(allowlist, id) {
-		return fmt.Errorf("extension id %q is not allowlisted", id)
-	}
-	return nil
+	return fmt.Errorf("redirect_uri host must be under %v, got %q", extensionRedirectSuffixes, host)
 }
 
 // redirectWithFragment returns base with vals encoded into its URL fragment,

@@ -36,12 +36,13 @@ OAuth sign-in (`internal/identity/auth/oauth/`) adds a provider registry (Google
 
 The browser extension signs in with `chrome.identity.launchWebAuthFlow`, which
 opens `GET /api/v1/auth/extension/connect` **in the freehire origin** and waits for
-a redirect to `https://<extension-id>.chromiumapp.org/`. Handlers live in
+a redirect to `https://<extension-id>.chromiumapp.org/` (Firefox:
+`https://<sha1-of-addon-id>.extensions.allizom.org/`). Handlers live in
 `internal/api/handler/extension_connect.go`, both **cookie-only** like key management —
 a leaked key must not mint further keys — but mounted on `optionalCookie`:
 
 - `GET` validates `redirect_uri` (`validateExtensionRedirect`: https +
-  `<id>.chromiumapp.org` + `<id>` on the allowlist) and renders a consent page.
+  `<id>.chromiumapp.org` or `<id>.extensions.allizom.org` + `<id>` on the allowlist) and renders a consent page.
 - `POST` re-validates, then on `decision=allow` **issues a session JWT**
   (`Issuer.Issue`) and 302s to `redirect_uri#token=…&state=…` — the token rides the
   **fragment**, never the query, so it is not logged or sent in `Referer`. Any

@@ -6,8 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
     "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
     "zip": "WXT_RELEASE=1 wxt zip",
+    "zip:firefox": "WXT_RELEASE=1 wxt zip -b firefox",
     "test": "vitest run",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "oxlint && eslint .",
