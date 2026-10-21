@@ -63,6 +63,14 @@ are matched; `cmd/import-collections` writes `companies.collections`, and the se
   wired at cmd/import-collections/main.go:358). Tags the registry does not manage are
   preserved untouched.
 
+- **A register row naming a local subsidiary matches its parent** (`Collection.Country`,
+  `withoutCountrySuffix` in register.go): when "Google (UK) Limited" finds no `google-uk`, the
+  slug is retried without a trailing mention of the register's OWN country. Only that
+  country — "Stantec Ireland" in the UK file stays unmatched — and never a city: "JJ London Ltd"
+  is some London business, not the catalogue's `jj`. Measured 2026-10-21 before the country
+  gate: UK +2741 name matches, IE +387, CA +221, DK +62 — Google, Salesforce, Cisco, IBM,
+  ServiceNow and SAP among them, the employers this filter is opened for. The gate still
+  requires open jobs in the country.
 - **Canada, Ireland and Denmark carry no identity field we can use**, and that is a decision,
   not an omission. The LMIA file's only per-row discriminator is the business ADDRESS, which
   differs per location of one employer — keyed on it, `DropAmbiguous` would delete every

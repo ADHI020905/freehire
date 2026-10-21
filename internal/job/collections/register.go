@@ -89,11 +89,34 @@ func RequireCountry(code string) func(Company, Record) bool {
 // company name, not a country.
 var countryAliases = map[string][]string{
 	"GB": {"uk", "united kingdom", "great britain", "england", "scotland", "wales"},
-	"NL": {"netherlands", "the netherlands", "holland"},
+	"NL": {"netherlands", "the netherlands", "holland", "nederland"},
 	"US": {"usa", "u.s.a.", "u.s.", "united states", "united states of america", "america"},
 	"CA": {"canada"},
 	"IE": {"ireland", "republic of ireland"},
-	"DK": {"denmark"},
+	"DK": {"denmark", "danmark"},
+}
+
+// withoutCountrySuffix returns a register slug with a trailing mention of the
+// given country removed — "google-uk" for GB gives "google" — or "" when the slug
+// does not end in one, or ends in nothing else.
+//
+// Only that ONE country, spelled as its ISO code or as a countryAliases name: a
+// register lists local entities, so "Google (UK) Limited" in the UK register is the
+// UK arm of Google, while another country's name ("Stantec Ireland" in the UK file)
+// is not that evidence. Cities are deliberately not countries here — "JJ London Ltd"
+// is some London business, not the "jj" the catalogue knows.
+//
+// Because the country is part of the register's own name, the stripped match still
+// counts as a multi-token name in RequireCountry: the subsidiary naming the country
+// is what makes it specific. The gate still demands open jobs there.
+func withoutCountrySuffix(slug, code string) string {
+	for _, name := range append([]string{strings.ToLower(code)}, countryAliases[strings.ToUpper(code)]...) {
+		suffix := "-" + strings.Join(strings.FieldsFunc(name, func(r rune) bool { return r == ' ' || r == '.' }), "-")
+		if parent, ok := strings.CutSuffix(slug, suffix); ok && parent != "" {
+			return parent
+		}
+	}
+	return ""
 }
 
 // countryMatches reports whether a stored country value denotes the given ISO code.

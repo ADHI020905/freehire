@@ -309,3 +309,63 @@ func TestRegisterSlugIsTheCatalogueRule(t *testing.T) {
 		})
 	}
 }
+
+func TestMembers_MatchesALocalSubsidiaryToItsParentByTheRegistersCountry(t *testing.T) {
+	uk := Collection{Slug: "uk", Kind: KindCredential, Country: "GB", Gate: RequireCountry("GB")}
+	companies := map[string]Company{
+		"google":         {Slug: "google", Countries: []string{"GB", "US"}, HQCountry: "US"},
+		"hitachi-energy": {Slug: "hitachi-energy", Countries: []string{"GB"}},
+		"jj":             {Slug: "jj", Countries: []string{"GB"}},
+		"stantec":        {Slug: "stantec", Countries: []string{"GB"}},
+		"tjx":            {Slug: "tjx", Countries: []string{"GB"}},
+	}
+	records := []Record{
+		// The register names the UK arm; the catalogue knows the parent.
+		{Name: "Google (UK) Limited"},
+		{Name: "HITACHI ENERGY UK LIMITED"},
+		{Name: "TJX United Kingdom Ltd"},
+		// A city is not a country: "JJ London" is some other business, not jj.
+		{Name: "JJ LONDON LTD"},
+		// Only the register's OWN country is stripped.
+		{Name: "Stantec Ireland Limited"},
+	}
+	got, _ := uk.Members(records, companies)
+	if want := []string{"google", "hitachi-energy", "tjx"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("Members = %v, want %v", got, want)
+	}
+}
+
+func TestMembers_StrippedSubsidiaryStillNeedsJobsInTheCountry(t *testing.T) {
+	dk := Collection{Slug: "dk", Kind: KindCredential, Country: "DK", Gate: RequireCountry("DK")}
+	companies := map[string]Company{"google": {Slug: "google", Countries: []string{"US"}, HQCountry: "US"}}
+	got, stat := dk.Members([]Record{{Name: "Google Denmark ApS"}}, companies)
+	if len(got) != 0 || stat.Gated != 1 {
+		t.Errorf("Members = %v (gated %d), want nothing matched and 1 gated", got, stat.Gated)
+	}
+}
+
+func TestMembers_WithoutACountryNothingIsStripped(t *testing.T) {
+	editorial := Collection{Slug: "e", Kind: KindEditorial}
+	companies := map[string]Company{"google": {Slug: "google"}}
+	if got, _ := editorial.Members([]Record{{Name: "Google UK"}}, companies); len(got) != 0 {
+		t.Errorf("Members = %v, want nothing — only a register's own country is stripped", got)
+	}
+}
+
+func TestWithoutCountrySuffix(t *testing.T) {
+	for _, tc := range []struct{ slug, code, want string }{
+		{"google-uk", "GB", "google"},
+		{"tjx-united-kingdom", "GB", "tjx"},
+		{"epam-systems-canada", "CA", "epam-systems"},
+		{"sap-danmark", "DK", "sap"},
+		{"acme-nederland", "NL", "acme"},
+		{"acme-nl", "NL", "acme"},
+		{"jj-london", "GB", ""},
+		{"uk", "GB", ""},              // nothing left once stripped
+		{"stantec-ireland", "GB", ""}, // another country's name
+	} {
+		if got := withoutCountrySuffix(tc.slug, tc.code); got != tc.want {
+			t.Errorf("withoutCountrySuffix(%q, %q) = %q, want %q", tc.slug, tc.code, got, tc.want)
+		}
+	}
+}

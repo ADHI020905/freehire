@@ -132,6 +132,14 @@ type Collection struct {
 	// A nil Gate admits every name match, which is what every editorial collection
 	// wants and has always done.
 	Gate func(Company, Record) bool
+	// Country is the ISO code of the country a credential's register covers. It lets
+	// a register row naming a local subsidiary ("Google (UK) Limited", "SAP Danmark
+	// A/S") match the parent company the catalogue knows ("google", "sap"): when the
+	// row's own slug matches nothing, the same slug without a trailing mention of
+	// THIS country is tried. Measured 2026-10-21, that recovered thousands of UK
+	// sponsors and more than doubled Ireland's, most of them the large employers the
+	// filter exists for. Empty for editorial collections, which strip nothing.
+	Country string
 }
 
 // Company is the subset of a catalogue company a Gate may consult: its canonical
@@ -262,6 +270,7 @@ var All = []Collection{
 		Description: "Open roles at employers on the GOV.UK register of licensed sponsors for the Skilled Worker and related work routes. The licence belongs to the employer — it is not a commitment to sponsor any particular role.",
 		Kind:        KindCredential,
 		Dataset:     &Dataset{ResolveURL: ResolveUKSponsorCSV, Parse: ParseUKSponsors, IdentityKey: "town"},
+		Country:     "GB",
 		Gate:        AllOf(RequireCountry("GB"), RequireRoute(ukWorkRoutes...)),
 	},
 	{
@@ -271,7 +280,8 @@ var All = []Collection{
 		Kind:        KindCredential,
 		Dataset:     &Dataset{URL: nlSponsorURL, Parse: ParseNLSponsors, IdentityKey: "kvk"},
 		// No route gate: the IND register publishes recognition, not routes.
-		Gate: RequireCountry("NL"),
+		Country: "NL",
+		Gate:    RequireCountry("NL"),
 	},
 	{
 		Slug:        "us-h1b-sponsor",
@@ -281,7 +291,8 @@ var All = []Collection{
 		Dataset:     &Dataset{Records: FetchUSH1BSponsors, IdentityKey: "tin4"},
 		// No route gate: the USCIS Data Hub is H-1B-specific already, unlike the UK
 		// register's multi-route file.
-		Gate: RequireCountry("US"),
+		Country: "US",
+		Gate:    RequireCountry("US"),
 	},
 	{
 		Slug:        "ca-lmia-employer",
@@ -289,6 +300,7 @@ var All = []Collection{
 		Description: "Open roles at employers ESDC issued a positive Labour Market Impact Assessment in the last four quarters, through the High Wage, Global Talent or Permanent Resident streams. The approval belongs to the employer — it is not a commitment to sponsor any particular role.",
 		Kind:        KindCredential,
 		Dataset:     &Dataset{Records: FetchCALMIASponsors},
+		Country:     "CA",
 		Gate:        AllOf(RequireCountry("CA"), RequireRoute(caWorkStreams...)),
 	},
 	{
@@ -297,6 +309,7 @@ var All = []Collection{
 		Description: "Open roles at employers DETE issued Irish employment permits to this year or in the two years before. The permits belong to the employer — it is not a commitment to sponsor any particular role.",
 		Kind:        KindCredential,
 		Dataset:     &Dataset{Records: FetchIEPermitEmployers},
+		Country:     "IE",
 		Gate:        RequireCountry("IE"),
 	},
 	{
@@ -305,6 +318,7 @@ var All = []Collection{
 		Description: "Open roles at companies SIRI has certified for the Danish Fast-track scheme for hiring foreign skilled workers. The certification belongs to the employer — it is not a commitment to sponsor any particular role.",
 		Kind:        KindCredential,
 		Dataset:     &Dataset{URL: dkSponsorURL, Parse: ParseDKSponsors, IdentityKey: "cvr"},
+		Country:     "DK",
 		Gate:        RequireCountry("DK"),
 	},
 }
@@ -523,6 +537,12 @@ func (c Collection) Members(records []Record, companies map[string]Company) ([]s
 	for _, r := range records {
 		slug := normalize.CompanySlug(r.Name)
 		company, known := companies[slug]
+		if !known && c.Country != "" {
+			if parent := withoutCountrySuffix(slug, c.Country); parent != "" {
+				slug = parent
+				company, known = companies[slug]
+			}
+		}
 		if slug == "" || !known {
 			stat.Unmatched++
 			stat.UnmatchedNames = append(stat.UnmatchedNames, r.Name)
