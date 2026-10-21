@@ -320,7 +320,7 @@ company_upsert AS (
 )
 INSERT INTO jobs (
     source, external_id, url, title, company, company_slug, company_slug_folded, location, remote, description, posted_at,
-    public_slug, countries, regions, cities, work_mode, skills, seniority, category, is_tech, requires_clearance,
+    public_slug, countries, regions, cities, metros, work_mode, skills, seniority, category, is_tech, requires_clearance,
     posting_language, employment_type, education_level, english_level, experience_years_min,
     salary_min_source, salary_max_source, salary_currency_source, salary_period_source,
     content_hash, role_fingerprint, requirements_derived, hydrated_at
@@ -329,7 +329,7 @@ INSERT INTO jobs (
     sqlc.arg(company), sqlc.arg(company_slug), replace(sqlc.arg(company_slug), '-', ''), sqlc.arg(location), sqlc.arg(remote),
     sqlc.arg(description), sqlc.arg(posted_at),
     sqlc.arg(public_slug),
-    COALESCE(sqlc.arg(countries)::text[], '{}'), COALESCE(sqlc.arg(regions)::text[], '{}'), COALESCE(sqlc.arg(cities)::text[], '{}'),
+    COALESCE(sqlc.arg(countries)::text[], '{}'), COALESCE(sqlc.arg(regions)::text[], '{}'), COALESCE(sqlc.arg(cities)::text[], '{}'), COALESCE(sqlc.arg(metros)::text[], '{}'),
     sqlc.arg(work_mode), COALESCE(sqlc.arg(skills)::text[], '{}'), sqlc.arg(seniority), sqlc.arg(category), sqlc.arg(is_tech), sqlc.arg(requires_clearance),
     sqlc.arg(posting_language), sqlc.arg(employment_type), sqlc.arg(education_level), sqlc.arg(english_level), sqlc.arg(experience_years_min),
     sqlc.arg(salary_min_source), sqlc.arg(salary_max_source), sqlc.arg(salary_currency_source), sqlc.arg(salary_period_source),
@@ -368,6 +368,7 @@ ON CONFLICT (source, external_id) DO UPDATE SET
     countries    = EXCLUDED.countries,
     regions      = EXCLUDED.regions,
     cities       = EXCLUDED.cities,
+    metros       = EXCLUDED.metros,
     work_mode    = EXCLUDED.work_mode,
     skills       = EXCLUDED.skills,
     seniority    = EXCLUDED.seniority,
@@ -498,7 +499,9 @@ WHERE source = sqlc.arg(source) AND company = '' AND external_id LIKE sqlc.arg(b
 -- (unset/unknown) still matches its own kind — a plain = would push every sourceless/unknown job
 -- off the cheap path forever. Whether the key still covers every written column is enforced by
 -- TestUpsertParams_CheapWriteMatchKeyCoversEveryColumnItWrites (internal/job); add a derived
--- column outside the hash and it fails there.
+-- column outside the hash and it fails there. metros is covered the way countries and regions
+-- are: Derive reads it off the location, which the hash covers, or off a caller's structured
+-- cities (in the key) and countries.
 --
 -- A NULL stored content_hash (a legacy row predating the column) compares unequal and so takes
 -- the full path, which is right: nothing is known about what it holds.
@@ -818,7 +821,8 @@ SELECT
     m.owner_id,
     array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'c' AND t.val <> '')::text[] AS countries,
     array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'r' AND t.val <> '')::text[] AS regions,
-    array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'y' AND t.val <> '')::text[] AS cities
+    array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'y' AND t.val <> '')::text[] AS cities,
+    array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'm' AND t.val <> '')::text[] AS metros
 FROM member m
 JOIN jobs o ON o.id = m.member_id
 LEFT JOIN LATERAL (
@@ -827,6 +831,8 @@ LEFT JOIN LATERAL (
     SELECT 'r', e FROM unnest(o.regions) AS e
     UNION ALL
     SELECT 'y', e FROM unnest(o.cities) AS e
+    UNION ALL
+    SELECT 'm', e FROM unnest(o.metros) AS e
 ) t ON true
 GROUP BY m.owner_id;
 
@@ -864,7 +870,8 @@ SELECT
     m.owner_id,
     array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'c' AND t.val <> '')::text[] AS countries,
     array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'r' AND t.val <> '')::text[] AS regions,
-    array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'y' AND t.val <> '')::text[] AS cities
+    array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'y' AND t.val <> '')::text[] AS cities,
+    array_agg(DISTINCT t.val) FILTER (WHERE t.kind = 'm' AND t.val <> '')::text[] AS metros
 FROM member m
 JOIN jobs o ON o.id = m.member_id
 LEFT JOIN LATERAL (
@@ -873,6 +880,8 @@ LEFT JOIN LATERAL (
     SELECT 'r', e FROM unnest(o.regions) AS e
     UNION ALL
     SELECT 'y', e FROM unnest(o.cities) AS e
+    UNION ALL
+    SELECT 'm', e FROM unnest(o.metros) AS e
 ) t ON true
 GROUP BY m.owner_id;
 
@@ -1192,7 +1201,7 @@ WITH company_upsert AS (
 )
 INSERT INTO jobs (
     source, external_id, url, title, company, company_slug, company_slug_folded, location, remote, description, posted_at,
-    public_slug, countries, regions, cities, work_mode, skills, seniority, category, is_tech, requires_clearance,
+    public_slug, countries, regions, cities, metros, work_mode, skills, seniority, category, is_tech, requires_clearance,
     posting_language, employment_type, education_level, english_level, experience_years_min,
     salary_min_manual, salary_max_manual, salary_currency_manual, salary_period_manual, enrichment,
     content_hash, role_fingerprint, requirements_derived,
@@ -1202,7 +1211,7 @@ INSERT INTO jobs (
     sqlc.arg(company), sqlc.arg(company_slug), replace(sqlc.arg(company_slug), '-', ''), sqlc.arg(location), sqlc.arg(remote),
     sqlc.arg(description), sqlc.arg(posted_at),
     sqlc.arg(public_slug),
-    COALESCE(sqlc.arg(countries)::text[], '{}'), COALESCE(sqlc.arg(regions)::text[], '{}'), COALESCE(sqlc.arg(cities)::text[], '{}'),
+    COALESCE(sqlc.arg(countries)::text[], '{}'), COALESCE(sqlc.arg(regions)::text[], '{}'), COALESCE(sqlc.arg(cities)::text[], '{}'), COALESCE(sqlc.arg(metros)::text[], '{}'),
     sqlc.arg(work_mode), COALESCE(sqlc.arg(skills)::text[], '{}'),
     sqlc.arg(seniority), sqlc.arg(category), sqlc.arg(is_tech), sqlc.arg(requires_clearance),
     sqlc.arg(posting_language), sqlc.arg(employment_type), sqlc.arg(education_level), sqlc.arg(english_level), sqlc.arg(experience_years_min),
@@ -1239,6 +1248,7 @@ ON CONFLICT (source, external_id) DO UPDATE SET
     countries    = EXCLUDED.countries,
     regions      = EXCLUDED.regions,
     cities       = EXCLUDED.cities,
+    metros       = EXCLUDED.metros,
     work_mode    = EXCLUDED.work_mode,
     skills       = EXCLUDED.skills,
     seniority    = EXCLUDED.seniority,
@@ -1315,7 +1325,7 @@ RETURNING *;
 -- comparable if it were ever to matter, even though it is never indexed or clustered.
 INSERT INTO jobs (
     source, external_id, url, title, company, company_slug, company_slug_folded, location, remote, description,
-    public_slug, countries, regions, cities, work_mode, skills, seniority, category, is_tech, requires_clearance,
+    public_slug, countries, regions, cities, metros, work_mode, skills, seniority, category, is_tech, requires_clearance,
     posting_language, employment_type, education_level, english_level, experience_years_min,
     content_hash, role_fingerprint, requirements_derived,
     created_by, is_private
@@ -1324,7 +1334,7 @@ INSERT INTO jobs (
     sqlc.arg(company), sqlc.arg(company_slug), replace(sqlc.arg(company_slug), '-', ''), sqlc.arg(location), sqlc.arg(remote),
     sqlc.arg(description),
     sqlc.arg(public_slug),
-    COALESCE(sqlc.arg(countries)::text[], '{}'), COALESCE(sqlc.arg(regions)::text[], '{}'), COALESCE(sqlc.arg(cities)::text[], '{}'),
+    COALESCE(sqlc.arg(countries)::text[], '{}'), COALESCE(sqlc.arg(regions)::text[], '{}'), COALESCE(sqlc.arg(cities)::text[], '{}'), COALESCE(sqlc.arg(metros)::text[], '{}'),
     sqlc.arg(work_mode), COALESCE(sqlc.arg(skills)::text[], '{}'),
     sqlc.arg(seniority), sqlc.arg(category), sqlc.arg(is_tech), sqlc.arg(requires_clearance),
     sqlc.arg(posting_language), sqlc.arg(employment_type), sqlc.arg(education_level), sqlc.arg(english_level), sqlc.arg(experience_years_min),
@@ -1377,6 +1387,7 @@ SET title        = sqlc.arg(title),
     countries    = COALESCE(sqlc.arg(countries)::text[], '{}'),
     regions      = COALESCE(sqlc.arg(regions)::text[], '{}'),
     cities       = COALESCE(sqlc.arg(cities)::text[], '{}'),
+    metros       = COALESCE(sqlc.arg(metros)::text[], '{}'),
     work_mode    = sqlc.arg(work_mode),
     skills       = COALESCE(sqlc.arg(skills)::text[], '{}'),
     seniority    = sqlc.arg(seniority),
@@ -1440,6 +1451,7 @@ SET title        = sqlc.arg(title),
     countries    = COALESCE(sqlc.arg(countries)::text[], '{}'),
     regions      = COALESCE(sqlc.arg(regions)::text[], '{}'),
     cities       = COALESCE(sqlc.arg(cities)::text[], '{}'),
+    metros       = COALESCE(sqlc.arg(metros)::text[], '{}'),
     work_mode    = sqlc.arg(work_mode),
     skills       = COALESCE(sqlc.arg(skills)::text[], '{}'),
     seniority    = sqlc.arg(seniority),
@@ -2294,6 +2306,7 @@ UPDATE jobs
 SET countries = COALESCE(sqlc.arg(countries)::text[], '{}'),
     regions   = COALESCE(sqlc.arg(regions)::text[], '{}'),
     cities    = COALESCE(sqlc.arg(cities)::text[], '{}'),
+    metros    = COALESCE(sqlc.arg(metros)::text[], '{}'),
     work_mode = sqlc.arg(work_mode),
     skills    = COALESCE(sqlc.arg(skills)::text[], '{}'),
     seniority = sqlc.arg(seniority),

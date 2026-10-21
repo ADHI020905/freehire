@@ -5879,7 +5879,9 @@ type Querier interface {
 	// (unset/unknown) still matches its own kind — a plain = would push every sourceless/unknown job
 	// off the cheap path forever. Whether the key still covers every written column is enforced by
 	// TestUpsertParams_CheapWriteMatchKeyCoversEveryColumnItWrites (internal/job); add a derived
-	// column outside the hash and it fails there.
+	// column outside the hash and it fails there. metros is covered the way countries and regions
+	// are: Derive reads it off the location, which the hash covers, or off a caller's structured
+	// cities (in the key) and countries.
 	//
 	// A NULL stored content_hash (a legacy row predating the column) compares unequal and so takes
 	// the full path, which is right: nothing is known about what it holds.

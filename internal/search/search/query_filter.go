@@ -28,6 +28,7 @@ var StringFacets = map[string]string{
 	"domains":         "enrichment.domains",
 	"countries":       "countries",
 	"cities":          "cities",
+	"metros":          "metros",
 	"company_type":    "enrichment.company_type",
 	"company_size":    "enrichment.company_size",
 	"salary_currency": "enrichment.salary_currency",
@@ -72,7 +73,7 @@ var StringFacets = map[string]string{
 // and a non-location facet (e.g. work_mode) still ANDs with the whole group, so
 // "remote AND (Europe OR Brazil)" holds. Geographic AND is nonsensical ("in
 // Europe AND in LATAM" is empty), so the `_mode=and` override does not apply here.
-var locationFacets = map[string]bool{"regions": true, "countries": true, "cities": true}
+var locationFacets = map[string]bool{"regions": true, "countries": true, "cities": true, "metros": true}
 
 // RegionUnspecified is the reserved value of the `regions` facet that selects
 // jobs with no resolved geography (an empty regions array) rather than a real
@@ -171,7 +172,7 @@ func retiredCategory(param, attr, val string) (string, string) {
 // Meilisearch filter. Within a facet, included values are ORed by default (or
 // ANDed when `<param>_mode=and`); excluded values (`<param>_exclude=...`) become
 // NOT fragments. Facets are ANDed, except the location facets (regions/countries/
-// cities), whose includes OR into one shared group (see locationFacets). Returns
+// cities/metros), whose includes OR into one shared group (see locationFacets). Returns
 // nil when no facet is set.
 //
 // It is pure (no *fiber.Ctx), so the HTTP handler and the notification matcher
