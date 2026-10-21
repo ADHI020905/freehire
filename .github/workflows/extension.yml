@@ -64,10 +64,15 @@ jobs:
       - name: Build and zip
         run: npm run zip
 
+      # The same source as a Firefox build, plus the sources ZIP addons.mozilla.org
+      # reviews a bundled build against (wxt.config.ts `zip` says what is in it).
+      - name: Build and zip for Firefox
+        run: npm run zip:firefox
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: chrome-mv3
+          name: extension
           path: extension/.output/*.zip
           # .output is a dotted directory, and upload-artifact skips hidden
           # paths unless told otherwise.
@@ -125,7 +130,7 @@ jobs:
           # not the pinned dev key's id in wxt.config.ts — those are different ids by design.
           CHROME_WEBSTORE_EXTENSION_ID: ijfaechijopdlikalojadpojmpilplnj
         run: |
-          zip_path=$(find .output -maxdepth 1 -name '*.zip' | sort | head -n1)
+          zip_path=$(find .output -maxdepth 1 -name '*-chrome.zip')
           npx --yes chrome-webstore-upload-cli@3 upload \
             --source "$zip_path" \
             --extension-id "$CHROME_WEBSTORE_EXTENSION_ID" \
@@ -137,3 +142,26 @@ jobs:
             --client-id "$CHROME_WEBSTORE_CLIENT_ID" \
             --client-secret "$CHROME_WEBSTORE_CLIENT_SECRET" \
             --refresh-token "$CHROME_WEBSTORE_REFRESH_TOKEN"
+
+      # Submits the Firefox build to addons.mozilla.org as a new version of the
+      # listed add-on, with the sources ZIP its review requires. Same gates as the
+      # Chrome step: a new version, and the secrets existing at all — so it is a
+      # no-op until AMO_JWT_ISSUER / AMO_JWT_SECRET (addons.mozilla.org → Developer
+      # Hub → Manage API Keys) are repo secrets. It only ADDS versions: the first
+      # listing is created by hand, see extension/docs/firefox-addons.md.
+      # `--approval-timeout 0` returns once the upload is accepted; review takes
+      # days and a CI job must not wait on it.
+      - name: Publish to addons.mozilla.org
+        if: github.event_name == 'push' && steps.gh_release.outputs.created == 'true' && env.AMO_JWT_ISSUER != ''
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          sources_path=$(find .output -maxdepth 1 -name '*-sources.zip')
+          npx --yes web-ext@8 sign \
+            --source-dir .output/firefox-mv2 \
+            --channel listed \
+            --upload-source-code "$sources_path" \
+            --approval-timeout 0 \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET"

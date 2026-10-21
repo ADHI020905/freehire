@@ -10,7 +10,7 @@ when one changes, change the other.
    rejects a re-upload of a version it already has.
 2. **Get the package** — either `cd extension && npm run zip`
    (`.output/freehire-extension-<version>-chrome.zip`) or download the
-   `chrome-mv3` artifact from the `build` workflow.
+   `extension` artifact from the `build` workflow.
 3. **Upload** to the [Developer Dashboard](https://chrome.google.com/webstore/devconsole)
    (one-time $5 registration + a verified contact email).
 4. Fill the listing, privacy practices, and permission justifications below.

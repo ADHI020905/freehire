@@ -214,7 +214,8 @@ panel.
 ### Firefox
 
 `npm run dev:firefox` / `npm run build:firefox` (-> `.output/firefox-mv2`) /
-`npm run zip:firefox` (the addons.mozilla.org artifact). Load it at
+`npm run zip:firefox` (the add-on plus the sources ZIP addons.mozilla.org reviews;
+publishing is in [docs/firefox-addons.md](docs/firefox-addons.md)). Load it at
 `about:debugging` → This Firefox → **Load Temporary Add-on** → the build's
 `manifest.json`. The `sidepanel` entrypoint becomes Firefox's `sidebar_action`,
 and the toolbar click toggles it (`background.ts`).

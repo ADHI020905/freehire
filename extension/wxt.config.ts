@@ -30,6 +30,18 @@ const DEV_KEY =
 
 export default defineConfig({
   modules: ['@wxt-dev/module-svelte'],
+  // The sources ZIP addons.mozilla.org reviews a bundled build against. It is
+  // rooted at the repository because the bundle compiles in ../design-system
+  // (a `file:` dependency), and names .env.production explicitly: hidden files
+  // are skipped by default, and without it a reviewer's build points at localhost.
+  zip: {
+    sourcesRoot: '..',
+    includeSources: [
+      'extension/**',
+      'extension/.env.production',
+      'design-system/**',
+    ],
+  },
   vite: () => ({ plugins: [tailwindcss()] }),
   manifest: ({ browser }) =>
     ({
