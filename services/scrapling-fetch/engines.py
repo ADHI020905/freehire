@@ -21,9 +21,10 @@ _FRAMING = frozenset({"content-encoding", "content-length", "transfer-encoding"}
 # IP, and the next session opens on another one.
 _REFUSED = frozenset({403, 429})
 
-# Attempts a refused http request gets through the rotating proxy. Each leaves from another
-# exit IP, so a 403/429 is usually one flagged address; measured 2026-10-20, 1 of 11 Wellfound
-# requests through Webshare's rotating gateway got a 403 the next IP did not.
+# Attempts an http request gets through the rotating proxy when it is refused (403/429) or the
+# transport fails. Each leaves from another exit IP, so either is usually one bad address:
+# measured 2026-10-20, 1 of 11 Wellfound requests got a 403 the next IP did not, and kontur
+# timed out at 40 s on one exit.
 ROTATING_ATTEMPTS = 3
 
 HTTP_TIMEOUT_SECONDS = 40
@@ -92,8 +93,9 @@ def _scrapling_send(method: str):
 
 def http_fetcher(proxies: ProxyConfig, send=_scrapling_send):
     """One request through curl_cffi with Chrome's TLS fingerprint, through the rotating proxy
-    when asked. A refusal through that proxy is retried, since the retry leaves from another
-    IP; any other outcome is returned as is — the Go client does not retry over this tier."""
+    when asked. A refusal or a transport failure through that proxy is retried, since the retry
+    leaves from another IP; any other outcome is returned as is — the Go client does not retry
+    over this tier."""
 
     async def fetch(req: FetchRequest) -> FetchResult:
         kwargs = dict(
@@ -107,14 +109,16 @@ def http_fetcher(proxies: ProxyConfig, send=_scrapling_send):
         if req.body and req.method in ("POST", "PUT"):
             kwargs["data"] = req.body
         attempts = ROTATING_ATTEMPTS if req.proxy and proxies.rotating else 1
-        for _ in range(attempts):
+        for attempt in range(1, attempts + 1):
             try:
                 result = _result(await send(req.method)(req.url, **kwargs))
             except Exception as e:
+                if attempt < attempts:
+                    continue  # a slow or dead exit IP; the next attempt leaves from another
                 raise FetchError(f"http fetch {req.url}: {type(e).__name__}: {e}") from e
-            if result.status not in _REFUSED:
-                break
-        return result
+            if result.status not in _REFUSED or attempt == attempts:
+                return result
+        raise AssertionError("unreachable: the last attempt always returns or raises")
 
     return fetch
 

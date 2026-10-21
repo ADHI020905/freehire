@@ -195,3 +195,37 @@ def test_a_direct_refusal_is_not_retried():
     fetch = http_fetcher(ProxyConfig(rotating="http://rot", sticky=[]), send=lambda method: send_fn)
     r = asyncio.run(fetch(FetchRequest(url="https://ex.com", proxy=False)))
     assert r.status == 403 and len(calls) == 1
+
+
+def test_a_transport_error_through_the_rotating_proxy_is_retried_on_a_new_ip():
+    # A slow or dead exit IP times out; the next attempt leaves from another one.
+    outcomes = [TimeoutError("curl: (28) Operation timed out"), "ok"]
+    calls = []
+
+    async def send_fn(url, **kw):
+        calls.append(1)
+        o = outcomes.pop(0)
+        if isinstance(o, Exception):
+            raise o
+
+        class P:
+            status, url, body, headers = 200, "https://ex.com", b"x", {}
+
+        return P()
+
+    fetch = http_fetcher(ProxyConfig(rotating="http://rot", sticky=[]), send=lambda method: send_fn)
+    r = asyncio.run(fetch(FetchRequest(url="https://ex.com", proxy=True)))
+    assert r.status == 200 and len(calls) == 2
+
+
+def test_a_transport_error_on_every_attempt_is_a_fetch_error():
+    import pytest
+
+    from app import FetchError
+
+    async def send_fn(url, **kw):
+        raise TimeoutError("timed out")
+
+    fetch = http_fetcher(ProxyConfig(rotating="http://rot", sticky=[]), send=lambda method: send_fn)
+    with pytest.raises(FetchError):
+        asyncio.run(fetch(FetchRequest(url="https://ex.com", proxy=True)))
