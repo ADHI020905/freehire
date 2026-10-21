@@ -560,10 +560,13 @@ func buildSearchRequest(p SearchParams) *meilisearch.SearchRequest {
 }
 
 // semanticRatio is how much of a hybrid query's ranking the description vectors decide
-// (0 = keyword only, 1 = vector only). An even blend keeps an exact title match on top
-// while letting a posting that says the same thing in other words reach the page.
-// Revisited against sampled agent queries in agent-semantic-search's rollout.
-const semanticRatio = 0.5
+// (0 = keyword only, 1 = vector only). Sampled against 19 agent-shaped queries on
+// 2026-10-21: at 0.5 a query with ANY keyword match got zero vector hits, so the flag
+// changed nothing whenever a word matched ("help kids learn to read" stayed lifeguards).
+// At 0.7, with the SEMANTIC_SCORE_THRESHOLD floor, a query worded by meaning reaches the
+// postings that say it in other words, and a query outside the embedded (is_tech-only)
+// catalogue still falls back to its keyword hits instead of distant vector matches.
+const semanticRatio = 0.7
 
 // Search runs a query against the jobs (facet/keyword) index and decodes the hits.
 func (c *Client) Search(ctx context.Context, p SearchParams) (SearchResult, error) {

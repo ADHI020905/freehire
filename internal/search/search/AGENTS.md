@@ -275,6 +275,18 @@ it, and only when the agent sends `semantic: true`
   so without a floor the page fills with distant matches and the estimated total approaches
   the embedded catalogue (`TestIntegration_HybridSearchFindsByMeaning` fails without it). The
   value is `SEMANTIC_SCORE_THRESHOLD`, set from sampled agent queries, not a constant here.
+  Prod runs `0.925` (2026-10-21, at `semanticRatio` 0.7): e5 scores sit in a narrow band, junk
+  at 0.911–0.927 and relevant hits from 0.930. The junk is structural — only `is_tech` jobs
+  carry `desc` vectors, so a non-tech query's nearest vectors are unrelated tech postings.
+  0.93 was cleaner but cut a Russian Python query to 5 results. Re-sample after changing
+  either number or the embedding model.
+- **The query embed needs a TEI nobody else is using.** With the shared TEI that `cmd/embed`
+  drains its backlog through, the 400 ms query deadline was missed by every request — the
+  query queued 15–20 s behind bulk batches — so every `semantic: true` answered
+  `unavailable` while the index itself was fine. Prod points the API's `EMBED_URL` at a
+  dedicated loopback TEI pinned to the bulk TEI's image digest (freehire-ops:
+  `provision/fsn/freehire-query-embed-tei/README.md`). If `semantic` reports `unavailable`,
+  look at the query TEI before the index.
 - **Rollout order is the skill embedder's**: deploy → settings → full rebuild → set
   `EMBED_URL` on the API server → verify. Until `EMBED_URL` is set the flag answers
   `unavailable`, which is also the rollback.
