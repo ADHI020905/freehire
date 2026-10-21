@@ -79,6 +79,7 @@ describe('collectionPaths', () => {
     const paths = collectionPaths();
     expect(paths).toContain('/collections/yc'); // company collection
     expect(paths).toContain('/collections/remote-worldwide'); // filter collection
+    expect(paths).toContain('/collections/group/languages'); // hub section
     expect(new Set(paths).size).toBe(paths.length);
   });
 });

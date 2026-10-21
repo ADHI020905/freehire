@@ -12,7 +12,7 @@
 // Pure data only, no `@lucide/svelte` import: this is imported by
 // seeAlsoMark.ts, which vitest runs in plain Node — a Lucide icon component
 // is a `.svelte` file the Svelte compiler must transform, so the icon
-// components themselves are looked up in JobSeeAlso.svelte instead, keyed by
+// components themselves are looked up in CollectionMark.svelte instead, keyed by
 // the same FamilyIconName.
 export type FamilyIconName = 'tech' | 'role' | 'seniority' | 'remote' | 'company';
 

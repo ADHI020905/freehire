@@ -4,6 +4,7 @@
 // company chunks). Each chunk is one keyset page fetched by cursor.
 
 import { collectionSlugs } from './collections';
+import { COLLECTION_SECTIONS } from './collectionSections';
 import { contributorGroups } from './contributors';
 import type { ContributorsSnapshot } from './contributors';
 import contributorsSnapshot from './data/contributors.json';
@@ -167,11 +168,15 @@ export const STATIC_PATHS = [
   '/roles',
 ];
 
-/** The curated collection landing pages (`/collections/:slug`), one per collection.
+/** The curated collection landing pages (`/collections/:slug`), one per collection,
+ *  plus the hub section pages (`/collections/group/:slug`).
  *  A small, fixed set, so they ride in the static-pages sub-sitemap alongside
  *  STATIC_PATHS rather than needing their own chunked file. */
 export function collectionPaths(): string[] {
-  return collectionSlugs().map((slug) => `/collections/${slug}`);
+  return [
+    ...collectionSlugs().map((slug) => `/collections/${slug}`),
+    ...COLLECTION_SECTIONS.map((section) => `/collections/group/${section.slug}`),
+  ];
 }
 
 /** The per-contributor profile pages (`/contributors/:login`), one per person the

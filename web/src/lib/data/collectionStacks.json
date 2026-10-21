@@ -1,0 +1,681 @@
+{
+  "a16z-portfolio": {
+    "companies": [
+      "Anduril Industries",
+      "Shield AI",
+      "Applied Intuition",
+      "Socket.dev"
+    ]
+  },
+  "a16z-speedrun": {
+    "companies": [
+      "Aghanim",
+      "Sunflower",
+      "Sentra",
+      "emanate"
+    ]
+  },
+  "adtech": {
+    "companies": [
+      "Reddit",
+      "Smartly.io",
+      "Discord",
+      "WITHIN"
+    ]
+  },
+  "agencies": {
+    "companies": [
+      "WITHIN",
+      "David AI",
+      "Current",
+      "Orchestra"
+    ]
+  },
+  "ai": {
+    "companies": [
+      "Anthropic",
+      "OpenAI",
+      "Mistral AI",
+      "Harvey"
+    ]
+  },
+  "ai-agent-engineer": {
+    "companies": [
+      "Microsoft",
+      "Thermo Fisher Scientific",
+      "Flexport",
+      "Airbnb"
+    ]
+  },
+  "ai-engineering": {
+    "companies": [
+      "Anthropic",
+      "Scale AI",
+      "Celonis",
+      "Globalization Partners"
+    ]
+  },
+  "ai-infra-engineer": {
+    "companies": [
+      "Salesforce",
+      "Yuma AI",
+      "Preply",
+      "Cambridge Mobile Telematics"
+    ]
+  },
+  "ai-native": {
+    "companies": [
+      "Deepgram",
+      "Cohere",
+      "LangChain",
+      "Fireworks AI"
+    ]
+  },
+  "architecture": {
+    "companies": [
+      "Databricks",
+      "Workato",
+      "Vercel",
+      "Oracle"
+    ]
+  },
+  "backend": {
+    "companies": [
+      "Cresta",
+      "c6bank",
+      "GitLab",
+      "HappyRobot"
+    ]
+  },
+  "bigtech": {
+    "companies": [
+      "Amazon",
+      "Microsoft",
+      "Apple",
+      "NVIDIA"
+    ]
+  },
+  "climate-tech": {
+    "companies": [
+      "Redwood Materials",
+      "Stoke Space ",
+      "Anduril Industries",
+      "Relativity Space"
+    ]
+  },
+  "contract": {
+    "companies": [
+      "Abnormal Security",
+      "Redwood Materials",
+      "Anduril Industries",
+      "Anthropic"
+    ]
+  },
+  "crypto": {
+    "companies": [
+      "Coinbase",
+      "fireblocks",
+      "bitpanda",
+      "kraken"
+    ]
+  },
+  "cybersecurity": {
+    "companies": [
+      "Abnormal Security",
+      "Pentera",
+      "Anthropic",
+      "Anduril Industries"
+    ]
+  },
+  "data-engineering": {
+    "companies": [
+      "Warner Bros. Discovery",
+      "Discord",
+      "Databricks",
+      "justworks"
+    ]
+  },
+  "data-science": {
+    "companies": [
+      "Reddit",
+      "Formation Bio",
+      "Discord",
+      "Attentive"
+    ]
+  },
+  "devops": {
+    "companies": [
+      "Apple",
+      "Cresta",
+      "Relativity Space",
+      "Incode Technologies"
+    ]
+  },
+  "devtools": {
+    "companies": [
+      "Vercel",
+      "Glean",
+      "GitLab",
+      "Aviatrix"
+    ]
+  },
+  "eastern-roots": {
+    "companies": [
+      "EPAM Systems",
+      "Luxoft",
+      "Gopuff",
+      "GitLab"
+    ]
+  },
+  "ecommerce": {
+    "companies": [
+      "Coupang",
+      "Foot Locker",
+      "ShipBob, Inc.",
+      "RADAR"
+    ]
+  },
+  "edtech": {
+    "companies": [
+      "Wonderschool",
+      "Cresta",
+      "Ablefy",
+      "multiverse"
+    ]
+  },
+  "embedded": {
+    "companies": [
+      "Zipline ",
+      "Anduril Industries",
+      "Verkada",
+      "Microsoft"
+    ]
+  },
+  "engineering-manager": {
+    "companies": [
+      "Smartly.io",
+      "Vercel",
+      "Discord",
+      "Workato"
+    ]
+  },
+  "european": {
+    "companies": [
+      "Scalable Capital",
+      "Wise",
+      "plexus",
+      "clark"
+    ]
+  },
+  "fellowship": {
+    "companies": [
+      "Bristol Myers Squibb",
+      "Northrop Grumman",
+      "weave",
+      "Scale AI"
+    ]
+  },
+  "fintech": {
+    "companies": [
+      "DriveWealth",
+      "airwallex",
+      "Vercel",
+      "Block"
+    ]
+  },
+  "fortune500": {
+    "companies": [
+      "Dollar Tree",
+      "Northrop Grumman",
+      "Advance Auto Parts",
+      "Marriott International"
+    ]
+  },
+  "founding-engineer": {
+    "companies": [
+      "Glean",
+      "Oklo",
+      "KoBold Metals",
+      "Zendar"
+    ]
+  },
+  "frontend": {
+    "companies": [
+      "Toss",
+      "Coinbase",
+      "Anduril Industries",
+      "Glean"
+    ]
+  },
+  "fullstack": {
+    "companies": [
+      "Discord",
+      "Telemedi",
+      "Stoke Space ",
+      "Glean"
+    ]
+  },
+  "fullstack-ai-engineer": {
+    "companies": [
+      "SpaceX",
+      "Humana",
+      "Relativity Space",
+      "Doctolib"
+    ]
+  },
+  "gaming": {
+    "companies": [
+      "Discord",
+      "Scopely",
+      "voodoo",
+      "Epic Games"
+    ]
+  },
+  "government": {
+    "companies": [
+      "Rivet",
+      "Bristol Myers Squibb",
+      "Marriott International",
+      "Community Health Systems"
+    ]
+  },
+  "govtech": {
+    "companies": [
+      "Anduril Industries",
+      "astro-mechanica",
+      "Abnormal Security",
+      "Verkada"
+    ]
+  },
+  "healthcare": {
+    "companies": [
+      "BillionToOne",
+      "limbic",
+      "Doctolib",
+      "Formation Bio"
+    ]
+  },
+  "hr-tech": {
+    "companies": [
+      "justworks",
+      "Gusto",
+      "Cresta",
+      "Globalization Partners"
+    ]
+  },
+  "indian-roots": {
+    "companies": [
+      "Tata Capital",
+      "Kotak Mahindra Bank",
+      "CSB Bank Limited",
+      "Tata Consultancy Services"
+    ]
+  },
+  "internship": {
+    "companies": [
+      "Zipline ",
+      "Cresta",
+      "Epic Games",
+      "Stage"
+    ]
+  },
+  "junior": {
+    "companies": [
+      "Picnic",
+      "WITHIN",
+      "carvana",
+      "Nextiva"
+    ]
+  },
+  "lead": {
+    "companies": [
+      "Glean",
+      "Abnormal Security",
+      "Vercel",
+      "Anduril Industries"
+    ]
+  },
+  "logistics": {
+    "companies": [
+      "Zipline ",
+      "Redwood Materials",
+      "Anduril Industries",
+      "Flexport"
+    ]
+  },
+  "machine-learning": {
+    "companies": [
+      "Glean",
+      "Cresta",
+      "Signifyd",
+      "limbic"
+    ]
+  },
+  "mag7": {
+    "companies": [
+      "Amazon",
+      "Microsoft",
+      "Apple",
+      "NVIDIA"
+    ]
+  },
+  "media": {
+    "companies": [
+      "Discord",
+      "Reddit",
+      "Vercel",
+      "Databricks"
+    ]
+  },
+  "mid-level": {
+    "companies": [
+      "ElevenLabs",
+      "Block",
+      "Reddit",
+      "Abnormal Security"
+    ]
+  },
+  "ml-platform-engineer": {
+    "companies": [
+      "Amgen",
+      "Adobe",
+      "Reddit",
+      "PhysicsX"
+    ]
+  },
+  "ml-research": {
+    "companies": [
+      "Apple",
+      "Reddit",
+      "xyz-reality",
+      "Morgan Stanley"
+    ]
+  },
+  "mobile": {
+    "companies": [
+      "Warner Bros. Discovery",
+      "Toss",
+      "Reddit",
+      "Perplexity"
+    ]
+  },
+  "mobility": {
+    "companies": [
+      "Anduril Industries",
+      "Relativity Space",
+      "Zipline ",
+      "Gigs"
+    ]
+  },
+  "network-engineering": {
+    "companies": [
+      "Nscale",
+      "Anduril Industries",
+      "SpaceX",
+      "Graphcore"
+    ]
+  },
+  "nl-recognised-sponsor": {
+    "companies": [
+      "Thermo Fisher Scientific",
+      "GE Healthcare",
+      "NXP Semiconductors",
+      "Arcadis"
+    ]
+  },
+  "outsourcing": {
+    "companies": [
+      "Rivet",
+      "Integral",
+      "able",
+      "DXC Technology"
+    ]
+  },
+  "outstaffing": {
+    "companies": [
+      "Turing",
+      "Blackbird",
+      "Axle",
+      "Integral"
+    ]
+  },
+  "part-time": {
+    "companies": [
+      "carvana",
+      "GoStudent",
+      "Tenet Healthcare",
+      "Wonderschool"
+    ]
+  },
+  "principal": {
+    "companies": [
+      "Microsoft",
+      "DriveWealth",
+      "Reddit",
+      "Coupang"
+    ]
+  },
+  "product-companies": {
+    "companies": [
+      "Abnormal Security",
+      "airwallex",
+      "Coinbase",
+      "astro-mechanica"
+    ]
+  },
+  "proptech": {
+    "companies": [
+      "QuintoAndar",
+      "xyz-reality",
+      "Relativity Space",
+      "Toss"
+    ]
+  },
+  "qa": {
+    "companies": [
+      "Anduril Industries",
+      "Stoke Space ",
+      "Zipline ",
+      "Redwood Materials"
+    ]
+  },
+  "rag-engineer": {
+    "companies": [
+      "Databricks",
+      "Morgan Stanley",
+      "Eli Lilly",
+      "HP"
+    ]
+  },
+  "relocation": {
+    "companies": [
+      "Discord",
+      "Anthropic",
+      "Anduril Industries",
+      "Pentera"
+    ]
+  },
+  "remote-apac": {
+    "flags": [
+      "in",
+      "ph",
+      "au",
+      "sg"
+    ]
+  },
+  "remote-europe": {
+    "flags": [
+      "de",
+      "pl",
+      "es",
+      "ua"
+    ]
+  },
+  "remote-latam": {
+    "flags": [
+      "br",
+      "mx",
+      "co",
+      "ar"
+    ]
+  },
+  "remote-worldwide": {
+    "flags": [
+      "us",
+      "ca",
+      "ua",
+      "gb"
+    ]
+  },
+  "saas": {
+    "companies": [
+      "Vercel",
+      "Abnormal Security",
+      "airwallex"
+    ]
+  },
+  "security": {
+    "companies": [
+      "Vercel",
+      "Anduril Industries",
+      "Glean",
+      "Abnormal Security"
+    ]
+  },
+  "senior": {
+    "companies": [
+      "Abnormal Security",
+      "Vercel",
+      "astro-mechanica",
+      "Apple"
+    ]
+  },
+  "senior-backend": {
+    "companies": [
+      "Cresta",
+      "GitLab",
+      "Databricks",
+      "Abnormal Security"
+    ]
+  },
+  "senior-data-engineering": {
+    "companies": [
+      "Discord",
+      "justworks",
+      "Redwood Materials",
+      "Smartly.io"
+    ]
+  },
+  "senior-devops": {
+    "companies": [
+      "Apple",
+      "Graphcore",
+      "HackerRank",
+      "Cresta"
+    ]
+  },
+  "senior-frontend": {
+    "companies": [
+      "Vinted ",
+      "Coinbase",
+      "polarsteps",
+      "Cresta"
+    ]
+  },
+  "senior-fullstack": {
+    "companies": [
+      "Discord",
+      "Stoke Space ",
+      "Smartly.io",
+      "Telemedi"
+    ]
+  },
+  "software-engineer": {
+    "companies": [
+      "Vercel",
+      "Abnormal Security",
+      "Coinbase",
+      "BillionToOne"
+    ]
+  },
+  "sre": {
+    "companies": [
+      "Grafana Labs",
+      "GitLab",
+      "Reddit",
+      "Oracle"
+    ]
+  },
+  "staff": {
+    "companies": [
+      "Redwood Materials",
+      "Discord",
+      "Coinbase",
+      "Archer"
+    ]
+  },
+  "staff-engineer": {
+    "companies": [
+      "Gusto",
+      "Discord",
+      "Coinbase",
+      "Archer"
+    ]
+  },
+  "startups": {
+    "companies": [
+      "Glean",
+      "Verkada",
+      "HappyRobot",
+      "astro-mechanica"
+    ]
+  },
+  "techstars": {
+    "companies": [
+      "wynd",
+      "remitly",
+      "Zipline ",
+      "Harvey"
+    ]
+  },
+  "travel": {
+    "companies": [
+      "GetYourGuide",
+      "Airbnb",
+      "Nuitée",
+      "polarsteps"
+    ]
+  },
+  "uk-skilled-worker-sponsor": {
+    "companies": [
+      "EPAM Systems",
+      "TurnerTownsend",
+      "fourseasons",
+      "SopraSteria1"
+    ]
+  },
+  "unicorn": {
+    "companies": [
+      "SpaceX",
+      "Scalable Capital",
+      "Databricks",
+      "Stripe"
+    ]
+  },
+  "us-h1b-sponsor": {
+    "companies": [
+      "GameStop",
+      "Chico's FAS",
+      "TurnerTownsend",
+      "Hyatt"
+    ]
+  },
+  "yc": {
+    "companies": [
+      "benchmark",
+      "Meta",
+      "pennant",
+      "Stripe"
+    ]
+  }
+}

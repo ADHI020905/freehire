@@ -24,6 +24,8 @@ export function resolveSeeAlsoMark(
     return familyMark('tech');
   }
   if (params.countries) return { kind: 'flag', countryCode: params.countries };
+  if (params.ai_archetype || params.employment_type || params.relocation) return familyMark('role');
+  if (params.domains || params.company_type) return familyMark('company');
   if (params.seniority) return familyMark('seniority');
   if (params.category) return familyMark('role');
   if (params.work_mode) return familyMark('remote');
