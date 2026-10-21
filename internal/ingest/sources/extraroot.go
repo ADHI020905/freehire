@@ -20,14 +20,16 @@ import (
 // Alfa-Bank's careers API moved to a certificate this CA issued, which no standard trust
 // store carries, so the crawl failed at the TLS handshake before any request went out —
 // 2,416 vacancies unreachable since 2026-07-29. ptsecurity.com and hr.tochka.com serve
-// certificates chaining to the same root (verified from hydra on 2026-10-14).
+// certificates chaining to the same root (verified from hydra on 2026-10-14), and so does
+// www.tbank.ru (verified from the crawl host on 2026-10-21: its served root matched this
+// file's SHA-256 and the copy published on gu-st.ru).
 //
 //go:embed russian_trusted_root_ca.pem
 var russianTrustedRootCA []byte
 
 // NewRussianTrustedRootClient builds an ingest client that trusts the system roots PLUS
 // the certificate above, and is handed only to the adapters whose hosts serve a certificate
-// this CA issued (alfabank, ptsecurity and tochka, in All).
+// this CA issued (alfabank, ptsecurity, tochka and tbank, in All).
 //
 // It ADDS a root; it does not skip verification. InsecureSkipVerify would accept any
 // certificate from any host this client touches, which turns a narrow "we accept this
@@ -37,7 +39,7 @@ var russianTrustedRootCA []byte
 //
 // The scope is the load-bearing part. A state CA can issue a certificate for any name, so
 // trusting one everywhere would let its holder impersonate every source we crawl. One
-// client, three adapters, three hosts' worth of exposure — and the crawl sends no
+// client, four adapters, four hosts' worth of exposure — and the crawl sends no
 // credentials and reads only public listings, so the worst case is a forged job feed
 // rather than a leak.
 //

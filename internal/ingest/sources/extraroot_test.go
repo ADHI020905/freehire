@@ -74,3 +74,21 @@ func poolOf(t *testing.T, c *http.Client) *x509.CertPool {
 	}
 	return tr.TLSClientConfig.RootCAs
 }
+
+// T-Bank moved www.tbank.ru to a certificate chaining to the Russian Trusted Root CA, and the
+// crawl failed every run at the handshake ("x509: certificate signed by unknown authority",
+// since 2026-09-23) until it was handed the client that trusts that root.
+func TestTBankUsesTheRussianTrustedRootClient(t *testing.T) {
+	src, ok := All(NewClient())["tbank"].(tbank)
+	if !ok {
+		t.Fatalf("tbank is %T", All(NewClient())["tbank"])
+	}
+	c, ok := src.http.(*Client)
+	if !ok {
+		t.Fatalf("tbank's client is %T, want *Client", src.http)
+	}
+	tr, ok := c.httpClient.Transport.(*http.Transport)
+	if !ok || tr.TLSClientConfig == nil || tr.TLSClientConfig.RootCAs == nil {
+		t.Fatal("tbank's client carries no extra root pool; it must be NewRussianTrustedRootClient")
+	}
+}
