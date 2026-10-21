@@ -69,7 +69,7 @@ func (i *Interpreter) Interpret(ctx context.Context, req Request) (Result, error
 	if err != nil {
 		return Result{}, err
 	}
-	raw, err := i.client.GenerateJSON(ctx, systemPrompt, user, llm.WithSchema(schemaName, schema))
+	raw, err := i.client.GenerateJSON(ctx, systemPrompt, user, llm.WithSchema(schemaName, schema), llm.WithReasoning(llm.ReasoningNone))
 	if err != nil {
 		return Result{}, fmt.Errorf("searchintent: generate: %w", err)
 	}

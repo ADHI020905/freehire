@@ -139,3 +139,34 @@ func TestSchemaConstrainsClosedVocabularies(t *testing.T) {
 		}
 	}
 }
+
+// Interpretation is a translation into a closed vocabulary, not a judgement, so it must
+// ask the model not to deliberate. Measured on production 2026-10-20 against the gateway's
+// `mid` alias: the same request took 66-86s with reasoning left on (3.5-4.5k completion
+// tokens behind a ~1k-character answer) and 10-17s with it off, proposing the same facets —
+// and the slow tail is what crossed the 90s deadline and answered a visitor with a 500.
+func TestInterpretAsksTheModelNotToDeliberate(t *testing.T) {
+	var effort json.RawMessage
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]json.RawMessage
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		effort = body["reasoning_effort"]
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"id":"1","object":"chat.completion","choices":`+
+			`[{"index":0,"message":{"role":"assistant","content":"{\"summary\":\"Go roles.\"}"},"finish_reason":"stop"}]}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	client, err := llm.New(srv.URL, "sk-test", "test-model")
+	if err != nil {
+		t.Fatalf("llm.New: %v", err)
+	}
+	if _, err := NewInterpreter(client).Interpret(context.Background(), Request{Text: "go roles"}); err != nil {
+		t.Fatalf("Interpret: %v", err)
+	}
+	if string(effort) != `"none"` {
+		t.Fatalf("reasoning_effort = %s, want \"none\"", effort)
+	}
+}
