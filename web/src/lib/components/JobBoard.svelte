@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { goto, pushState } from '$app/navigation';
+  import { untrack } from 'svelte';
+  import { goto, pushState, replaceState } from '$app/navigation';
   import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import { Search, X as XIcon } from '@lucide/svelte';
@@ -12,6 +13,7 @@
     BOARD_COLUMNS,
     columnOf,
     matchesQuery,
+    matchesStage,
     needsAttention,
     type BoardColumnId,
     type BoardItem,
@@ -46,9 +48,14 @@
   let openedInitial = false;
 
   const s = $derived(t(messages, locale()));
+  // The stage groups' labels are the generated vocabulary, which stays English for now
+  // (see JobBoard.messages.ts); the inbox is ours, and reads as the "No stage" option
+  // every stage picker already offers.
+  const columnLabel = (col: { id: BoardColumnId; label: string }) =>
+    col.id === 'unstaged' ? s.noStage : col.label;
 
   function emptyColumns(): Record<BoardColumnId, BoardItem[]> {
-    return { preparing: [], applied: [], interview: [], offer: [], closed: [] };
+    return { unstaged: [], preparing: [], applied: [], interview: [], offer: [], closed: [] };
   }
 
   // Per-column arrays are the source of truth once loaded; svelte-dnd-action
@@ -61,6 +68,14 @@
   // Drawer state. A Closed drop opens the drawer requiring an outcome choice.
   let openItem = $state.raw<BoardItem | null>(null);
   let pendingOutcome = $state(false);
+  // Whether the open drawer has its own history entry (pushed by openDrawer). Only then
+  // does Back close it, and only then does closing it go back rather than forward. A
+  // drawer opened by a Closed drop has no entry, and a deep-linked one IS the entry the
+  // visitor arrived on — Back from either leaves the page, as it should.
+  let drawerInHistory = false;
+  // Set while the drawer is the one a deep link (/my/tracking/[id]) opened, so closing
+  // it can swap that URL for the board's own instead of leaving it in the address bar.
+  let onDeepLink = false;
   // The follow-up dialog is its own overlay, not a drawer tab: it is reached from
   // the card's silence badge and closes back to the board.
   let followUpItem = $state.raw<BoardItem | null>(null);
@@ -71,14 +86,14 @@
   let sessionError = $state<string | null>(null);
 
   // Lay the fetched rows out into the columns and open the deep-linked drawer once.
-  // The 'board' filter returns saved ∪ applied ∪ stage, and a saved-only row now lands
-  // in Preparing (see columnOf) rather than being dropped here — saving a job is taking
-  // it on, so the board is where it belongs.
+  // The 'board' filter returns saved ∪ applied ∪ stage, and a saved-only row lands in
+  // the no-stage inbox (see columnOf) rather than being dropped here — saving a job is
+  // taking it on, so the board is where it belongs.
   //
   // Those rows always counted toward the 500 cap; showing them makes an existing
   // consequence visible rather than creating it. A user with hundreds of bookmarks can
   // push older active applications outside the fetched window, and now sees a wide
-  // Preparing column while it happens. Still acceptable at this scale; the fix if it
+  // inbox column while it happens. Still acceptable at this scale; the fix if it
   // bites is the same one as before — a server-side filter that pages the board's
   // columns separately, so a long backlog cannot crowd out the live applications.
   function build(rows: MyJob[]) {
@@ -105,6 +120,7 @@
       if (found) {
         openItem = found;
         pendingOutcome = false;
+        onDeepLink = true;
       }
     }
   }
@@ -130,40 +146,49 @@
     if (!preloaded && isAuthenticated()) void load();
   });
 
-  // Search + the "needs attention" toggle, mirrored into `?q=`/`?attention=1` so a
-  // shared or reloaded link shows the same rows. One UrlSyncedState over both
-  // fields — not two separate ones — because each instance's write replaces the
-  // WHOLE query string with its own serialization; two independent states on the
-  // same page would each erase the other's param on every change. It writes the
+  // Search, the "needs attention" toggle and the stage filter, mirrored into
+  // `?q=`/`?attention=1`/`?stage=` so a shared or reloaded link shows the same rows.
+  // One UrlSyncedState over all three — not separate ones — because each instance's
+  // write replaces the WHOLE query string with its own serialization; independent
+  // states on the same page would each erase the others' params on every change. It writes the
   // URL synchronously on every keystroke/click (the structural fix for the
   // dropped-character race) and seeds from location.search rather than page.url,
   // which lags after a shallow-routing back/forward. Filtering is local and
   // instant, so there is nothing to debounce — setNow writes and applies
   // together, and the view reads `value`.
-  const filters = new UrlSyncedState<{ q: string; attention: boolean }>(page.url.searchParams, {
-    parse: (p) => ({ q: p.get('q') ?? '', attention: p.get('attention') === '1' }),
-    serialize: (v) =>
-      new URLSearchParams({
-        ...(v.q ? { q: v.q } : {}),
-        ...(v.attention ? { attention: '1' } : {}),
+  const filters = new UrlSyncedState<{ q: string; attention: boolean; stage: string }>(
+    page.url.searchParams,
+    {
+      parse: (p) => ({
+        q: p.get('q') ?? '',
+        attention: p.get('attention') === '1',
+        stage: p.get('stage') ?? '',
       }),
-  });
+      serialize: (v) =>
+        new URLSearchParams({
+          ...(v.q ? { q: v.q } : {}),
+          ...(v.attention ? { attention: '1' } : {}),
+          ...(v.stage ? { stage: v.stage } : {}),
+        }),
+    },
+  );
   syncOnNavigation(filters);
   const query = $derived(filters.value.q);
   const attentionOnly = $derived(filters.value.attention);
+  // The stage filter is the list's: on the board the columns already ARE that filter,
+  // so it is neither offered nor applied there — a `?stage=` carried over from the
+  // list must not quietly empty five of the six columns.
+  const stageFilter = $derived(view === 'list' ? filters.value.stage : '');
 
   const searching = $derived(query.trim().length > 0);
-  const filtering = $derived(searching || attentionOnly);
-  const matchesFilters = (i: BoardItem) => matchesQuery(i, query) && (!attentionOnly || needsAttention(i));
+  const filtering = $derived(searching || attentionOnly || stageFilter !== '');
+  const matchesFilters = (i: BoardItem) =>
+    matchesQuery(i, query) && (!attentionOnly || needsAttention(i)) && matchesStage(i, stageFilter);
   const shown = $derived<Record<BoardColumnId, BoardItem[]>>(
     filtering
-      ? {
-          preparing: columns.preparing.filter(matchesFilters),
-          applied: columns.applied.filter(matchesFilters),
-          interview: columns.interview.filter(matchesFilters),
-          offer: columns.offer.filter(matchesFilters),
-          closed: columns.closed.filter(matchesFilters),
-        }
+      ? (Object.fromEntries(
+          BOARD_COLUMNS.map((c) => [c.id, columns[c.id].filter(matchesFilters)]),
+        ) as Record<BoardColumnId, BoardItem[]>)
       : columns,
   );
 
@@ -197,6 +222,12 @@
   async function persistMove(item: BoardItem, to: BoardColumnId) {
     try {
       switch (to) {
+        case 'unstaged':
+          await clearStage(item);
+          // A row with no saved mark has nothing to keep it on the board once its stage
+          // is gone; reload rather than leave a card the next load would not show.
+          if (!item.saved_at) await load();
+          break;
         case 'preparing':
           item.stage = 'preparing';
           await api.trackApplication(item.id, { stage: 'preparing' });
@@ -254,10 +285,10 @@
   async function applyStage(item: BoardItem, stage: string) {
     const prevCol = cardCol[item.id];
     item.stage = stage || null;
-    // "No stage" clears the pipeline, not the job. A SAVED job then falls back to
-    // Preparing (columnOf), which is where the board says a job you have taken on but
-    // not applied to lives — so this reads as moving the card back to the start rather
-    // than as deleting it. Only a job that was never saved leaves the board.
+    // "No stage" clears the pipeline, not the job. A SAVED job then falls back to the
+    // no-stage inbox (columnOf), where the board keeps a job you have taken on but not
+    // started — so this reads as moving the card back to the start rather than as
+    // deleting it. Only a job that was never saved leaves the board.
     if (!stage) item.applied_at = null;
     const nextCol = columnOf(item);
     if (nextCol === null) {
@@ -267,7 +298,7 @@
         columns[prevCol] = columns[prevCol].filter((i) => i.id !== item.id);
         Reflect.deleteProperty(cardCol, item.id);
       }
-      openItem = null;
+      closeDrawer();
     } else if (prevCol && nextCol !== prevCol) {
       columns[prevCol] = columns[prevCol].filter((i) => i.id !== item.id);
       columns[nextCol] = [item, ...columns[nextCol]];
@@ -279,15 +310,26 @@
       if (stage) {
         await api.trackApplication(item.id, { stage });
       } else {
-        // Keeping the bookmark only means something while there is a posting to
-        // bookmark. An application whose posting was removed has no saved mark to
-        // preserve, and saveJob is addressed by a slug it does not have.
-        if (item.job) await api.saveJob(item.job.public_slug);
-        await api.clearApplicationStage(item.id);
+        await clearStage(item);
       }
     } catch {
       await load();
     }
+  }
+
+  // The write behind "No stage", whether picked from a selector or by dropping a card
+  // into the inbox column.
+  async function clearStage(item: BoardItem) {
+    item.stage = null;
+    item.applied_at = null;
+    // Keeping the bookmark only means something while there is a posting to bookmark.
+    // An application whose posting was removed has no saved mark to preserve, and
+    // saveJob is addressed by a slug it does not have.
+    if (item.job) {
+      await api.saveJob(item.job.public_slug);
+      item.saved_at ??= new Date().toISOString();
+    }
+    await api.clearApplicationStage(item.id);
   }
 
   async function saveNotes(notes: string) {
@@ -308,7 +350,7 @@
       columns[col] = columns[col].filter((i) => i.id !== item.id);
       Reflect.deleteProperty(cardCol, item.id);
     }
-    openItem = null;
+    closeDrawer();
     try {
       await api.untrackApplication(item.id);
     } catch {
@@ -316,15 +358,55 @@
     }
   }
 
-  function closeDrawer() {
+  // Close the drawer without touching the URL — Back has already moved it.
+  function dismissDrawer() {
     if (pendingOutcome) {
       // Closing without choosing an outcome reverts the Closed drop.
       pendingOutcome = false;
       void load();
     }
     openItem = null;
-    pushState(resolve('/my/tracking'), {}); // drop the per-application slug from the URL
   }
+
+  function closeDrawer() {
+    const hadEntry = drawerInHistory;
+    drawerInHistory = false;
+    dismissDrawer();
+    if (hadEntry) {
+      // Undo openDrawer's push rather than pushing the list URL on top of it: a second
+      // entry is what left Back walking through closed drawers, and going back also
+      // returns to the exact view and filters the drawer was opened from.
+      history.back();
+    } else if (onDeepLink) {
+      // Arrived on a deep link: swap the per-application URL for the board's own.
+      onDeepLink = false;
+      // eslint-disable-next-line svelte/no-navigation-without-resolve -- the path IS resolved; only the current query string is appended
+      replaceState(resolve('/my/tracking') + location.search, {});
+    }
+  }
+
+  // Back and Forward over the drawer's history entry. SvelteKit restores page.state
+  // with the entry, so the open application is read from it rather than kept only in
+  // this component — a URL that changed while the drawer stayed put was the bug.
+  $effect(() => {
+    const id = page.state.trackingItem;
+    untrack(() => {
+      if (id) {
+        if (openItem?.id !== id) {
+          const found = Object.values(columns)
+            .flat()
+            .find((i) => i.id === id);
+          if (!found) return;
+          openItem = found;
+          pendingOutcome = false;
+        }
+        drawerInHistory = true;
+      } else if (drawerInHistory) {
+        drawerInHistory = false;
+        dismissDrawer();
+      }
+    });
+  });
 
   function openFollowUp(item: MyJob) {
     followUpItem = item as BoardItem;
@@ -368,7 +450,11 @@
     pendingOutcome = false;
     // Give the open application its own shareable URL without a full navigation.
     // Keyed by the row id, so an application whose posting was removed gets one too.
-    pushState(resolve('/my/tracking/[id]', { id: (item as BoardItem).id }), {});
+    // The query rides along so the filtered rows behind the drawer stay filtered.
+    const id = (item as BoardItem).id;
+    drawerInHistory = true;
+    // eslint-disable-next-line svelte/no-navigation-without-resolve -- the path IS resolved; only the current query string is appended
+    pushState(resolve('/my/tracking/[id]', { id }) + location.search, { trackingItem: id });
   }
 </script>
 
@@ -417,6 +503,22 @@
     >
       {s.needsAttention}
     </button>
+    {#if view === 'list'}
+      <select
+        value={stageFilter}
+        onchange={(e) => filters.setNow({ ...filters.value, stage: e.currentTarget.value })}
+        aria-label={s.stageFilterAria}
+        class={cn(
+          'shrink-0 rounded-md border bg-transparent px-2.5 py-1.5 text-sm font-medium',
+          stageFilter ? 'border-ring text-foreground' : 'border-input text-muted-foreground',
+        )}
+      >
+        <option value="">{s.allStages}</option>
+        {#each BOARD_COLUMNS as col (col.id)}
+          <option value={col.id}>{columnLabel(col)}</option>
+        {/each}
+      </select>
+    {/if}
     {#if filtering}
       <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{format(s.matchedOfTotal, { matched: String(matched), total: String(total) })}</span>
     {/if}
@@ -429,7 +531,7 @@
       {#each BOARD_COLUMNS as col (col.id)}
         <BoardColumn
           id={col.id}
-          label={col.label}
+          label={columnLabel(col)}
           items={shown[col.id]}
           dragDisabled={filtering}
           {onconsider}

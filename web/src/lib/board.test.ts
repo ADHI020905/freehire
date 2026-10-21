@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { BOARD_COLUMNS, CLOSED_OUTCOMES, boardRefFor, columnOf, matchesQuery, needsAttention } from './board';
+import {
+  BOARD_COLUMNS,
+  CLOSED_OUTCOMES,
+  boardRefFor,
+  columnOf,
+  matchesQuery,
+  matchesStage,
+  needsAttention,
+} from './board';
 import { STAGE_GROUPS } from './generated/contracts';
 import { must } from './utils';
 import type { MyJob } from './types';
@@ -44,8 +52,11 @@ describe('needsAttention', () => {
 });
 
 describe('BOARD_COLUMNS', () => {
-  it('has no Saved column — only the active application states', () => {
+  // The first column is the inbox: jobs saved but not yet given a stage. It is a board
+  // column only — no stage group carries it, because "no stage" is not a stage.
+  it('leads with the no-stage inbox, then the stage groups in order', () => {
     expect(BOARD_COLUMNS.map((c) => c.id)).toEqual([
+      'unstaged',
       'preparing',
       'applied',
       'interview',
@@ -67,11 +78,11 @@ describe('columnOf', () => {
     expect(columnOf(job({ applied_at: '2026-07-12T00:00:00Z' }))).toBe('applied');
   });
 
-  // Saving IS taking a job on, so a bookmark is a board card in the first column. This
-  // is read-side only: nothing writes a stage on the saver's behalf, which is why it
-  // applies to every job saved before the rule existed as well as after.
-  it('maps a saved-only row to preparing', () => {
-    expect(columnOf(job({ saved_at: '2026-07-12T00:00:00Z' }))).toBe('preparing');
+  // A bookmark is a board card, but not one the candidate has started on: it waits in
+  // the no-stage inbox until they give it a stage. Lumping it into Preparing hid the
+  // applications actually being prepared among everything ever saved.
+  it('maps a saved-only row to the no-stage inbox', () => {
+    expect(columnOf(job({ saved_at: '2026-07-12T00:00:00Z' }))).toBe('unstaged');
   });
 
   it('keeps an explicit stage ahead of the saved mark', () => {
@@ -82,6 +93,27 @@ describe('columnOf', () => {
 
   it('returns null for a row that is neither saved nor tracked', () => {
     expect(columnOf(job({}))).toBeNull();
+  });
+});
+
+describe('matchesStage', () => {
+  it('keeps everything when no stage filter is set', () => {
+    expect(matchesStage(job({ stage: 'offer' }), '')).toBe(true);
+    expect(matchesStage(job({ saved_at: '2026-07-12T00:00:00Z' }), '')).toBe(true);
+  });
+
+  it('keeps only the rows in the chosen column', () => {
+    expect(matchesStage(job({ stage: 'screening' }), 'applied')).toBe(true);
+    expect(matchesStage(job({ stage: 'interview' }), 'applied')).toBe(false);
+    expect(matchesStage(job({ saved_at: '2026-07-12T00:00:00Z' }), 'unstaged')).toBe(true);
+    expect(matchesStage(job({ stage: 'preparing' }), 'unstaged')).toBe(false);
+  });
+
+  // A shared link may carry a value this build does not know (a retired column, a typo).
+  // Narrowing to nothing would read as "you have no applications"; keeping everything
+  // reads as the filter being off, which is what it effectively is.
+  it('ignores an unknown stage value', () => {
+    expect(matchesStage(job({ stage: 'offer' }), 'nonsense')).toBe(true);
   });
 });
 

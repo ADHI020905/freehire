@@ -33,6 +33,16 @@
   html.dark {
     color-scheme: dark;
   }
+  /* `color-scheme` is not enough on its own. Chrome on Windows paints an open menu
+     with the SELECT's background and text colour, and a select styled
+     `bg-transparent` hands it no background at all, so the menu falls back to white
+     while the options keep the page's light dark-mode text: white on white. Giving
+     the options an opaque surface of their own fixes every such select at once,
+     rather than asking each call site to remember an opaque background. */
+  option,
+  optgroup {
+    @apply bg-popover text-popover-foreground;
+  }
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }

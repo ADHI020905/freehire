@@ -1,24 +1,27 @@
 // Derives which Kanban column a tracked job belongs to. The column is NOT stored
 // — it is a view over the application's saved_at / applied_at / stage. A row the board
-// cannot place is one the user has neither saved nor tracked; a saved job is a card in
-// the first column, because saving one is taking it on.
+// cannot place is one the user has neither saved nor tracked; a saved job with no stage
+// waits in the first column, the no-stage inbox.
 //
-// The columns and their membership are the generated ones (internal/userjob →
+// The stage columns and their membership are the generated ones (internal/userjob →
 // cmd/gen-contracts). This file used to restate both, which is how the board and the
-// pipeline came to call the same settled application by two different names.
+// pipeline came to call the same settled application by two different names. The inbox
+// is the one column this file adds, because it is not a stage: no stage group carries
+// it, and the pipeline has nothing to count in it.
 import { STAGE_GROUPS } from './generated/contracts';
 import { autoApplyNeedsReviewBadge } from './autoApplyReview';
 import type { MyJob } from './types';
 import { must } from './utils';
 
-export type BoardColumnId = (typeof STAGE_GROUPS)[number]['id'];
+type StageColumnId = (typeof STAGE_GROUPS)[number]['id'];
+export type BoardColumnId = 'unstaged' | StageColumnId;
 
-export const BOARD_COLUMNS: { id: BoardColumnId; label: string }[] = STAGE_GROUPS.map((g) => ({
-  id: g.id,
-  label: g.label,
-}));
+export const BOARD_COLUMNS: { id: BoardColumnId; label: string }[] = [
+  { id: 'unstaged', label: 'No stage' },
+  ...STAGE_GROUPS.map((g) => ({ id: g.id, label: g.label })),
+];
 
-const STAGE_COLUMN: Record<string, BoardColumnId> = Object.fromEntries(
+const STAGE_COLUMN: Record<string, StageColumnId> = Object.fromEntries(
   STAGE_GROUPS.flatMap((g) => g.stages.map((stage) => [stage, g.id])),
 );
 
@@ -29,15 +32,27 @@ export function columnOf(item: MyJob): BoardColumnId | null {
   const col = item.stage ? STAGE_COLUMN[item.stage] : undefined;
   if (col) return col;
   if (item.applied_at) return 'applied';
-  // A bookmark is a board card. Saving a job is taking it on, and the board is where a
-  // candidate looks to see what they have taken on — a saved row that showed up nowhere
-  // there meant the product had two places to keep a job and told you about one.
+  // A bookmark is a board card — saving a job is taking it on, and a saved row that
+  // showed up nowhere on the board meant the product had two places to keep a job and
+  // told you about one. But it is not yet a job being prepared: it sits in the inbox
+  // until the candidate gives it a stage. Folding it into Preparing (as this once did)
+  // buried the applications actually under way among everything ever bookmarked.
   //
   // Read-side only, deliberately: nothing writes a stage on the saver's behalf, so this
   // needed no migration and applies to every job saved before the rule as well as after.
-  // A stage, when there is one, still decides — this is the fallback, not an override.
-  if (item.saved_at) return 'preparing';
+  if (item.saved_at) return 'unstaged';
   return null;
+}
+
+const COLUMN_IDS = new Set<string>(BOARD_COLUMNS.map((c) => c.id));
+
+/** Whether an application sits in the column a stage filter names. A blank filter keeps
+ *  everything, and so does a value this build has no column for — a shared link can
+ *  carry a retired or mistyped one, and narrowing to nothing would read as "you have no
+ *  applications" rather than as the filter being off. */
+export function matchesStage(item: MyJob, stage: string): boolean {
+  if (!COLUMN_IDS.has(stage)) return true;
+  return columnOf(item) === stage;
 }
 
 // The terminal stages live behind the single "Closed" column; the user picks which one in the

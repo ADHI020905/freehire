@@ -16,7 +16,11 @@ declare global {
       // path-gated to /my/** in hooks.server.ts — 'en' everywhere else.
       locale: import('$lib/locale').Locale;
     }
-    // interface PageState {}
+    interface PageState {
+      // The application whose drawer the tracking board opened with pushState, so Back
+      // and Forward can close and reopen it (lib/components/JobBoard.svelte).
+      trackingItem?: string;
+    }
     // interface Platform {}
   }
 }
