@@ -315,6 +315,23 @@ WHERE company_slug = $1 AND closed_at IS NULL AND duplicate_of IS NULL AND NOT i
 ORDER BY created_at DESC, id DESC
 LIMIT $2 OFFSET $3;
 
+-- name: ListClosedJobsByCompany :many
+-- The company page's Closed tab: the postings this company has closed, most recently closed
+-- first. The same exclusions as ListJobsByCompany (reposts, private pasted JDs) with the
+-- closed_at predicate inverted.
+--
+-- Served by jobs_closed_company_closed_at_idx (migration 0194): (company_slug, closed_at DESC,
+-- id DESC), PARTIAL on exactly this WHERE. Partial because the broader jobs_company_slug_idx
+-- leaves closed_at/duplicate_of/is_private as heap filters, so page 1 walked every open
+-- posting first (dominos, 14.5k open rows: 5.4s cold). The ORDER BY must match the index
+-- exactly: a large employer holds hundreds of thousands of closed rows, and any other order
+-- is a sort over all of them. That is also why nothing counts this set — see the handler.
+SELECT *
+FROM jobs
+WHERE company_slug = $1 AND closed_at IS NOT NULL AND duplicate_of IS NULL AND NOT is_private
+ORDER BY closed_at DESC, id DESC
+LIMIT $2 OFFSET $3;
+
 -- name: UpsertJob :one
 -- Single atomic write: upsert the company (only when the slug is non-empty,
 -- via the WHERE on the SELECT) and the job together, keeping the "one write =

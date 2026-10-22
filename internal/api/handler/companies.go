@@ -40,6 +40,7 @@ func (h *companiesHandlers) register(api fiber.Router, mw middleware) {
 	api.Get("/companies/subindustries", readLimit, h.CompanySubindustries)
 	api.Get("/companies/:slug", readLimit, mw.optional, h.GetCompany)
 	api.Get("/companies/:slug/hiring", readLimit, h.CompanyHiring)
+	api.Get("/companies/:slug/closed-jobs", readLimit, h.CompanyClosedJobs)
 }
 
 // companySearcher is the company-search backend the list handler depends on.
@@ -417,6 +418,56 @@ func (h *companiesHandlers) GetCompany(c *fiber.Ctx) error {
 		ReferralAvailable: referralAvailable,
 		Response:          companyResponseRate(c.Context(), h.queries, slug),
 	}})
+}
+
+// closedJobsWindow bounds how deep the Closed tab may page (offset+limit), far tighter than
+// the shared maxPageWindow. Even walking jobs_closed_company_closed_at_idx in order, every
+// skipped offset is a random heap fetch of a closed row — cold on prod a ~10k offset took
+// 6.4s — and nobody reads ten thousand closed postings. 2000 is the site's own FEED_WINDOW
+// (web/src/lib/pagination.ts), so the web pager never asks for a page this refuses.
+const closedJobsWindow = 2000
+
+// CompanyClosedJobs serves the company page's Closed tab: a page of the postings this company
+// has closed, most recently closed first, from Postgres — closed rows are never in the search
+// index.
+//
+// It answers has_more instead of a total. A large employer holds hundreds of thousands of
+// closed rows, and an exact count over them is the cost this endpoint exists to avoid; one
+// extra row fetched past the page says the same thing for free.
+func (h *companiesHandlers) CompanyClosedJobs(c *fiber.Ctx) error {
+	slug := c.Params("slug")
+
+	// Before the lookup, so a refused page costs no database work (see GetCompany).
+	limit, offset, err := pageParamsWithin(c, defaultLimit, maxLimit, closedJobsWindow)
+	if err != nil {
+		return err
+	}
+
+	if _, redirected, err := h.lookupCompany(c, slug); err != nil || redirected {
+		return err
+	}
+
+	rows, err := h.queries.ListClosedJobsByCompany(c.Context(), db.ListClosedJobsByCompanyParams{
+		CompanySlug: slug,
+		Limit:       int32(limit + 1),
+		Offset:      int32(offset),
+	})
+	if err != nil {
+		return err
+	}
+	hasMore := len(rows) > limit
+	if hasMore {
+		rows = rows[:limit]
+	}
+
+	views, err := jobview.FromRows(rows)
+	if err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{
+		"data": views,
+		"meta": fiber.Map{"limit": limit, "offset": offset, "has_more": hasMore},
+	})
 }
 
 // companyHitsViaMeili runs the ranked company search and projects each hit onto the list wire
