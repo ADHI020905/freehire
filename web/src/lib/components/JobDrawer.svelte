@@ -412,9 +412,10 @@
 <svelte:window onkeydown={(e) => e.key === 'Escape' && !blocked && close()} />
 
 <!-- Fullscreen job panel (like the swipe deck): a centered column with a fixed
-     header + pill tabs, a scrolling tab body, and a pinned View-job footer. -->
+     header + pill tabs, a scrolling tab body, and a pinned View-job footer. It covers
+     the screen edge to edge, so it fades in rather than growing from the centre. -->
 <div
-  class="fixed inset-0 z-50 flex flex-col bg-background text-foreground"
+  class="fixed inset-0 z-50 flex animate-modal-fade flex-col bg-background text-foreground"
   role="dialog"
   aria-modal="true"
   aria-label={s.dialogAria}
@@ -607,7 +608,7 @@
 
           <div class="flex flex-col gap-1 text-sm">
             <span class="font-medium">{s.notes}</span>
-            <NoteEditor value={item.notes ?? ''} onsave={onsavenotes} />
+            <NoteEditor value={item.notes ?? ''} onsave={onsavenotes} label={s.notes} />
           </div>
         </div>
       {:else if tab === 'auto_apply'}
@@ -623,7 +624,7 @@
                         step.state === 'done' && 'bg-brand text-brand-foreground',
                         step.state === 'active' && 'bg-brand-muted text-brand-strong ring-2 ring-brand-ring',
                         step.state === 'queued' && 'bg-muted text-muted-foreground ring-2 ring-border',
-                        step.state === 'error' && 'bg-destructive/15 text-destructive',
+                        step.state === 'error' && 'bg-destructive/15 text-destructive-strong',
                         step.state === 'pending' && 'bg-muted text-muted-foreground'
                       )}
                     >
