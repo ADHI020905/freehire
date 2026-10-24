@@ -459,6 +459,8 @@ var atsBoards = []struct{ host, source, mode string }{
 	{"geekhunter.com", "geekhunter", modePathPattern},
 	{"cleverstaff.net", "cleverstaff", modePathPattern},
 	{"careers.flatchr.io", "flatchr", modePathPattern},
+	{"app.trinethire.com", "trinethire", modePathPattern},
+	{"jobs.gohire.io", "gohire", modePathPattern},
 }
 
 // pathPattern is one pathPatternBoards entry; see there.
@@ -523,6 +525,20 @@ var pathPatternBoards = map[string]pathPattern{
 	"careers.flatchr.io": {
 		path:    regexp.MustCompile(`^/(?:[a-z]{2}/)?company/([a-z0-9][a-z0-9-]*?)(?:\.json)?(?:/|$)`),
 		listing: "/fr/company/%s",
+	},
+	// TriNet Hire: /companies/<numeric id>[-<slug>]/jobs[/<posting>] (internal/ingest/sources/
+	// trinethire.go). The leading id is what proves the segment is a company; the host's own
+	// pages (/privacy) sit outside /companies/.
+	"app.trinethire.com": {
+		path:    regexp.MustCompile(`^/companies/(\d+(?:-[a-z0-9-]+)?)(?:/|$)`),
+		listing: "/companies/%s/jobs",
+	},
+	// GoHire: /<slug>-<8-character site code>/[<posting>/] (internal/ingest/sources/gohire.go).
+	// The code's shape is what separates a site from the platform's /assets and from the
+	// retired numeric form (dexerto-19265), which answers 404.
+	"jobs.gohire.io": {
+		path:    regexp.MustCompile(`^/([a-z0-9][a-z0-9-]*-[a-z0-9]{8})(?:/|$)`),
+		listing: "/%s/",
 	},
 }
 
