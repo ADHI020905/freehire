@@ -79,6 +79,35 @@ func TestExtractOracleSiteName(t *testing.T) {
 		"POLK_BoCC_Career Site":         "",
 		"Candidate Experience site":     "",
 		"":                              "",
+		// The noise in the 613 names the first prod dry-run resolved (2026-10-24).
+		"Working at Signature Aviation":           "Signature Aviation",
+		"Job Listings at Liquidity Services Inc.": "Liquidity Services Inc.",
+		"EXL Talent Acquisition Team":             "EXL",
+		"Mycronic Job Openings":                   "Mycronic",
+		"Crawford Job Listings - Global":          "Crawford",
+		"UT Health San Antonio Staff Positions":   "UT Health San Antonio",
+		"IRENA Employment":                        "IRENA",
+		"Yanfeng Human Resources":                 "Yanfeng",
+		"BDO USA Campus":                          "BDO USA",
+		"Schroders Referral":                      "Schroders",
+		"NemoursCareerSite":                       "Nemours",
+		"OMNES Education - Carrière":              "OMNES Education",
+		"City of Greeley -":                       "City of Greeley",
+		"UConn Health - Community Network":        "UConn Health - Community Network",
+		"WorkSafeNB":                              "WorkSafeNB",
+		"Vylla Home":                              "Vylla Home",
+		"Work with us":                            "",
+		"Job Search":                              "",
+		"Talent Acquisition Team":                 "",
+		"Graduate and Apprenticeship":             "",
+		"Sitio de carrera Laureate":               "",
+		"Home Page":                               "",
+		"Global":                                  "",
+		"Schools":                                 "",
+		"Generic":                                 "",
+		// A "Career" inside the name is part of it: refused by the purpose word, never cut to
+		// a different employer ("Summit").
+		"Summit Career College": "",
 	}
 	for in, want := range cases {
 		if got := ExtractOracleSiteName(in); got != want {
