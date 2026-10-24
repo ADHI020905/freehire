@@ -6,17 +6,36 @@ import type { Attachment } from 'svelte/attachments';
  * logic is unit-testable in Node (the DOM glue in `focusTrap` is verified via
  * svelte-check + visually).
  *
- * - focus escaped the trap (`current === -1`) → pull it to the first item
+ * - focus is outside the items (`current === -1`: on the container right after open, or
+ *   escaped) → Tab enters at the first item, Shift+Tab at the last
  * - forward Tab on the last item → wrap to the first
  * - backward Shift+Tab on the first item → wrap to the last
  * - anything else → `null`, let the browser move focus normally
  */
 export function nextTrapIndex(current: number, count: number, shift: boolean): number | null {
   if (count <= 0) return null;
-  if (current === -1) return 0;
+  if (current === -1) return shift ? count - 1 : 0;
   if (!shift && current === count - 1) return 0;
   if (shift && current === 0) return count - 1;
   return null;
+}
+
+/** The element focus should go back to when an overlay closes: the opener, if it is one. A
+ *  mouse click in Safari focuses nothing, which leaves `<body>` — not a place to return to. */
+export function openerOf(active: Element | null): HTMLElement | null {
+  return active instanceof HTMLElement && active !== document.body ? active : null;
+}
+
+/**
+ * Return focus to the overlay's opener — unless the app has already moved it elsewhere.
+ * Runs in an attachment's cleanup, and Svelte detaches an `{#if}` branch's DOM before it
+ * runs that branch's teardowns: focus that was inside the overlay is on `<body>` by now,
+ * so `<body>` counts as "still ours", alongside anything still inside the node.
+ */
+export function restoreFocus(opener: HTMLElement | null, node: HTMLElement): void {
+  const active = document.activeElement;
+  const lost = !active || active === document.body || node.contains(active);
+  if (lost && opener?.isConnected) opener.focus();
 }
 
 const FOCUSABLE =
@@ -32,7 +51,7 @@ const FOCUSABLE =
  */
 export function focusTrap(): Attachment<HTMLElement> {
   return (node) => {
-    const trigger = document.activeElement as HTMLElement | null;
+    const opener = openerOf(document.activeElement);
 
     const focusables = () =>
       Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
@@ -59,9 +78,8 @@ export function focusTrap(): Attachment<HTMLElement> {
 
     return () => {
       node.removeEventListener('keydown', onKeydown);
-      // Restore focus to the opener, but only if focus is still inside the dialog —
-      // if the app already moved it elsewhere (e.g. a navigation), leave it be.
-      if (node.contains(document.activeElement)) trigger?.focus?.();
+      // Back to the opener, unless the app already moved focus elsewhere (a navigation).
+      restoreFocus(opener, node);
     };
   };
 }
