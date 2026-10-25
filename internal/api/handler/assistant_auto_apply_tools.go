@@ -54,6 +54,9 @@ const agentsMayApplyOff = "auto-apply by connected agents is turned off for this
 
 // requireAgentsMayApply refuses unless the account switched agents_may_apply on.
 func (h *assistantHandlers) requireAgentsMayApply(ctx context.Context, userID int64) error {
+	if agentsMayApplyWaived(ctx) {
+		return nil
+	}
 	allowed, err := h.queries.GetAgentsMayApply(ctx, userID)
 	if err != nil {
 		return err
@@ -297,7 +300,9 @@ func autoApplyNextStep(status string, mayHaveReachedEmployer bool) string {
 	case autoapply.StatusApproved:
 		return "Wait: it is queued for submission."
 	case autoapply.StatusBlocked:
-		return "Ask the person each open question, save the answers with answer_bank_save (or screening_answers_set for work authorization, visa, salary, notice period, relocation, age), then call auto_apply_retry."
+		return "Ask the person every open question at once, as one numbered list, so they can answer \"1 …, 3 …\" in one reply. " +
+			"Save each answer in the language of the application form — translate faithfully if they answered in another — " +
+			"with answer_bank_save (or screening_answers_set for work authorization, visa, salary, notice period, relocation, age), then call auto_apply_retry."
 	case autoapply.StatusFailed:
 		if mayHaveReachedEmployer {
 			return "Do not apply again automatically: the employer may already have this application. The person should check with the employer."

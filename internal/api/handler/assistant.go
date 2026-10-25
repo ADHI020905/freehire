@@ -29,6 +29,7 @@ import (
 	"github.com/strelov1/freehire/internal/ingest/screeninganswers"
 	"github.com/strelov1/freehire/internal/platform/db"
 	"github.com/strelov1/freehire/internal/platform/llm"
+	"github.com/strelov1/freehire/internal/platform/pgerr"
 )
 
 // assistantHandlers is the in-app agent. It owns the conversation store and the
@@ -210,6 +211,7 @@ func (h *assistantHandlers) register(api fiber.Router, mw middleware) {
 	// now — they have seen the work so far and are choosing to spend more of the day on it.
 	api.Post("/assistant/sessions/:id/extend", mw.key, h.PostAssistantExtend)
 	api.Post("/assistant/sessions/:id/opening", mw.key, mw.paidAI(plan.FeatureAssistant), h.PostAssistantOpening)
+	api.Post("/assistant/sessions/:id/sync", mw.key, mw.paidAI(plan.FeatureAssistant), h.PostAssistantSync)
 	// Resume after a transport/model failure without appending another user message —
 	// re-sending the prompt would duplicate it in the model's context.
 	api.Post("/assistant/sessions/:id/retry", mw.key, mw.paidAI(plan.FeatureAssistant), h.PostAssistantRetry)
@@ -318,7 +320,29 @@ func (h *assistantHandlers) CreateAssistantSession(c *fiber.Ctx) error {
 		}
 		vacancy, jobID = job, &job.ID
 	}
+	// An application holds ONE apply conversation: its numbered questions and the answers
+	// given to them must stay in one transcript, so opening it again resumes it.
+	if preset == assistant.PresetApply {
+		existing, ok, err := h.store.SessionForJob(c.Context(), userID, preset, *jobID)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return c.JSON(fiber.Map{"data": sessionView(existing)})
+		}
+	}
 	sess, err := h.store.CreateSession(c.Context(), userID, preset, nil, jobID)
+	if name, dup := pgerr.UniqueViolationConstraint(err); dup && name == "assistant_sessions_one_apply_per_job" {
+		// Another open of the same application won the race to create it; that one is the
+		// conversation, so return it rather than failing the second click.
+		existing, ok, err := h.store.SessionForJob(c.Context(), userID, preset, *jobID)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return c.JSON(fiber.Map{"data": sessionView(existing)})
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -353,6 +377,7 @@ var creatablePresets = []string{
 	assistant.PresetBrowse,
 	assistant.PresetInterview,
 	assistant.PresetDebrief,
+	assistant.PresetApply,
 }
 
 func creatablePreset(asked string) (string, error) {
@@ -376,7 +401,7 @@ func creatablePreset(asked string) (string, error) {
 // exactly who it is for; where the button appears is the client's judgement, and
 // refusing them here would be a bug wearing a rule's clothes.
 func bindsToApplication(preset string) bool {
-	return preset == assistant.PresetInterview || preset == assistant.PresetDebrief
+	return preset == assistant.PresetInterview || preset == assistant.PresetDebrief || preset == assistant.PresetApply
 }
 
 // applicationSessionLabel names such a session in the rail: what it is, the role, and
@@ -390,6 +415,8 @@ func applicationSessionLabel(preset string, job db.Job) string {
 		prefix = "Interview: "
 	case assistant.PresetDebrief:
 		prefix = "Debrief: "
+	case assistant.PresetApply:
+		prefix = "Application: "
 	default:
 		return ""
 	}
@@ -644,6 +671,8 @@ func (h *assistantHandlers) streamSSE(
 	start func(context.Context, *assistant.Runner, *assistant.Registry, string, func(assistant.Event)) error,
 ) error {
 	asExtension := auth.IsExtensionBearer(c)
+	// Read here, while the request is ours: the turn runs on after the handler returns.
+	inBrowser := auth.ViaCookie(c)
 	turnSess := sess
 	turnSess.Preset = effectivePreset(sess.Preset, asExtension)
 
@@ -781,7 +810,11 @@ func (h *assistantHandlers) streamSSE(
 		}
 		defer h.turns.release(sess.ID, slot)
 
-		err = start(ctx, turnRunner, registry, system, func(e assistant.Event) {
+		turnCtx := ctx
+		if inBrowser {
+			turnCtx = withPersonInBrowser(ctx)
+		}
+		err = start(turnCtx, turnRunner, registry, system, func(e assistant.Event) {
 			// A write that fails means THIS reader is not listening: a phone froze its tab,
 			// a tunnel dropped, a laptop slept. It does not mean the work should stop, and
 			// treating it that way threw away live runs — a tailoring pass lost its report

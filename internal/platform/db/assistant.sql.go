@@ -13,6 +13,36 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const advanceAssistantNarratedEvent = `-- name: AdvanceAssistantNarratedEvent :execrows
+UPDATE assistant_sessions
+SET narrated_event_id = $1
+WHERE id = $2 AND user_id = $3
+  AND narrated_event_id IS NOT DISTINCT FROM $4
+`
+
+type AdvanceAssistantNarratedEventParams struct {
+	NarratedEventID pgtype.Int8 `json:"narrated_event_id"`
+	ID              uuid.UUID   `json:"id"`
+	UserID          int64       `json:"user_id"`
+	Previous        pgtype.Int8 `json:"previous"`
+}
+
+// Move the narrated-event cursor, but only from the value the caller read: two syncs racing
+// over the same events both narrate, and only the first to finish moves the cursor, so the
+// second neither rewinds it nor skips past an event it never saw.
+func (q *Queries) AdvanceAssistantNarratedEvent(ctx context.Context, arg AdvanceAssistantNarratedEventParams) (int64, error) {
+	result, err := q.db.Exec(ctx, advanceAssistantNarratedEvent,
+		arg.NarratedEventID,
+		arg.ID,
+		arg.UserID,
+		arg.Previous,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const appendAssistantMessage = `-- name: AppendAssistantMessage :one
 INSERT INTO assistant_messages (session_id, seq, role, content)
 VALUES (
@@ -114,6 +144,26 @@ func (q *Queries) DeleteAssistantSession(ctx context.Context, arg DeleteAssistan
 	return result.RowsAffected(), nil
 }
 
+const getAssistantNarratedEvent = `-- name: GetAssistantNarratedEvent :one
+SELECT narrated_event_id
+FROM assistant_sessions
+WHERE id = $1 AND user_id = $2
+`
+
+type GetAssistantNarratedEventParams struct {
+	ID     uuid.UUID `json:"id"`
+	UserID int64     `json:"user_id"`
+}
+
+// The last auto_apply_events id an apply conversation has narrated; NULL when it has
+// narrated nothing. Owner-scoped like every other session read.
+func (q *Queries) GetAssistantNarratedEvent(ctx context.Context, arg GetAssistantNarratedEventParams) (pgtype.Int8, error) {
+	row := q.db.QueryRow(ctx, getAssistantNarratedEvent, arg.ID, arg.UserID)
+	var narrated_event_id pgtype.Int8
+	err := row.Scan(&narrated_event_id)
+	return narrated_event_id, err
+}
+
 const getAssistantSession = `-- name: GetAssistantSession :one
 SELECT id, user_id, preset, label, cv_id, job_id, created_at, updated_at
 FROM assistant_sessions
@@ -141,6 +191,50 @@ type GetAssistantSessionRow struct {
 func (q *Queries) GetAssistantSession(ctx context.Context, arg GetAssistantSessionParams) (GetAssistantSessionRow, error) {
 	row := q.db.QueryRow(ctx, getAssistantSession, arg.ID, arg.UserID)
 	var i GetAssistantSessionRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Preset,
+		&i.Label,
+		&i.CvID,
+		&i.JobID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getAssistantSessionForJob = `-- name: GetAssistantSessionForJob :one
+SELECT id, user_id, preset, label, cv_id, job_id, created_at, updated_at
+FROM assistant_sessions
+WHERE user_id = $1 AND preset = $2 AND job_id = $3
+ORDER BY created_at DESC
+LIMIT 1
+`
+
+type GetAssistantSessionForJobParams struct {
+	UserID int64  `json:"user_id"`
+	Preset string `json:"preset"`
+	JobID  *int64 `json:"job_id"`
+}
+
+type GetAssistantSessionForJobRow struct {
+	ID        uuid.UUID          `json:"id"`
+	UserID    int64              `json:"user_id"`
+	Preset    string             `json:"preset"`
+	Label     pgtype.Text        `json:"label"`
+	CvID      *uuid.UUID         `json:"cv_id"`
+	JobID     *int64             `json:"job_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+// The caller's most recent session of one preset bound to one vacancy. Used to reopen the
+// one conversation an application holds instead of minting a second beside it. Owner-scoped:
+// another user's session for the same vacancy is never returned.
+func (q *Queries) GetAssistantSessionForJob(ctx context.Context, arg GetAssistantSessionForJobParams) (GetAssistantSessionForJobRow, error) {
+	row := q.db.QueryRow(ctx, getAssistantSessionForJob, arg.UserID, arg.Preset, arg.JobID)
+	var i GetAssistantSessionForJobRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
