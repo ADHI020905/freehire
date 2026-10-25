@@ -60,6 +60,8 @@ var (
 	onlyfyJobPath = regexp.MustCompile(`^/job/([a-z0-9]+)$`)
 	// onlyfyTotal reads the board's posting count out of the fragment's pager script.
 	onlyfyTotal = regexp.MustCompile(`#pageInfoTotalCount'\)\.text\((\d+)\)`)
+	// onlyfyRowDate is a listing row's publication date, dd.mm.yy.
+	onlyfyRowDate = regexp.MustCompile(`^\d{2}\.\d{2}\.\d{2}$`)
 )
 
 // Fetch is the list-only fallback HydratingSource specifies; it hydrates every posting.
@@ -75,22 +77,27 @@ func (s onlyfy) FetchNew(ctx context.Context, e CompanyEntry, seen func(external
 		return nil, fmt.Errorf("onlyfy: board %q is not a site name", e.Board)
 	}
 	site := "https://" + board + ".onlyfy.jobs"
-	ids, err := s.listing(ctx, site)
+	rows, err := s.listing(ctx, site)
 	if err != nil {
 		return nil, fmt.Errorf("onlyfy: board %s: %w", board, err)
 	}
-	return fetchDetails(ids, defaultDetailWorkers, func(id string) (Job, bool) {
-		url := site + "/job/" + id
-		if seen(id) {
-			return Job{ExternalID: id, URL: url, Company: e.Company, SeenRefresh: true}, true
+	return fetchDetails(rows, defaultDetailWorkers, func(r onlyfyRow) (Job, bool) {
+		url := site + "/job/" + r.id
+		if seen(r.id) {
+			return Job{ExternalID: r.id, URL: url, Company: e.Company, SeenRefresh: true}, true
 		}
-		return s.detail(ctx, e, id, url)
+		return s.detail(ctx, e, site, r)
 	}), nil
 }
 
-// listing walks the board's pages and returns its posting ids in listing order.
-func (s onlyfy) listing(ctx context.Context, site string) ([]string, error) {
-	var ids []string
+// onlyfyRow is one listing row: the posting id and what the row itself states about it.
+type onlyfyRow struct {
+	id, title, location, posted string
+}
+
+// listing walks the board's pages and returns its rows in listing order.
+func (s onlyfy) listing(ctx context.Context, site string) ([]onlyfyRow, error) {
+	var ids []onlyfyRow
 	have := map[string]bool{}
 	total := -1
 	for page := 1; page <= onlyfyMaxPages; page++ {
@@ -111,11 +118,11 @@ func (s onlyfy) listing(ctx context.Context, site string) ([]string, error) {
 			return nil, fmt.Errorf("listing page %d states %d postings, page 1 stated %d", page, n, total)
 		}
 		total = n
-		rows := onlyfyRowIDs(root)
-		for _, id := range rows {
-			if !have[id] {
-				have[id] = true
-				ids = append(ids, id)
+		rows := onlyfyRows(root)
+		for _, r := range rows {
+			if !have[r.id] {
+				have[r.id] = true
+				ids = append(ids, r)
 			}
 		}
 		if len(ids) >= total || len(rows) == 0 {
@@ -147,18 +154,40 @@ func onlyfyCount(root *html.Node) (int, bool) {
 	return n, found
 }
 
-// onlyfyRowIDs returns the posting ids a listing fragment links, in order.
-func onlyfyRowIDs(root *html.Node) []string {
-	var ids []string
+// onlyfyRows returns a listing fragment's rows, in order. A row is a div of class row-table
+// holding the title link, a cell marked with the map-marker icon (the place) and a cell with the
+// publication date ("23.10.26").
+func onlyfyRows(root *html.Node) []onlyfyRow {
+	var rows []onlyfyRow
 	walk(root, func(n *html.Node) bool {
-		if n.Type == html.ElementNode && n.Data == "a" {
-			if m := onlyfyJobPath.FindStringSubmatch(Attr(n, "href")); m != nil {
-				ids = append(ids, m[1])
-			}
+		if n.Type != html.ElementNode || n.Data != "div" || !HasClass(n, "row-table") {
+			return true
 		}
-		return true
+		var r onlyfyRow
+		walk(n, func(c *html.Node) bool {
+			if c.Type != html.ElementNode {
+				return true
+			}
+			switch {
+			case c.Data == "a" && r.id == "":
+				if m := onlyfyJobPath.FindStringSubmatch(Attr(c, "href")); m != nil {
+					r.id, r.title = m[1], strings.TrimSpace(textContent(c))
+				}
+			case c.Data == "i" && HasClass(c, "icon-map-marker") && c.Parent != nil:
+				r.location = strings.TrimSpace(textContent(c.Parent))
+			case c.Data == "div" && HasClass(c, "inner"):
+				if t := strings.TrimSpace(textContent(c)); onlyfyRowDate.MatchString(t) {
+					r.posted = t
+				}
+			}
+			return true
+		})
+		if r.id != "" {
+			rows = append(rows, r)
+		}
+		return false
 	})
-	return ids
+	return rows
 }
 
 // onlyfyPosting is the posting page's schema.org JobPosting, the fields the adapter maps.
@@ -178,14 +207,19 @@ type onlyfyPosting struct {
 	} `json:"baseSalary"`
 }
 
-// detail fetches one posting page and maps its JobPosting. A posting the site no longer serves
-// is dropped; one it failed to serve is reported unreadable.
+// detail reads one posting. Its page renders a schema.org JobPosting on roughly half the sites;
+// a site with its own job template renders none (de-cix, measured 2026-10-25: 1,422 of 3,004
+// postings came back unreadable before this fallback), and there the posting is the platform's
+// own job-ad view, <site>/job/show/<id>/full, whose #jobAdContainer every template shares, with
+// the title, place and date the listing row states. A posting the site no longer serves is
+// dropped; one it failed to serve is reported unreadable.
 //
 // jobLocationType is deliberately not read: the site sets TELECOMMUTE on postings whose body
 // describes on-site work (a petrol-station clerk, a construction engineer) — 16 of 26 such
 // postings sampled on 2026-10-25 mention no remote work at all — so the flag states nothing a
 // work mode could rest on, and the description parser decides.
-func (s onlyfy) detail(ctx context.Context, e CompanyEntry, id, url string) (Job, bool) {
+func (s onlyfy) detail(ctx context.Context, e CompanyEntry, site string, r onlyfyRow) (Job, bool) {
+	id, url := r.id, site+"/job/"+r.id
 	root, err := s.http.GetHTML(ctx, url)
 	if err != nil {
 		if detailUnreadable(err) {
@@ -195,7 +229,7 @@ func (s onlyfy) detail(ctx context.Context, e CompanyEntry, id, url string) (Job
 	}
 	var p onlyfyPosting
 	if !LDJobPosting(root, &p) || strings.TrimSpace(p.Title) == "" {
-		return unreadableDetail(id, url, e.Company), true
+		return s.templateDetail(ctx, e, site, r)
 	}
 	j := Job{
 		ExternalID:     id,
@@ -229,4 +263,36 @@ func (s onlyfy) detail(ctx context.Context, e CompanyEntry, id, url string) (Job
 		}
 	}
 	return j, true
+}
+
+// templateDetail reads a posting from the platform's job-ad view, for a site whose posting page
+// renders no JobPosting. The body is #jobAdContainer; the title, place and date are the listing
+// row's, since the view states them only as free text.
+func (s onlyfy) templateDetail(ctx context.Context, e CompanyEntry, site string, r onlyfyRow) (Job, bool) {
+	url := site + "/job/" + r.id
+	root, err := s.http.GetHTML(ctx, site+"/job/show/"+r.id+"/full?mode=candidate")
+	if err != nil {
+		if detailUnreadable(err) {
+			return unreadableDetail(r.id, url, e.Company), true
+		}
+		return Job{}, false
+	}
+	ad := firstByID(root, "jobAdContainer")
+	if ad == nil || r.title == "" {
+		return unreadableDetail(r.id, url, e.Company), true
+	}
+	// The view carries a hidden second copy of the ad (div.stepstone-content, display:none) for
+	// a job board's import; kept, every section would appear twice.
+	for hidden := firstByClass(ad, "stepstone-content"); hidden != nil && hidden != ad; hidden = firstByClass(ad, "stepstone-content") {
+		hidden.Parent.RemoveChild(hidden)
+	}
+	return Job{
+		ExternalID:  r.id,
+		URL:         url,
+		Title:       r.title,
+		Company:     e.Company,
+		Location:    r.location,
+		Description: sanitizeHTML(innerHTML(ad)),
+		PostedAt:    parseLayout("02.01.06", r.posted),
+	}, true
 }

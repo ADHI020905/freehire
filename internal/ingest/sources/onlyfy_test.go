@@ -109,18 +109,64 @@ func TestOnlyfyEmptyAndGoneBoards(t *testing.T) {
 }
 
 func TestOnlyfyDetailFailures(t *testing.T) {
+	const site = "https://x.onlyfy.jobs"
 	fake := (&routedHTTP{}).
 		route("/job/bare", "<html><body><h1>x</h1></body></html>").
 		routeErr("/job/down", &StatusError{Code: http.StatusServiceUnavailable}).
 		routeErr("/job/gone", &StatusError{Code: http.StatusNotFound})
 	s := NewOnlyfy(fake).(onlyfy)
+	// No JobPosting and no job-ad view to fall back on; a failed request.
 	for _, id := range []string{"bare", "down"} {
-		if j, ok := s.detail(context.Background(), CompanyEntry{}, id, "https://x.onlyfy.jobs/job/"+id); !ok || !j.Unreadable {
+		if j, ok := s.detail(context.Background(), CompanyEntry{}, site, onlyfyRow{id: id, title: "x"}); !ok || !j.Unreadable {
 			t.Errorf("%s: want an unreadable marker, got ok=%v %+v", id, ok, j)
 		}
 	}
-	if _, ok := s.detail(context.Background(), CompanyEntry{}, "gone", "https://x.onlyfy.jobs/job/gone"); ok {
+	if _, ok := s.detail(context.Background(), CompanyEntry{}, site, onlyfyRow{id: "gone"}); ok {
 		t.Error("a 404 posting must be dropped")
+	}
+}
+
+// A site with its own job template renders no JobPosting (DE-CIX, captured 2026-10-25): the
+// posting is read from the platform's job-ad view, with the listing row's title, place and date.
+func TestOnlyfyTemplateSiteFallsBackToJobAdView(t *testing.T) {
+	const id = "jyxrsg8kld15ge09aecmu2d3covtccs"
+	fake := (&routedHTTP{}).
+		route("de-cix.onlyfy.jobs/candidate/job/ajax_list", onlyfyFixture(t, "decix_page1.html")).
+		route("/job/show/"+id+"/full", onlyfyFixture(t, "decix_full.html")).
+		route("/job/"+id, onlyfyFixture(t, "decix_posting.html"))
+	jobs, err := NewOnlyfy(fake).(onlyfy).FetchNew(context.Background(),
+		CompanyEntry{Provider: "onlyfy", Board: "de-cix", Company: "DE-CIX"},
+		func(x string) bool { return x != id })
+	if err != nil {
+		t.Fatalf("FetchNew: %v", err)
+	}
+	if len(jobs) != 13 {
+		t.Fatalf("got %d jobs, want the 13 the listing states", len(jobs))
+	}
+	var j Job
+	for _, x := range jobs {
+		if !x.SeenRefresh {
+			j = x
+		}
+	}
+	if j.Unreadable {
+		t.Fatal("the posting came back unreadable")
+	}
+	if j.URL != "https://de-cix.onlyfy.jobs/job/"+id || j.Title != "Sales Manager - New Business - Interconnection & Internet Exchange (IX) | Brazil & LATAM" {
+		t.Errorf("URL/Title = %q/%q", j.URL, j.Title)
+	}
+	if j.Location != "São Paulo" || j.PostedAt == nil || j.PostedAt.Format("2006-01-02") != "2026-10-15" {
+		t.Errorf("Location/PostedAt = %q/%v", j.Location, j.PostedAt)
+	}
+	// The view's hidden duplicate of the ad (stepstone-content) is not part of the body.
+	if n := strings.Count(j.Description, "Internet, AI and Cloud Exchanges"); n != 1 {
+		t.Errorf("the ad's opening appears %d times, want once", n)
+	}
+	if !strings.Contains(j.Description, "Internet, AI and Cloud Exchanges") {
+		t.Errorf("Description lacks the job ad: %.200q", j.Description)
+	}
+	if strings.Contains(j.Description, "#jobAdContainer") || strings.Contains(j.Description, "font-family") {
+		t.Error("Description carries the view's stylesheet")
 	}
 }
 
