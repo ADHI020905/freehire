@@ -84,12 +84,20 @@ func jobPostingNodes(raw []byte) []json.RawMessage {
 	if isJobPosting(trimmed) {
 		return []json.RawMessage{trimmed}
 	}
-	// Not a bare JobPosting object → it may be a @graph wrapper listing the page's nodes.
+	// Not a bare JobPosting object → it may be a @graph wrapper listing the page's nodes, or a
+	// WebPage whose mainEntity is the posting (AcademicTransfer).
 	var wrapper struct {
-		Graph []json.RawMessage `json:"@graph"`
+		Graph      []json.RawMessage `json:"@graph"`
+		MainEntity json.RawMessage   `json:"mainEntity"`
 	}
-	if json.Unmarshal(trimmed, &wrapper) == nil {
-		return filterJobPostings(wrapper.Graph)
+	if json.Unmarshal(trimmed, &wrapper) != nil {
+		return nil
+	}
+	if postings := filterJobPostings(wrapper.Graph); len(postings) > 0 {
+		return postings
+	}
+	if len(wrapper.MainEntity) > 0 && isJobPosting(wrapper.MainEntity) {
+		return []json.RawMessage{wrapper.MainEntity}
 	}
 	return nil
 }
