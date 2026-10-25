@@ -52,12 +52,20 @@ const tagAutoApplyDrafting = "auto-apply-drafting"
 // Every entry here must also have a layout (layout.go), and a test asserts the containment:
 // a provider Submit will try to fill, with no description of its page to fill it by, would
 // reach a submit click with selectors matching nothing.
-var fillProviders = map[string]bool{
-	"greenhouse": true,
-}
+//
+// Empty since 2026-10-25, when Greenhouse moved to the browser-use executor (see
+// browserUseProviders): this host's own Chrome submitted from the host's own address, which
+// every candidate's application then carried to the employer, and it lost Greenhouse's
+// invisible reCAPTCHA as often as it passed it. The path stays — the DOM scan that builds
+// a Greenhouse or Lever plan still runs through it, and a provider this Chrome can complete
+// on is a row here again.
+var fillProviders = map[string]bool{}
 
-// SubmittableProviders is fillProviders as a value other packages may read: the providers
-// an application can be COMPLETED on without a person.
+// SubmittableProviders is the set other packages may read as "an application can be
+// COMPLETED here without a person": the providers this package's own browser submits on
+// (fillProviders) and the ones the browser-use executor does — the latter only while this
+// deployment has it enforcing, since in shadow mode it sends nothing and an agent planning
+// around the flag would wait on an application that is never made.
 //
 // It is exported because the OJCP surface publishes exactly this fact as
 // `supports_agent_submission`, the flag an external agent plans around, and a hand-written
@@ -67,9 +75,14 @@ var fillProviders = map[string]bool{
 //
 // A copy is returned so a caller cannot mutate the map this package routes on.
 func SubmittableProviders() map[string]bool {
-	out := make(map[string]bool, len(fillProviders))
+	out := make(map[string]bool, len(fillProviders)+len(browserUseProviders))
 	for provider, ok := range fillProviders {
 		out[provider] = ok
+	}
+	if browserUseEnforce() {
+		for provider, ok := range browserUseProviders {
+			out[provider] = out[provider] || ok
+		}
 	}
 	return out
 }
