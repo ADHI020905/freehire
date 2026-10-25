@@ -357,3 +357,38 @@ func redactProxy(raw string) string {
 	}
 	return raw
 }
+
+// NewFormClientFromEnv builds the client application-form traffic egresses through: always
+// the proxy — the rotating gateway when SOURCES_ROTATING_PROXY_URL is set, else the fixed
+// SOURCES_PROXY_URL exit — and the direct client only when neither is configured, which a
+// caller reports rather than takes silently.
+//
+// Always, not on refusal like the crawl's refusalRetryProviders: this traffic reads the forms
+// candidates apply through, and the host's own address should not be the one the platforms
+// learn to associate with it. It is also what had them ban that address — on 2026-10-25 every
+// approved Workable auto-apply attempt died on its form fetch with a 429 and a 23-hour
+// Retry-After, after cmd/capture-apply-form had read 3,369 Workable forms from it that day.
+// The rotating gateway is preferred because each form fetch is one stateless GET, so a fresh
+// exit per request costs nothing and no ban outlives a request.
+//
+// Like every proxied client it relaxes the SSRF target check (the proxy resolves the target),
+// so it is for URLs that come from a fixed platform API or a stored posting URL — never for
+// following an arbitrary link.
+func NewFormClientFromEnv() (client *Client, proxied bool, err error) {
+	rotating, err := rotatingProxy()
+	if err != nil {
+		return nil, false, err
+	}
+	if rotating != nil {
+		return NewProxyClient(rotating), true, nil
+	}
+	raw := strings.TrimSpace(os.Getenv("SOURCES_PROXY_URL"))
+	if raw == "" {
+		return NewClient(), false, nil
+	}
+	fixed, err := url.Parse(raw)
+	if err != nil || fixed.Host == "" {
+		return nil, false, fmt.Errorf("sources: invalid SOURCES_PROXY_URL %q", redactProxy(raw))
+	}
+	return NewProxyClient(fixed), true, nil
+}
