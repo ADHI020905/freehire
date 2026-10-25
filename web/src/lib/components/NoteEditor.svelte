@@ -19,12 +19,13 @@
 </script>
 
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import 'easymde/dist/easymde.min.css';
   import type EasyMDE from 'easymde';
   import { messages } from './NoteEditor.messages';
   import { locale } from '#lib/i18n/currentLocale.svelte.js';
   import { t } from '#lib/i18n/t.js';
+  import { announce } from '#lib/announce.svelte.js';
 
   // A small markdown editor for notes: EasyMDE (the maintained SimpleMDE fork) over a
   // textarea, markdown in and out. EasyMDE touches `window`, so it is dynamically
@@ -34,12 +35,26 @@
   // to the tracker's "Notes…". `label` is the editor's accessible name: CodeMirror
   // swaps the textarea for its own hidden input, which no <label> can reach, so the
   // name is set on that input once the editor exists.
+  //
+  // `showSaveState` is for a caller whose `onsave` is a real write (the tracker's notes):
+  // it returns a promise that rejects on failure, and the editor reports Saving…/Saved/
+  // Couldn't save beside itself, keeping the text for a retry. A caller that only syncs a
+  // form field leaves it off — "Saved" there would be a claim about nothing.
   let {
     value = '',
     onsave,
     placeholder,
     label,
-  }: { value?: string; onsave: (v: string) => void; placeholder?: string; label: string } = $props();
+    showSaveState = false,
+  }: {
+    value?: string;
+    // `unknown` rather than `void`: a form field's `(v) => (x = v)` returns the string it
+    // assigned, and only a returned promise means anything here.
+    onsave: (v: string) => unknown;
+    placeholder?: string;
+    label: string;
+    showSaveState?: boolean;
+  } = $props();
 
   const s = $derived(t(messages, locale()));
   const effectivePlaceholder = $derived(placeholder ?? s.defaultPlaceholder);
@@ -51,13 +66,37 @@
   // Persist on blur AND on teardown — closing via Escape (or any unmount) never
   // blurs the editor, so a blur-only save would drop the last edit. Dedup against the
   // last persisted value so an untouched open/close doesn't fire a redundant save.
-  let lastSaved = value;
-  const persist = () => {
+  //
+  // `lastSaved` moves only once the save resolves, so a failed one is retried by the next
+  // blur (or the Retry button) instead of being taken for done. `inFlight` holds every
+  // unsettled save: it keeps a blur during a slow save from sending the same text twice,
+  // and marks their echoes as ours. Each save takes a number, and only the newest one's
+  // outcome is reported — an older save settling late must not say "Saved" (or clear the
+  // newer one) about text that is no longer the editor's.
+  let lastSaved = untrack(() => value);
+  const inFlight: { seq: number; text: string }[] = [];
+  let lastSeq = 0;
+  let saveState = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const persist = async () => {
     if (!editor) return;
     const current = editor.value();
-    if (current === lastSaved) return;
-    lastSaved = current;
-    onsave(current);
+    if (current === lastSaved || current === inFlight.at(-1)?.text) return;
+    const seq = ++lastSeq;
+    inFlight.push({ seq, text: current });
+    saveState = 'saving';
+    try {
+      await onsave(current);
+      if (seq !== lastSeq) return;
+      lastSaved = current;
+      saveState = 'saved';
+      if (showSaveState) announce(s.saved);
+    } catch {
+      if (seq !== lastSeq) return;
+      saveState = 'error';
+      if (showSaveState) announce(s.saveFailed, 'assertive');
+    } finally {
+      inFlight.splice(inFlight.findIndex((f) => f.seq === seq), 1);
+    }
   };
 
   // Live-syncs an externally-driven value change (e.g. the submit form's URL prefill
@@ -76,6 +115,9 @@
     // read (skipped while `editor` is still undefined) would never register as this
     // effect's dependency, and it would then never re-run once `editor` exists.
     const v = value;
+    // The echo of our own save (the parent writes the row once the server has it) is not
+    // an external change: re-applying it would overwrite whatever was typed meanwhile.
+    if (v === lastSaved || inFlight.some((f) => f.text === v)) return;
     if (editor && v !== editor.value()) {
       editor.value(v);
       lastSaved = v;
@@ -111,13 +153,17 @@
           { name: 'preview', action: EasyMDECtor.togglePreview, className: ICON_CLASS, title: s.toolbar.preview, icon: icons.preview, noDisable: true },
         ],
       });
-      editor.codemirror.on('blur', persist);
+      editor.codemirror.on('blur', () => void persist());
+      // Typing again makes a "Saved" stale; a failure stays up until a save succeeds.
+      editor.codemirror.on('change', () => {
+        if (saveState === 'saved') saveState = 'idle';
+      });
       editor.codemirror.getInputField().setAttribute('aria-label', label);
     })();
 
     return () => {
       cancelled = true;
-      persist();
+      void persist();
       // toTextArea() reverts the CodeMirror DOM and detaches listeners. Wrapped: a
       // remount that lands moments after mount (editorKey bumped very soon after
       // EasyMDE's own async init settled, e.g. by an autofill) can hit an EasyMDE
@@ -135,6 +181,25 @@
 </script>
 
 <textarea bind:this={el} aria-label={label}></textarea>
+{#if showSaveState}
+  <div class="flex min-h-5 items-center justify-end gap-2 text-xs">
+    <!-- Voiced through the shared announcer (see persist); this is only what is seen. -->
+    <span
+      class={saveState === 'error' ? 'text-destructive-strong' : 'text-muted-foreground'}
+    >
+      {#if saveState === 'saving'}{s.saving}{:else if saveState === 'saved'}{s.saved}{:else if saveState === 'error'}{s.saveFailed}{/if}
+    </span>
+    {#if saveState === 'error'}
+      <button
+        type="button"
+        onclick={() => void persist()}
+        class="rounded font-medium text-foreground underline underline-offset-2 hover:text-muted-foreground"
+      >
+        {s.retry}
+      </button>
+    {/if}
+  </div>
+{/if}
 
 <style>
   /* Theme EasyMDE to the app tokens (raw CSS vars adapt to light/dark automatically). */

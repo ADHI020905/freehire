@@ -1,11 +1,13 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
+  import { X } from '@lucide/svelte';
   import { api } from '#lib/api.js';
   import { AsyncData } from '#lib/asyncData.svelte.js';
   import { isAuthenticated } from '#lib/auth.svelte.js';
   import { consumeReauthDraft } from '#lib/recentAuth.js';
   import { locale } from '#lib/i18n/currentLocale.svelte.js';
-  import { t } from '#lib/i18n/t.js';
+  import { format, t } from '#lib/i18n/t.js';
+  import { announce } from '#lib/announce.svelte.js';
   import type { ApiKey, CreatedApiKey } from '#lib/types.js';
   import { Button, ConfirmDialog } from '#lib/ui/index.js';
   import { timeAgo } from '#lib/utils.js';
@@ -26,6 +28,16 @@
   // dismissed. It is never persisted client-side and never fetched again.
   let revealed = $state.raw<CreatedApiKey | null>(null);
   let copied = $state(false);
+  let copyFailed = $state(false);
+  // Dismissing destroys the only copy of the secret there will ever be, so an unconfirmed
+  // dismissal asks first — unless the key was already copied, which is the answer.
+  let confirmingDismiss = $state(false);
+  let tokenEl = $state<HTMLElement>();
+  // Where focus goes when the confirmation ends: back to the ✕ that asked, or — once the
+  // panel holding both is gone — to "Create key", the nearest control that is still there.
+  let dismissButton = $state<HTMLButtonElement>();
+  let createButton = $state<HTMLElement>();
+  const confirmTextId = $props.id();
 
   // Show the fastest path to actually using the key: hand it to the CLI and
   // search. The raw Bearer-header call still works (noted in the page intro),
@@ -40,14 +52,20 @@
   // in flight when the page is opened directly), mirroring MyJobsView.
   const keysData = new AsyncData<ApiKey[]>([]);
   $effect(() => {
-    if (isAuthenticated()) void keysData.run(() => api.listApiKeys());
+    if (isAuthenticated()) loadKeys();
   });
   const status = $derived(keysData.status);
   const keys = $derived(keysData.value);
 
+  function loadKeys(): void {
+    void keysData.run(() => api.listApiKeys());
+  }
+
   function onCreated(key: CreatedApiKey): void {
     revealed = key;
     copied = false;
+    copyFailed = false;
+    confirmingDismiss = false;
     keysData.value = [key, ...keysData.value];
   }
 
@@ -56,9 +74,41 @@
     try {
       await navigator.clipboard.writeText(revealed.token);
       copied = true;
+      copyFailed = false;
+      announce(s.reveal.copied);
     } catch {
+      // A denied or missing clipboard must not look like nothing happened: say so, and do
+      // the first half of the manual copy for them by selecting the token.
       copied = false;
+      copyFailed = true;
+      announce(s.reveal.copyFailed, 'assertive');
+      if (tokenEl) window.getSelection()?.selectAllChildren(tokenEl);
     }
+  }
+
+  function requestDismiss(): void {
+    if (copied) {
+      dismiss();
+      return;
+    }
+    // The confirmation's "Yes" takes focus as it mounts (see its attachment).
+    confirmingDismiss = true;
+  }
+
+  function dismiss(): void {
+    revealed = null;
+    createButton?.focus();
+  }
+
+  function keepRevealed(): void {
+    confirmingDismiss = false;
+    dismissButton?.focus();
+  }
+
+  // Escape answers "keep it": the safe choice, the same one leaving the question unanswered
+  // makes. On the bar's two buttons, which are the only places focus can be inside it.
+  function cancelOnEscape(e: KeyboardEvent): void {
+    if (e.key === 'Escape') keepRevealed();
   }
 
   let revokeTarget = $state<ApiKey | null>(null);
@@ -128,7 +178,15 @@
           {s.intro.apiReferenceTail}
         </p>
       </div>
-      <Button variant="primary" onclick={() => (createOpen = true)}>{s.form.create}</Button>
+      <Button
+        variant="primary"
+        onclick={() => (createOpen = true)}
+        {@attach (el: HTMLElement) => {
+          createButton = el;
+        }}
+      >
+        {s.form.create}
+      </Button>
     </div>
 
     {#if revealed}
@@ -139,22 +197,47 @@
             <p class="text-xs text-muted-foreground">{s.reveal.copyNow}</p>
           </div>
           <button
+            bind:this={dismissButton}
             type="button"
-            onclick={() => (revealed = null)}
+            onclick={requestDismiss}
             aria-label={s.reveal.dismiss}
-            class="text-muted-foreground transition-colors hover:text-foreground"
+            class="-m-1.5 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            ✕
+            <X class="size-4" aria-hidden="true" />
           </button>
         </div>
+        {#if confirmingDismiss}
+          <div
+            role="group"
+            aria-labelledby={confirmTextId}
+            class="flex flex-wrap items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm"
+          >
+            <p id={confirmTextId} class="flex-1">{s.reveal.dismissConfirm}</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onclick={dismiss}
+              onkeydown={cancelOnEscape}
+              {@attach (el: HTMLElement) => el.focus()}
+            >
+              {s.reveal.dismissConfirmYes}
+            </Button>
+            <Button variant="ghost" size="sm" onclick={keepRevealed} onkeydown={cancelOnEscape}>
+              {s.reveal.dismissConfirmNo}
+            </Button>
+          </div>
+        {/if}
         <div class="flex items-center gap-2">
-          <code class="flex-1 overflow-x-auto rounded bg-background px-3 py-2 font-mono text-sm"
+          <code bind:this={tokenEl} class="flex-1 overflow-x-auto rounded bg-background px-3 py-2 font-mono text-sm"
             >{revealed.token}</code
           >
           <Button variant="secondary" size="sm" onclick={copyToken}>
             {copied ? s.reveal.copied : s.reveal.copy}
           </Button>
         </div>
+        {#if copyFailed}
+          <p class="text-xs text-destructive">{s.reveal.copyFailed}</p>
+        {/if}
         <pre
           class="overflow-x-auto rounded bg-background px-3 py-2 font-mono text-xs text-muted-foreground">{cliExample}</pre>
         <p class="text-xs text-muted-foreground">
@@ -167,7 +250,7 @@
     {#if status === 'loading'}
       <States state="loading" />
     {:else if status === 'error'}
-      <States state="error" message={s.list.loadError} />
+      <States state="error" message={s.list.loadError} onRetry={loadKeys} />
     {:else if keys.length === 0}
       <States state="empty" message={s.list.empty} />
     {:else}
@@ -186,7 +269,12 @@
                 {#if key.expires_at}· {s.list.expiresPrefix} {timeAgo(key.expires_at, locale())}{/if}
               </span>
             </div>
-            <Button variant="ghost" size="sm" onclick={() => requestRevoke(key)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={format(s.list.revokeAria, { name: key.name })}
+              onclick={() => requestRevoke(key)}
+            >
               {s.list.revoke}
             </Button>
           </li>
