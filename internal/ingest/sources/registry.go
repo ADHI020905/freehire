@@ -803,6 +803,16 @@ func All(c HTTPClient) map[string]Source {
 	} else {
 		registry["instahyre"] = pacedInstahyre(c, c)
 	}
+	// hirist.tech and iimjobs.com: one Indian job platform on two sites, enumerated by category
+	// (board) through the API their web app calls, hydrating each new posting's body from the
+	// posting API. Every request of a run is paced to one a second. See hirist.go.
+	if c == nil {
+		registry["hirist"] = NewHirist(nil)
+		registry["iimjobs"] = NewIIMJobs(nil)
+	} else {
+		registry["hirist"] = NewHirist(pacedHiristGetter(c))
+		registry["iimjobs"] = NewIIMJobs(pacedHiristGetter(c))
+	}
 	// meta/uber/gusto are NOT served by the shared client: Meta's edge 400s the default Go
 	// TLS+HTTP/2 fingerprint and Uber's and Gusto's Cloudflare edges challenge it, so all three
 	// need the shared Chrome-fingerprint transport (fingerprintHTTP, also used by the
