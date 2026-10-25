@@ -59,7 +59,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "@scalar/api-reference": "1.69.2",
     "@scalar/server-side-rendering": "0.1.60",
-    "@scalar/types": "0.22.4",
+    "@scalar/types": "0.24.0",
     "@sentry/sveltekit": "^11.8.0",
     "easymde": "^2.21.0",
     "flag-icons": "^7.5.0",

@@ -29,8 +29,8 @@ importers:
         specifier: 0.1.60
         version: 0.1.60(tailwindcss@4.3.3)(typescript@6.0.3)(zod@4.6.7)
       '@scalar/types':
-        specifier: 0.22.4
-        version: 0.22.4
+        specifier: 0.24.0
+        version: 0.24.0
       '@sentry/sveltekit':
         specifier: ^11.8.0
         version: 11.8.0(@babel/core@7.29.7)(@sveltejs/kit@3.1.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.2.0(svelte@5.57.2(@typescript-eslint/types@8.65.0))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.65.0))(typescript@6.0.3)(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))(rollup@4.62.2)(svelte@5.57.2(@typescript-eslint/types@8.65.0))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
@@ -1177,10 +1177,6 @@ packages:
     resolution: {integrity: sha512-rcX0rFLiWWc0VBr/E+HkatubL0I0ZzxASQkd3032NWEMAEfNd2TiJ9kH46HwbSAOOl696ghxymWegjpjjvxwzA==}
     engines: {node: '>=22'}
 
-  '@scalar/helpers@0.16.0':
-    resolution: {integrity: sha512-lCBNB3hN8sGfUghz5AK5r63G+1/x4PHSgjH9asJVWne5e1tnKkti5eaejPLgy8didpAZsyXEp744xIosoWu9AA==}
-    engines: {node: '>=22'}
-
   '@scalar/helpers@0.16.4':
     resolution: {integrity: sha512-9eILWzUcAkHEuYMMvijpSIy69t+Vkq+NudLB/7lgARFTWqXfQpIxW1L3VH7ogKyRie5+E4CNZ3PSvlw6IIfLGw==}
     engines: {node: '>=22'}
@@ -1278,10 +1274,6 @@ packages:
 
   '@scalar/types@0.20.0':
     resolution: {integrity: sha512-+05slk/Q6MRMqEQt6eM77Jt9DnDPAvfcc/6r7mbrXhIqJSp3oAPrixpAnp1knBSlFaxgixcK/GMKw9QDfD+Zgg==}
-    engines: {node: '>=22'}
-
-  '@scalar/types@0.22.4':
-    resolution: {integrity: sha512-Nkdg1BYt/U5ajD2c8HNWzjyT57KYsTLtYeDVsrWsGBs1LbbzgbV3oJ1NHOezhC3tQI1yOXoixb+6NCaNJvvQ1g==}
     engines: {node: '>=22'}
 
   '@scalar/types@0.24.0':
@@ -4957,8 +4949,6 @@ snapshots:
 
   '@scalar/helpers@0.12.0': {}
 
-  '@scalar/helpers@0.16.0': {}
-
   '@scalar/helpers@0.16.4': {}
 
   '@scalar/icons@0.7.6(typescript@6.0.3)':
@@ -5155,13 +5145,6 @@ snapshots:
   '@scalar/types@0.20.0':
     dependencies:
       '@scalar/helpers': 0.12.0
-      nanoid: 5.1.16
-      type-fest: 5.10.0
-      zod: 4.6.7
-
-  '@scalar/types@0.22.4':
-    dependencies:
-      '@scalar/helpers': 0.16.0
       nanoid: 5.1.16
       type-fest: 5.10.0
       zod: 4.6.7
