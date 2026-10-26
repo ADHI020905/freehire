@@ -297,6 +297,19 @@
     </section>
 
     <section class="flex flex-col gap-3">
+      <h2 class="text-xl font-semibold tracking-tight">Interview buddies</h2>
+      <p class="text-sm leading-relaxed text-muted-foreground">
+        If you join interview buddies, your anonymous card, the companies and job titles you
+        apply to, and when you move to the interview or offer stage are visible to other members,
+        including applications made before you joined, but never your name or employer. Any
+        application can be hidden. Buddy messages are stored so the conversation can be read in
+        your account. Moderators can read a conversation only when someone reports it. Deleting
+        your account deletes your buddy membership, conversations, messages, blocks, and hidden
+        application marks.
+      </p>
+    </section>
+
+    <section class="flex flex-col gap-3">
       <h2 class="text-xl font-semibold tracking-tight">Retention</h2>
       <p class="text-sm leading-relaxed text-muted-foreground">
         We keep account and activity data for as long as your account exists. When you delete your

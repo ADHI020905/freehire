@@ -149,6 +149,14 @@ import type {
   ExperienceEmployment,
   ApiSuggestion,
   BankedAnswer,
+  BuddyStatus,
+  BuddySimilar,
+  BuddyFeedPage,
+  BuddyProfile,
+  BuddyActivity,
+  Conversation,
+  ConversationMessage,
+  ConversationReport,
 } from './types';
 
 /** A page of list items, optionally the total matching the query (endpoints that
@@ -2401,6 +2409,66 @@ export function createApi(
     await call(`/api/v1/me/referrals/offers/${encodeURIComponent(id)}`, { method: 'DELETE' });
   }
 
+  // ── Interview buddies ────────────────────────────────────────────────────
+  async function buddyStatus(): Promise<BuddyStatus> { return requestData('/api/v1/me/buddies'); }
+  async function joinBuddies(): Promise<BuddyStatus> { return requestData('/api/v1/me/buddies', { method: 'POST' }); }
+  async function leaveBuddies(): Promise<void> { await call('/api/v1/me/buddies', { method: 'DELETE' }); }
+  async function listBuddySimilar(limit = 20, offset = 0): Promise<BuddySimilar[]> {
+    return requestData(`/api/v1/me/buddies/similar?limit=${limit}&offset=${offset}`);
+  }
+  async function listBuddyFeed(mode: 'similar' | 'all', cursor?: string, limit = 30): Promise<BuddyFeedPage> {
+    const q = new URLSearchParams({ mode, limit: String(limit) });
+    if (cursor) q.set('cursor', cursor);
+    return request<BuddyFeedPage>(`/api/v1/me/buddies/feed?${q}`);
+  }
+  /** One member's own activity: the same feed, narrowed to their handle. */
+  async function listBuddyMemberFeed(handle: string, cursor?: string, limit = 30): Promise<BuddyFeedPage> {
+    const q = new URLSearchParams({ handle, limit: String(limit) });
+    if (cursor) q.set('cursor', cursor);
+    return request<BuddyFeedPage>(`/api/v1/me/buddies/feed?${q}`);
+  }
+  async function getBuddyProfile(handle: string): Promise<BuddyProfile> {
+    return requestData(`/api/v1/me/buddies/profiles/${encodeURIComponent(handle)}`);
+  }
+  async function getBuddyActivity(handle: string): Promise<BuddyActivity> {
+    return requestData(`/api/v1/me/buddies/profiles/${encodeURIComponent(handle)}/activity`);
+  }
+  async function listBuddyHiddenApplications(): Promise<number[]> { return requestData('/api/v1/me/buddies/hidden-applications'); }
+  async function setBuddyApplicationHidden(id: string, hidden: boolean): Promise<void> {
+    await call(`/api/v1/me/buddies/hidden-applications/${encodeURIComponent(id)}`, { method: hidden ? 'PUT' : 'DELETE' });
+  }
+  async function inviteBuddy(handle: string, body: string): Promise<Conversation> {
+    return requestData('/api/v1/me/buddies/invite', jsonBody('POST', { handle, body }));
+  }
+
+  // ── Conversations (the messaging core, every kind) ───────────────────────
+  async function listConversations(): Promise<Conversation[]> { return requestData('/api/v1/me/conversations'); }
+  async function answerConversation(id: number, action: 'accept' | 'decline'): Promise<Conversation> {
+    return requestData(`/api/v1/me/conversations/${id}/${action}`, jsonBody('POST', {}));
+  }
+  async function blockConversation(id: number): Promise<void> { await call(`/api/v1/me/conversations/${id}/block`, { method: 'POST' }); }
+  async function reportConversation(id: number, reason: ConversationReport['reason'], note: string): Promise<void> {
+    await call(`/api/v1/me/conversations/${id}/report`, jsonBody('POST', { reason, note }));
+  }
+  async function listConversationMessages(id: number, after?: number, limit?: number): Promise<ConversationMessage[]> {
+    const params = new URLSearchParams();
+    if (after) params.set('after', String(after));
+    if (limit) params.set('limit', String(limit));
+    const q = params.size ? `?${params}` : '';
+    return requestData(`/api/v1/me/conversations/${id}/messages${q}`);
+  }
+  async function sendConversationMessage(id: number, body: string): Promise<ConversationMessage> {
+    return requestData(`/api/v1/me/conversations/${id}/messages`, jsonBody('POST', { body }));
+  }
+  async function markConversationRead(id: number, upTo: number): Promise<void> {
+    await call(`/api/v1/me/conversations/${id}/read`, jsonBody('POST', { up_to: upTo }));
+  }
+  async function listConversationReports(limit = 30, offset = 0, includeResolved = false): Promise<ConversationReport[]> {
+    const q = new URLSearchParams({ limit: String(limit), offset: String(offset), include_resolved: String(includeResolved) });
+    return requestData(`/api/v1/moderation/conversation-reports?${q}`);
+  }
+  async function resolveConversationReport(id: number): Promise<void> { await call(`/api/v1/moderation/conversation-reports/${id}/resolve`, jsonBody('POST', {})); }
+
   /** The referrer inbox: open requests for the companies the caller is approved for. */
   async function listIncomingReferrals(): Promise<IncomingReferralRequest[]> {
     return requestData<IncomingReferralRequest[]>('/api/v1/me/referrals/incoming');
@@ -3376,6 +3444,26 @@ export function createApi(
     withdrawReferralOffer,
     listIncomingReferrals,
     resolveReferral,
+    buddyStatus,
+    joinBuddies,
+    leaveBuddies,
+    listBuddySimilar,
+    listBuddyFeed,
+    listBuddyMemberFeed,
+    getBuddyProfile,
+    getBuddyActivity,
+    listBuddyHiddenApplications,
+    setBuddyApplicationHidden,
+    inviteBuddy,
+    listConversations,
+    answerConversation,
+    blockConversation,
+    reportConversation,
+    listConversationMessages,
+    sendConversationMessage,
+    markConversationRead,
+    listConversationReports,
+    resolveConversationReport,
     referralCvUrl,
     listPendingReferralOffers,
     decideReferralOffer,

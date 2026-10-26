@@ -270,6 +270,22 @@ type BroadcastEmail struct {
 	Error    string             `json:"error"`
 }
 
+type BuddyHiddenApplication struct {
+	UserID        int64              `json:"user_id"`
+	ApplicationID int64              `json:"application_id"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type BuddyMember struct {
+	UserID    int64              `json:"user_id"`
+	Handle    string             `json:"handle"`
+	Category  pgtype.Text        `json:"category"`
+	Countries []string           `json:"countries"`
+	Regions   []string           `json:"regions"`
+	JoinedAt  pgtype.Timestamptz `json:"joined_at"`
+	LeftAt    pgtype.Timestamptz `json:"left_at"`
+}
+
 type CandidateSurvey struct {
 	UserID                int64              `json:"user_id"`
 	JobSearchStage        pgtype.Text        `json:"job_search_stage"`
@@ -392,6 +408,36 @@ type CompanyVote struct {
 	Vote        int16              `json:"vote"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Conversation struct {
+	ID         int64              `json:"id"`
+	Kind       string             `json:"kind"`
+	PairKey    pgtype.Text        `json:"pair_key"`
+	StarterID  int64              `json:"starter_id"`
+	Status     string             `json:"status"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	AcceptedAt pgtype.Timestamptz `json:"accepted_at"`
+	ClosedAt   pgtype.Timestamptz `json:"closed_at"`
+}
+
+type ConversationParticipant struct {
+	ConversationID    int64              `json:"conversation_id"`
+	UserID            int64              `json:"user_id"`
+	Persona           string             `json:"persona"`
+	LastReadMessageID pgtype.Int8        `json:"last_read_message_id"`
+	NotifiedAt        pgtype.Timestamptz `json:"notified_at"`
+}
+
+type ConversationReport struct {
+	ID             int64              `json:"id"`
+	ConversationID int64              `json:"conversation_id"`
+	ReporterID     int64              `json:"reporter_id"`
+	Reason         string             `json:"reason"`
+	Note           pgtype.Text        `json:"note"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ResolvedAt     pgtype.Timestamptz `json:"resolved_at"`
+	ResolvedBy     pgtype.Int8        `json:"resolved_by"`
 }
 
 type CoverLetter struct {
@@ -1058,6 +1104,14 @@ type MentorReview struct {
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Message struct {
+	ID             int64              `json:"id"`
+	ConversationID int64              `json:"conversation_id"`
+	SenderID       int64              `json:"sender_id"`
+	Body           string             `json:"body"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
 type NotificationSetting struct {
 	UserID             int64              `json:"user_id"`
 	Enabled            bool               `json:"enabled"`
@@ -1510,6 +1564,12 @@ type User struct {
 	ApiUntilStripe     pgtype.Timestamptz `json:"api_until_stripe"`
 	ApiDataUntilStripe pgtype.Timestamptz `json:"api_data_until_stripe"`
 	AgentsMayApply     bool               `json:"agents_may_apply"`
+}
+
+type UserBlock struct {
+	BlockerID int64              `json:"blocker_id"`
+	BlockedID int64              `json:"blocked_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type UserEmailCode struct {

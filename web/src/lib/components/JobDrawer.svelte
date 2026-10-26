@@ -184,6 +184,40 @@
   // Declared here (before TABS, which reads autoApplied) rather than nearer its own
   // rendering further down — the same ordering `emails`'s own comment already explains.
   let events = $state.raw<TimelineEvent[]>([]);
+  let buddyMember = $state(false);
+  let hiddenInBuddyFeed = $state(false);
+  let buddyVisibilityBusy = $state(false);
+  const buddyApplicationId = $derived(events.find((event) => event.application_id)?.application_id ?? null);
+  // One request answers both questions: the hidden list is a member-only route (403 for
+  // anybody else), so its answer is the membership too. Never GET /me/buddies from here —
+  // that one refreshes the member's ranking keys and belongs to entering the section.
+  // Nothing is asked until the drawer holds an application, so a posting never applied to
+  // costs no request.
+  $effect(() => {
+    const id = buddyApplicationId;
+    if (id !== null) void loadBuddyVisibility(id);
+  });
+  async function loadBuddyVisibility(id: number) {
+    try {
+      const ids = await api.listBuddyHiddenApplications();
+      buddyMember = true;
+      hiddenInBuddyFeed = ids.includes(id);
+    } catch {
+      buddyMember = false;
+    }
+  }
+  async function toggleBuddyVisibility() {
+    if (buddyApplicationId === null || buddyVisibilityBusy) return;
+    buddyVisibilityBusy = true;
+    const previous = hiddenInBuddyFeed;
+    hiddenInBuddyFeed = !previous;
+    try {
+      await api.setBuddyApplicationHidden(String(buddyApplicationId), hiddenInBuddyFeed);
+    } catch (err) {
+      hiddenInBuddyFeed = previous;
+      sessionError = err instanceof Error ? err.message : s.errors.buddyVisibility;
+    } finally { buddyVisibilityBusy = false; }
+  }
 
   // Once a successful submission retires the live attempt, `autoApply` goes back to null
   // and the job's stage looks like any other "applied" job. The ledger still knows better:
@@ -667,6 +701,12 @@
             </Button>
           {/if}
         </div>
+      {/if}
+      {#if buddyMember && buddyApplicationId !== null}
+        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" checked={!hiddenInBuddyFeed} disabled={buddyVisibilityBusy} onchange={toggleBuddyVisibility} />
+          {s.showInBuddyFeed}
+        </label>
       {/if}
       {#if sessionError}
         <p class="text-sm text-warning-strong" role="alert">{sessionError}</p>

@@ -125,6 +125,11 @@ type Querier interface {
 	// back to the state before the first of the coalesced edits, which is what makes undo mean
 	// something for typed text.
 	AmendCVRevision(ctx context.Context, arg AmendCVRevisionParams) (CvRevision, error)
+	// Accept or decline a pending conversation. Only a participant who did not start it
+	// matches, and no block may stand between the participants (a block closes the
+	// conversation, but one committing between the caller's read and this write would not be
+	// seen otherwise); no row means the caller must look the conversation up to say why.
+	AnswerConversation(ctx context.Context, arg AnswerConversationParams) (Conversation, error)
 	// Append one message to a session's transcript, assigning the next sequence number in the
 	// same statement so concurrent writers cannot collide on (session_id, seq) — the primary
 	// key rejects a duplicate rather than silently reordering the conversation.
@@ -328,6 +333,12 @@ type Querier interface {
 	//
 	// Guarded on IS NULL, so a re-run writes nothing and stopping mid-way is free.
 	BackfillSemanticInputHashChunk(ctx context.Context, arg BackfillSemanticInputHashChunkParams) (int64, error)
+	// Block the other participant of a conversation and close EVERY conversation between the
+	// two, of any kind, in one statement so no half can land alone. Only a participant
+	// matches; no row means the caller must say the conversation is not theirs. Closing is
+	// allowed from any status, and a conversation that was already closed keeps its original
+	// closed_at. Blocking twice writes nothing the second time.
+	BlockFromConversation(ctx context.Context, arg BlockFromConversationParams) (int64, error)
 	// Add a host to the blocklist, attributed to the blocking moderator. ON CONFLICT DO NOTHING
 	// makes blocking an already-blocked host a no-op rather than an error (submission.Service.Reject
 	// calls this every time block_domain is set, whether or not the host is new).
@@ -676,6 +687,10 @@ type Querier interface {
 	// worker died (stale claimed_at), so no separate reaper process is needed.
 	// Oldest post first so a backlog drains in posting order.
 	ClaimTelegramPosts(ctx context.Context, arg ClaimTelegramPostsParams) ([]ClaimTelegramPostsRow, error)
+	// Take the notice for one participant before sending it: only the run that moves the stamp
+	// from the value it read (and sees the same read cursor) gets a row back. A concurrent
+	// run, or a read that landed in between, gets none and sends nothing.
+	ClaimUnread(ctx context.Context, arg ClaimUnreadParams) (int64, error)
 	// Store a freshly minted credential, but only if this account still has none, and report
 	// what is now stored. NO ROWS means somebody else claimed first — the caller re-reads the
 	// winner's credential and deletes the one it minted, which would otherwise sit at the
@@ -1208,6 +1223,10 @@ type Querier interface {
 	// from the job ledger and then ADDED by the caller: the budget belongs to the engine,
 	// and a company page costs it exactly what a job page does.
 	CountCompanySearchPingsSince(ctx context.Context, arg CountCompanySearchPingsSinceParams) (int64, error)
+	// How many conversations of the kind starter_id started after since, and when the oldest
+	// of them was started (NULL when there are none): that instant plus the window is when a
+	// slot frees up.
+	CountConversationsStartedSince(ctx context.Context, arg CountConversationsStartedSinceParams) (CountConversationsStartedSinceRow, error)
 	// How many pending matches a digest will COVER without carrying: the subscription's
 	// pending matches strictly older than the oldest one the claim took. The claim reads
 	// newest first, so these are exactly the ones that did not fit; the digest counts them in
@@ -2383,6 +2402,10 @@ type Querier interface {
 	// answers both pauses: a second query per board would double the per-board round trips over
 	// the crawl host's link to the database.
 	GetBoardCooldown(ctx context.Context, arg GetBoardCooldownParams) (GetBoardCooldownRow, error)
+	// The member behind a handle, active or left.
+	GetBuddyMemberByHandle(ctx context.Context, handle string) (BuddyMember, error)
+	// A member's own row, active or left. The caller decides what left_at means.
+	GetBuddyMemberByUser(ctx context.Context, userID int64) (BuddyMember, error)
 	// The user's saved CV appearance defaults, if any. No row means the user has never saved
 	// any — the caller falls back to the system defaults rather than treating this as an error.
 	GetCVAppearanceDefaults(ctx context.Context, userID int64) (CvAppearanceDefault, error)
@@ -2457,6 +2480,11 @@ type Querier interface {
 	//
 	// No rows means nothing was charged under this reference, and the release is a no-op.
 	GetConsumptionDay(ctx context.Context, arg GetConsumptionDayParams) (pgtype.Date, error)
+	// The kind's conversation for a pair_key, in any status.
+	GetConversationByPairKey(ctx context.Context, arg GetConversationByPairKeyParams) (Conversation, error)
+	// One conversation, only when user_id takes part in it: an outsider gets no row, exactly
+	// as for a conversation that does not exist.
+	GetConversationForUser(ctx context.Context, arg GetConversationForUserParams) (Conversation, error)
 	// The caller's current cover letter for one vacancy, with the two staleness stamps it was
 	// written against: model and language. No row means the pair was never drafted, and the
 	// handler reports that without calling a model. The handler compares both stamps against
@@ -3070,6 +3098,11 @@ type Querier interface {
 	// Two sources rather than one because they cover different moments: the event row exists from
 	// the first delivery onward, and the column survives even if events are ever pruned.
 	HasRevenueCatFootprint(ctx context.Context, userID int64) (pgtype.Bool, error)
+	// Mark one of the caller's own applications as hidden from the buddy feed and from the
+	// shared-company count. The SELECT is what proves ownership: for an application that is
+	// not the caller's it yields nothing and no row comes back. Hiding twice is a no-op that
+	// still returns the id (the DO UPDATE touches nothing real, it only makes RETURNING fire).
+	HideBuddyApplication(ctx context.Context, arg HideBuddyApplicationParams) (int64, error)
 	// The moderator lever: hide a specific review (idempotent — hiding an already-
 	// hidden row is a no-op). Returns the company_slug so the caller can recompute
 	// that company's counters in the same transaction. pgx.ErrNoRows on an unknown id.
@@ -3157,6 +3190,10 @@ type Querier interface {
 	// The partial unique index on (user_id, feature, ref) WHERE kind='consume' guards against
 	// a double charge for the same ref even under a race.
 	InsertConsumption(ctx context.Context, arg InsertConsumptionParams) error
+	// A report of a conversation by one of its participants. No row means either the reporter
+	// does not take part or they already reported it; the caller looks the conversation up to
+	// say which.
+	InsertConversationReport(ctx context.Context, arg InsertConversationReportParams) (int64, error)
 	// Append the debit for a metered action. delta is negative (the action cost). The partial
 	// unique index on (user_id, feature, ref) WHERE kind='debit' guards against a double charge
 	// for the same ref even under a race.
@@ -3202,6 +3239,12 @@ type Querier interface {
 	// GPU-bound (~19 docs/s against a GPU embedding a wave in ~7s) — see
 	// hire-semantic-vectors-in-pg's "THE REAL BOTTLENECK IS POSTGRES, NOT THE GPU" note.
 	InsertJobSemanticChunks(ctx context.Context, arg InsertJobSemanticChunksParams) error
+	// A message into an OPEN conversation the sender takes part in, and the sender's read
+	// cursor moved onto it, in one statement. The status is guarded here, under FOR SHARE,
+	// and not by an earlier read: a close that commits while this waits makes the row stop
+	// matching, so no message lands after it. No row means the caller must look the
+	// conversation up to say why.
+	InsertMessage(ctx context.Context, arg InsertMessageParams) (InsertMessageRow, error)
 	// Reserves a company slug for a claim in progress. The UNIQUE(company_slug) constraint is
 	// the whole race guard: two concurrent claims on the same slug both attempt this insert, one
 	// succeeds, and the loser's caller maps the unique violation to a clean conflict — see
@@ -3316,6 +3359,13 @@ type Querier interface {
 	// WHERE over `description` de-TOASTs the column for every row it examines, and the
 	// search index already holds the text.
 	JobsForWorkModeRecheckByIDs(ctx context.Context, ids []int64) ([]JobsForWorkModeRecheckByIDsRow, error)
+	// Opt a member in to the interview-buddies network, or bring a returning one back. A first
+	// join stores the handle the caller minted; a rejoin (the user_id conflict) clears left_at
+	// and refreshes the ranking keys but leaves the stored handle alone, so the argument is
+	// only used on the insert path. A handle collision is a different unique violation (the
+	// handle column) that ON CONFLICT (user_id) does not absorb, so the caller can retry with
+	// a new handle.
+	JoinBuddyMember(ctx context.Context, arg JoinBuddyMemberParams) (BuddyMember, error)
 	// When the candidate last set this application's stage themselves, or NULL if never.
 	//
 	// This is what silences a mail-driven stage suggestion. A `stage_set` later than the message
@@ -3376,6 +3426,14 @@ type Querier interface {
 	// returns exactly one row — NULL for an empty catalogue — rather than the
 	// no-rows error a bare LIMIT 1 SELECT would give sqlc's :one on an empty table.
 	LatestOpenJobAddedAt(ctx context.Context) (pgtype.Timestamptz, error)
+	// Opt a member out: stamp left_at and close every pending or open buddy conversation they
+	// are in, in one statement so a leave cannot half-apply. The conversations are the
+	// messaging core's (kind 'buddy'); closing them here rather than through the core is what
+	// keeps the two writes atomic. The row is kept, so rejoining restores the handle. The
+	// member update is guarded by left_at IS NULL, so for a member who is not active it
+	// returns no row; the conversation close is not guarded, which is harmless because a left
+	// member has no pending or open buddy conversation to close.
+	LeaveBuddyMember(ctx context.Context, userID int64) (BuddyMember, error)
 	// Bind a Discord account to a freehire account, or move an existing binding to a different
 	// Discord account.
 	//
@@ -3599,6 +3657,46 @@ type Querier interface {
 	// all, because the only thing that creates the row is a page behind the login.
 	// Migration 0153 split the two.
 	ListBroadcastCandidates(ctx context.Context, arg ListBroadcastCandidatesParams) ([]ListBroadcastCandidatesRow, error)
+	// How the other side of each of the viewer's buddy conversations is drawn: handle and card
+	// inputs, and whether they may be shown at all. They may while both sides are active
+	// members and no block stands between them in either direction; otherwise the
+	// conversation still lists (its history is the viewer's) but the caller must not serve
+	// the other member's handle or card.
+	ListBuddyCounterparts(ctx context.Context, arg ListBuddyCounterpartsParams) ([]ListBuddyCounterpartsRow, error)
+	// One page of the buddy feed, newest first, keyset-paged on (occurred_at, id). Three kinds
+	// of event qualify and nothing else: an application ('applied'), and a move into the
+	// 'interview' or 'offer' stage. 'accepted' is excluded on purpose (it says the person
+	// changed jobs) and so is every rejection, withdrawal and expiry. The kind / retracted_at
+	// predicate is written exactly as the partial index application_events_feed_idx declares
+	// it, which is what lets the planner use that index; the signal test only narrows it.
+	//
+	// Excluded: the viewer's own events, authors who are not active members, blocked pairs in
+	// either direction, events on a private (user-pasted) posting, and applications their author hid. The author's earlier events count
+	// from before they joined: only left_at gates, never joined_at.
+	//
+	// authors_only restricts to author_handles: the viewer's top similar members, which the
+	// caller takes from ListSimilarBuddies so the scoring formula lives in one place, or the
+	// one member whose page the viewer is reading. Either way the author still passes every
+	// predicate above, so naming a handle never widens what the viewer may see. The day
+	// is the UTC calendar date; the timestamp itself never leaves this query except as the
+	// cursor key. cursor_id is NULL for the first page. Otherwise it names the last event of
+	// the previous page and the page is read INCLUSIVE of it: the keyset position is resolved
+	// here, from the event itself, so the client never holds a timestamp, and the caller
+	// checks the first row is that event. Because the event passes through the same
+	// visibility predicate as every other row, a cursor naming an event the viewer may not
+	// see (rejected, hidden, blocked, retracted, unknown) comes back without it.
+	ListBuddyFeed(ctx context.Context, arg ListBuddyFeedParams) ([]ListBuddyFeedRow, error)
+	// The handles behind account ids, active or left, for a moderator reading a reported
+	// buddy conversation by what its members saw.
+	ListBuddyHandles(ctx context.Context, userIds []int64) ([]ListBuddyHandlesRow, error)
+	// One member's feed events counted per UTC day since since_day, oldest first, for the year
+	// grid on their page. It is ListBuddyFeed's visibility predicate RESTATED, narrowed to one
+	// author and aggregated: sqlc cannot share a WHERE clause between two queries, and every
+	// exclusion above must hold here too or the grid counts what the feed hides. The guard
+	// against the two drifting is TestMemberActivityMatchesMemberFeed, which seeds every
+	// exclusion and asserts the grid's total equals the author-filtered feed's length — change
+	// one predicate and change the other. Only days with an event come back.
+	ListBuddyMemberActivity(ctx context.Context, arg ListBuddyMemberActivityParams) ([]ListBuddyMemberActivityRow, error)
 	// The feed, newest first.
 	ListCVRevisions(ctx context.Context, arg ListCVRevisionsParams) ([]CvRevision, error)
 	// Every revision of one agent turn or autopilot run that is still standing, newest first —
@@ -3844,6 +3942,17 @@ type Querier interface {
 	// The prefix is passed already terminated by the caller (the session id plus '#'), so a
 	// session id that is a prefix of another cannot borrow its charges.
 	ListConsumptionRefsByPrefix(ctx context.Context, arg ListConsumptionRefsByPrefixParams) ([]pgtype.Text, error)
+	ListConversationParticipants(ctx context.Context, conversationID int64) ([]ListConversationParticipantsRow, error)
+	// A page of reports, newest first, with the conversation's kind and the reporter and the
+	// participant they reported, each as account id and persona. The persona turns the id
+	// into the name the others saw; the id itself never leaves the service.
+	ListConversationReports(ctx context.Context, arg ListConversationReportsParams) ([]ListConversationReportsRow, error)
+	// Every conversation of the viewer with the other participant's id, the viewer's unread
+	// count (the other side's messages past the viewer's read cursor) and the newest message
+	// time, newest first. A declined conversation is hidden from the participant who declined
+	// it. The unread count and last time come from one pass over each conversation's
+	// messages, so the list costs one query however many conversations there are.
+	ListConversations(ctx context.Context, viewerID int64) ([]ListConversationsRow, error)
 	// Up to $2 (board, region) pairs currently in an active cooldown for a provider,
 	// soonest-to-expire first — the recovery probe's candidates. The ordering rotates the sample as
 	// cooldowns lapse, so a run does not keep probing the same few boards.
@@ -4026,6 +4135,8 @@ type Querier interface {
 	// silence ladder it reads from, so both channels clear the same bar from the same
 	// source.
 	ListGhostReportEvidence(ctx context.Context, jobIds []int64) ([]ListGhostReportEvidenceRow, error)
+	// The caller's hidden application ids, for the tracker's visibility switch.
+	ListHiddenBuddyApplications(ctx context.Context, userID int64) ([]int64, error)
 	// Every claimed HEAVY-pool run, with what the scheduler needs to ask the service manager
 	// about it. See ListInFlightLightRuns for the other pool, and ClaimDueHeavyRuns for what
 	// "heavy" means and why the two pools are counted apart: the budget each pool claims
@@ -4426,6 +4537,11 @@ type Querier interface {
 	// once they are). The scope check is defensive alongside the flag: a grant can lose a
 	// scope outside our control, and this worker must not call an API it no longer holds.
 	ListMentorBusySyncConnections(ctx context.Context, calendarScope string) ([]ListMentorBusySyncConnectionsRow, error)
+	// Messages after a given id, oldest first. Readability is the caller's check.
+	ListMessages(ctx context.Context, arg ListMessagesParams) ([]ListMessagesRow, error)
+	// Every message of the given conversations, oldest first within each, with the persona its
+	// sender spoke as. One read for a whole page of reports.
+	ListMessagesForConversations(ctx context.Context, conversationIds []int64) ([]ListMessagesForConversationsRow, error)
 	// All of the caller's own feedback on a company, across every category they've
 	// reviewed it under — the write dialog's "which categories have I already
 	// used" read. Not filtered by status, same reasoning as GetMyCompanyFeedback.
@@ -4660,6 +4776,22 @@ type Querier interface {
 	// catalogue, and ~862k of those jobs carry chunks. Ordered so a caller can group rows by
 	// job without sorting, and so a job's vectors keep their chunk order.
 	ListSemanticChunksForJobs(ctx context.Context, jobIds []int64) ([]JobSemanticChunk, error)
+	// The active members most like the viewer, best first, one page. The score is
+	//   w_category*(same category) + w_countries*(countries overlap) + w_regions*(regions
+	//   overlap) + w_company*(shared companies, at most company_cap counted)
+	// with the weights passed in by the caller (they are named constants in Go, a first guess,
+	// and this is the only place the formula lives). Ties break on joined_at DESC, then user_id
+	// so a page boundary is stable. A member who shares nothing still ranks, with score 0.
+	//
+	// A company is shared when BOTH sides applied to it (kind 'applied', not retracted) inside
+	// the last 90 days, ignoring any application its own author has hidden from the buddy
+	// feed: hiding an application takes it out of every buddy surface. The page's shared
+	// companies come back as parallel slug / name arrays, at most company_cap, in slug order.
+	//
+	// Excluded: the viewer, members who left, and any pair in user_blocks (account-wide) in either
+	// direction. A viewer who is not an active member yields no rows (the service checks first).
+	// The CV is read for the page's rows only, to project the card summary.
+	ListSimilarBuddies(ctx context.Context, arg ListSimilarBuddiesParams) ([]ListSimilarBuddiesRow, error)
 	// Companies whose ingested name is still a squished slug (lowercase, no
 	// whitespace or uppercase) and that have at least one open job, with a
 	// representative open job's source and URL so the backfill worker can locate the
@@ -4848,6 +4980,17 @@ type Querier interface {
 	// the row processed — so a store purchase would be marked done having never conferred
 	// anything, and never be retried.
 	ListUnprocessedBillingEvents(ctx context.Context, arg ListUnprocessedBillingEventsParams) ([]ListUnprocessedBillingEventsRow, error)
+	// The participants due an unread notice: one row per (conversation, recipient). A
+	// participant is due when another participant has written something past its read cursor,
+	// the OLDEST such message is not newer than cutoff, and it was not already notified since
+	// that message — notified_at is compared with the oldest unread message rather than
+	// cleared on read, so reading and a later message re-arms it without the read path
+	// knowing the worker exists. Open conversations notify every participant; a pending one
+	// only those who did not start it, so a starter is never told about their own request.
+	// Declined and closed are never due.
+	//
+	// prev_notified_at and last_read are returned for the compare-and-set in ClaimUnread.
+	ListUnreadDue(ctx context.Context, arg ListUnreadDueParams) ([]ListUnreadDueRow, error)
 	// Every feature's consumption for one user on one day, for the usage surface. A feature
 	// the user has not touched today simply does not come back, and the caller reports it as
 	// untouched rather than as absent.
@@ -5060,6 +5203,9 @@ type Querier interface {
 	// so it is never looked up again. Touches nothing else: an unmatched company's
 	// tagline/company_info stay exactly as another source may have left them.
 	MarkCompanyWikipediaChecked(ctx context.Context, slug string) error
+	// Move the caller's read cursor up to up_to, never back and never past the conversation's
+	// newest message. No row means the caller does not take part.
+	MarkConversationRead(ctx context.Context, arg MarkConversationReadParams) (int64, error)
 	// Stamp notified_at on the matches a delivered digest counted without carrying — the set
 	// CountCoveredMatches measured before the send, under the same predicate. notified_at is
 	// honest here: the digest the person received announced these postings in its count and
@@ -6252,6 +6398,9 @@ type Querier interface {
 	// usable destination on any configured channel) is retried promptly on a later pass
 	// instead of waiting out the lease.
 	ReleaseReminderClaim(ctx context.Context, id int64) error
+	// Give a claim back after every channel failed, so the next run retries. Guarded on the
+	// stamp being the claim's own: a participant re-notified since keeps its newer one.
+	ReleaseUnread(ctx context.Context, arg ReleaseUnreadParams) error
 	// Remove a job from a list. Idempotent: removing an absent job is a no-op.
 	RemoveJobListItem(ctx context.Context, arg RemoveJobListItemParams) error
 	// Apply a resolved display name to every stored job of ONE board whose company is still that
@@ -6287,6 +6436,14 @@ type Querier interface {
 	// rather than silently writing over a fresher grant... which it cannot do anyway, the WHERE
 	// naming the access token this renewal was issued against.
 	RenewSocialToken(ctx context.Context, arg RenewSocialTokenParams) (int64, error)
+	// A new start on a pair_key whose conversation was closed WITHOUT a block (a feature closed
+	// it, e.g. a buddy leaving; a block never reopens). The row is reused rather than
+	// replaced, so the history stays and the pair keeps exactly one conversation. It goes back
+	// to pending under the new starter, created_at restarts so it counts against the kind's
+	// start cap, both notice stamps clear, and the old messages count as read for both sides
+	// so only the new first message is unread. The read cursors are taken from the snapshot
+	// before the new message is inserted. No row means closed-without-block did not hold.
+	ReopenConversation(ctx context.Context, arg ReopenConversationParams) (ReopenConversationRow, error)
 	// Undoes CloseEmployerJob: the same actor, the same scope (created_by = actor_id AND
 	// source = 'employer'), and ONLY a close that actor made — closed_reason =
 	// 'employer_closed'. A posting another mechanism closed (a moderator, the liveness probe)
@@ -6393,6 +6550,8 @@ type Querier interface {
 	// one. Without the ORDER BY a violation would resolve differently run to run; with it, the
 	// adapter can also see the conflict and say so.
 	ResolveCompanySlugAliases(ctx context.Context, foldedKeys []string) ([]ResolveCompanySlugAliasesRow, error)
+	// Mark a report handled. An already resolved report keeps its first resolver and time.
+	ResolveConversationReport(ctx context.Context, arg ResolveConversationReportParams) (int64, error)
 	// Mark a sent request contacted or declined, recording the acting referrer and time. The
 	// status='sent' guard makes it race-safe: whichever referrer acts first wins; a second
 	// attempt matches no row (mapped to "already resolved").
@@ -7098,6 +7257,8 @@ type Querier interface {
 	// username means another account already holds it. The caller resolves either
 	// case by re-reading GetUsernameByUser.
 	SetUsernameIfAbsent(ctx context.Context, arg SetUsernameIfAbsentParams) (int64, error)
+	// Lift a hide. Keyed on the caller, so it can only ever remove the caller's own mark.
+	ShowBuddyApplication(ctx context.Context, arg ShowBuddyApplicationParams) error
 	// The trailing 90 UTC calendar days of recorded daily status (today and the 89
 	// days before it), oldest first. A day with no row (never sampled) is simply
 	// absent — the caller must not treat that as "operational". The `>` against a
@@ -7147,6 +7308,18 @@ type Querier interface {
 	// LEFT, so an id with no hash beside it is still stamped, with a NULL input hash — "not
 	// known", which only ever costs a re-embed — rather than silently not stamped at all.
 	StampSemanticEmbeddedBatch(ctx context.Context, arg StampSemanticEmbeddedBatchParams) error
+	// The messaging core (internal/engage/messaging). Every conversation today has exactly two
+	// participants; queries that name "the other participant" rely on it, and a multi-party
+	// kind will have to revisit them. Each participant speaks as a persona; anything that
+	// names an account to another reads the persona, never the account.
+	// A pending conversation, both participants and the starter's first message in ONE
+	// statement, so a conversation never exists without the message that opened it or
+	// without either side. A second conversation of the kind for the same pair_key is the
+	// unique violation on (kind, pair_key), which the caller turns into a reopen or a
+	// conflict. A block between the two in either direction is checked HERE and not in an
+	// earlier read, so a block committing in between cannot slip a conversation through; no
+	// row then means the pair is blocked.
+	StartConversation(ctx context.Context, arg StartConversationParams) (StartConversationRow, error)
 	// Record the credential a person has just signed in for.
 	//
 	// obtained_at moves and refreshed_at is cleared, because both describe THIS grant: the
@@ -7393,6 +7566,9 @@ type Querier interface {
 	// boardcatalog.PlaceholderCompany, once a curator knows the real one. Matches any status
 	// (a placeholder is worth fixing whether the board is still pending or already active).
 	UpdateBoardCompany(ctx context.Context, arg UpdateBoardCompanyParams) (int64, error)
+	// Refresh the category and geography similarity is scored on. Skips a left member: their
+	// keys are not read, and a write would only touch a row nobody is using.
+	UpdateBuddyMemberRankingKeys(ctx context.Context, arg UpdateBuddyMemberRankingKeysParams) error
 	// Replace a CV's editable fields, stamping updated_at. Owner-scoped: no row is updated
 	// for a foreign or missing id (the handler maps the resulting no-row error to 404).
 	UpdateCV(ctx context.Context, arg UpdateCVParams) (UpdateCVRow, error)
@@ -7816,6 +7992,8 @@ type Querier interface {
 	// Whether a user has a stored original résumé — the check before attaching an 'original'
 	// CV to a request, so a seeker cannot request with a résumé they never uploaded.
 	UserHasResume(ctx context.Context, id int64) (bool, error)
+	// A block between the two accounts in either direction.
+	UsersBlocked(ctx context.Context, arg UsersBlockedParams) (bool, error)
 	// Withdrawal marks the profile rather than deleting it, and that is the whole point:
 	// mentor_bookings and mentor_reviews reference this row ON DELETE CASCADE, so a DELETE
 	// would take every session and rating with it. A session that happened is history both

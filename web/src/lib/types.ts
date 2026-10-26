@@ -11,6 +11,7 @@ import type {
   Report as ATSReportContract,
   Analysis as MatchAnalysisContract,
   Education as ResumeEducation,
+  CandidateCard,
 } from './generated/contracts';
 /** @public — the app's vocabulary for the generated contract; a name is carried here
  *  whether or not a screen reads it yet. */
@@ -1138,6 +1139,30 @@ export interface TrackedApplication {
    *  banner reads this. */
   auto_apply?: AutoApplyReviewInfo;
 }
+
+interface BuddySummary { category: string; seniority: string; country: string }
+interface BuddyCompany { slug: string; name: string }
+export interface BuddyStatus { member: boolean; handle?: string; card_empty: boolean }
+export interface BuddySimilar { handle: string; card_summary: BuddySummary; score: number; shared_companies: BuddyCompany[] }
+export interface BuddyFeedPage { data: BuddyFeedItem[]; meta: { next_cursor: string | null } }
+export interface BuddyProfile { handle: string; card: CandidateCard; card_empty: boolean }
+/** One member's feed events per UTC day over the last year; only days with an event. */
+export interface BuddyActivity { days: { day: string; count: number }[] }
+export interface BuddyFeedItem { id: number; handle: string; card_summary: BuddySummary; company: BuddyCompany; job_title: string | null; type: 'applied' | 'interview' | 'offer'; day: string }
+/** How a buddy counterpart is drawn: by handle and card, and nothing at all once they are
+ *  unreachable (left, blocked) — not even the handle. */
+type BuddyCounterpart =
+  | { persona: 'buddy'; reachable: true; detail: { handle: string; card_summary: BuddySummary } }
+  | { persona: 'buddy'; reachable: false; detail: null };
+/** The other side of a conversation, drawn by the persona they speak as. Nothing here names
+ *  the account behind the persona (internal/engage/messaging/AGENTS.md). */
+export type Counterpart = BuddyCounterpart;
+export type ConversationStatus = 'incoming' | 'outgoing' | 'open' | 'closed';
+export interface Conversation { id: number; kind: 'buddy'; status_for_me: ConversationStatus; counterpart: Counterpart; unread: number; last_message_at: string | null; created_at: string }
+export interface ConversationMessage { id: number; mine: boolean; body: string; created_at: string }
+/** A reported conversation for moderators; every participant is named the way the
+ *  conversation's kind draws them (a buddy by handle). */
+export interface ConversationReport { id: number; conversation_id: number; kind: Conversation['kind']; reason: 'spam' | 'harassment' | 'scam' | 'other'; note: string; created_at: string; resolved_at: string | null; reporter: string; reported: string; messages: { sender: string; body: string; created_at: string }[] }
 
 /** The assembled follow-up message for a silent application. Deterministic and
  *  template-built server-side — no model, no allowance. `recipient` is present only
