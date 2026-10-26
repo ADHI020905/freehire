@@ -42,6 +42,7 @@ type job104 struct {
 	http    HeaderJSONGetter
 	static  JSONGetter
 	limiter waiter
+	backoff time.Duration
 	codes   *job104Codes
 }
 
@@ -54,10 +55,23 @@ const (
 	job104MaxPage = 100
 )
 
-// job104RequestInterval paces every search request of a run through one limiter. The
-// platform publishes no limit; about one request a second is what its own frontend issues
-// while a visitor pages through results, and is courtesy toward a large site.
-const job104RequestInterval = 800 * time.Millisecond
+// job104RequestInterval paces every search request of ONE run through one limiter — and the
+// provider is sharded, with the scheduler running several shards at once, each its own process
+// with its own limiter. The first production pass ran five shards concurrently at one request
+// every 0.8 s each (~6 a second together) and the platform began answering 429, with no
+// Retry-After, within minutes: 25 of shard 1's 69 boards failed and shards 2-5 failed almost
+// whole. A request repeated a few seconds later was served. Four seconds per shard keeps even
+// five concurrent shards near the ~1.25 a second a lone shard was served at for 19 minutes, and
+// job104RateLimitRetries rides out the 429s that still come.
+const job104RequestInterval = 4 * time.Second
+
+// job104RateLimitRetries and job104RateLimitBackoff retry a refused (403/429) search, the wait
+// doubling from 5 s up to retryDelayCap. The Scrapling client retries nothing itself (see
+// newScraplingClient), so without this one 429 fails the whole board.
+const (
+	job104RateLimitRetries = 4
+	job104RateLimitBackoff = 5 * time.Second
+)
 
 // job104ExpBrackets are the search's experience brackets; each posting falls in exactly one
 // (their totals sum exactly to the unfiltered total), so they partition a slice.
@@ -70,6 +84,7 @@ func NewJob104(search HeaderJSONGetter, static JSONGetter) Source {
 		http:    search,
 		static:  static,
 		limiter: rate.NewLimiter(rate.Every(job104RequestInterval), 1),
+		backoff: job104RateLimitBackoff,
 		codes:   &job104Codes{},
 	}
 }
@@ -239,14 +254,17 @@ func (s job104) readPages(ctx context.Context, params url.Values, last int, add 
 }
 
 func (s job104) search(ctx context.Context, params url.Values, page int) (job104Response, error) {
-	if err := s.limiter.Wait(ctx); err != nil {
-		return job104Response{}, err
-	}
 	q := with104(params, "page", strconv.Itoa(page))
 	// Newest first, so a page boundary moves only when a posting is added ahead of it.
 	q.Set("order", "2")
 	var resp job104Response
-	err := s.http.GetJSONWithHeaders(ctx, job104SearchURL+"?"+q.Encode(), map[string]string{"Referer": job104Referer}, &resp)
+	err := retryWhile(ctx, job104RateLimitRetries, s.backoff, isRateLimited, func() error {
+		if err := s.limiter.Wait(ctx); err != nil {
+			return err
+		}
+		resp = job104Response{}
+		return s.http.GetJSONWithHeaders(ctx, job104SearchURL+"?"+q.Encode(), map[string]string{"Referer": job104Referer}, &resp)
+	})
 	if err != nil {
 		return resp, fmt.Errorf("job104: search %s page %d: %w", params.Encode(), page, err)
 	}
