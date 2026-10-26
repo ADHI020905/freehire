@@ -63,3 +63,24 @@ func TestEmbeddedCityDict(t *testing.T) {
 		}
 	}
 }
+
+func TestCanonicalCity(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+		ok   bool
+	}{
+		{"münchen", "Munich", true},
+		{"Muenchen", "Munich", true},
+		{" Munich ", "Munich", true},
+		{"köln", "Cologne", true},
+		{"Nowheretown", "", false},
+		{"", "", false},
+	}
+	for _, c := range cases {
+		got, ok := CanonicalCity(c.in)
+		if got != c.want || ok != c.ok {
+			t.Errorf("CanonicalCity(%q) = %q, %v; want %q, %v", c.in, got, ok, c.want, c.ok)
+		}
+	}
+}

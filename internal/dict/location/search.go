@@ -99,6 +99,20 @@ func SearchCities(query, countryCode string, limit int) []CityMatch {
 	return searchCitiesIn(citySearchIndex, query, countryCode, limit)
 }
 
+// CanonicalCity resolves a city spelling (a local-language name such as "München" or
+// "Köln", or the canonical name itself) to the canonical display name Parse puts into
+// Geo.Cities. It exists so a filter value typed in a local spelling reaches the facet
+// value the index actually carries: postings are indexed under "Munich", so an exact
+// match on "München" finds almost nothing. The dictionary is curated, never guessed, so
+// an unknown spelling reports false and the caller keeps the value verbatim.
+func CanonicalCity(alias string) (string, bool) {
+	ce, ok := cityDict[strings.ToLower(strings.TrimSpace(alias))]
+	if !ok {
+		return "", false
+	}
+	return ce.Name, true
+}
+
 // searchCitiesIn is SearchCities' pure matching logic over an injected index, so tests
 // can exercise it against a small fixture instead of the embedded 34k-row dataset.
 func searchCitiesIn(index []citySearchEntry, query, countryCode string, limit int) []CityMatch {

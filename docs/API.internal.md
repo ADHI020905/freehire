@@ -126,7 +126,7 @@ Every facet below supports repeat-OR, `_mode=and`, and `_exclude` as described a
 | `domains` | Industry | fintech, crypto, ecommerce, gambling, gamedev, media, travel, healthcare, edtech, govtech, devtools, cybersecurity, ai, hrtech, adtech, proptech, logistics, mobility, climatetech, other |
 | `company_type` | Company type | product, startup, outsource, outstaff, agency, inhouse, government |
 | `countries` | Countries | Open vocabulary — call /jobs/facets for live values |
-| `cities` | City | Open vocabulary — call /jobs/facets for live values |
+| `cities` | City | Open vocabulary — call /jobs/facets for live values. Recognized dictionary aliases such as München and Köln resolve to their canonical city names. |
 | `metros` | Metro area | Open vocabulary — call /jobs/facets for live values |
 | `relocation` | Relocation | not_supported, supported, required |
 | `employment_type` | Employment | full_time, part_time, contract, internship, fellowship |

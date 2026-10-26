@@ -44,6 +44,8 @@ const API_ONLY_FACETS: FilterRow[] = [
 // replaces the derived `values` text for that row only — the row itself still comes
 // from the FACETS registry, so the facet cannot be documented twice or go missing.
 const VALUES_OVERRIDE: Record<string, string> = {
+  cities:
+    'Open vocabulary — call /jobs/facets for live values. Recognized dictionary aliases such as München and Köln resolve to their canonical city names.',
   // The one-sided vocabulary. An integrator who reads `role_type_exclude` as a
   // positive individual-contributor filter is building on a claim the catalogue
   // cannot support, so the caveat has to ride with the row rather than be inferred.

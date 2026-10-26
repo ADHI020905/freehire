@@ -564,3 +564,23 @@ func TestFilterFromValues_MetrosExclude(t *testing.T) {
 		t.Errorf("metros_exclude: got %v, want %v", got, want)
 	}
 }
+
+func TestFilterFromValues_CitiesResolveThroughDictionary(t *testing.T) {
+	now := time.Date(2026, 6, 19, 0, 0, 0, 0, time.UTC)
+	want := normalizeGroups(t, filterFromValues(vals("cities=Munich"), now))
+	if got := normalizeGroups(t, filterFromValues(vals("cities=M%C3%BCnchen"), now)); !reflect.DeepEqual(got, want) {
+		t.Errorf("cities=München: got %v, want %v (same as Munich)", got, want)
+	}
+
+	// An unknown city stays verbatim: an open facet may carry values the dictionary lacks.
+	unknown := normalizeGroups(t, filterFromValues(vals("cities=Nowheretown"), now))
+	if wantUnknown := [][]string{{`cities = "Nowheretown"`}}; !reflect.DeepEqual(unknown, wantUnknown) {
+		t.Errorf("unknown city: got %v, want %v", unknown, wantUnknown)
+	}
+
+	excl := normalizeGroups(t, filterFromValues(vals("cities_exclude=M%C3%BCnchen"), now))
+	wantExcl := normalizeGroups(t, filterFromValues(vals("cities_exclude=Munich"), now))
+	if !reflect.DeepEqual(excl, wantExcl) {
+		t.Errorf("cities_exclude=münchen: got %v, want %v", excl, wantExcl)
+	}
+}
