@@ -73,6 +73,9 @@ func TestWorkstreamEmployer(t *testing.T) {
 		// A title that carries no suffix at all is the employer name already.
 		"Sarku Japan": "Sarku Japan",
 		"":            "",
+		// A title that begins with the suffix (match at position 0) must still be trimmed:
+		// i > 0 skips position 0 and leaks the suffix into the employer name.
+		" Careers and Jobs": "",
 	}
 	for title, want := range cases {
 		if got := workstreamEmployer(title); got != want {

@@ -96,7 +96,7 @@ func (workstreamProber) probe(ctx context.Context, c httpClient, board string) (
 // workstreamEmployer reads the employer name out of a career site's <title>, cutting the
 // platform's own suffix off whether the site rendered it whole or truncated.
 func workstreamEmployer(title string) string {
-	if i := strings.Index(title, workstreamTitleSuffix); i > 0 {
+	if i := strings.Index(title, workstreamTitleSuffix); i >= 0 {
 		return strings.TrimSpace(title[:i])
 	}
 	return title
