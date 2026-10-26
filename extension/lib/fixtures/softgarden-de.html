@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="de">
+<head><meta charset="utf-8"><title>softgarden fixture</title></head>
+<body>
+<!-- softgarden apply form, markup reduced to controls and labels; ids, names and labels verbatim, personal values, scripts, URLs and styles blanked. ASSUMED, not captured: the option lists of Anrede (Frau, Herr, Divers) and Wie haben Sie diese Position gefunden? (LinkedIn, Website, Sonstiges). -->
+<form>
+  <div><label for="idd">Wählen Sie eine Option, um Ihren Lebenslauf hochzuladen</label>
+    <input type="file" id="idd" name="cvBorder:cvBorder_body:cv:upload:oneRowPanel:cvParser:form:cvUpload"></div>
+  <div><label for="id1">Anrede</label>
+    <select id="id1" name="salutationBorder:salutationBorder_body:salutationChoice"><option value=""></option><option value="1">Frau</option><option value="2">Herr</option><option value="3">Divers</option></select>
+    <input type="text" placeholder="Search options"></div>
+  <div><label for="id2">Akademischer Titel</label>
+    <select id="id2" name="academicTitleGroup:academicTitleGroup_body:academicTitleChoice"><option value=""></option></select>
+    <input type="text" placeholder="Search options"></div>
+  <div><label for="id3">Vorname *</label><input type="text" id="id3" name="firstNameBorder:firstNameBorder_body:firstName"></div>
+  <div><label for="id4">Nachname *</label><input type="text" id="id4" name="lastNameBorder:lastNameBorder_body:lastName"></div>
+  <div><label for="ida">Wie haben Sie diese Position gefunden?</label>
+    <select id="ida" name="applicationSourceBorder:applicationSourceBorder_body:applicationSource"><option value=""></option><option value="a">LinkedIn</option><option value="b">Website</option><option value="c">Sonstiges</option></select>
+    <input type="text" placeholder="Search options"></div>
+  <div><label for="id6">E-Mail *</label><input type="email" id="id6" name="emailBorder:emailBorder_body:email"></div>
+  <div><label for="id9">Telefon *</label><input type="text" id="id9" name="phoneBorder:phoneBorder_body:phone"></div>
+  <div><label for="idb">Anschreiben</label><textarea id="idb" name="coverLetterBorder:coverLetterBorder_body:coverLetter"></textarea></div>
+  <div><span>Weitere Anhänge</span><input type="file" id="id11" name="attachments:uploadForm:upload" aria-label="file upload button"></div>
+  <div><label for="id13">Wie ist Ihre Kündigungsfrist? *</label><input type="text" id="id13" name="questions:questions:0:question:border:border_body:answer"></div>
+  <div><label for="id14">Bitte geben Sie Ihren Gehaltswunsch an *</label><input type="text" id="id14" name="questions:questions:1:question:border:border_body:answer"></div>
+  <button type="submit">Bewerbung absenden</button>
+</form>
+</body>
+</html>

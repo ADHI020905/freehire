@@ -947,6 +947,27 @@ describe('matchFieldKey', () => {
     expect(matchFieldKey('LinkedIn URL')).toBe('linkedin');
   });
 
+  it('maps German labels to canonical profile keys', () => {
+    expect(matchFieldKey('Vorname')).toBe('firstName');
+    expect(matchFieldKey('Vorname (erforderlich)')).toBe('firstName');
+    expect(matchFieldKey('Nachname *')).toBe('lastName');
+    expect(matchFieldKey('E-Mail-Adresse')).toBe('email');
+    expect(matchFieldKey('Telefonnummer *')).toBe('phone');
+    expect(matchFieldKey('PLZ')).toBe('postalCode');
+    expect(matchFieldKey('Wohnort')).toBe('city');
+    expect(matchFieldKey('Gehaltsvorstellung (brutto/Jahr)')).toBe('desiredSalary');
+    expect(matchFieldKey('Kündigungsfrist')).toBe('noticePeriod');
+  });
+
+  it('does not let a German word claim a longer German word', () => {
+    expect(matchFieldKey('Ortsteil')).toBeNull();
+    expect(matchFieldKey('Landkreis')).toBeNull();
+  });
+
+  it('does not let a German word mid-sentence claim a key', () => {
+    expect(matchFieldKey('In welchem Land haben Sie studiert?')).toBeNull();
+  });
+
   it('returns null for an unknown label', () => {
     expect(matchFieldKey('Favourite colour')).toBeNull();
   });

@@ -384,20 +384,37 @@ function collapse(text: string | null | undefined): string {
   return (text ?? '').replace(/\s+/g, ' ').trim();
 }
 
-/** Canonical profile keys and the label synonyms that map to them. */
+/**
+ * Canonical profile keys and the label synonyms that map to them. German ATS forms
+ * (Personio, softgarden, SuccessFactors) use the German synonyms. The English
+ * 'email' / 'e-mail' prefixes already open "E-Mail-Adresse" and "Email-Adresse"
+ * (a hyphen ends the word), so email needs no German entry.
+ */
 const FIELD_SYNONYMS: Record<string, string[]> = {
   fullName: ['full name', 'your name', 'candidate name', 'applicant name'],
-  firstName: ['first name', 'given name', 'legal first name', 'preferred first name'],
-  lastName: ['last name', 'family name', 'surname', 'legal last name'],
+  firstName: ['first name', 'given name', 'legal first name', 'preferred first name', 'vorname'],
+  lastName: ['last name', 'family name', 'surname', 'legal last name', 'nachname', 'familienname'],
   email: ['email', 'e-mail', 'e-mail address', 'email address'],
-  phone: ['phone', 'mobile', 'telephone', 'contact number', 'cell'],
-  city: ['city', 'town', 'current location', 'location (city)'],
-  state: ['state', 'province', 'region'],
-  country: ['country'],
-  postalCode: ['postal code', 'zip', 'zip code', 'pincode', 'pin code'],
+  phone: [
+    'phone',
+    'mobile',
+    'telephone',
+    'contact number',
+    'cell',
+    'telefon',
+    'telefonnummer',
+    'mobilnummer',
+    'handynummer',
+    'rufnummer',
+    'mobil',
+  ],
+  city: ['city', 'town', 'current location', 'location (city)', 'ort', 'wohnort', 'stadt'],
+  state: ['state', 'province', 'region', 'bundesland'],
+  country: ['country', 'land'],
+  postalCode: ['postal code', 'zip', 'zip code', 'pincode', 'pin code', 'plz', 'postleitzahl'],
   linkedin: ['linkedin'],
   github: ['github'],
-  portfolio: ['portfolio', 'website', 'personal site'],
+  portfolio: ['portfolio', 'website', 'personal site', 'webseite', 'homepage'],
   // The candidate's own screening answers (internal/screeninganswers), not a
   // boolean "are you authorized to work" question — that asks something the
   // profile does not carry an answer to, so it stays unmatched rather than
@@ -425,12 +442,19 @@ const FIELD_SYNONYMS: Record<string, string[]> = {
     'salary expectations',
     'what are your salary expectations',
     'compensation expectations',
+    'gehaltsvorstellung',
+    'gehaltsvorstellungen',
+    'gehaltswunsch',
+    'gewünschtes gehalt',
+    'ihre gehaltsvorstellung',
   ],
   noticePeriod: [
     'notice period',
     'current notice period',
     'what is your notice period',
     'how much notice',
+    'kündigungsfrist',
+    'ihre kündigungsfrist',
   ],
   willingToRelocate: [
     'are you willing to relocate',
@@ -438,6 +462,9 @@ const FIELD_SYNONYMS: Record<string, string[]> = {
     'willing to relocate',
     'are you open to relocating',
     'open to relocation',
+    'umzugsbereitschaft',
+    'sind sie umzugsbereit',
+    'sind sie bereit umzuziehen',
   ],
   age18OrOlder: [
     'are you at least 18 years',
@@ -496,8 +523,9 @@ export function matchFieldKey(label: string): string | null {
 /** True when the label opens with this synonym and ends it at a word boundary. */
 function opensWith(label: string, synonym: string): boolean {
   if (!label.startsWith(synonym)) return false;
-  // "Citywide preference" is not a `city` question.
-  return !/[a-z0-9]/.test(label.charAt(synonym.length));
+  // "Citywide preference" is not a `city` question. äöüß count as letters too, so
+  // German "Ort" does not claim "Ortsteil" nor "Land" claim "Landkreis".
+  return !/[a-z0-9äöüß]/.test(label.charAt(synonym.length));
 }
 
 /**
