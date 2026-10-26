@@ -469,6 +469,8 @@ func All(c HTTPClient) map[string]Source {
 		NewCoveto(limitedCovetoGetter(c)),
 		NewConcludis(c),
 		NewKenjo(c),
+		// Concurrency-limited: one API host answers every Oorwin portal (see oorwinMaxInFlight).
+		NewOorwin(limitedOorwinPoster(c)),
 		NewEasyCruit(c),
 		// Rate-paced: one origin serves every Homerun feed and vacancy page (see homerunRequestInterval).
 		NewHomerun(pacedHomerunGetter(c)),

@@ -69,7 +69,20 @@ func (a adapterProber) probeSeeded(ctx context.Context, _ httpClient, board, com
 	if company == "" {
 		company = board
 	}
-	jobs, err := a.newSource().Fetch(ctx, sources.CompanyEntry{Provider: a.provider, Board: board, Company: company})
+	e := sources.CompanyEntry{Provider: a.provider, Board: board, Company: company}
+	src := a.newSource()
+	// A hydrating adapter is asked for its listing alone: every posting reads as already held,
+	// so the probe costs the listing and no detail request — the body is not what it counts,
+	// and on a platform whose detail is slow (oorwin's takes seconds) Fetch would hydrate
+	// every board it probes only to throw the bodies away.
+	if hs, ok := src.(sources.HydratingSource); ok {
+		jobs, err := hs.FetchNew(ctx, e, func(string) bool { return true })
+		if err != nil {
+			return "", 0, err
+		}
+		return "", len(jobs), nil
+	}
+	jobs, err := src.Fetch(ctx, e)
 	if err != nil {
 		return "", 0, err
 	}

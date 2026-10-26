@@ -527,6 +527,32 @@ func (g concurrencyLimitedJSONGetter) GetJSON(ctx context.Context, url string, v
 	return g.inner.GetJSON(ctx, url, v)
 }
 
+// concurrencyLimitedJSONPoster is the JSON-POST counterpart of concurrencyLimitedJSONGetter: a
+// shared semaphore bounds how many PostJSON calls are in flight at once, across every board and
+// page of a run.
+type concurrencyLimitedJSONPoster struct {
+	inner JSONPoster
+	sem   chan struct{}
+}
+
+// PostJSON acquires a semaphore slot before delegating (releasing it after); a cancelled context
+// surfaces while waiting and skips the inner request.
+func (p concurrencyLimitedJSONPoster) PostJSON(ctx context.Context, url string, body, v any) error {
+	select {
+	case p.sem <- struct{}{}:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	defer func() { <-p.sem }()
+	return p.inner.PostJSON(ctx, url, body, v)
+}
+
+// limitedOorwinPoster wraps a poster with a fresh semaphore shared across one registry build:
+// every Oorwin tenant is answered by the same API host, and a detail takes seconds to build.
+func limitedOorwinPoster(c JSONPoster) JSONPoster {
+	return concurrencyLimitedJSONPoster{inner: c, sem: make(chan struct{}, oorwinMaxInFlight)}
+}
+
 // concurrencyLimitedHTMLGetter is the HTML-GET counterpart of concurrencyLimitedJSONGetter: it
 // bounds how many GetHTML calls are in flight at once via a shared semaphore, independent of
 // the pipeline's board-worker pool — the right lever for a host that degrades under sustained

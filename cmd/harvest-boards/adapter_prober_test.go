@@ -148,3 +148,40 @@ func TestAdapterProbeCountsAFetchErrorAsAFailure(t *testing.T) {
 		t.Errorf("kept=%d failures=%d, want 0 and 2 — a dead platform must not read as empty boards", len(kept), failures)
 	}
 }
+
+// hydratingSource lists n postings and counts the detail requests a crawl would spend: Fetch
+// hydrates everything, FetchNew only what seen does not hold.
+type hydratingSource struct {
+	n       int
+	details int
+}
+
+func (*hydratingSource) Provider() string { return "hydrating" }
+
+func (s *hydratingSource) Fetch(ctx context.Context, e sources.CompanyEntry) ([]sources.Job, error) {
+	return s.FetchNew(ctx, e, func(string) bool { return false })
+}
+
+func (s *hydratingSource) FetchNew(_ context.Context, _ sources.CompanyEntry, seen func(string) bool) ([]sources.Job, error) {
+	out := make([]sources.Job, s.n)
+	for range out {
+		if !seen("x") {
+			s.details++
+		}
+	}
+	return out, nil
+}
+
+func TestAdapterProbeOfAHydratingAdapterSpendsNoDetail(t *testing.T) {
+	src := &hydratingSource{n: 7}
+	p := adapterProber{provider: "hydrating", newSource: func() sources.Source { return src }}
+
+	_, n, err := p.probe(context.Background(), nil, "acme")
+
+	if err != nil || n != 7 {
+		t.Fatalf("probe = %d, %v; want the listing's 7 postings", n, err)
+	}
+	if src.details != 0 {
+		t.Errorf("probe spent %d detail requests, want none: it counts the listing", src.details)
+	}
+}

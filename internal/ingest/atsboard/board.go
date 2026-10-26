@@ -326,6 +326,10 @@ var atsBoards = []struct{ host, source, mode string }{
 	// platformLabelsByApex.
 	{"homerun.co", "homerun", modeSubdomain},
 	{"easycruit.com", "easycruit", modeSubdomain},
+	// Oorwin (US/Indian IT staffing ATS): the career portal is a label on oorwin.com
+	// (purpledrive.oorwin.com/careers), the label the adapter names in its API body. Vendor
+	// hosts and demo tenants are in platformLabelsByApex.
+	{"oorwin.com", "oorwin", modeSubdomain},
 	// HR Office (Dutch): the career site is a label on inhroffice.com. Employers that show the
 	// same vacancies on their own domain pull them from there, so those domains name no board.
 	{"inhroffice.com", "hroffice", modeSubdomain},
@@ -1506,8 +1510,11 @@ var platformLabelsByApex = map[string][]string{
 	"talentstorm.de": {"www", "api", "videos"},
 	// Homerun's marketing site and sign-up funnel, the host a gone tenant's pages redirect to, the
 	// one feed host every tenant's feed is served from, and its asset hosts.
-	"homerun.co":     {"www", "try", "404", "feed", "static", "cdn"},
-	"easycruit.com":  {"www"},         // Visma's EasyCruit product site
+	"homerun.co":    {"www", "try", "404", "feed", "static", "cdn"},
+	"easycruit.com": {"www"}, // Visma's EasyCruit product site
+	// Oorwin's marketing site and the vendor's own demo/CRM portals, which answer the careers API
+	// with sample postings.
+	"oorwin.com":     {"www", "demous", "demoind", "demosg", "oorwincrm"},
 	"inhroffice.com": {"www", "link"}, // link.inhroffice.com is the vendor's link shortener
 	// Darwinbox's marketing site, its content hub and its events site.
 	"darwinbox.com": {"www", "explore", "lighthouse"},
