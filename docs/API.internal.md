@@ -1029,7 +1029,7 @@ curl -X PUT "https://freehire.me/api/v1/me/screening-answers" \
 
 ## Onboarding survey
 
-What you told us about your search when you signed up: how far along it is, the single biggest thing in its way, and what you earn today. A singleton per user — no id in the path. These answers describe you to us and reach no employer and no job search; what you WANT to be paid is a screening answer (`desired_salary_*`), not one of these. `PUT` is a partial update: a field the body omits keeps its stored value, and there is no way to clear one back to unstated.
+Your stored answers about your job search: how far along it is, the things in its way, and what you earn today. The onboarding tour asks only for the things in its way; the other two are kept from earlier sign-ups. A singleton per user — no id in the path. These answers describe you to us and reach no employer and no job search; what you WANT to be paid is a screening answer (`desired_salary_*`), not one of these. `PUT` is a partial update: a field the body omits keeps its stored value, and there is no way to clear one back to unstated.
 
 ### `PUT /me/survey`
 
@@ -1037,15 +1037,15 @@ What you told us about your search when you signed up: how far along it is, the 
 
 Update one or more survey answers.
 
-A field the body omits is left unchanged. A stage or challenge outside its vocabulary, a note alongside any challenge other than `other`, a currency that is not a three-letter ISO 4217 code, a period outside the vocabulary, or a non-positive income is a `400` naming the offending field.
+A field the body omits is left unchanged. A stage or challenge outside its vocabulary, `just_starting` beside another challenge, a note when the challenges do not include `other`, a currency that is not a three-letter ISO 4217 code, a period outside the vocabulary, or a non-positive income is a `400` naming the offending field.
 
 **Body**
 
 | Name | Type | Required | Description |
 | --- | --- | --- | --- |
 | `job_search_stage` | string | no | One of `not_started`, `searching`, `employed_looking`, `exploring`. (e.g. `searching`) |
-| `biggest_challenge` | string | no | One of `english`, `recruiter_contact`, `working_abroad`, `technical_interviews`, `other`. (e.g. `technical_interviews`) |
-| `biggest_challenge_note` | string | no | Free text. Accepted only alongside `biggest_challenge: "other"`. |
+| `biggest_challenges` | string[] | no | Any of `recruiter_contact`, `job_fit`, `remote_flexible`, `working_abroad`, `visa_sponsorship`, `technical_interviews`, `english`, `first_job`, `just_starting`, `other`. `just_starting` stands alone. Replaces the stored list. (e.g. `["technical_interviews"]`) |
+| `biggest_challenge_note` | string | no | Free text. Accepted only while `biggest_challenges` includes `other`. |
 | `current_income_amount` | integer | no | What you earn today, in the currency and period below. (e.g. `5000`) |
 | `current_income_currency` | string | no | Three-letter ISO 4217 currency code. (e.g. `USD`) |
 | `current_income_period` | string | no | Income period, e.g. `year`, `month`. (e.g. `month`) |

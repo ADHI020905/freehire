@@ -2176,7 +2176,7 @@ curl "https://freehire.me/api/v1/me/screening-answers" -H "Authorization: Bearer
 
 ## Onboarding survey
 
-What you told us about your search when you signed up: how far along it is, the single biggest thing in its way, and what you earn today. A singleton per user — no id in the path. These answers describe you to us and reach no employer and no job search; what you WANT to be paid is a screening answer (`desired_salary_*`), not one of these. `PUT` is a partial update: a field the body omits keeps its stored value, and there is no way to clear one back to unstated.
+Your stored answers about your job search: how far along it is, the things in its way, and what you earn today. The onboarding tour asks only for the things in its way; the other two are kept from earlier sign-ups. A singleton per user — no id in the path. These answers describe you to us and reach no employer and no job search; what you WANT to be paid is a screening answer (`desired_salary_*`), not one of these. `PUT` is a partial update: a field the body omits keeps its stored value, and there is no way to clear one back to unstated.
 
 ### `GET /me/survey`
 
@@ -2192,7 +2192,7 @@ curl "https://freehire.me/api/v1/me/survey" -H "Authorization: Bearer $FREEHIRE_
 {
   "data": {
     "job_search_stage": "searching",
-    "biggest_challenge": "technical_interviews",
+    "biggest_challenges": ["technical_interviews", "visa_sponsorship"],
     "current_income_amount": 5000,
     "current_income_currency": "USD",
     "current_income_period": "month"
