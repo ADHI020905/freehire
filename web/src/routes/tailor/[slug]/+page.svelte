@@ -1,7 +1,8 @@
 <script lang="ts">
   // The dedicated CV-tailoring workspace: a three-column surface — left panel tabbed between the
-  // structured Editor and the Chat, a centre live HTML CV preview (zoom + Download PDF), and a
-  // right context panel tabbed between Templates, the Job description, and the Verdict. Two modes:
+  // Chat, the structured Editor, the Experience bank and Design, a centre live HTML CV preview
+  // (zoom, page count, Download PDF), and a right context panel that measures the CV against the
+  // vacancy (Job Match, Score, Cover letter, History, Job). Two modes:
   //  - bootstrap (no ?cv): create the tailored CV + a seeded agent session and store the
   //    session id on the CV. Nothing is sent: the empty chat offers two ways to start.
   //  - resume (?cv=<id>): reuse the existing CV + its stored session — re-attach, NO kickoff.
@@ -9,11 +10,11 @@
   // The page owns the CV document in memory so the Editor and the centre preview share one object:
   // typing re-renders the preview instantly, autosave persists in the background, and an agent turn
   // refetches and replaces the document.
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import { ZoomIn, ZoomOut, Download, Menu, PanelLeftClose, PanelLeftOpen, Terminal } from '@lucide/svelte';
+  import { Check, Download, Menu, PanelLeftClose, PanelLeftOpen, Terminal, TriangleAlert, ZoomIn, ZoomOut } from '@lucide/svelte';
   import { announce } from '#lib/announce.svelte.js';
   import { api, ApiError } from '#lib/api.js';
   import { offerCvRefresh, TAILOR_REFRESH_MESSAGE } from '#lib/cvRefreshOffer.js';
@@ -32,8 +33,11 @@
   import TemplateGallery from '#lib/tailor/TemplateGallery.svelte';
   import AccountNavRail from '#lib/components/AccountNavRail.svelte';
   import { ConfirmDialog } from '#lib/ui/index.js';
-  import { clampWidth, keyResizeWidth, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH } from '#lib/tailor/geometry.js';
+  import { clampWidth, fitToWidthZoom, keyResizeWidth, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH } from '#lib/tailor/geometry.js';
   import { undoRun, openingActions } from '#lib/tailor/autopilot.js';
+  import { findPlaceholders } from '#lib/tailor/readiness.js';
+  import { tablist } from '#lib/actions/tablist.js';
+  import { fillViewport } from '#lib/actions/fillViewport.js';
   import {
     toEditable,
     emptyDocument,
@@ -104,14 +108,13 @@
   // switches (hidden, not unmounted) so its live session is never dropped.
   // The left panel holds what CHANGES the document — its text, its template, its typography —
   // and the chat that does all three by asking. Measuring the document is the right panel's job.
-  type LeftTab = 'chat' | 'editor' | 'experience' | 'templates' | 'settings';
+  type LeftTab = 'chat' | 'editor' | 'experience' | 'design';
   let leftTab = $state<LeftTab>('chat');
   const leftTabs: [LeftTab, string][] = [
     ['chat', 'Chat'],
     ['editor', 'Editor'],
     ['experience', 'Experience'],
-    ['templates', 'Templates'],
-    ['settings', 'Settings'],
+    ['design', 'Design'],
   ];
   let leftWidth = $state(350);
   // Folded to a rail so the centre CV preview can take the width. Desktop-only: below lg the
@@ -131,17 +134,16 @@
   // syncs the matching column's own selector (mobile → column) so the wide layout shows the same
   // content once revealed. The reverse (a desktop tab change updating mobileView) is not wired —
   // switching a column tab then narrowing across lg resets the mobile view to that tab's default.
-  type MobileView = 'chat' | 'editor' | 'experience' | 'settings' | 'preview' | 'templates' | 'jd' | 'jobmatch' | 'score' | 'letter' | 'history';
+  type MobileView = 'chat' | 'editor' | 'experience' | 'design' | 'preview' | 'jd' | 'jobmatch' | 'score' | 'letter' | 'history';
   const mobileTabs: [MobileView, string][] = [
     ['chat', 'Chat'],
     ['editor', 'Editor'],
     ['experience', 'Experience'],
-    ['templates', 'Templates'],
-    ['settings', 'Settings'],
+    ['design', 'Design'],
     ['preview', 'Preview'],
     ['jobmatch', 'Job Match'],
-    ['score', 'Score'],
-    ['letter', 'Cover letter'],
+    ['score', 'ATS'],
+    ['letter', 'Letter'],
     ['history', 'History'],
     ['jd', 'Job'],
   ];
@@ -155,18 +157,58 @@
   let navOpen = $state(false);
   function pickMobile(v: MobileView) {
     mobileView = v;
-    if (v === 'chat' || v === 'editor' || v === 'experience' || v === 'templates' || v === 'settings') leftTab = v;
+    if (v === 'chat' || v === 'editor' || v === 'experience' || v === 'design') leftTab = v;
     else if (v !== 'preview') artifactTab = v;
   }
 
-  // Centre preview zoom, clamped to 50–150% in 10% steps. Starts at 80%: the A4 page then fits
-  // the centre column with both side panels open, so nothing has to be dragged before reading.
-  let zoom = $state(0.8);
+  // Centre preview zoom. It opens fitted to the column's width, so the whole sheet is readable
+  // whatever the window or the side panels leave; the + and − buttons then step in 10% from
+  // there (50–150%), and the percentage puts it back to fit. A fixed 80% start used to promise
+  // this and overflowed the column at 1440px with both panels open.
+  const SCROLLER_PADDING = 48; // the scroller's p-6, both sides
+  let previewWidth = $state(0);
+  let fitMode = $state(true);
+  let manualZoom = $state(0.8);
+  const fitZoom = $derived(fitToWidthZoom(previewWidth - SCROLLER_PADDING));
+  const zoom = $derived(fitMode ? fitZoom : manualZoom);
   const zoomPct = $derived(Math.round(zoom * 100));
   const clampZoom = (z: number) => Math.min(1.5, Math.max(0.5, Math.round(z * 10) / 10));
-  const zoomOut = () => (zoom = clampZoom(zoom - 0.1));
-  const zoomIn = () => (zoom = clampZoom(zoom + 0.1));
+  const setZoom = (z: number) => {
+    manualZoom = clampZoom(z);
+    fitMode = false;
+  };
+  const zoomOut = () => setZoom(zoom - 0.1);
+  const zoomIn = () => setZoom(zoom + 0.1);
   const pdfUrl = $derived(`${api.cvPdfUrl(cvId)}?v=${pdfVersion}`);
+
+  // Readiness of the PDF, the one thing here the seeker actually sends. The page count comes
+  // from the preview's own pagination; a template slot the agent left behind (`[result]`)
+  // would print verbatim, so the download stops to say so rather than letting it go out.
+  let pageCount = $state<number | null>(null);
+  const placeholders = $derived(findPlaceholders(doc));
+  const placeholderTokens = $derived([...new Set(placeholders.map((p) => p.token))]);
+  let placeholdersShown = $state(false);
+  const showingPlaceholders = $derived(placeholdersShown && placeholders.length > 0);
+  let confirmDownloadOpen = $state(false);
+  let previewScroller = $state<HTMLElement | null>(null);
+
+  async function togglePlaceholders(show = !showingPlaceholders) {
+    placeholdersShown = show;
+    if (!show) return;
+    await tick();
+    // The hidden measurement layer renders the same marks, so skip anything inside it.
+    const first = Array.from(previewScroller?.querySelectorAll('.cv-lit') ?? []).find(
+      (el) => !el.closest('[aria-hidden="true"]'),
+    );
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    first?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  function guardDownload(e: MouseEvent) {
+    if (placeholders.length === 0) return;
+    e.preventDefault();
+    confirmDownloadOpen = true;
+  }
 
   // The member's headshot, for the templates that print one. Read once here rather than inside
   // the preview: the photo belongs to the profile, not to the CV being edited, and the same URL
@@ -552,7 +594,7 @@
 
 <!-- Full-width workspace loses the account shell nav; the same left-edge icon rail as
      the Agent page brings the account sections back. It stays put across every state. -->
-<div class="flex h-[calc(100dvh-3.5rem)]">
+<div use:fillViewport class="flex h-[calc(100dvh-3.5rem)]">
   <AccountNavRail collapsible bind:open={navOpen} />
   {#if status === 'loading'}
     <div class="flex min-w-0 flex-1 items-center justify-center text-sm text-muted-foreground">
@@ -614,7 +656,7 @@
         bind:this={leftPanelEl}
         class={[
           'w-full min-h-0 flex-1 flex-col border-r border-border bg-background lg:w-[var(--lw)] lg:flex-none',
-          mobileView === 'chat' || mobileView === 'editor' || mobileView === 'experience' || mobileView === 'templates' || mobileView === 'settings'
+          mobileView === 'chat' || mobileView === 'editor' || mobileView === 'experience' || mobileView === 'design'
             ? 'flex'
             : 'hidden',
           leftCollapsed ? 'lg:hidden' : 'lg:flex',
@@ -623,10 +665,19 @@
       >
         <!-- Own tab bar (and save status) is desktop-only; the mobile bar drives the tab there. -->
         <div class="hidden items-center justify-between gap-2 border-b border-border px-2 py-1.5 text-sm lg:flex">
-          <div class="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto">
+          <div
+            role="tablist"
+            aria-label="Edit this CV"
+            use:tablist={leftTab}
+            class="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto"
+          >
             {#each leftTabs as [id, label] (id)}
               <button
                 type="button"
+                role="tab"
+                id="tailor-left-tab-{id}"
+                aria-selected={leftTab === id}
+                aria-controls="tailor-left-panel"
                 onclick={() => (leftTab = id)}
                 class={['shrink-0 rounded px-2 py-1 transition-colors', leftTab === id ? 'bg-brand-muted font-semibold text-brand-strong' : 'text-muted-foreground hover:text-foreground']}
               >
@@ -635,7 +686,7 @@
             {/each}
           </div>
           <div class="flex shrink-0 items-center gap-1">
-            {#if leftTab === 'editor' || leftTab === 'settings'}
+            {#if leftTab === 'editor' || leftTab === 'design'}
               <span
                 class={['text-xs', saveState === 'error' ? 'text-destructive' : 'text-muted-foreground']}
                 aria-live="polite"
@@ -646,14 +697,6 @@
             {/if}
             <button
               type="button"
-              onclick={() => (cliDialogOpen = true)}
-              aria-label="Edit this CV from the CLI"
-              class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <Terminal class="size-4" />
-            </button>
-            <button
-              type="button"
               onclick={() => (leftCollapsed = true)}
               aria-label="Collapse the editor panel"
               class="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -662,7 +705,7 @@
             </button>
           </div>
         </div>
-        <div class="min-h-0 flex-1">
+        <div id="tailor-left-panel" role="tabpanel" aria-labelledby="tailor-left-tab-{leftTab}" class="min-h-0 flex-1">
           <div class="h-full overflow-auto p-4" class:hidden={leftTab !== 'editor'}>
             {#if runActive}
               <p class="mb-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
@@ -674,6 +717,15 @@
             <fieldset disabled={runActive} class="contents">
               <CvSectionForm bind:doc bind:title />
             </fieldset>
+            <!-- The terminal is another way to edit the same text, so it is offered where the
+                 text is edited rather than as an unlabelled glyph in the panel's header. -->
+            <button
+              type="button"
+              onclick={() => (cliDialogOpen = true)}
+              class="mt-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Terminal class="size-4" aria-hidden="true" /> Edit this CV from your terminal
+            </button>
           </div>
           <!-- The experience bank as its owner sees it on /my/profile — same component, so
                checking, confirming, or editing what the assistant knows never means leaving the
@@ -691,31 +743,31 @@
             {/if}
             <ExperienceBankView onBankMutated={offerRefreshAfterBankEdit} />
           </div>
-          <!-- Presentation, in two blocks of label→control rows. Both write straight into the
-               shared document, so the centre preview re-renders live and autosave persists them
-               on the same debounce as any other edit. -->
-          <!-- Templates: what the CV looks like, beside the rest of what decides that. The
-               gallery is the same component the right panel used to host — moved, not rewritten. -->
-          <div class="h-full overflow-auto p-4" class:hidden={leftTab !== 'templates'}>
-            <TemplateGallery {cvId} onSelected={onTemplateSelected} />
-          </div>
-          <div class="h-full overflow-auto p-4" class:hidden={leftTab !== 'settings'}>
-            <div class="space-y-6">
-              <section class="space-y-2">
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Typography</h2>
+          <!-- Design: everything that decides how the CV looks, in one place — the template first,
+               since it sets the defaults every control below adjusts. All of it writes straight
+               into the shared document, so the centre preview re-renders live and autosave
+               persists it on the same debounce as any other edit. -->
+          <div class="h-full overflow-auto p-4" class:hidden={leftTab !== 'design'}>
+            <div class="space-y-8">
+              <section class="space-y-3">
+                <h2 class="text-sm font-semibold text-foreground">Template</h2>
+                <TemplateGallery {cvId} onSelected={onTemplateSelected} />
+              </section>
+              <section class="space-y-3">
+                <h2 class="text-sm font-semibold text-foreground">Typography</h2>
                 <StyleSettings bind:style={doc.style} {fonts} />
               </section>
-              <section class="space-y-2">
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Page margins <span class="font-normal normal-case tracking-normal">(inches)</span>
+              <section class="space-y-3">
+                <h2 class="text-sm font-semibold text-foreground">
+                  Page margins <span class="font-normal text-muted-foreground">(inches)</span>
                 </h2>
                 <MarginSettings bind:margins={doc.margins} />
               </section>
               <!-- Not a presentation choice, and deliberately last: consent to track whoever opens
                    this CV is a different kind of decision from a font size, and it writes on its
                    own rather than riding the document's autosave. -->
-              <section class="space-y-2">
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Link tracking</h2>
+              <section class="space-y-3 border-t border-border pt-6">
+                <h2 class="text-sm font-semibold text-foreground">Link tracking</h2>
                 <TracerLinksSettings {cvId} bind:enabled={tracerLinksEnabled} />
               </section>
             </div>
@@ -778,29 +830,74 @@
               <button type="button" onclick={zoomOut} aria-label="Zoom out" class="rounded p-1 text-muted-foreground transition-colors hover:text-foreground">
                 <ZoomOut class="size-4" />
               </button>
-              <span class="w-12 text-center text-xs tabular-nums text-muted-foreground">{zoomPct}%</span>
+              <button
+                type="button"
+                onclick={() => (fitMode = true)}
+                aria-label="Zoom {zoomPct}%. Fit the page to the width"
+                title="Fit to width"
+                aria-pressed={fitMode}
+                class="w-12 rounded py-0.5 text-center text-xs tabular-nums text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {zoomPct}%
+              </button>
               <button type="button" onclick={zoomIn} aria-label="Zoom in" class="rounded p-1 text-muted-foreground transition-colors hover:text-foreground">
                 <ZoomIn class="size-4" />
               </button>
             </div>
+            {#if pageCount !== null}
+              <span
+                class={['inline-flex items-center gap-1 text-xs tabular-nums', pageCount > 2 ? 'text-warning-strong' : 'text-muted-foreground']}
+              >
+                {#if pageCount > 2}
+                  <TriangleAlert class="size-3.5" aria-hidden="true" />
+                  {pageCount} pages · aim for 1–2
+                {:else}
+                  <Check class="size-3.5 text-success-strong" aria-hidden="true" />
+                  {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+                {/if}
+              </span>
+            {/if}
           </div>
-          <!-- eslint-disable svelte/no-navigation-without-resolve -- external CV PDF API URL, not an internal route -->
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            <!-- eslint-enable svelte/no-navigation-without-resolve -->
-            <Download class="size-4" /> Download PDF
-          </a>
+          <div class="flex flex-wrap items-center gap-2">
+            {#if placeholders.length > 0}
+              <button
+                type="button"
+                onclick={() => togglePlaceholders()}
+                aria-pressed={showingPlaceholders}
+                class="inline-flex items-center gap-1.5 rounded-md bg-warning-muted px-2.5 py-1 text-xs font-medium text-warning-strong transition-colors hover:bg-warning-muted/70"
+              >
+                <TriangleAlert class="size-3.5" aria-hidden="true" />
+                <!-- Names one of the slots: "placeholder" alone did not say what was wrong. -->
+                {placeholders.length === 1 ? `1 gap: ${placeholders[0]?.token}` : `${placeholders.length} gaps like ${placeholders[0]?.token}`}
+              </button>
+            {/if}
+            <!-- eslint-disable svelte/no-navigation-without-resolve -- external CV PDF API URL, not an internal route -->
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener"
+              onclick={guardDownload}
+              class="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <!-- eslint-enable svelte/no-navigation-without-resolve -->
+              <Download class="size-4" /> Download PDF
+            </a>
+          </div>
         </div>
-        <div class="min-h-0 flex-1 overflow-auto p-6">
-          <CvHtmlPreview {doc} {templateId} {zoom} {fonts} {photoSrc} highlightPaths={pinnedRevision?.paths ?? []} />
+        <div bind:this={previewScroller} bind:clientWidth={previewWidth} class="min-h-0 flex-1 overflow-auto p-6">
+          <CvHtmlPreview
+            {doc}
+            {templateId}
+            {zoom}
+            {fonts}
+            {photoSrc}
+            highlightPaths={showingPlaceholders ? placeholders.map((p) => p.path) : (pinnedRevision?.paths ?? [])}
+            onPageCount={(n) => (pageCount = n)}
+          />
         </div>
       </div>
 
-      <!-- RIGHT: Templates / Job description / Verdict (renders its own splitter). Shown on mobile
+      <!-- RIGHT: Job Match / Score / Cover letter / History / Job (renders its own splitter). Shown on mobile
            only when one of its tabs is picked; always shown at lg. -->
       <ArtifactPanel
         job={must(job, 'job')}
@@ -836,3 +933,30 @@
   confirmLabel="Reset"
   onConfirm={applyReseed}
 />
+
+<ConfirmDialog
+  bind:open={confirmDownloadOpen}
+  title="Your CV still has gaps to fill"
+  description="These bracketed slots will print in the PDF exactly as written."
+  confirmLabel="Download anyway"
+  cancelLabel="Keep editing"
+  onConfirm={() => {
+    window.open(pdfUrl, '_blank', 'noopener');
+  }}
+>
+  <ul class="flex flex-wrap gap-1.5">
+    {#each placeholderTokens as token (token)}
+      <li><code class="rounded bg-muted px-1.5 py-0.5 text-xs">{token}</code></li>
+    {/each}
+  </ul>
+  <button
+    type="button"
+    class="mt-3 text-sm font-medium text-brand-strong underline-offset-4 hover:underline"
+    onclick={() => {
+      confirmDownloadOpen = false;
+      togglePlaceholders(true);
+    }}
+  >
+    Show them on the page
+  </button>
+</ConfirmDialog>

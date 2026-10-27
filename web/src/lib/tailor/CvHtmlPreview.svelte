@@ -12,7 +12,7 @@
   import type { Document, ExperienceItem, Project } from '#lib/generated/contracts.js';
   import { experienceHeader, educationLine, languageLabel, certificationLine, type CvFont } from '#lib/cv.js';
   import HeadshotSilhouette from '#lib/components/HeadshotSilhouette.svelte';
-  import { paginateBlocks, previewTypography } from './geometry';
+  import { A4_WIDTH_PX, paginateBlocks, previewTypography, printedPageCount } from './geometry';
   import { must } from '#lib/utils.js';
   import { keepIndex, makeHighlighter, makeContainerHighlighter } from './revisions';
 
@@ -23,6 +23,7 @@
     fonts = [],
     photoSrc = null,
     highlightPaths = [],
+    onPageCount,
   }: {
     doc: Document;
     templateId?: string;
@@ -32,6 +33,9 @@
     /** Addresses a revision touched, e.g. `experience[2].bullets[1]`. The nodes they name are
      *  underlined, so "what changed" is answerable by looking at the page. */
     highlightPaths?: string[];
+    /** Told how many pages the PDF will have, or null until the blocks have been measured —
+     *  before that everything sits on one sheet, and a "1 page" read off it would be a guess. */
+    onPageCount?: (pages: number | null) => void;
   } = $props();
 
   // Whether a given address was touched by whatever the history has selected.
@@ -41,7 +45,7 @@
   const litInside = $derived(makeContainerHighlighter(highlightPaths));
 
   // A4 at 96dpi, and the inch→pixel factor margins convert through.
-  const PAGE_W = 794;
+  const PAGE_W = A4_WIDTH_PX;
   const PAGE_H = 1123;
   const PX_PER_IN = 96;
   const COL_GAP = 24; // matches the sidebar grid's gap-6
@@ -181,6 +185,9 @@
   // re-paginate once real heights land.
   const measured = $derived(heights.length === blocks.length ? heights : blocks.map(() => 0));
   const pages = $derived(paginateBlocks(measured, pageBodyHeight));
+  $effect(() => {
+    onPageCount?.(heights.length === blocks.length ? printedPageCount(pages, heights, pageBodyHeight) : null);
+  });
   // Resolve each page's block indices to the blocks themselves for type-safe iteration.
   const pageBlocks = $derived<Block[][]>(pages.map((pg) => pg.map((i) => blocks[i]).filter((b): b is Block => !!b)));
 </script>
@@ -357,9 +364,11 @@
 
 <!-- Visible A4 sheets, stacked. The CSS `zoom` property scales the whole stack — layout included —
      so the scroll container reserves the scaled size (transform: scale would keep the 794px box and
-     clip the left edge on first paint). `items-center` centres each sheet when it fits and lets it
-     overflow-scroll when zoomed past the column width. -->
-<div class="flex flex-col items-center gap-6" style="zoom: {zoom};">
+     clip the left edge on first paint). `items-center-safe` centres each sheet when it fits and,
+     once the sheet is wider than the column (a phone, or zoomed in), falls back to the start edge
+     so it overflow-scrolls to the right — plain `items-center` overflows BOTH sides, and the left
+     half sits past the scroll origin where no scrollbar can reach it. -->
+<div class="flex flex-col items-center-safe gap-6" style="zoom: {zoom};">
   {#each pageBlocks as page, p (p)}
     <article
       class={['bg-white text-neutral-900 shadow-sm', useTemplateFace && (isSans ? 'font-sans' : 'font-serif')]}

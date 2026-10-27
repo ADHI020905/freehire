@@ -17,6 +17,7 @@
   import { resolve } from '$app/paths';
   import { ExternalLink, PanelRightClose, PanelRightOpen } from '@lucide/svelte';
   import { clampWidth, keyResizeWidth, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH } from './geometry';
+  import { tablist } from '#lib/actions/tablist.js';
   import JobDescription from '#lib/components/JobDescription.svelte';
   import MatchAnalysisFull from '#lib/components/MatchAnalysisFull.svelte';
   import { companyLogoUrl } from '#lib/logo.js';
@@ -25,6 +26,7 @@
   import AutopilotReport from './AutopilotReport.svelte';
   import AtsDelta from './AtsDelta.svelte';
   import JobMatch from './JobMatch.svelte';
+  import { scoreTone, type JobMatchTone } from './jobmatch';
   import CoverLetter from './CoverLetter.svelte';
   import type { Analysis, AutopilotEntry, RevisionView } from '#lib/generated/contracts.js';
   import type { Job, MatchAnalysisResponse } from '#lib/types.js';
@@ -97,13 +99,27 @@
 
   const tabs: [Tab, string][] = [
     ['jobmatch', 'Job Match'],
-    ['score', 'Score'],
-    ['letter', 'Cover letter'],
+    ['score', 'ATS'],
+    ['letter', 'Letter'],
     ['history', 'History'],
     ['jd', 'Job'],
   ];
   // 400 rather than the 340 floor: at the floor the tab strip wraps "Job Match" onto two lines
   // and the vacancy title truncates after a couple of words, so the panel opened looking cramped.
+  // Each measuring tab carries its current number, so the score is readable from whichever tab
+  // is open and the three measurements stop competing for one heading. Absent when the score
+  // is — a badge reading "–" would be a state to ignore, which is what the panel avoids.
+  const badges = $derived<Partial<Record<Tab, number>>>({
+    jobmatch: jobMatch?.available ? jobMatch.score?.overall : undefined,
+    score: atsDelta?.available ? atsDelta.delta?.tailored : undefined,
+  });
+  // The same thresholds the Job match card colours its own number by, so a badge and the card
+  // it summarises never disagree about whether a score is good.
+  const badgeTone: Record<JobMatchTone, string> = {
+    strong: 'text-brand-strong',
+    moderate: 'text-warning-strong',
+    poor: 'text-destructive',
+  };
   let width = $state(400);
   let resizing = false;
   // Collapsed to a rail so the centre CV preview can take the width. Desktop-only: below lg
@@ -186,20 +202,31 @@
   <!-- Own tab bar is desktop-only; on mobile the page's flat tab bar drives the tab. The
        collapse control sits at its end, beside the edge the panel folds towards. -->
   <div class="hidden items-center gap-1 border-b border-border px-2 py-1.5 text-sm lg:flex">
+    <div role="tablist" aria-label="Measure this CV" use:tablist={tab} class="flex min-w-0 items-center gap-1">
     {#each tabs as [id, label] (id)}
       <button
         type="button"
+        role="tab"
+        id="tailor-right-tab-{id}"
+        aria-selected={tab === id}
+        aria-controls="tailor-right-panel"
         onclick={() => (tab = id)}
         class={[
-          'rounded px-2 py-1 transition-colors',
+          'whitespace-nowrap rounded px-2 py-1 transition-colors',
           tab === id
             ? 'bg-brand-muted font-semibold text-brand-strong'
             : 'text-muted-foreground hover:text-foreground',
         ]}
       >
         {label}
+        {#if badges[id] !== undefined}
+          {@const value = badges[id] ?? 0}
+          <span class="ml-1 text-xs font-medium tabular-nums {badgeTone[scoreTone(value)]}">{value}</span>
+          <span class="sr-only">out of 100</span>
+        {/if}
       </button>
     {/each}
+    </div>
     <button
       type="button"
       onclick={() => (collapsed = true)}
@@ -238,7 +265,7 @@
     {/if}
   </div>
 
-  <div class="min-h-0 flex-1 overflow-auto">
+  <div id="tailor-right-panel" role="tabpanel" aria-labelledby="tailor-right-tab-{tab}" class="min-h-0 flex-1 overflow-auto">
     {#if tab === 'history'}
       <div>
         {#if onReseed}
@@ -255,7 +282,7 @@
               onclick={() => void onReseed()}
               class="mt-2 inline-flex items-center rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {resetBusy ? 'Resetting…' : 'Reset Changes'}
+              {resetBusy ? 'Resetting…' : 'Reset changes'}
             </button>
             {#if resetError}
               <p class="mt-1.5 text-xs text-destructive">{resetError}</p>
@@ -288,13 +315,11 @@
       <div class="p-4">
         <JobMatch data={jobMatch} />
         <!-- The match analysis used to be a frozen base-profile snapshot; it is now refreshed
-             by every autopilot run, so it says that instead of implying it never moves. -->
-        <div class="mb-3 rounded-lg border border-border bg-muted/30 px-2.5 py-2">
+             by every autopilot run, so it says that instead of implying it never moves. A
+             heading rather than a card: the analysis below already draws its own surface. -->
+        <div class="mb-2 mt-6 flex items-baseline justify-between gap-2">
           <h3 class="text-sm font-semibold text-foreground">Match analysis</h3>
-          <p class="mt-0.5 text-xs leading-snug text-muted-foreground">
-            Refreshed automatically after every autopilot run. You can also run or recompute it
-            here any time.
-          </p>
+          <p class="text-xs text-muted-foreground">Refreshed after every autopilot run</p>
         </div>
         <!-- Keyed on whether an analysis is present: MatchAnalysisFull seeds its internal state
              from `initial` once, on mount, and does not re-read it if the prop changes later —

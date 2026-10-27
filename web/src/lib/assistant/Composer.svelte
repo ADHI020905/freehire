@@ -41,6 +41,7 @@
   } = $props();
 
   const s = $derived(t(messages, locale()));
+  const keysHintId = $props.id();
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
   // Dictation. `dictationOff` latches once the server reports no speech gateway: the
@@ -212,6 +213,7 @@
         rows="1"
         placeholder={s.placeholder}
         aria-label={s.messageAria}
+        aria-describedby={keysHintId}
         {disabled}
         onkeydown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
@@ -219,7 +221,7 @@
             (e.currentTarget.form as HTMLFormElement | null)?.requestSubmit();
           }
         }}
-        class="block max-h-[200px] min-h-[1.5rem] flex-1 resize-none cursor-text bg-transparent py-1 text-base leading-6 text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+        class="block max-h-[200px] min-h-[1.5rem] flex-1 resize-none cursor-text bg-transparent py-1.5 text-base leading-6 text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
       ></textarea>
       {#if DICTATION_ENABLED && !dictationOff}
         <VoiceInput
@@ -254,6 +256,10 @@
         </button>
       {/if}
     </form>
+    <!-- The keys used to live in the placeholder, which wrapped to three lines in a narrow
+         panel and inflated the box before anything was typed. Pointer devices only: a phone
+         keyboard has no Shift+Enter to explain. -->
+    <p id={keysHintId} class="mt-1.5 hidden text-center text-xs text-muted-foreground/80 pointer-fine:block">{s.keysHint}</p>
 
     {#if voiceError}
       <p class="mt-1.5 px-4 text-xs text-destructive" role="alert">{voiceError}</p>
