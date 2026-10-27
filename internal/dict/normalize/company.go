@@ -1,6 +1,7 @@
 package normalize
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -45,7 +46,9 @@ var legalSuffixes = map[string]struct{}{
 }
 
 // CompanySlug is [Slug] with any trailing corporate forms removed: "Arch Capital Group Ltd."
-// becomes "arch-capital-group". An empty or untransliterable name yields "".
+// becomes "arch-capital-group". A Japanese form is the exception — it is moved to the tail as a
+// Latin mark rather than removed, "株式会社Speee" becoming "speee-kk"; [japaneseForms] argues
+// why. An empty or untransliterable name yields "".
 //
 // Stripping repeats rather than stopping at one match: compound forms are ordinary ("Acme
 // GmbH & Co. KG", "Atlassian Pty Ltd"), and a single pass would leave half the form behind.
@@ -56,7 +59,7 @@ var legalSuffixes = map[string]struct{}{
 //
 // A single-word name is never stripped: "Limited" stays "limited", because an empty slug
 // silently matches nothing while a visibly odd company row can be found and fixed.
-func CompanySlug(name string) string { return trimTail(name, IsLegalForm) }
+func CompanySlug(name string) string { return trimTail(name, IsLegalForm, true) }
 
 // boardNameTails are the tails an ATS board id drops that the company key must keep. They are
 // a SECOND vocabulary rather than entries in [legalSuffixes] because they are not corporate
@@ -94,16 +97,23 @@ func IsBoardNameTail(word string) bool {
 // live evidence — a slug that happens to be another employer's board is rejected by the probe
 // and the name gate, not accepted on the resemblance. It must never key a company.
 func BoardNameSlug(name string) string {
-	return trimTail(name, func(word string) bool { return IsLegalForm(word) || IsBoardNameTail(word) })
+	return trimTail(name, func(word string) bool { return IsLegalForm(word) || IsBoardNameTail(word) }, false)
 }
 
 // trimTail is the shared walk under [CompanySlug] and [BoardNameSlug]: drop trailing words the
 // caller's vocabulary recognises, then slug what is left. The two differ only in that
 // vocabulary, and sharing the walk is what keeps their single-word and repeat rules identical.
-func trimTail(name string, isTail func(word string) bool) string {
-	words := strings.FieldsFunc(dropApostrophes(name), isWordBreak)
+//
+// keepJapaneseMark decides what becomes of a Japanese form cut from either end: the company key
+// keeps it as one Latin mark at the tail (see [japaneseForms]), a board-id guess drops it.
+func trimTail(name string, isTail func(word string) bool, keepJapaneseMark bool) string {
+	rest, mark := trimJapaneseForms(name)
+	words := strings.FieldsFunc(dropApostrophes(rest), isWordBreak)
 	for len(words) > 1 && isTail(words[len(words)-1]) {
 		words = words[:len(words)-1]
+	}
+	if keepJapaneseMark && mark != "" {
+		words = append(words, mark)
 	}
 	return Slug(strings.Join(words, " "))
 }
@@ -131,6 +141,69 @@ func isWordBreak(r rune) bool {
 	return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '.' && r != '/'
 }
 
+// japaneseForms are the Japanese corporate forms, written out and abbreviated, each with the
+// Latin mark it becomes in the company key. They are a separate list from [legalSuffixes]
+// because they cannot be matched the same way: the letters-only comparison reduces a kanji
+// word to nothing, and Japanese writes no space between the form and the name, so
+// "株式会社サイバーエージェント" is a single word to the tail walk. They are matched as a
+// literal PREFIX or SUFFIX of the name — Japanese puts the form on either side
+// ("株式会社リクルート", "トヨタ自動車株式会社") — and both sides key alike.
+//
+// Before this list the form reached [Slug] whole and was romanised as Chinese: 株式会社
+// became "zhu-shi-hui-she", measured 2026-10-26 on ~12k companies (hrmos, herp, engage,
+// mynavi), and one employer written with the form before and after its name keyed as two.
+//
+// THE FORM IS KEPT AS A MARK, NOT DROPPED, unlike every Latin form — and the data is why. A
+// token earns its place by whether stripping it lands on a DIFFERENT employer, and these fail
+// that test where the Latin ones pass it: once the form is gone, a small Japanese firm's name
+// romanises into a short Latin word some unrelated company already owns. Dropping it put
+// 726 Japanese companies on someone else's key — 株式会社タケダ on Takeda's, 株式会社COMPASS on
+// Compass's, 株式会社Walk on a Danish ApS. `takeda-kk` keeps the variants of one Japanese
+// employer together and every foreign namesake apart.
+//
+// One mark per form, because the forms are different legal entities: 有限会社Foo and
+// 株式会社Foo are not one company spelled two ways.
+//
+// Only the business forms. The non-profit and institutional ones (医療法人, 学校法人,
+// 一般社団法人) are deliberately absent: they compound ("社会医療法人社団") in ways a literal
+// list does not cover, and together they key fewer than 300 companies.
+var japaneseForms = []struct{ form, mark string }{
+	{"株式会社", "kk"}, {"(株)", "kk"}, {"（株）", "kk"}, {"㈱", "kk"},
+	{"有限会社", "yk"}, {"(有)", "yk"}, {"（有）", "yk"}, {"㈲", "yk"},
+	{"合同会社", "gk"}, {"(同)", "gk"}, {"（同）", "gk"},
+	{"合名会社", "gmk"}, {"合資会社", "gsk"},
+}
+
+// trimJapaneseForms cuts [japaneseForms] from either end of a name, repeatedly, with the spaces
+// around them — half-width and the full-width U+3000 that Japanese text uses — and returns
+// what is left with the mark of the first form it cut ("" when it cut none).
+//
+// Like the tail walk, it never empties a name: "株式会社" alone is returned as it is, unmarked,
+// because an empty slug silently matches nothing while a visibly odd row can be found and fixed.
+func trimJapaneseForms(name string) (rest, mark string) {
+	const spaces = " \t\u3000"
+	name = strings.Trim(name, spaces)
+	for {
+		trimmed, cut := name, ""
+		for _, f := range japaneseForms {
+			if r, ok := strings.CutPrefix(trimmed, f.form); ok {
+				trimmed, cut = r, f.mark
+			}
+			if r, ok := strings.CutSuffix(trimmed, f.form); ok {
+				trimmed, cut = r, f.mark
+			}
+		}
+		trimmed = strings.Trim(trimmed, spaces)
+		if trimmed == name || trimmed == "" {
+			return name, mark
+		}
+		if mark == "" {
+			mark = cut
+		}
+		name = trimmed
+	}
+}
+
 // IsLegalForm reports whether a single word of a company name is a corporate form ("Ltd.",
 // "GmbH", "B.V."), by the same letters-only comparison [CompanySlug] strips with.
 //
@@ -139,6 +212,9 @@ func isWordBreak(r rune) bool {
 // and must not use [CompanySlug]'s word breaks, which split "T-Mobile" in two and would make
 // a single-token name look specific enough to skip its headquarters check.
 func IsLegalForm(word string) bool {
+	if slices.ContainsFunc(japaneseForms, func(f struct{ form, mark string }) bool { return f.form == word }) {
+		return true
+	}
 	_, ok := legalSuffixes[letters(word)]
 	return ok
 }
