@@ -47,7 +47,9 @@ func TestEveryCompanySlugWriteAlsoWritesTheFoldedColumn(t *testing.T) {
 			// MENTIONS the folded column ("company_slug_folded is written below", or a
 			// TODO to write it) satisfied this check while leaving the column unwritten —
 			// which is precisely the silent failure the rule exists to prevent.
-			body := stripSQLComments(stmt.body)
+			// Strip block comments too, so a mention of company_slug_folded in /* */ does not
+// falsely satisfy the check. Then strip line comments.
+	body := stripSQLComments(stmt.body)
 			if !writesJobsCompanySlug(body) {
 				continue
 			}
@@ -196,11 +198,15 @@ func assignmentOffsets(set, column string) []int {
 	}
 }
 
-// stripSQLComments drops `-- …` line comments from a statement so the rule reads the SQL and
-// not the commentary. A `--` inside a string literal would be cut too; no query here holds
-// one, and the failure direction is safe — a statement would look like it writes LESS than it
+// StripSQLComments drops `-- …` line comments and `/* … */` block comments
+// from a statement so the rule reads the SQL and not the commentary. A `--` or
+// `/*` inside a string literal would be cut too; no query here holds one, and the
+// failure direction is safe — a statement would look like it writes LESS than it
 // does, which errs toward reporting a violation rather than hiding one.
 func stripSQLComments(body string) string {
+	// First strip block comments /* … */
+	body = stripBlockComments(body)
+	// Then strip line comments -- …
 	lines := strings.Split(body, "\n")
 	out := make([]string, 0, len(lines))
 	for _, line := range lines {
@@ -210,4 +216,19 @@ func stripSQLComments(body string) string {
 		out = append(out, line)
 	}
 	return strings.Join(out, "\n")
+}
+
+// stripBlockComments removes C-style block comments /* ... */ from body.
+func stripBlockComments(body string) string {
+	const open = "/*"
+	const close = "*/"
+	for {
+		const openIdx = strings.Index(body, open)
+		const closeIdx = strings.Index(body, close)
+		if openIdx < 0 || closeIdx < 0 || closeIdx < openIdx {
+			break
+		}
+		body = body[:openIdx] + body[closeIdx+2:]
+	}
+	return body
 }
