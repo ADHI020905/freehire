@@ -43,16 +43,11 @@ func TestEveryCompanySlugWriteAlsoWritesTheFoldedColumn(t *testing.T) {
 		}
 
 		for _, stmt := range splitNamedQueries(string(src)) {
-			// Judge the SQL, not the prose around it. We strip line comments first
-			// (--) and then block comments (/* */) so that a mention of
-			// company_slug_folded in a comment does not falsely satisfy the check —
-			// the rule exists to prevent the silent failure of writing company_slug
-			// without its folded column.
-			// Strip line comments first (--) and then block comments (/* ... */).
-			// We strip line comments first so that a /* inside a line comment (e.g.
-			// `-- ... /api/v1/insights/*`) is not mistaken for a block comment start.
-			// Running the -- pass first also rules out that a later */ in the same
-			// statement would cut real SQL between the two passes.
+			// Judge the SQL, not the prose around it. A statement whose comment merely
+			// MENTIONS the folded column ("company_slug_folded is written below", or a
+			// TODO to write it) satisfied this check while leaving the column unwritten —
+			// which is precisely the silent failure the rule exists to prevent. Block
+			// comments count as prose too.
 			body := stripSQLComments(stmt.body)
 			if !writesJobsCompanySlug(body) {
 				continue
@@ -91,8 +86,8 @@ func TestAssignsCompanySlugInSetClause(t *testing.T) {
 		want bool
 	}{
 		{"first in the set list", "update jobs\nset company_slug = $1\nwhere id = $2", true},
-		{"not first in the set list", "update jobs\nset title = $1,\n	company_slug = $2\nwhere id = $3", true},
-		{"aligned with padding", "update jobs\nset title		= $1,\n	company_slug	= $2\nwhere id = $3", true},
+		{"not first in the set list", "update jobs\nset title = $1,\n    company_slug = $2\nwhere id = $3", true},
+		{"aligned with padding", "update jobs\nset title        = $1,\n    company_slug     = $2\nwhere id = $3", true},
 		{"only the folded column is assigned", "update jobs\nset company_slug_folded = $1\nwhere id = $2", false},
 		{"read in the where clause is not a write", "update jobs\nset title = $1\nwhere company_slug = $2", false},
 		{"read in a returning clause is not a write", "update jobs\nset title = $1\nreturning company_slug = $2", false},
@@ -101,6 +96,30 @@ func TestAssignsCompanySlugInSetClause(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := assignsCompanySlugInSetClause(tc.sql); got != tc.want {
 				t.Errorf("assignsCompanySlugInSetClause(%q) = %v, want %v", tc.sql, got, tc.want)
+			}
+		})
+	}
+}
+
+// A mention of the folded column inside a comment must not count as writing it, whichever
+// comment syntax carries the mention — and stripping one syntax must never eat real SQL.
+func TestStripSQLComments(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		sql  string
+		want string
+	}{
+		{"line comment", "set company_slug = $1 -- company_slug_folded later", "set company_slug = $1 "},
+		{"block comment", "set company_slug = $1 /* company_slug_folded later */, title = $2", "set company_slug = $1  , title = $2"},
+		{"block comment across lines", "set company_slug = $1 /* TODO\ncompany_slug_folded */\nwhere id = $2", "set company_slug = $1  \nwhere id = $2"},
+		{"two block comments", "a /* x */ b /* y */ c", "a   b   c"},
+		{"a comment between tokens keeps them apart", "update jobs/* note */set company_slug = $1", "update jobs set company_slug = $1"},
+		{"a line comment holding /* does not start a block", "-- see /api/v1/insights/*\nset title = $1 */ x", "\nset title = $1 */ x"},
+		{"an unterminated block is left alone", "set title = $1 /* company_slug_folded", "set title = $1 /* company_slug_folded"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := stripSQLComments(tc.sql); got != tc.want {
+				t.Errorf("stripSQLComments(%q) = %q, want %q", tc.sql, got, tc.want)
 			}
 		})
 	}
@@ -202,17 +221,14 @@ func assignmentOffsets(set, column string) []int {
 	}
 }
 
-// StripSQLComments drops `-- …` line comments and `/* … */` block comments
-// from a statement so the rule reads the SQL and not the commentary. A `--` or
-// `/*` inside a string literal would be cut too; no query here holds one, and the
-// failure direction is safe — a statement would look like it writes LESS than it
-// does, which errs toward reporting a violation rather than hiding one.
-// We strip line comments first (--) and then block comments (/* */) so that a
-// mention of company_slug_folded in a comment does not falsely satisfy the check —
-// the rule exists to prevent the silent failure of writing company_slug without
-// its folded column.
+// stripSQLComments drops `-- …` line comments and `/* … */` block comments from a statement so
+// the rule reads the SQL and not the commentary. Line comments go first: a line comment may
+// itself contain `/*` (an endpoint path like `/api/v1/insights/*`), and reading that as the
+// start of a block comment would cut real SQL up to the next `*/`. A `--` or `/*` inside a
+// string literal would be cut too; no query here holds one, and the failure direction is
+// safe — a statement would look like it writes LESS than it does, which errs toward reporting
+// a violation rather than hiding one.
 func stripSQLComments(body string) string {
-	// First strip line comments -- …
 	lines := strings.Split(body, "\n")
 	out := make([]string, 0, len(lines))
 	for _, line := range lines {
@@ -221,92 +237,23 @@ func stripSQLComments(body string) string {
 		}
 		out = append(out, line)
 	}
-	body = strings.Join(out, "\n")
-	// Then strip block comments /* … */
-	return stripBlockComments(body)
+	return stripBlockComments(strings.Join(out, "\n"))
 }
 
-// stripBlockComments removes C-style block comments /* ... */ from body.
-// We strip line comments first (in the caller) so that a /* inside a line
-// comment is not mistaken for a block comment start. We search for the closing
-// */ starting after the opening one, e.g. using strings.Index on the suffix,
-// to avoid matching a stray */ that appears earlier in the statement.
+// stripBlockComments replaces every `/* … */` in body with a space — the separator Postgres
+// itself reads it as, so `jobs/* note */SET` stays two tokens instead of becoming `jobsSET`
+// and hiding the SET clause. An unterminated `/*` is left as it is: Postgres rejects one, so
+// sqlc would never have compiled the statement in the first place.
 func stripBlockComments(body string) string {
-	open := "/*"
-	close := "*/"
 	for {
-		openIdx := strings.Index(body, open)
-		if openIdx < 0 {
-			break
+		start := strings.Index(body, "/*")
+		if start < 0 {
+			return body
 		}
-		// Search for closing */ after the opening /
-		closeIdx := strings.Index(body[openIdx+2:], close)
-		if closeIdx < 0 {
-			// Unterminated block comment — stop processing
-			break
+		end := strings.Index(body[start+2:], "*/")
+		if end < 0 {
+			return body
 		}
-		closeIdx = closeIdx + openIdx + 2 // adjust index back to full string
-		body = body[:openIdx] + body[closeIdx+2:]
-	}
-	return body
-}
-
-// stripSQLCommentsTestTable holds test cases for stripSQLComments.
-var stripSQLCommentsTestTable = []struct {
-	name    string
-	body    string
-	want    string // body after stripping
-}{
-	{
-		name: "block comment mentioning company_slug_folded",
-		body: `SELECT company_slug_folded FROM jobs /* this is a block comment */`,
-		want: `SELECT FROM jobs `,
-	},
-	{
-		name: "line comment containing /*",
-		body: `SELECT * FROM jobs -- this has /* in the line comment /api/v1/insights/`,
-		want: `SELECT * FROM jobs `,
-	},
-	{
-		name: "unterminated block comment",
-		body: `SELECT * FROM jobs /* this block never closes`,
-		want: `SELECT * FROM jobs `,
-	},
-	{
-		name: "mixed line and block comments",
-		body: `SELECT company_slug FROM jobs -- a line comment /* not a block */`,
-		want: `SELECT FROM jobs `,
-	},
-	{
-		name: "no comments",
-		body: `SELECT company_slug FROM jobs`,
-		want: `SELECT company_slug FROM jobs`,
-	},
-}
-
-func TeststripSQLCommentsTableDriven(t *testing.T) {
-	for _, tc := range stripSQLCommentsTestTable {
-		t.Run(tc.name, func(t *testing.T) {
-			got := stripSQLComments(tc.body)
-			if got != tc.want {
-				t.Errorf("stripSQLComments(%q) = %q, want %q", tc.body, got, tc.want)
-			}
-		})
+		body = body[:start] + " " + body[start+2+end+2:]
 	}
 }
-
-// TestEveryCompanySlugWriteAlsoWritesTheFoldedColumn pins a rule that only a comment
-// would otherwise hold.
-//
-// jobs.company_slug_folded duplicates `replace(company_slug, '-', ”)` as a stored
-// column, because the planner cannot estimate a predicate on an expression when the
-// values arrive as a parameter (migrations/0109 carries the measurements: 271s per
-// batch against 491ms for the same shape over a plain column). It is NOT a generated
-// column — adding one would rewrite a 7.4M-row, 95 GB table under ACCESS EXCLUSIVE —
-// so the engine does not maintain it. The write paths do.
-//
-// That means a new statement writing company_slug and forgetting the folded column is
-// silently wrong in the worst way available: nothing errors, the row simply stops
-// matching the suppression pass, and the aggregator duplicate it should have hidden
-// stays in the index. This test is cheaper than discovering that from a bug report. 
- 
